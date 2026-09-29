@@ -17,7 +17,7 @@
 
 ## 4. Welcome screen
 
-- [ ] 4.1 Implement `WelcomeBackground` Canvas composable (gradient sky, stylized pipes with ink outlines, bubbles/drops) that fills any landscape size
+- [ ] 4.1 Implement `WelcomeBackground` composable showing the prepared `assets/welcome` illustration (bundled as a downscaled drawable, `ContentScale.Crop`) so it fills any landscape size
 - [ ] 4.2 Implement title composable: "LEAK OUT" large, centered, outlined with drop shadow, scaled to available size
 - [ ] 4.3 Implement `WelcomeScreen(onPlay, onSettings, onExit)` with title centered and Play / Settings / Exit buttons below in that order
 - [ ] 4.4 Handle short landscape heights via `BoxWithConstraints` scaling and safe-drawing insets/cutouts

@@ -1,0 +1,11 @@
+{
+  "id": 4,
+  "name": "Low Pressure",
+  "grid": { "columns": 9, "rows": 7 },
+  "start":  { "x": 0, "y": 5, "openSide": "RIGHT" },
+  "finish": { "x": 8, "y": 0, "openSide": "LEFT" },
+  "blocked": [],
+  "flow": { "initialDelayMs": 18500, "cellsPerSecond": 0.45 },
+  "stack": { "weights": { "X": 0, "RES": 0 } },
+  "stars": { "one": 90, "two": 140, "three": 210 }
+}

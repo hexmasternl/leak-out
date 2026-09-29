@@ -1,0 +1,11 @@
+{
+  "id": 12,
+  "name": "Crossroads",
+  "grid": { "columns": 12, "rows": 9 },
+  "start":  { "x": 0, "y": 7, "openSide": "RIGHT" },
+  "finish": { "x": 11, "y": 0, "openSide": "LEFT" },
+  "blocked": [ { "x": 3, "y": 1 }, { "x": 2, "y": 2 }, { "x": 5, "y": 8 } ],
+  "flow": { "initialDelayMs": 15000, "cellsPerSecond": 0.65 },
+  "stack": { "weights": { "X": 1, "RES": 0 } },
+  "stars": { "one": 150, "two": 250, "three": 370 }
+}

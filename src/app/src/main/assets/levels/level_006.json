@@ -1,0 +1,11 @@
+{
+  "id": 6,
+  "name": "Downpipe",
+  "grid": { "columns": 10, "rows": 7 },
+  "start":  { "x": 2, "y": 0, "openSide": "BOTTOM" },
+  "finish": { "x": 5, "y": 6, "openSide": "TOP" },
+  "blocked": [],
+  "flow": { "initialDelayMs": 18000, "cellsPerSecond": 0.5 },
+  "stack": { "weights": { "X": 0, "RES": 0 } },
+  "stars": { "one": 100, "two": 160, "three": 240 }
+}

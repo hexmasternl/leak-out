@@ -1,0 +1,11 @@
+{
+  "id": 20,
+  "name": "Sewer Rats",
+  "grid": { "columns": 15, "rows": 11 },
+  "start":  { "x": 0, "y": 10, "openSide": "RIGHT" },
+  "finish": { "x": 14, "y": 0, "openSide": "LEFT" },
+  "blocked": [ { "x": 7, "y": 0 }, { "x": 1, "y": 2 }, { "x": 4, "y": 3 }, { "x": 7, "y": 3 }, { "x": 12, "y": 3 }, { "x": 14, "y": 3 }, { "x": 6, "y": 4 }, { "x": 12, "y": 4 }, { "x": 6, "y": 6 }, { "x": 9, "y": 6 }, { "x": 10, "y": 6 }, { "x": 8, "y": 7 }, { "x": 9, "y": 7 }, { "x": 9, "y": 9 }, { "x": 13, "y": 9 }, { "x": 10, "y": 10 } ],
+  "flow": { "initialDelayMs": 11500, "cellsPerSecond": 0.8 },
+  "stack": { "weights": { "X": 2, "RES": 0 } },
+  "stars": { "one": 230, "two": 380, "three": 560 }
+}

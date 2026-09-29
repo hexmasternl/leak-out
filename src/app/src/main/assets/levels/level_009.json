@@ -1,0 +1,11 @@
+{
+  "id": 9,
+  "name": "Overflow",
+  "grid": { "columns": 11, "rows": 8 },
+  "start":  { "x": 0, "y": 2, "openSide": "RIGHT" },
+  "finish": { "x": 10, "y": 0, "openSide": "LEFT" },
+  "blocked": [],
+  "flow": { "initialDelayMs": 16500, "cellsPerSecond": 0.55 },
+  "stack": { "weights": { "X": 0, "RES": 0 } },
+  "stars": { "one": 120, "two": 200, "three": 300 }
+}

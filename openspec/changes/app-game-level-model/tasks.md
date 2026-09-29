@@ -39,5 +39,5 @@
 
 ## 6. Wrap up
 
-- [ ] 6.1 Document the level JSON format in `docs/level-format.md`: an annotated full example, a minimal example, the table of defaults and the endpoint rules
-- [ ] 6.2 Run the full test suite and confirm every spec scenario has a passing test
+- [x] 6.1 Document the level JSON format in `docs/level-format.md`: an annotated full example, a minimal example, the table of defaults and the endpoint rules
+- [x] 6.2 Run the full test suite and confirm every spec scenario has a passing test

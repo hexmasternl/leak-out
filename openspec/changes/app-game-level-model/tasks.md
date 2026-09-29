@@ -1,8 +1,8 @@
 ## 1. Project setup
 
-- [ ] 1.1 Ensure the pure Kotlin JVM `core` module exists (create it if the Android project is not scaffolded yet) with package `nl.hexmaster.leakout.core.level`
-- [ ] 1.2 Add kotlinx.serialization (plugin and JSON library) and a unit test framework to that module
-- [ ] 1.3 Confirm `./gradlew test` runs on the module with a trivial passing test
+- [x] 1.1 Ensure the pure Kotlin JVM `core` module exists (create it if the Android project is not scaffolded yet) with package `nl.hexmaster.leakout.core.level`
+- [x] 1.2 Add kotlinx.serialization (plugin and JSON library) and a unit test framework to that module
+- [x] 1.3 Confirm `./gradlew test` runs on the module with a trivial passing test
 
 ## 2. Level model
 

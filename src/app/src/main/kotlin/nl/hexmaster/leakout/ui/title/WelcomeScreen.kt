@@ -12,12 +12,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -51,10 +51,19 @@ fun WelcomeScreen(
     Box(modifier = modifier.fillMaxSize().testTag(WelcomeScreenTags.SCREEN)) {
         WelcomeBackground()
         // Art runs under the bars and cutout; interactive content stays inside the safe area.
+        // The larger inset is applied to both sides so a one-sided camera cutout does not push
+        // the logo off the screen's centre line.
+        val safe = WindowInsets.safeDrawing
+        val density = LocalDensity.current
+        val direction = LocalLayoutDirection.current
+        val horizontalInset = with(density) {
+            maxOf(safe.getLeft(density, direction), safe.getRight(density, direction)).toDp()
+        }
+        val verticalInset = with(density) { maxOf(safe.getTop(density), safe.getBottom(density)).toDp() }
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .padding(horizontal = horizontalInset, vertical = verticalInset)
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             contentAlignment = Alignment.Center,
         ) {

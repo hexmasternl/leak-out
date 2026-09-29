@@ -6,7 +6,7 @@
 ## 2. Landscape orientation
 
 - [x] 2.1 Set `android:screenOrientation="sensorLandscape"` on `MainActivity` in the manifest
-- [ ] 2.2 Verify on device/emulator: launches landscape while held in portrait, never rotates to portrait, flips between both landscape sides
+- [x] 2.2 Verify on device/emulator: launches landscape while held in portrait, never rotates to portrait, flips between both landscape sides
 
 ## 3. Theme and components
 
@@ -31,6 +31,6 @@
 
 ## 6. Tests and docs
 
-- [ ] 6.1 Compose UI test: Play, Settings, Exit are displayed and each click invokes exactly its callback once
-- [ ] 6.2 Compose UI test: title text is displayed
+- [x] 6.1 Compose UI test: Play, Settings, Exit are displayed and each click invokes exactly its callback once
+- [x] 6.2 Compose UI test: title text is displayed
 - [ ] 6.3 Update `docs/project-plan.md` orientation statements (sections 1.2 and 1.11) to landscape

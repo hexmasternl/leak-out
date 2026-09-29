@@ -1,9 +1,9 @@
 ## 1. Prerequisites and dependencies
 
-- [ ] 1.1 Confirm the `app-welcome-screen` scaffolding exists (`app` module, `MainActivity`, `LeakOutTheme`); if not, apply that change first
-- [ ] 1.2 Add `androidx.core:core-splashscreen` to `gradle/libs.versions.toml` and `app/build.gradle.kts`
-- [ ] 1.3 Bundle `wendy_one_regular.ttf` (OFL) in `app/src/main/res/font/` if it is not already present
-- [ ] 1.4 Make sure the Deep color tokens `surfaceDeep`, `liquidGlow`, `liquid300`, `liquid500` and `liquid700` exist in `ui/theme` with the design-system hex values
+- [x] 1.1 Confirm the `app-welcome-screen` scaffolding exists (`app` module, `MainActivity`, `LeakOutTheme`); if not, apply that change first
+- [x] 1.2 Add `androidx.core:core-splashscreen` to `gradle/libs.versions.toml` and `app/build.gradle.kts`
+- [x] 1.3 Bundle `wendy_one_regular.ttf` (OFL) in `app/src/main/res/font/` if it is not already present
+- [x] 1.4 Make sure the Deep color tokens `surfaceDeep`, `liquidGlow`, `liquid300`, `liquid500` and `liquid700` exist in `ui/theme` with the design-system hex values
 
 ## 2. System splash
 

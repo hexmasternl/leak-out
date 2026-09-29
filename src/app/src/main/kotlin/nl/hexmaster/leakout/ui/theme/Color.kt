@@ -48,4 +48,15 @@ object LeakOutColors {
 
     // The welcome art is a dark navy scene; this matches its base tone for the window background.
     val SceneNavy = Color(0xFF0C1A2A)
+
+    // Deep Flow tokens (docs/design-system.md v2, Deep theme). There is no theme switch yet;
+    // screens that must stay dark whatever the theme (the splash) read these directly.
+    // 2.1 surface.deep
+    val SurfaceDeep = Color(0xFF0C1A2A)
+
+    // 2.3 Liquid (hero colour)
+    val LiquidGlow = Color(0xFF9DF3FF)
+    val Liquid300 = Color(0xFF5EE7FF)
+    val Liquid500 = Color(0xFF19C6F2)
+    val Liquid700 = Color(0xFF0A8DC2)
 }

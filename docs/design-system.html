@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leak Out Design System</title>
+<meta name="description" content="Deep Flow: the visual, motion and component system for the Leak Out pipe puzzle game.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Wendy+One&family=Varela+Round&display=swap" rel="stylesheet">
+<style>
+/* ===================================================================
+   TOKENS
+   =================================================================== */
+:root{
+  --abyss:#07111C; --deep:#0C1A2A; --base:#122538; --raised:#19324A; --overlay:#21405C;
+  --scrim:rgba(7,17,28,.72);
+  --line-subtle:rgba(255,255,255,.08); --line-strong:rgba(255,255,255,.16); --line-hi:rgba(255,255,255,.22);
+
+  --liquid-glow:#9DF3FF; --liquid-300:#5EE7FF; --liquid-500:#19C6F2; --liquid-700:#0A8DC2; --liquid-900:#065A82;
+  --liquid-tint:rgba(25,198,242,.14);
+  --brass-100:#FFE9B0; --brass-300:#FFCF5C; --brass-500:#F5A623; --brass-700:#C97A12; --brass-900:#7A4708;
+  --brass-tint:rgba(245,166,35,.16);
+  --leak-500:#FF5A5F; --leak-700:#C9353B; --leak-tint:rgba(255,90,95,.16);
+  --success-500:#3DDC97; --success-700:#1FA971; --success-tint:rgba(61,220,151,.16);
+  --res-300:#C7B5FF; --res-500:#A78BFA; --res-700:#7C5CE6;
+  --steel-100:#C9D6E2; --steel-300:#8FA3B8; --steel-500:#5C7189; --steel-700:#3A4B60; --steel-900:#22303F;
+
+  --text-1:#F2F7FB; --text-2:#A9BACB; --text-3:#6E8296;
+  --on-brass:#2A1A03; --on-liquid:#04202E; --on-status:#FFFFFF;
+
+  --shadow-1:0 4px 12px rgba(0,0,0,.35);
+  --shadow-2:0 8px 24px rgba(0,0,0,.45);
+  --shadow-3:0 24px 64px rgba(0,0,0,.60);
+  --glow-liquid:0 0 24px rgba(25,198,242,.45);
+  --glow-brass:0 0 24px rgba(245,166,35,.45);
+  --glow-success:0 0 24px rgba(61,220,151,.45);
+
+  --font-display:'Wendy One', 'Arial Rounded MT Bold', system-ui, sans-serif;
+  --font-ui:'Varela Round', 'Segoe UI', system-ui, sans-serif;
+
+  --r-xs:6px; --r-sm:10px; --r-md:16px; --r-lg:24px; --r-xl:32px; --r-pill:999px;
+  --ease-out:cubic-bezier(.2,.8,.2,1);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+}
+:root[data-theme="light"]{
+  --abyss:#DCE9F3; --deep:#E8F1F8; --base:#FFFFFF; --raised:#F5F9FD; --overlay:#E1ECF5;
+  --scrim:rgba(15,34,51,.5);
+  --line-subtle:rgba(15,34,51,.10); --line-strong:rgba(15,34,51,.18); --line-hi:rgba(255,255,255,.8);
+  --text-1:#0F2233; --text-2:#4A5F74; --text-3:#7C8FA2;
+  --shadow-1:0 4px 12px rgba(15,34,51,.10);
+  --shadow-2:0 8px 24px rgba(15,34,51,.14);
+  --shadow-3:0 24px 64px rgba(15,34,51,.22);
+}
+
+/* ===================================================================
+   BASE
+   =================================================================== */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--abyss); color:var(--text-1);
+  font-family:var(--font-ui); font-size:16px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(1200px 600px at 20% -10%, rgba(25,198,242,.10), transparent 60%),
+    radial-gradient(900px 500px at 100% 20%, rgba(124,92,230,.08), transparent 60%);
+  background-attachment:fixed;
+}
+h1,h2,h3,h4{font-family:var(--font-display); font-weight:400; margin:0; letter-spacing:.01em}
+h1{font-size:40px; line-height:1.05}
+h2{font-size:28px; line-height:1.1}
+h3{font-size:22px; line-height:1.15}
+h4{font-size:18px; line-height:1.2}
+p{margin:0 0 12px}
+a{color:var(--liquid-300); text-decoration:none}
+code{font-family:ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size:.85em; background:var(--overlay); padding:2px 6px; border-radius:6px; color:var(--text-1)}
+.eyebrow{font-family:var(--font-display); font-size:14px; letter-spacing:.06em; text-transform:uppercase; color:var(--liquid-300)}
+.muted{color:var(--text-2)}
+.small{font-size:14px}
+.caption{font-size:12px; color:var(--text-3); letter-spacing:.02em}
+
+/* ===================================================================
+   PAGE LAYOUT
+   =================================================================== */
+.topbar{
+  position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:16px;
+  padding:12px 16px; background:color-mix(in srgb, var(--deep) 85%, transparent);
+  backdrop-filter:blur(14px); border-bottom:1px solid var(--line-subtle);
+}
+.brand{display:flex; align-items:center; gap:12px}
+.brand .mark{
+  width:40px; height:40px; border-radius:12px; display:grid; place-items:center;
+  background:linear-gradient(180deg, var(--liquid-300), var(--liquid-700));
+  box-shadow:var(--glow-liquid), inset 0 1px 0 rgba(255,255,255,.4);
+}
+.brand .mark svg{width:24px; height:24px}
+.brand h1{font-size:22px}
+.brand .sub{font-size:12px; color:var(--text-3); margin-top:-2px}
+.topbar .spacer{flex:1}
+
+.layout{display:grid; grid-template-columns:240px 1fr; max-width:1400px; margin:0 auto}
+.sidenav{position:sticky; top:65px; height:calc(100vh - 65px); overflow:auto; padding:24px 16px; border-right:1px solid var(--line-subtle)}
+.sidenav a{display:block; padding:8px 12px; border-radius:10px; color:var(--text-2); font-size:14px; transition:all .16s var(--ease-out)}
+.sidenav a:hover{background:var(--overlay); color:var(--text-1)}
+.sidenav a.active{background:var(--liquid-tint); color:var(--liquid-300)}
+.sidenav .group{font-family:var(--font-display); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); padding:16px 12px 6px}
+main{padding:32px 32px 120px; min-width:0}
+section.block{margin-bottom:72px; scroll-margin-top:90px}
+section.block > header{margin-bottom:24px; max-width:720px}
+section.block > header p{color:var(--text-2)}
+.grid{display:grid; gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g6{grid-template-columns:repeat(6,minmax(0,1fr))}
+@media (max-width:1000px){ .g4,.g6{grid-template-columns:repeat(3,minmax(0,1fr))} .g3{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:820px){
+  .layout{grid-template-columns:1fr}
+  .sidenav{position:static; height:auto; display:flex; gap:4px; overflow-x:auto; padding:8px 16px; border-right:0; border-bottom:1px solid var(--line-subtle); white-space:nowrap}
+  .sidenav .group{display:none}
+  main{padding:24px 16px 96px}
+  .g2,.g3,.g4,.g6{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:520px){ .g4,.g6{grid-template-columns:repeat(2,minmax(0,1fr))} .g3{grid-template-columns:1fr} }
+
+/* ===================================================================
+   SURFACES
+   =================================================================== */
+.panel{ /* depth 1 */
+  background:var(--base); border-radius:var(--r-lg); padding:20px;
+  box-shadow:inset 0 1px 0 var(--line-hi), var(--shadow-1);
+}
+.card{ /* depth 2 */
+  background:var(--raised); border-radius:var(--r-md); padding:16px;
+  border:1px solid var(--line-subtle);
+  box-shadow:inset 0 1px 0 var(--line-hi), var(--shadow-2);
+}
+.floating{ /* depth 3 */
+  background:var(--base); border-radius:var(--r-lg); padding:24px;
+  box-shadow:inset 0 1px 0 var(--line-hi), var(--shadow-3);
+}
+.plate{background:var(--base); border-radius:var(--r-xl); padding:12px; box-shadow:inset 0 1px 0 var(--line-hi), var(--shadow-1); position:relative}
+.plate::before{content:""; position:absolute; inset:0; border-radius:inherit; background:radial-gradient(80% 70% at 50% 40%, transparent, rgba(7,17,28,.35)); pointer-events:none}
+
+/* ===================================================================
+   HERO
+   =================================================================== */
+.hero{display:grid; grid-template-columns:1.2fr 1fr; gap:32px; align-items:center; padding:40px; border-radius:var(--r-xl); position:relative; overflow:hidden;
+  background:linear-gradient(160deg, var(--base), var(--deep)); box-shadow:inset 0 1px 0 var(--line-hi), var(--shadow-2)}
+.hero::after{content:""; position:absolute; inset:-40% -20% auto auto; width:600px; height:600px; border-radius:50%;
+  background:radial-gradient(circle, rgba(25,198,242,.22), transparent 60%); pointer-events:none}
+.hero .logo{font-family:var(--font-display); font-size:clamp(48px, 8vw, 88px); line-height:.95; letter-spacing:.01em;
+  background:linear-gradient(180deg, var(--liquid-glow) 0%, var(--liquid-300) 35%, var(--liquid-500) 70%, var(--liquid-700) 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 6px 24px rgba(25,198,242,.35))}
+.hero .tag{display:inline-flex; gap:8px; margin-top:16px}
+.principles{display:grid; gap:12px}
+.principle{display:flex; gap:14px; align-items:flex-start; padding:14px 16px; border-radius:var(--r-md); background:color-mix(in srgb, var(--raised) 70%, transparent); border:1px solid var(--line-subtle)}
+.principle .n{font-family:var(--font-display); font-size:20px; color:var(--brass-300); width:28px; flex:none}
+.principle b{display:block; font-weight:400; font-family:var(--font-display); font-size:16px; margin-bottom:2px}
+.principle span{font-size:14px; color:var(--text-2)}
+@media (max-width:900px){ .hero{grid-template-columns:1fr; padding:28px} }
+
+/* ===================================================================
+   COLOUR SWATCHES
+   =================================================================== */
+.swatches{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:12px}
+.swatch{border-radius:var(--r-md); overflow:hidden; border:1px solid var(--line-subtle); background:var(--raised); cursor:pointer; transition:transform .16s var(--ease-out), box-shadow .16s}
+.swatch:hover{transform:translateY(-2px); box-shadow:var(--shadow-2)}
+.swatch .chip{height:72px; position:relative}
+.swatch .chip.glow{box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.swatch .meta{padding:10px 12px}
+.swatch .name{font-family:var(--font-display); font-size:14px; letter-spacing:.02em}
+.swatch .hex{font-family:ui-monospace, Consolas, monospace; font-size:12px; color:var(--text-3)}
+.swatch .use{font-size:12px; color:var(--text-2); margin-top:4px; line-height:1.35}
+.copied{position:fixed; left:50%; bottom:28px; transform:translate(-50%, 20px); opacity:0; background:var(--raised); color:var(--text-1); padding:10px 18px; border-radius:var(--r-pill); font-size:14px; border:1px solid var(--line-strong); box-shadow:var(--shadow-2); transition:all .2s var(--ease-out); pointer-events:none; z-index:99}
+.copied.show{opacity:1; transform:translate(-50%,0)}
+
+/* ===================================================================
+   TYPOGRAPHY SPECIMENS
+   =================================================================== */
+.spec{display:grid; grid-template-columns:200px 1fr; gap:16px; align-items:baseline; padding:14px 0; border-bottom:1px solid var(--line-subtle)}
+.spec:last-child{border-bottom:0}
+.spec .k{font-size:12px; color:var(--text-3); line-height:1.4}
+.spec .k b{display:block; color:var(--text-2); font-weight:400; font-family:var(--font-display); font-size:13px; letter-spacing:.04em}
+.t-hero{font-family:var(--font-display); font-size:56px; line-height:1; letter-spacing:.5px}
+.t-xl{font-family:var(--font-display); font-size:40px; line-height:1.05}
+.t-lg{font-family:var(--font-display); font-size:28px; line-height:1.1}
+.t-md{font-family:var(--font-display); font-size:22px; line-height:1.15}
+.t-sm{font-family:var(--font-display); font-size:18px; line-height:1.2; letter-spacing:.25px}
+.t-xs{font-family:var(--font-display); font-size:14px; line-height:1.2; letter-spacing:.5px; text-transform:uppercase}
+.b-lg{font-size:18px} .b-md{font-size:16px} .b-sm{font-size:14px; line-height:1.45}
+.l-md{font-size:13px; letter-spacing:.4px; text-transform:uppercase; color:var(--text-2)}
+.n-lg{font-family:var(--font-display); font-size:32px; line-height:1}
+.digits span{display:inline-block; width:.62em; text-align:center}
+@media (max-width:640px){ .spec{grid-template-columns:1fr; gap:6px} .t-hero{font-size:44px} }
+
+/* ===================================================================
+   BUTTONS & CONTROLS
+   =================================================================== */
+.btn{
+  font-family:var(--font-display); font-size:18px; letter-spacing:.25px; line-height:1;
+  height:56px; padding:0 24px; border-radius:var(--r-md); border:0; cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center; gap:10px;
+  position:relative; transition:transform .09s linear, box-shadow .09s linear, filter .09s;
+  -webkit-tap-highlight-color:transparent; user-select:none; color:var(--text-1); background:var(--overlay);
+}
+.btn.md{height:48px; font-size:16px; padding:0 20px}
+.btn.sm{height:40px; font-size:14px; padding:0 16px; border-radius:12px}
+.btn svg{width:20px; height:20px}
+.btn-primary{background:linear-gradient(180deg, var(--brass-300), var(--brass-500)); color:var(--on-brass);
+  box-shadow:0 4px 0 var(--brass-700), inset 0 1px 0 rgba(255,255,255,.45), var(--glow-brass)}
+.btn-primary:active{transform:translateY(2px); box-shadow:0 2px 0 var(--brass-700), inset 0 1px 0 rgba(255,255,255,.45), 0 0 32px rgba(245,166,35,.6)}
+.btn-glass{background:var(--overlay); border:1px solid var(--line-strong); color:var(--text-1);
+  box-shadow:0 4px 0 var(--abyss), inset 0 1px 0 var(--line-hi)}
+.btn-glass:active{transform:translateY(2px); box-shadow:0 2px 0 var(--abyss), inset 0 1px 0 var(--line-hi)}
+.btn-tertiary{background:transparent; color:var(--liquid-300); box-shadow:none}
+.btn-tertiary:active{background:var(--liquid-tint)}
+.btn-danger{background:linear-gradient(180deg, var(--leak-500), var(--leak-700)); color:var(--on-status);
+  box-shadow:0 4px 0 var(--leak-700), inset 0 1px 0 rgba(255,255,255,.3)}
+.btn-danger:active{transform:translateY(2px); box-shadow:0 2px 0 var(--leak-700), inset 0 1px 0 rgba(255,255,255,.3)}
+.btn-success{background:linear-gradient(180deg, var(--success-500), var(--success-700)); color:var(--on-status);
+  box-shadow:0 4px 0 var(--success-700), inset 0 1px 0 rgba(255,255,255,.35), var(--glow-success)}
+.btn-success:active{transform:translateY(2px); box-shadow:0 2px 0 var(--success-700), inset 0 1px 0 rgba(255,255,255,.35)}
+.btn:disabled, .btn.disabled{background:var(--overlay); color:var(--text-3); box-shadow:none; opacity:.6; cursor:not-allowed; transform:none}
+.btn-icon{width:48px; height:48px; padding:0; border-radius:50%; background:var(--overlay); border:1px solid var(--line-strong); box-shadow:inset 0 1px 0 var(--line-hi)}
+.btn-icon svg{width:22px; height:22px}
+.btn-icon.sm{width:40px; height:40px}
+.btn-row{display:flex; flex-wrap:wrap; gap:12px; align-items:center}
+.demo{padding:24px; border-radius:var(--r-md); background:var(--deep); border:1px solid var(--line-subtle)}
+.demo .lbl{font-family:var(--font-display); font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-3); margin-bottom:14px}
+
+.chipx{display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px; border-radius:var(--r-pill); background:var(--raised); font-family:var(--font-display); font-size:13px; letter-spacing:.05em; text-transform:uppercase; border:1px solid var(--line-subtle)}
+.chipx svg{width:16px; height:16px}
+.chipx.liquid{background:var(--liquid-tint); color:var(--liquid-300); border-color:transparent}
+.chipx.brass{background:var(--brass-tint); color:var(--brass-300); border-color:transparent}
+.chipx.leak{background:var(--leak-tint); color:var(--leak-500); border-color:transparent}
+.chipx.success{background:var(--success-tint); color:var(--success-500); border-color:transparent}
+.chipx.res{background:rgba(167,139,250,.18); color:var(--res-300); border-color:transparent}
+.badge{display:inline-grid; place-items:center; width:20px; height:20px; border-radius:50%; background:var(--brass-500); color:var(--on-brass); font-family:var(--font-display); font-size:12px}
+
+.switch{width:52px; height:30px; border-radius:var(--r-pill); background:var(--overlay); position:relative; cursor:pointer; border:1px solid var(--line-subtle); transition:background .16s}
+.switch::after{content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:var(--text-2); transition:all .2s var(--spring)}
+.switch.on{background:var(--liquid-500); box-shadow:var(--glow-liquid)}
+.switch.on::after{left:25px; background:var(--liquid-glow)}
+.setting-row{display:flex; align-items:center; justify-content:space-between; height:56px; padding:0 4px; border-bottom:1px solid var(--line-subtle)}
+.setting-row:last-child{border-bottom:0}
+
+/* ===================================================================
+   HUD, RING, STACK, TILES, TOAST
+   =================================================================== */
+.hud{display:flex; align-items:center; gap:14px; height:64px; padding:0 16px; background:var(--base); border-radius:0 0 var(--r-lg) var(--r-lg); box-shadow:inset 0 1px 0 var(--line-hi), var(--shadow-1)}
+.hud .lvl .l-md{font-size:11px}
+.hud .lvl .n{font-family:var(--font-display); font-size:20px; line-height:1}
+.hud .score{margin-left:auto; text-align:right}
+.hud .score .n{font-family:var(--font-display); font-size:20px; line-height:1; display:flex; align-items:center; gap:6px; justify-content:flex-end}
+.ring{width:44px; height:44px; position:relative; flex:none}
+.ring svg{width:44px; height:44px; transform:rotate(-90deg)}
+.ring circle{fill:none; stroke-width:5}
+.ring .track{stroke:var(--line-subtle)}
+.ring .prog{stroke:var(--liquid-500); stroke-linecap:round; stroke-dasharray:113; filter:drop-shadow(0 0 4px rgba(25,198,242,.6))}
+.ring.warn .prog{stroke:var(--brass-500); filter:drop-shadow(0 0 4px rgba(245,166,35,.6))}
+.ring.crit .prog{stroke:var(--leak-500); filter:drop-shadow(0 0 4px rgba(255,90,95,.6))}
+.ring .val{position:absolute; inset:0; display:grid; place-items:center; font-family:var(--font-display); font-size:16px}
+.ring.crit .val{animation:tick 1s ease-in-out infinite}
+@keyframes tick{0%,100%{transform:scale(1)} 50%{transform:scale(1.15)}}
+
+.rail{width:84px; padding:10px 8px 12px; background:var(--base); border-radius:var(--r-md); box-shadow:inset 0 1px 0 var(--line-hi), var(--shadow-1); display:flex; flex-direction:column; align-items:center; gap:8px}
+.rail .l-md{font-size:11px; color:var(--text-3)}
+.rail .piece{width:56px; height:56px; border-radius:var(--r-sm); background:var(--overlay); transition:all .24s var(--spring); position:relative}
+.rail .piece svg{width:100%; height:100%; display:block}
+.rail .piece.top{width:62px; height:62px; box-shadow:0 0 0 2px var(--brass-500), var(--glow-brass); animation:pulseGlow 2s ease-in-out infinite}
+.rail .piece:nth-child(3){opacity:.8} .rail .piece:nth-child(4){opacity:.65} .rail .piece:nth-child(5){opacity:.5} .rail .piece:nth-child(6){opacity:.4}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 0 2px var(--brass-500), 0 0 18px rgba(245,166,35,.35)} 50%{box-shadow:0 0 0 2px var(--brass-500), 0 0 30px rgba(245,166,35,.6)}}
+
+.tiles{display:flex; gap:12px; flex-wrap:wrap}
+.tile{width:88px; height:104px; border-radius:var(--r-md); background:var(--raised); border:1px solid var(--line-subtle); box-shadow:inset 0 1px 0 var(--line-hi), var(--shadow-2); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; position:relative}
+.tile .num{font-family:var(--font-display); font-size:26px; line-height:1}
+.tile .stars{display:flex; gap:3px}
+.tile .stars svg{width:14px; height:14px}
+.tile .stars .off{fill:none; stroke:var(--line-strong); stroke-width:1.5}
+.tile .stars .on{fill:var(--brass-300); filter:drop-shadow(0 0 3px rgba(255,207,92,.6))}
+.tile.locked{background:var(--base); box-shadow:none}
+.tile.locked .num{color:var(--text-3)}
+.tile.locked .lock{position:absolute; top:8px; right:8px; width:14px; height:14px; color:var(--text-3)}
+.tile.done{background:linear-gradient(180deg, var(--success-tint), transparent), var(--raised)}
+.tile.done .num{color:var(--success-500)}
+.tile.current{box-shadow:0 0 0 2px var(--brass-500), var(--glow-brass), var(--shadow-2)}
+.tile .cap{position:absolute; bottom:-22px; font-size:11px; color:var(--text-3); white-space:nowrap}
+
+.toast{display:inline-flex; align-items:center; gap:10px; height:48px; padding:0 20px; border-radius:var(--r-pill); background:var(--raised); border:1px solid var(--line-subtle); box-shadow:var(--shadow-2); font-size:14px}
+.toast svg{width:18px; height:18px; color:var(--leak-500)}
+
+/* ===================================================================
+   PIPES (SVG)
+   =================================================================== */
+.cell{aspect-ratio:1; border-radius:var(--r-sm); position:relative; overflow:hidden; background:transparent}
+.cell svg{width:100%; height:100%; display:block}
+.cell.empty{background:color-mix(in srgb, var(--overlay) 60%, transparent); border:1px solid var(--line-subtle)}
+.cell.empty::after{content:"+"; position:absolute; inset:0; display:grid; place-items:center; color:var(--text-3); opacity:.4; font-size:20px; font-family:var(--font-display)}
+.cell.target{background:var(--liquid-tint); border-color:var(--line-strong)}
+.cell.blocked{background:var(--abyss)}
+.cell.shake{animation:shake .24s linear; background:var(--leak-tint)}
+.cell.pop svg{animation:pop .32s var(--spring)}
+@keyframes shake{0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 50%{transform:translateX(3px)} 75%{transform:translateX(-3px)}}
+@keyframes pop{0%{transform:scale(1.15)} 60%{transform:scale(.97)} 100%{transform:scale(1)}}
+
+.pipe-shadow{fill:none; stroke:var(--steel-700); stroke-width:36; stroke-linejoin:round; transform:translate(1.5px,2px)}
+.pipe-body{fill:none; stroke-width:36; stroke-linejoin:round}
+.pipe-bore{fill:none; stroke:var(--steel-900); stroke-width:25; stroke-linejoin:round}
+.pipe-gap{fill:none; stroke:var(--deep); stroke-width:46}
+.liquid{fill:none; stroke-width:21; stroke-linejoin:round; stroke-dasharray:100; stroke-dashoffset:0; filter:drop-shadow(0 0 5px rgba(157,243,255,.55))}
+.liquid-anim{animation:fillPath 2.8s linear infinite}
+.liquid-anim.d1{animation-delay:.6s} .liquid-anim.d2{animation-delay:1.2s} .liquid-anim.d3{animation-delay:1.8s}
+@keyframes fillPath{0%{stroke-dashoffset:100} 72%{stroke-dashoffset:0} 100%{stroke-dashoffset:0}}
+.flange{fill:var(--steel-300)} .flange-edge{fill:var(--steel-700)}
+.tank-fill{transform:translateY(100px); animation:tank 2.8s ease-in-out infinite}
+@keyframes tank{0%{transform:translateY(100px)} 15%{transform:translateY(100px)} 80%{transform:translateY(0)} 100%{transform:translateY(0)}}
+.valve-glow{animation:valve 1.6s ease-in-out infinite}
+@keyframes valve{0%,100%{filter:drop-shadow(0 0 4px rgba(245,166,35,.45))} 50%{filter:drop-shadow(0 0 12px rgba(245,166,35,.9))}}
+.drain-glow{animation:drain 2s ease-in-out infinite}
+@keyframes drain{0%,100%{filter:drop-shadow(0 0 4px rgba(61,220,151,.4))} 50%{filter:drop-shadow(0 0 12px rgba(61,220,151,.9))}}
+.bubble{fill:var(--liquid-glow); opacity:.8; animation:bub 1.6s ease-in infinite}
+.bubble.b2{animation-delay:.5s} .bubble.b3{animation-delay:1s}
+@keyframes bub{0%{transform:translateY(0); opacity:.8} 100%{transform:translateY(-6px); opacity:0}}
+
+.pipecard{padding:14px; border-radius:var(--r-md); background:var(--raised); border:1px solid var(--line-subtle); box-shadow:inset 0 1px 0 var(--line-hi), var(--shadow-1); display:flex; flex-direction:column; align-items:center; gap:10px}
+.pipecard .cell{width:112px}
+.pipecard .name{font-family:var(--font-display); font-size:15px}
+.pipecard .ports{font-size:12px; color:var(--text-2)}
+.layers{display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:10px}
+.layers .step{text-align:center}
+.layers .cell{width:100%; background:var(--deep); border:1px solid var(--line-subtle)}
+.layers .step .caption{margin-top:6px; display:block}
+@media (max-width:820px){ .layers{grid-template-columns:repeat(3,1fr)} }
+
+/* ===================================================================
+   PHONE MOCKUP
+   =================================================================== */
+.phone-wrap{display:grid; grid-template-columns:auto 1fr; gap:32px; align-items:start}
+@media (max-width:900px){ .phone-wrap{grid-template-columns:1fr} }
+.phone{width:372px; border-radius:44px; padding:10px; background:#0a0f16; box-shadow:0 30px 80px rgba(0,0,0,.6), inset 0 0 0 2px #2a3340; margin:0 auto}
+.screen{border-radius:36px; overflow:hidden; background:var(--deep); min-height:700px; display:flex; flex-direction:column; position:relative;
+  background-image:radial-gradient(500px 300px at 50% -10%, rgba(25,198,242,.14), transparent 60%)}
+.statusbar{height:34px; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--text-3)}
+.statusbar .notch{width:96px; height:22px; background:#0a0f16; border-radius:0 0 16px 16px; position:absolute; top:0; left:50%; transform:translateX(-50%)}
+.gamebody{flex:1; padding:0 12px; display:flex; gap:8px; align-items:flex-start}
+.board{flex:1}
+.gridwrap{display:grid; grid-template-columns:repeat(5,1fr); gap:4px}
+.gridwrap .cell{border-radius:8px}
+.gridwrap .cell.empty::after{font-size:14px}
+.bottombar{display:flex; justify-content:space-between; align-items:center; padding:10px 16px 18px}
+.hint{font-size:12px; color:var(--text-3)}
+.mock-hud{margin:0 0 10px}
+
+/* ===================================================================
+   DIALOGS
+   =================================================================== */
+.scrimbox{background:var(--scrim); border-radius:var(--r-lg); padding:32px 20px; display:grid; place-items:center; min-height:420px; position:relative; overflow:hidden}
+.scrimbox::before{content:""; position:absolute; inset:0; background:repeating-linear-gradient(45deg, transparent 0 14px, rgba(255,255,255,.02) 14px 28px)}
+.dialog{width:100%; max-width:340px; text-align:center; position:relative}
+.dialog .eyebrow{margin-bottom:8px}
+.dialog h2{font-size:34px; line-height:1.05; margin-bottom:8px}
+.dialog p{color:var(--text-2); font-size:15px}
+.dialog .actions{display:flex; flex-direction:column; gap:10px; margin-top:20px}
+.stars-big{display:flex; justify-content:center; gap:8px; margin:10px 0 14px}
+.stars-big svg{width:40px; height:40px}
+.stars-big .on{fill:var(--brass-300); filter:drop-shadow(0 0 8px rgba(255,207,92,.7)); animation:starPop .32s var(--spring) both}
+.stars-big .on:nth-child(2){animation-delay:.08s; transform-origin:center} .stars-big .on:nth-child(3){animation-delay:.16s}
+.stars-big .off{fill:none; stroke:var(--line-strong); stroke-width:1.5}
+@keyframes starPop{0%{transform:scale(0)} 100%{transform:scale(1)}}
+.scorerow{display:flex; justify-content:center; gap:24px; margin:6px 0 4px}
+.scorerow .k{font-size:11px; letter-spacing:.4px; text-transform:uppercase; color:var(--text-3)}
+.scorerow .v{font-family:var(--font-display); font-size:24px}
+.splash{width:88px; height:88px; margin:4px auto 10px}
+.splash .drop{fill:var(--liquid-500); animation:burst .9s ease-out infinite}
+.splash .drop.g{fill:var(--liquid-glow)}
+@keyframes burst{0%{transform:translate(0,0) scale(1); opacity:1} 100%{transform:translate(var(--dx), var(--dy)) scale(.4); opacity:0}}
+
+/* ===================================================================
+   TABLES
+   =================================================================== */
+table{width:100%; border-collapse:collapse; font-size:14px}
+th{font-family:var(--font-display); font-weight:400; font-size:13px; letter-spacing:.05em; text-transform:uppercase; color:var(--text-3); text-align:left; padding:10px 12px; border-bottom:1px solid var(--line-strong)}
+td{padding:10px 12px; border-bottom:1px solid var(--line-subtle); color:var(--text-2); vertical-align:top}
+td:first-child{color:var(--text-1)}
+.pill-ok{display:inline-block; padding:2px 10px; border-radius:999px; background:var(--success-tint); color:var(--success-500); font-family:var(--font-display); font-size:12px}
+.depth-demo{display:grid; grid-template-columns:repeat(4,1fr); gap:20px; padding:28px; background:var(--deep); border-radius:var(--r-md)}
+.depth-demo > div{height:110px; border-radius:var(--r-md); display:grid; place-content:center; text-align:center; font-family:var(--font-display); font-size:14px}
+.radii{display:flex; gap:14px; flex-wrap:wrap}
+.radii div{width:72px; height:72px; background:var(--overlay); border:1px solid var(--line-strong); display:grid; place-items:center; font-size:11px; color:var(--text-2)}
+@media (max-width:820px){ .depth-demo{grid-template-columns:repeat(2,1fr)} }
+</style>
+</head>
+<body>
+
+<!-- Shared SVG defs: gradients used by every pipe -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="steelH" gradientUnits="userSpaceOnUse" x1="0" y1="32" x2="0" y2="68">
+      <stop offset="0" stop-color="#C9D6E2"/><stop offset=".3" stop-color="#8FA3B8"/><stop offset=".55" stop-color="#5C7189"/><stop offset="1" stop-color="#3A4B60"/>
+    </linearGradient>
+    <linearGradient id="steelV" gradientUnits="userSpaceOnUse" x1="32" y1="0" x2="68" y2="0">
+      <stop offset="0" stop-color="#C9D6E2"/><stop offset=".3" stop-color="#8FA3B8"/><stop offset=".55" stop-color="#5C7189"/><stop offset="1" stop-color="#3A4B60"/>
+    </linearGradient>
+    <linearGradient id="steelD" gradientUnits="userSpaceOnUse" x1="15" y1="15" x2="85" y2="85">
+      <stop offset="0" stop-color="#C9D6E2"/><stop offset=".3" stop-color="#8FA3B8"/><stop offset=".6" stop-color="#5C7189"/><stop offset="1" stop-color="#3A4B60"/>
+    </linearGradient>
+    <linearGradient id="liquidH" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="60">
+      <stop offset="0" stop-color="#9DF3FF"/><stop offset=".25" stop-color="#5EE7FF"/><stop offset=".6" stop-color="#19C6F2"/><stop offset="1" stop-color="#0A8DC2"/>
+    </linearGradient>
+    <linearGradient id="liquidV" gradientUnits="userSpaceOnUse" x1="40" y1="0" x2="60" y2="0">
+      <stop offset="0" stop-color="#9DF3FF"/><stop offset=".25" stop-color="#5EE7FF"/><stop offset=".6" stop-color="#19C6F2"/><stop offset="1" stop-color="#0A8DC2"/>
+    </linearGradient>
+    <linearGradient id="liquidD" gradientUnits="userSpaceOnUse" x1="30" y1="30" x2="70" y2="70">
+      <stop offset="0" stop-color="#9DF3FF"/><stop offset=".25" stop-color="#5EE7FF"/><stop offset=".6" stop-color="#19C6F2"/><stop offset="1" stop-color="#0A8DC2"/>
+    </linearGradient>
+    <radialGradient id="tankGrad" cx=".35" cy=".3" r=".85">
+      <stop offset="0" stop-color="#C7B5FF"/><stop offset=".5" stop-color="#A78BFA"/><stop offset="1" stop-color="#6A4BD6"/>
+    </radialGradient>
+    <radialGradient id="brassGrad" cx=".35" cy=".3" r=".85">
+      <stop offset="0" stop-color="#FFE9B0"/><stop offset=".45" stop-color="#F5A623"/><stop offset="1" stop-color="#C97A12"/>
+    </radialGradient>
+    <linearGradient id="liquidTank" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9DF3FF"/><stop offset=".4" stop-color="#19C6F2"/><stop offset="1" stop-color="#0A8DC2"/>
+    </linearGradient>
+    <pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="10" stroke="rgba(255,255,255,.08)" stroke-width="3"/>
+    </pattern>
+  </defs>
+</svg>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 3c3.5 4.2 6 7.4 6 10.4A6 6 0 0 1 6 13.4C6 10.4 8.5 7.2 12 3z" fill="#04202E" opacity=".9"/><path d="M9.2 14.2a2.8 2.8 0 0 0 2.4 2.7" stroke="#9DF3FF" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
+    <div>
+      <h1>Leak Out</h1>
+      <div class="sub">Design System · v2 “Deep Flow”</div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <span class="chipx" id="themeLabel">Deep theme</span>
+  <div class="switch on" id="themeSwitch" role="switch" aria-checked="true" aria-label="Toggle Daylight theme" tabindex="0"></div>
+</div>
+
+<div class="layout">
+  <nav class="sidenav" id="nav">
+    <div class="group">Foundations</div>
+    <a href="#overview">Overview</a>
+    <a href="#colour">Colour</a>
+    <a href="#type">Typography</a>
+    <a href="#shape">Shape &amp; depth</a>
+    <div class="group">Components</div>
+    <a href="#buttons">Buttons &amp; controls</a>
+    <a href="#hud">HUD &amp; panels</a>
+    <a href="#dialogs">Dialogs</a>
+    <div class="group">Game</div>
+    <a href="#pipes">Pipe sections</a>
+    <a href="#board">Board mockup</a>
+    <a href="#motion">Motion</a>
+    <a href="#a11y">Accessibility</a>
+  </nav>
+
+  <main>
+
+    <!-- ============================================================ OVERVIEW -->
+    <section class="block" id="overview">
+      <div class="hero">
+        <div>
+          <div class="eyebrow">Design direction</div>
+          <div class="logo">LEAK<br>OUT</div>
+          <p class="muted" style="margin-top:16px; max-width:460px">A dark, wet, glowing workshop. Liquid is the only luminous thing on screen; everything else is layered slate and steel. Brass marks what you can touch.</p>
+          <div class="tag">
+            <span class="chipx liquid">Wendy One</span>
+            <span class="chipx">Varela Round</span>
+            <span class="chipx brass">Android · Compose</span>
+          </div>
+        </div>
+        <div class="principles">
+          <div class="principle"><span class="n">01</span><div><b>Liquid is light</b><span>The aqua flow is the only saturated, glowing element. Nothing competes with it.</span></div></div>
+          <div class="principle"><span class="n">02</span><div><b>Depth without outlines</b><span>Glow, shadow and a one-pixel top highlight stack surfaces. No ink borders.</span></div></div>
+          <div class="principle"><span class="n">03</span><div><b>Chunky where it matters</b><span>Wendy One carries titles, numbers and buttons. Varela Round keeps the rest calm.</span></div></div>
+          <div class="principle"><span class="n">04</span><div><b>Motion behaves like water</b><span>Springs settle, liquid fills linearly, nothing snaps.</span></div></div>
+          <div class="principle"><span class="n">05</span><div><b>Brass means “touch me”</b><span>One warm accent, reserved for the primary action, the next piece and the valve.</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ COLOUR -->
+    <section class="block" id="colour">
+      <header>
+        <div class="eyebrow">Foundations</div>
+        <h2>Colour</h2>
+        <p>Tokens only, never raw hex in components. The Deep theme is the default for the game; Daylight remaps surfaces and text and leaves liquid, brass, status and steel untouched. Click a swatch to copy its hex.</p>
+      </header>
+
+      <h3 style="margin-bottom:12px">Surfaces</h3>
+      <div class="swatches" style="margin-bottom:28px">
+        <div class="swatch" data-hex="#07111C"><div class="chip" style="background:#07111C"></div><div class="meta"><div class="name">surface.abyss</div><div class="hex">#07111C</div><div class="use">System bars, page background</div></div></div>
+        <div class="swatch" data-hex="#0C1A2A"><div class="chip" style="background:#0C1A2A"></div><div class="meta"><div class="name">surface.deep</div><div class="hex">#0C1A2A</div><div class="use">Game screen background</div></div></div>
+        <div class="swatch" data-hex="#122538"><div class="chip" style="background:#122538"></div><div class="meta"><div class="name">surface.base</div><div class="hex">#122538</div><div class="use">Panels, board plate, sheets</div></div></div>
+        <div class="swatch" data-hex="#19324A"><div class="chip" style="background:#19324A"></div><div class="meta"><div class="name">surface.raised</div><div class="hex">#19324A</div><div class="use">Cards, HUD chips, level tiles</div></div></div>
+        <div class="swatch" data-hex="#21405C"><div class="chip" style="background:#21405C"></div><div class="meta"><div class="name">surface.overlay</div><div class="hex">#21405C</div><div class="use">Pressed states, glass buttons, empty cells</div></div></div>
+        <div class="swatch" data-hex="rgba(255,255,255,.16)"><div class="chip" style="background:#122538; box-shadow:inset 0 0 0 2px rgba(255,255,255,.16), inset 0 3px 0 rgba(255,255,255,.22)"></div><div class="meta"><div class="name">line.subtle / strong / highlight</div><div class="hex">#FFF 8% · 16% · 22%</div><div class="use">Borders, focus, top-edge highlight</div></div></div>
+      </div>
+
+      <h3 style="margin-bottom:12px">Liquid <span class="caption">hero colour</span></h3>
+      <div class="swatches" style="margin-bottom:28px">
+        <div class="swatch" data-hex="#9DF3FF"><div class="chip glow" style="background:#9DF3FF; box-shadow:inset 0 0 40px rgba(255,255,255,.5)"></div><div class="meta"><div class="name">liquid.glow</div><div class="hex">#9DF3FF</div><div class="use">Meniscus head, sparkle, glow colour</div></div></div>
+        <div class="swatch" data-hex="#5EE7FF"><div class="chip" style="background:#5EE7FF"></div><div class="meta"><div class="name">liquid.300</div><div class="hex">#5EE7FF</div><div class="use">Top highlight, links, tertiary text</div></div></div>
+        <div class="swatch" data-hex="#19C6F2"><div class="chip" style="background:#19C6F2; box-shadow:0 0 24px rgba(25,198,242,.6)"></div><div class="meta"><div class="name">liquid.500</div><div class="hex">#19C6F2</div><div class="use">Liquid body, progress, active</div></div></div>
+        <div class="swatch" data-hex="#0A8DC2"><div class="chip" style="background:#0A8DC2"></div><div class="meta"><div class="name">liquid.700</div><div class="hex">#0A8DC2</div><div class="use">Liquid shadow edge, pressed</div></div></div>
+        <div class="swatch" data-hex="#065A82"><div class="chip" style="background:#065A82"></div><div class="meta"><div class="name">liquid.900</div><div class="hex">#065A82</div><div class="use">Inactive liquid, deep tint</div></div></div>
+        <div class="swatch" data-hex="rgba(25,198,242,.14)"><div class="chip" style="background:linear-gradient(180deg,#5EE7FF,#19C6F2 55%,#0A8DC2); box-shadow:0 0 28px rgba(157,243,255,.55)"></div><div class="meta"><div class="name">liquid gradient + glow</div><div class="hex">300 → 500 → 700</div><div class="use">How liquid is always rendered</div></div></div>
+      </div>
+
+      <h3 style="margin-bottom:12px">Brass <span class="caption">action accent</span></h3>
+      <div class="swatches" style="margin-bottom:28px">
+        <div class="swatch" data-hex="#FFE9B0"><div class="chip" style="background:#FFE9B0"></div><div class="meta"><div class="name">brass.100</div><div class="hex">#FFE9B0</div><div class="use">Star highlight, text on dark brass</div></div></div>
+        <div class="swatch" data-hex="#FFCF5C"><div class="chip" style="background:#FFCF5C"></div><div class="meta"><div class="name">brass.300</div><div class="hex">#FFCF5C</div><div class="use">Button gradient top, earned star</div></div></div>
+        <div class="swatch" data-hex="#F5A623"><div class="chip" style="background:#F5A623; box-shadow:0 0 24px rgba(245,166,35,.55)"></div><div class="meta"><div class="name">brass.500</div><div class="hex">#F5A623</div><div class="use">Primary button, valve, next piece</div></div></div>
+        <div class="swatch" data-hex="#C97A12"><div class="chip" style="background:#C97A12"></div><div class="meta"><div class="name">brass.700</div><div class="hex">#C97A12</div><div class="use">Button lip, pressed</div></div></div>
+        <div class="swatch" data-hex="#7A4708"><div class="chip" style="background:#7A4708"></div><div class="meta"><div class="name">brass.900</div><div class="hex">#7A4708</div><div class="use">Brass shadow, valve spokes</div></div></div>
+      </div>
+
+      <h3 style="margin-bottom:12px">Status</h3>
+      <div class="swatches" style="margin-bottom:28px">
+        <div class="swatch" data-hex="#FF5A5F"><div class="chip" style="background:#FF5A5F"></div><div class="meta"><div class="name">leak.500</div><div class="hex">#FF5A5F</div><div class="use">Leak, lose title, destructive</div></div></div>
+        <div class="swatch" data-hex="#C9353B"><div class="chip" style="background:#C9353B"></div><div class="meta"><div class="name">leak.700</div><div class="hex">#C9353B</div><div class="use">Destructive lip, leak shadow</div></div></div>
+        <div class="swatch" data-hex="#3DDC97"><div class="chip" style="background:#3DDC97"></div><div class="meta"><div class="name">success.500</div><div class="hex">#3DDC97</div><div class="use">Finish ring, win title</div></div></div>
+        <div class="swatch" data-hex="#1FA971"><div class="chip" style="background:#1FA971"></div><div class="meta"><div class="name">success.700</div><div class="hex">#1FA971</div><div class="use">Success lip</div></div></div>
+        <div class="swatch" data-hex="#A78BFA"><div class="chip" style="background:radial-gradient(circle at 35% 30%, #C7B5FF, #A78BFA 50%, #6A4BD6)"></div><div class="meta"><div class="name">reservoir.300/500/700</div><div class="hex">#C7B5FF · #A78BFA · #7C5CE6</div><div class="use">Tank only. Liquid stays aqua.</div></div></div>
+      </div>
+
+      <h3 style="margin-bottom:12px">Steel <span class="caption">pipes</span></h3>
+      <div class="swatches" style="margin-bottom:28px">
+        <div class="swatch" data-hex="#C9D6E2"><div class="chip" style="background:#C9D6E2"></div><div class="meta"><div class="name">steel.100</div><div class="hex">#C9D6E2</div><div class="use">Specular highlight</div></div></div>
+        <div class="swatch" data-hex="#8FA3B8"><div class="chip" style="background:#8FA3B8"></div><div class="meta"><div class="name">steel.300</div><div class="hex">#8FA3B8</div><div class="use">Flange faces</div></div></div>
+        <div class="swatch" data-hex="#5C7189"><div class="chip" style="background:#5C7189"></div><div class="meta"><div class="name">steel.500</div><div class="hex">#5C7189</div><div class="use">Pipe body</div></div></div>
+        <div class="swatch" data-hex="#3A4B60"><div class="chip" style="background:#3A4B60"></div><div class="meta"><div class="name">steel.700</div><div class="hex">#3A4B60</div><div class="use">Body shadow, flange edges</div></div></div>
+        <div class="swatch" data-hex="#22303F"><div class="chip" style="background:#22303F"></div><div class="meta"><div class="name">steel.900</div><div class="hex">#22303F</div><div class="use">Bore (the hollow)</div></div></div>
+      </div>
+
+      <h3 style="margin-bottom:12px">Text</h3>
+      <div class="swatches">
+        <div class="swatch" data-hex="#F2F7FB"><div class="chip" style="background:#122538; display:grid; place-items:center; color:#F2F7FB; font-family:var(--font-display); font-size:22px">Aa</div><div class="meta"><div class="name">text.primary</div><div class="hex">#F2F7FB · light #0F2233</div></div></div>
+        <div class="swatch" data-hex="#A9BACB"><div class="chip" style="background:#122538; display:grid; place-items:center; color:#A9BACB; font-size:20px">Aa</div><div class="meta"><div class="name">text.secondary</div><div class="hex">#A9BACB · light #4A5F74</div></div></div>
+        <div class="swatch" data-hex="#6E8296"><div class="chip" style="background:#122538; display:grid; place-items:center; color:#6E8296; font-size:20px">Aa</div><div class="meta"><div class="name">text.muted</div><div class="hex">#6E8296 · light #7C8FA2</div></div></div>
+        <div class="swatch" data-hex="#2A1A03"><div class="chip" style="background:#F5A623; display:grid; place-items:center; color:#2A1A03; font-family:var(--font-display); font-size:22px">Aa</div><div class="meta"><div class="name">text.onBrass</div><div class="hex">#2A1A03</div></div></div>
+        <div class="swatch" data-hex="#04202E"><div class="chip" style="background:#19C6F2; display:grid; place-items:center; color:#04202E; font-family:var(--font-display); font-size:22px">Aa</div><div class="meta"><div class="name">text.onLiquid</div><div class="hex">#04202E</div></div></div>
+      </div>
+    </section>
+
+    <!-- ============================================================ TYPOGRAPHY -->
+    <section class="block" id="type">
+      <header>
+        <div class="eyebrow">Foundations</div>
+        <h2>Typography</h2>
+        <p><strong>Wendy One</strong> for display: logo, headings, level numbers, button labels, big numbers. <strong>Varela Round</strong> for UI: body, HUD labels, captions. Both are single-weight, so hierarchy comes from size, colour and case, never weight. Bundle both in <code>res/font/</code>.</p>
+      </header>
+      <div class="panel">
+        <div class="spec"><div class="k"><b>display.hero</b>Wendy One · 56sp · 1.0 · +0.5</div><div class="t-hero">Leak Out</div></div>
+        <div class="spec"><div class="k"><b>display.xl</b>Wendy One · 40sp · 1.05</div><div class="t-xl">Level Complete</div></div>
+        <div class="spec"><div class="k"><b>display.lg</b>Wendy One · 28sp · 1.1</div><div class="t-lg">Paused</div></div>
+        <div class="spec"><div class="k"><b>display.md</b>Wendy One · 22sp · 1.15</div><div class="t-md">Select a Level</div></div>
+        <div class="spec"><div class="k"><b>display.sm</b>Wendy One · 18sp · 1.2 · +0.25</div><div class="t-sm">Try Again</div></div>
+        <div class="spec"><div class="k"><b>display.xs</b>Wendy One · 14sp · uppercase · +0.5</div><div class="t-xs" style="color:var(--liquid-300)">Level Complete</div></div>
+        <div class="spec"><div class="k"><b>numeric.lg</b>Wendy One · 32sp · fixed-width digits</div><div class="n-lg digits"><span>1</span><span>2</span>.<span>4</span><span>s</span></div></div>
+        <div class="spec"><div class="k"><b>body.lg</b>Varela Round · 18sp · 1.5</div><div class="b-lg">Route the liquid from the valve to the drain before it spills.</div></div>
+        <div class="spec"><div class="k"><b>body.md</b>Varela Round · 16sp · 1.5</div><div class="b-md muted">Tap an empty cell to place the next piece. Tap a dry pipe to replace it. Reservoirs slow the flow and buy you time.</div></div>
+        <div class="spec"><div class="k"><b>body.sm</b>Varela Round · 14sp · 1.45</div><div class="b-sm muted">The liquid leaked at row 4, column 3. The cross section had no open port on that side.</div></div>
+        <div class="spec"><div class="k"><b>label.md</b>Varela Round · 13sp · uppercase · +0.4</div><div class="l-md">Level · Next · Score</div></div>
+        <div class="spec"><div class="k"><b>caption</b>Varela Round · 12sp · 1.35</div><div class="caption">Hold the pause button to restart the level.</div></div>
+      </div>
+      <div class="grid g3" style="margin-top:16px">
+        <div class="card"><h4>Never below 14sp</h4><p class="small muted" style="margin:6px 0 0">Wendy One loses its counters below 14sp. Use Varela Round for anything smaller.</p></div>
+        <div class="card"><h4>Title Case on buttons</h4><p class="small muted" style="margin:6px 0 0">Uppercase is reserved for <code>display.xs</code> chips and <code>label.md</code> HUD labels.</p></div>
+        <div class="card"><h4>Dark text on brass and liquid</h4><p class="small muted" style="margin:6px 0 0">White fails contrast on both. Always use <code>text.onBrass</code> / <code>text.onLiquid</code>.</p></div>
+      </div>
+    </section>
+
+    <!-- ============================================================ SHAPE & DEPTH -->
+    <section class="block" id="shape">
+      <header>
+        <div class="eyebrow">Foundations</div>
+        <h2>Shape &amp; depth</h2>
+        <p>A 4dp spacing grid, a six-step radius scale, and a “glow stack” of four depth levels. Outlines are gone; the only hard edge left in the UI is the button lip.</p>
+      </header>
+      <div class="grid g2">
+        <div class="panel">
+          <h4 style="margin-bottom:14px">Radius scale</h4>
+          <div class="radii">
+            <div style="border-radius:6px">xs 6</div>
+            <div style="border-radius:10px">sm 10</div>
+            <div style="border-radius:16px">md 16</div>
+            <div style="border-radius:24px">lg 24</div>
+            <div style="border-radius:32px">xl 32</div>
+            <div style="border-radius:999px">pill</div>
+          </div>
+          <p class="caption" style="margin-top:14px">Cells sm · buttons and chips md · panels and dialogs lg · board plate xl · toggles pill</p>
+          <h4 style="margin:22px 0 10px">Spacing</h4>
+          <p class="small muted" style="margin:0">4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48. Screen gutter 16dp (24dp tablets). Panel padding 16dp. Cell gap 4dp. Stacked buttons 12dp.</p>
+        </div>
+        <div class="panel">
+          <h4 style="margin-bottom:14px">Glow stack</h4>
+          <div class="depth-demo">
+            <div style="background:var(--base); box-shadow:inset 0 1px 0 var(--line-hi), var(--shadow-1)">1 · Panel</div>
+            <div style="background:var(--raised); border:1px solid var(--line-subtle); box-shadow:inset 0 1px 0 var(--line-hi), var(--shadow-2)">2 · Raised</div>
+            <div style="background:var(--base); box-shadow:inset 0 1px 0 var(--line-hi), var(--shadow-3)">3 · Floating</div>
+            <div style="background:linear-gradient(180deg,var(--liquid-300),var(--liquid-700)); color:var(--on-liquid); box-shadow:var(--glow-liquid)">G · Glow</div>
+          </div>
+          <p class="caption" style="margin-top:14px">Every raised surface has a 1dp top highlight (<code>line.highlight</code>). Glows are additive: a primary button is level 2 + G in brass.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ BUTTONS -->
+    <section class="block" id="buttons">
+      <header>
+        <div class="eyebrow">Components</div>
+        <h2>Buttons &amp; controls</h2>
+        <p>Press any button. It drops 2dp and its lip compresses from 4dp to 2dp in 90ms. Only one primary per screen.</p>
+      </header>
+      <div class="grid g2">
+        <div class="demo">
+          <div class="lbl">Variants · large 56dp</div>
+          <div class="btn-row">
+            <button class="btn btn-primary">Play <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+            <button class="btn btn-glass">Level Select</button>
+            <button class="btn btn-tertiary">Not now</button>
+          </div>
+          <div class="btn-row" style="margin-top:12px">
+            <button class="btn btn-success">Next Level</button>
+            <button class="btn btn-danger">Give Up</button>
+            <button class="btn" disabled>Disabled</button>
+          </div>
+        </div>
+        <div class="demo">
+          <div class="lbl">Sizes &amp; icon buttons</div>
+          <div class="btn-row">
+            <button class="btn btn-primary md">Medium 48</button>
+            <button class="btn btn-glass sm">Small 40</button>
+            <button class="btn btn-icon" aria-label="Pause"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6v12M16 6v12"/></svg></button>
+            <button class="btn btn-icon" aria-label="Restart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v5h5"/></svg></button>
+            <button class="btn btn-icon sm" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+          </div>
+          <div class="lbl" style="margin-top:22px">Chips &amp; badges</div>
+          <div class="btn-row">
+            <span class="chipx">Default</span>
+            <span class="chipx liquid"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c3.5 4.2 6 7.4 6 10.4A6 6 0 0 1 6 13.4C6 10.4 8.5 7.2 12 3z"/></svg>Flow ×1.2</span>
+            <span class="chipx brass">3 stars</span>
+            <span class="chipx success">Complete</span>
+            <span class="chipx leak">Leak!</span>
+            <span class="chipx res">Slow</span>
+            <span class="badge">5</span>
+          </div>
+        </div>
+      </div>
+      <div class="grid g2" style="margin-top:16px">
+        <div class="panel">
+          <h4 style="margin-bottom:8px">Settings rows</h4>
+          <div class="setting-row"><span>Sound effects</span><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="setting-row"><span>Music</span><div class="switch" onclick="this.classList.toggle('on')"></div></div>
+          <div class="setting-row"><span>Haptics</span><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+        <div class="panel">
+          <h4 style="margin-bottom:8px">Anatomy</h4>
+          <table>
+            <tr><th>Part</th><th>Spec</th></tr>
+            <tr><td>Fill</td><td>Vertical gradient light → base (brass.300 → brass.500)</td></tr>
+            <tr><td>Top highlight</td><td>inset 0 1 0 white 45%</td></tr>
+            <tr><td>Lip</td><td>4dp solid, darker shade (brass.700). 2dp when pressed</td></tr>
+            <tr><td>Glow</td><td>0 0 24 brass 45%, +30% while pressed (primary and success only)</td></tr>
+            <tr><td>Label</td><td>display.sm, Title Case, dark on-colour token</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ HUD -->
+    <section class="block" id="hud">
+      <header>
+        <div class="eyebrow">Components</div>
+        <h2>HUD &amp; panels</h2>
+        <p>The in-game chrome: the top bar with countdown ring, the stack rail with the brass-framed next piece, level tiles, and the non-blocking toast.</p>
+      </header>
+      <div class="grid g2">
+        <div>
+          <div class="panel" style="padding:0; overflow:hidden; border-radius:var(--r-lg)">
+            <div class="hud">
+              <div class="lvl"><div class="l-md">Level</div><div class="n">07</div></div>
+              <div class="ring"><svg viewBox="0 0 44 44"><circle class="track" cx="22" cy="22" r="18"/><circle class="prog" cx="22" cy="22" r="18" style="stroke-dashoffset:40"/></svg><div class="val">12</div></div>
+              <div class="score"><div class="l-md">Score</div><div class="n">240 <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFCF5C"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg></div></div>
+              <button class="btn btn-icon sm" aria-label="Pause"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6v12M16 6v12"/></svg></button>
+            </div>
+          </div>
+          <p class="caption" style="margin-top:10px">HUD bar · 64dp · level 1 panel · rounded bottom corners</p>
+
+          <div class="card" style="margin-top:20px">
+            <h4 style="margin-bottom:12px">Countdown ring states</h4>
+            <div class="btn-row" style="gap:24px">
+              <div style="text-align:center"><div class="ring"><svg viewBox="0 0 44 44"><circle class="track" cx="22" cy="22" r="18"/><circle class="prog" cx="22" cy="22" r="18" style="stroke-dashoffset:20"/></svg><div class="val">14</div></div><div class="caption" style="margin-top:6px">waiting</div></div>
+              <div style="text-align:center"><div class="ring warn"><svg viewBox="0 0 44 44"><circle class="track" cx="22" cy="22" r="18"/><circle class="prog" cx="22" cy="22" r="18" style="stroke-dashoffset:78"/></svg><div class="val">4</div></div><div class="caption" style="margin-top:6px">&lt; 5s</div></div>
+              <div style="text-align:center"><div class="ring crit"><svg viewBox="0 0 44 44"><circle class="track" cx="22" cy="22" r="18"/><circle class="prog" cx="22" cy="22" r="18" style="stroke-dashoffset:100"/></svg><div class="val">2</div></div><div class="caption" style="margin-top:6px">&lt; 2s · pulses</div></div>
+              <div style="text-align:center"><div class="ring"><svg viewBox="0 0 44 44"><circle class="track" cx="22" cy="22" r="18"/><circle class="prog" cx="22" cy="22" r="18" style="stroke-dashoffset:0"/></svg><div class="val" style="font-size:11px">×1.5</div></div><div class="caption" style="margin-top:6px">flowing · speed dial</div></div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:20px">
+            <h4 style="margin-bottom:12px">Toast</h4>
+            <div class="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>Can’t replace a filled pipe</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="grid" style="grid-template-columns:auto 1fr; gap:20px; align-items:start">
+            <div>
+              <div class="rail" id="railDemo">
+                <div class="l-md">Next</div>
+                <div class="piece top" data-type="LT"></div>
+                <div class="piece" data-type="H"></div>
+                <div class="piece" data-type="RB"></div>
+                <div class="piece" data-type="X"></div>
+                <div class="piece" data-type="RES"></div>
+              </div>
+              <p class="caption" style="margin-top:10px; text-align:center">Stack rail</p>
+            </div>
+            <div class="card">
+              <h4 style="margin-bottom:12px">Level tiles</h4>
+              <div class="tiles" style="margin-bottom:34px">
+                <div class="tile locked"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><div class="num">12</div><div class="cap">Locked</div></div>
+                <div class="tile"><div class="num">11</div><div class="stars"><svg viewBox="0 0 24 24"><path class="off" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24"><path class="off" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24"><path class="off" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg></div><div class="cap">Unlocked</div></div>
+                <div class="tile current"><div class="num">10</div><div class="stars"><svg viewBox="0 0 24 24"><path class="off" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24"><path class="off" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24"><path class="off" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg></div><div class="cap">Current</div></div>
+                <div class="tile done"><div class="num">9</div><div class="stars"><svg viewBox="0 0 24 24"><path class="on" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24"><path class="on" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24"><path class="off" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg></div><div class="cap">Completed</div></div>
+              </div>
+              <p class="caption">88 × 104dp · level 2 raised · current tile adds brass ring + glow</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ DIALOGS -->
+    <section class="block" id="dialogs">
+      <header>
+        <div class="eyebrow">Components</div>
+        <h2>Dialogs</h2>
+        <p>Level 3 floating panels over a 72% scrim. They pop in with <code>motion.pop</code> (scale 0.92 → 1). Stars stagger 80ms each.</p>
+      </header>
+      <div class="grid g3">
+        <div class="scrimbox">
+          <div class="floating dialog">
+            <div class="eyebrow" style="color:var(--success-500)">Level complete</div>
+            <div class="stars-big">
+              <svg viewBox="0 0 24 24"><path class="on" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg>
+              <svg viewBox="0 0 24 24"><path class="on" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg>
+              <svg viewBox="0 0 24 24"><path class="off" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg>
+            </div>
+            <h2>Perfect Flow</h2>
+            <div class="scorerow"><div><div class="k">Pipes</div><div class="v">12</div></div><div><div class="k">Bonus</div><div class="v">+45</div></div><div><div class="k">Score</div><div class="v">285</div></div></div>
+            <div class="actions">
+              <button class="btn btn-success">Next Level</button>
+              <button class="btn btn-glass md">Replay</button>
+              <button class="btn btn-tertiary sm">Levels</button>
+            </div>
+          </div>
+        </div>
+        <div class="scrimbox">
+          <div class="floating dialog">
+            <div class="eyebrow" style="color:var(--leak-500)">Leak!</div>
+            <svg class="splash" viewBox="0 0 88 88">
+              <circle cx="44" cy="52" r="14" fill="#0A8DC2" opacity=".5"/>
+              <circle cx="44" cy="48" r="10" fill="#19C6F2"/>
+              <circle class="drop" cx="44" cy="44" r="4" style="--dx:-26px; --dy:-22px"/>
+              <circle class="drop g" cx="44" cy="44" r="3" style="--dx:22px; --dy:-28px; animation-delay:.15s"/>
+              <circle class="drop" cx="44" cy="44" r="3.5" style="--dx:30px; --dy:-6px; animation-delay:.3s"/>
+              <circle class="drop g" cx="44" cy="44" r="2.5" style="--dx:-30px; --dy:2px; animation-delay:.45s"/>
+              <circle class="drop" cx="44" cy="44" r="3" style="--dx:-8px; --dy:-32px; animation-delay:.6s"/>
+              <circle class="drop g" cx="44" cy="44" r="2.5" style="--dx:10px; --dy:-30px; animation-delay:.75s"/>
+            </svg>
+            <h2>It Spilled</h2>
+            <p>The liquid ran out at row 4, column 3. That cross had no port facing the flow.</p>
+            <div class="actions">
+              <button class="btn btn-primary">Try Again</button>
+              <button class="btn btn-tertiary sm">Levels</button>
+            </div>
+          </div>
+        </div>
+        <div class="scrimbox">
+          <div class="floating dialog">
+            <h2>Paused</h2>
+            <p>Level 7 · 240 points so far</p>
+            <div class="actions">
+              <button class="btn btn-glass">Resume</button>
+              <button class="btn btn-glass md">Restart</button>
+              <button class="btn btn-danger md">Quit to Levels</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ PIPES -->
+    <section class="block" id="pipes">
+      <header>
+        <div class="eyebrow">Game</div>
+        <h2>Pipe sections</h2>
+        <p>Every section is drawn procedurally from the same layer recipe: shadow, body, bore, liquid, flanges. Liquid is a stroke on the same path clipped by progress, so the fill animation is free. All eight sections plus the fixed cells:</p>
+      </header>
+      <div class="grid g4" id="pipeGallery"></div>
+
+      <div class="panel" style="margin-top:24px">
+        <h3 style="margin-bottom:6px">Layer recipe</h3>
+        <p class="small muted">Sizes are relative to cell size <em>c</em>. Body 0.36c · bore 0.25c · liquid 0.21c · flange 0.10c long. Round joins give the elbow for free.</p>
+        <div class="layers" id="layerDemo"></div>
+      </div>
+
+      <div class="grid g3" style="margin-top:16px">
+        <div class="card"><h4>Cross bridge</h4><p class="small muted" style="margin:6px 0 0">The horizontal body is drawn over the vertical one with a 0.05c <code>surface.deep</code> gap around it, so it reads as two independent channels. Each channel has its own liquid layer.</p></div>
+        <div class="card"><h4>Reservoir tank</h4><p class="small muted" style="margin:6px 0 0">Violet tank, aqua liquid. The tank fills bottom-up during progress 0.1–0.9. The hourglass badge marks it as slow even for colour-blind players.</p></div>
+        <div class="card"><h4>Head &amp; bubbles</h4><p class="small muted" style="margin:6px 0 0">The active segment glows 16dp in <code>liquid.glow</code>; two or three bubbles drift up behind the head. Filled segments keep a faint top highlight.</p></div>
+      </div>
+    </section>
+
+    <!-- ============================================================ BOARD -->
+    <section class="block" id="board">
+      <header>
+        <div class="eyebrow">Game</div>
+        <h2>Board mockup</h2>
+        <p>The game screen assembled. Tap an empty cell to place the next piece from the rail; the rail slides up and refills. Tap a filled pipe to see the locked shake.</p>
+      </header>
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar"><div class="notch"></div></div>
+            <div class="hud mock-hud" style="margin:0 12px 10px; border-radius:var(--r-md)">
+              <div class="lvl"><div class="l-md">Level</div><div class="n">07</div></div>
+              <div class="ring" id="mockRing"><svg viewBox="0 0 44 44"><circle class="track" cx="22" cy="22" r="18"/><circle class="prog" cx="22" cy="22" r="18" style="stroke-dashoffset:0"/></svg><div class="val" style="font-size:11px">×1.0</div></div>
+              <div class="score"><div class="l-md">Score</div><div class="n" id="mockScore">40</div></div>
+              <button class="btn btn-icon sm" aria-label="Pause"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6v12M16 6v12"/></svg></button>
+            </div>
+            <div class="gamebody">
+              <div class="board plate" style="padding:8px">
+                <div class="gridwrap" id="mockGrid"></div>
+              </div>
+              <div class="rail" id="mockRail" style="width:64px; padding:8px 6px 10px">
+                <div class="l-md">Next</div>
+              </div>
+            </div>
+            <div class="bottombar">
+              <span class="hint">Tap a cell to place</span>
+              <button class="btn btn-glass sm" onclick="resetMock()">Reset</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <h4 style="margin-bottom:10px">What you are looking at</h4>
+            <table>
+              <tr><td>Board plate</td><td>Level 1 panel, radius xl, radial vignette so the centre reads brighter</td></tr>
+              <tr><td>Cells</td><td>≥ 44dp, 4dp gap, radius sm. Empty cells are <code>surface.overlay</code> at 60% with a faint “+”</td></tr>
+              <tr><td>Start valve</td><td>Brass wheel, pulsing while the countdown runs, chevron shows exit direction</td></tr>
+              <tr><td>Finish drain</td><td>Success ring with a grate, pulsing until hit</td></tr>
+              <tr><td>Blocked</td><td><code>surface.abyss</code> with a subtle 45° hatch</td></tr>
+              <tr><td>Rail</td><td>Next piece 8% larger with a 2dp brass ring and glow; pieces below fade 80 → 40%</td></tr>
+            </table>
+          </div>
+          <div class="card">
+            <h4 style="margin-bottom:10px">Layout rules</h4>
+            <p class="small muted" style="margin:0">Portrait: HUD on top, board fills the width minus the rail, rail on the trailing edge. Landscape and tablets: rail moves to the trailing side of the screen with the HUD, and the board is centred. Cell size = min(width / columns, height / rows), floored to whole pixels.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ MOTION -->
+    <section class="block" id="motion">
+      <header>
+        <div class="eyebrow">Game</div>
+        <h2>Motion</h2>
+        <p>Springs for things the player touches, linear for liquid, slow pulses for things that are waiting. Liquid progress is driven by the engine, never by an animator.</p>
+      </header>
+      <div class="grid g2">
+        <div class="panel">
+          <table>
+            <tr><th>Token</th><th>Duration</th><th>Easing</th><th>Use</th></tr>
+            <tr><td>motion.instant</td><td>90ms</td><td>linear</td><td>Press feedback, lip</td></tr>
+            <tr><td>motion.quick</td><td>160ms</td><td>ease-out</td><td>Chips, toast, scrim</td></tr>
+            <tr><td>motion.settle</td><td>240ms</td><td>spring · damping 0.75</td><td>Rail slide, cell state</td></tr>
+            <tr><td>motion.pop</td><td>320ms</td><td>spring · damping 0.6</td><td>Tile placement, dialog, stars</td></tr>
+            <tr><td>motion.drift</td><td>1600ms loop</td><td>ease-in-out</td><td>Valve glow</td></tr>
+            <tr><td>motion.pulse</td><td>2000ms loop</td><td>ease-in-out</td><td>Finish ring, next piece</td></tr>
+            <tr><td>Liquid fill</td><td>continuous</td><td>linear</td><td>Engine-driven</td></tr>
+          </table>
+        </div>
+        <div class="demo">
+          <div class="lbl">Try it</div>
+          <div class="btn-row" style="align-items:flex-start; gap:28px">
+            <div style="text-align:center">
+              <div class="cell" id="popCell" style="width:96px; background:var(--overlay); border-radius:var(--r-sm)"></div>
+              <button class="btn btn-glass sm" style="margin-top:10px" onclick="demoPop()">Place</button>
+            </div>
+            <div style="text-align:center">
+              <div class="cell" id="shakeCell" style="width:96px; background:var(--overlay); border-radius:var(--r-sm)"></div>
+              <button class="btn btn-glass sm" style="margin-top:10px" onclick="demoShake()">Locked tap</button>
+            </div>
+            <div style="text-align:center">
+              <div class="cell" id="flowCell" style="width:96px; background:var(--overlay); border-radius:var(--r-sm)"></div>
+              <button class="btn btn-glass sm" style="margin-top:10px" onclick="demoFlow()">Flow</button>
+            </div>
+          </div>
+          <p class="caption" style="margin-top:16px">Reduced motion: springs become 160ms ease-out, pulses freeze at 60%, no shake, no droplet burst. Liquid fill is gameplay and is never reduced.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ A11Y -->
+    <section class="block" id="a11y">
+      <header>
+        <div class="eyebrow">Game</div>
+        <h2>Accessibility</h2>
+        <p>Colour is never the only signal. Leaks burst outward, flow stays in a bore, the reservoir has a badge, the countdown has a number.</p>
+      </header>
+      <div class="grid g2">
+        <div class="panel">
+          <h4 style="margin-bottom:10px">Verified contrast</h4>
+          <table>
+            <tr><th>Pair</th><th>Ratio</th><th></th></tr>
+            <tr><td>text.primary on surface.base</td><td>14.6 : 1</td><td><span class="pill-ok">AAA</span></td></tr>
+            <tr><td>text.secondary on surface.base</td><td>8.1 : 1</td><td><span class="pill-ok">AAA</span></td></tr>
+            <tr><td>text.onBrass on brass.500</td><td>8.9 : 1</td><td><span class="pill-ok">AAA</span></td></tr>
+            <tr><td>liquid.500 on surface.deep</td><td>8.2 : 1</td><td><span class="pill-ok">AAA</span></td></tr>
+            <tr><td>leak.500 on surface.deep</td><td>5.6 : 1</td><td><span class="pill-ok">AA</span></td></tr>
+            <tr><td>success.500 on surface.deep</td><td>10.4 : 1</td><td><span class="pill-ok">AAA</span></td></tr>
+          </table>
+        </div>
+        <div class="panel">
+          <h4 style="margin-bottom:10px">Rules</h4>
+          <table>
+            <tr><td>Tap targets</td><td>≥ 48dp for controls, ≥ 44dp for cells with 4dp gaps</td></tr>
+            <tr><td>Font scaling</td><td>Body text scales to 130%. Display sizes are fixed; they never carry information without a body or icon counterpart</td></tr>
+            <tr><td>Content descriptions</td><td>Rail pieces: “Next: corner, left to top”. Cells: “Row 3, column 2, empty”</td></tr>
+            <tr><td>Reduced motion</td><td>Honours the system setting, see Motion</td></tr>
+            <tr><td>Colour vision</td><td>Aqua vs coral vs violet vs mint are separable under deuteranopia and protanopia; every state also has a shape or motion cue</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="copied" id="copied">Copied</div>
+
+<script>
+/* ======================================================================
+   PIPE RENDERER  (mirrors the Compose PipeDrawer recipe)
+   ====================================================================== */
+const SECTIONS = {
+  H:  { path:'M0 50H100',       ports:['L','R'], grad:'H', name:'Straight', ports_txt:'Left ↔ Right' },
+  V:  { path:'M50 0V100',       ports:['T','B'], grad:'V', name:'Straight', ports_txt:'Top ↔ Bottom' },
+  LT: { path:'M0 50H50V0',      ports:['L','T'], grad:'D', name:'Corner',   ports_txt:'Left ↔ Top' },
+  LB: { path:'M0 50H50V100',    ports:['L','B'], grad:'D', name:'Corner',   ports_txt:'Left ↔ Bottom' },
+  RT: { path:'M100 50H50V0',    ports:['R','T'], grad:'D', name:'Corner',   ports_txt:'Right ↔ Top' },
+  RB: { path:'M100 50H50V100',  ports:['R','B'], grad:'D', name:'Corner',   ports_txt:'Right ↔ Bottom' },
+};
+
+function flange(port){
+  switch(port){
+    case 'L': return '<rect x="0" y="27" width="11" height="46" rx="2" class="flange"/><rect x="9" y="27" width="2.5" height="46" class="flange-edge"/>';
+    case 'R': return '<rect x="89" y="27" width="11" height="46" rx="2" class="flange"/><rect x="88.5" y="27" width="2.5" height="46" class="flange-edge"/>';
+    case 'T': return '<rect x="27" y="0" width="46" height="11" rx="2" class="flange"/><rect x="27" y="9" width="46" height="2.5" class="flange-edge"/>';
+    case 'B': return '<rect x="27" y="89" width="46" height="11" rx="2" class="flange"/><rect x="27" y="88.5" width="46" height="2.5" class="flange-edge"/>';
+  }
+  return '';
+}
+
+/* upto: 1 shadow, 2 body, 3 bore, 4 liquid, 5 flanges */
+function layers(path, grad, o){
+  const upto = o.upto ?? 5;
+  let s = '';
+  if(upto>=1) s += `<path d="${path}" class="pipe-shadow"/>`;
+  if(upto>=2) s += `<path d="${path}" class="pipe-body" stroke="url(#steel${grad})"/>`;
+  if(upto>=3) s += `<path d="${path}" class="pipe-bore"/>`;
+  if(upto>=4 && o.liquid){
+    const cls = o.liquid==='anim' ? `liquid liquid-anim ${o.delay||''}` : 'liquid';
+    const st  = o.progress!=null ? `stroke-dashoffset:${100 - o.progress*100}` : '';
+    s += `<path d="${path}" pathLength="100" class="${cls}" stroke="url(#liquid${grad})" style="${st}"/>`;
+  }
+  return s;
+}
+
+function pipeSVG(type, o={}){
+  let inner = '';
+  if(SECTIONS[type]){
+    const sct = SECTIONS[type];
+    inner = layers(sct.path, sct.grad, o) + ((o.upto??5)>=5 ? sct.ports.map(flange).join('') : '');
+  }
+  else if(type==='X'){
+    const lh = o.liquid==='anim' ? 'anim' : (o.liquidH ? true : null);
+    const lv = o.liquidV ? true : null;
+    inner = layers('M50 0V100','V',{liquid:lv, progress:o.progressV})
+          + `<path d="M0 50H100" class="pipe-gap"/>`
+          + layers('M0 50H100','H',{liquid:lh, progress:o.progressH, delay:o.delay})
+          + ['L','R','T','B'].map(flange).join('');
+  }
+  else if(type==='RES'){
+    inner = layers('M0 50H100','H',{})
+      + (o.liquid ? `<path d="M0 50H30" pathLength="100" class="liquid ${o.liquid==='anim'?'liquid-anim':''}" stroke="url(#liquidH)" style="animation-duration:1.2s"/>` : '')
+      + `<circle cx="51.5" cy="52" r="30" fill="#2a1f4f" opacity=".6"/>`
+      + `<circle cx="50" cy="50" r="30" fill="url(#tankGrad)"/>`
+      + `<clipPath id="tk${o.id||''}"><circle cx="50" cy="50" r="26"/></clipPath>`
+      + `<g clip-path="url(#tk${o.id||''})">`
+      +   (o.liquid ? `<rect x="20" y="26" width="60" height="60" fill="url(#liquidTank)" class="${o.liquid==='anim'?'tank-fill':''}" style="${o.liquid!=='anim'?'transform:translateY(0)':''}"/>` : '')
+      +   (o.liquid ? `<circle class="bubble" cx="42" cy="66" r="2.2"/><circle class="bubble b2" cx="52" cy="70" r="1.6"/><circle class="bubble b3" cx="59" cy="64" r="2"/>` : '')
+      + `</g>`
+      + `<circle cx="50" cy="50" r="30" fill="none" stroke="#8FA3B8" stroke-width="3"/>`
+      + `<circle cx="50" cy="50" r="26" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.5"/>`
+      + `<ellipse cx="40" cy="38" rx="8" ry="4" fill="rgba(255,255,255,.22)" transform="rotate(-30 40 38)"/>`
+      + ['L','R'].map(flange).join('')
+      + `<circle cx="84" cy="16" r="10" fill="#A78BFA" stroke="#0C1A2A" stroke-width="2"/>`
+      + `<path d="M79.5 10.5h9l-4.5 5.5zM79.5 21.5h9l-4.5-5.5z" fill="#2A1A4F"/><path d="M79.5 10.5h9M79.5 21.5h9" stroke="#2A1A4F" stroke-width="1.5" stroke-linecap="round"/>`;
+  }
+  else if(type==='START'){
+    const dir = o.dir||'R';
+    const stub = {R:'M50 50H100', L:'M50 50H0', T:'M50 50V0', B:'M50 50V100'}[dir];
+    const g = (dir==='L'||dir==='R') ? 'H' : 'V';
+    const chev = {R:'M74 42l8 8-8 8', L:'M26 42l-8 8 8 8', T:'M42 26l8-8 8 8', B:'M42 74l8 8 8-8'}[dir];
+    inner = layers(stub, g, {liquid:o.liquid, progress:o.progress}) + flange(dir)
+      + `<path d="${chev}" fill="none" stroke="#FFCF5C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`
+      + `<g class="${o.pulse!==false?'valve-glow':''}">`
+      + `<circle cx="50" cy="50" r="26" fill="url(#brassGrad)"/>`
+      + `<circle cx="50" cy="50" r="26" fill="none" stroke="#C97A12" stroke-width="3"/>`
+      + `<g stroke="#7A4708" stroke-width="4.5" stroke-linecap="round"><path d="M50 30v40M30 50h40"/></g>`
+      + `<circle cx="50" cy="50" r="8" fill="#C97A12" stroke="#7A4708" stroke-width="2"/>`
+      + `<circle cx="42" cy="40" r="4" fill="rgba(255,255,255,.45)"/>`
+      + `</g>`;
+  }
+  else if(type==='FINISH'){
+    const dir = o.dir||'L';
+    const stub = {L:'M0 50H50', R:'M100 50H50', T:'M50 0V50', B:'M50 100V50'}[dir];
+    const g = (dir==='L'||dir==='R') ? 'H' : 'V';
+    inner = layers(stub, g, {liquid:o.liquid, progress:o.progress}) + flange(dir)
+      + `<g class="${o.pulse!==false?'drain-glow':''}">`
+      + `<circle cx="50" cy="50" r="26" fill="#122538"/>`
+      + `<circle cx="50" cy="50" r="26" fill="none" stroke="#3DDC97" stroke-width="5"/>`
+      + `<g fill="#8FA3B8"><rect x="38" y="36" width="5" height="28" rx="2"/><rect x="47.5" y="36" width="5" height="28" rx="2"/><rect x="57" y="36" width="5" height="28" rx="2"/></g>`
+      + `</g>`;
+  }
+  else if(type==='BLOCKED'){
+    inner = `<rect x="4" y="4" width="92" height="92" rx="12" fill="#07111C"/><rect x="4" y="4" width="92" height="92" rx="12" fill="url(#hatch)"/><rect x="4" y="4" width="92" height="92" rx="12" fill="none" stroke="rgba(255,255,255,.06)"/>`;
+  }
+  return `<svg viewBox="0 0 100 100" aria-hidden="true">${inner}</svg>`;
+}
+
+/* ======================================================================
+   GALLERY
+   ====================================================================== */
+const gallery = document.getElementById('pipeGallery');
+const items = [
+  ['H',{liquid:'anim'}, 'Straight', 'Left ↔ Right'],
+  ['V',{liquid:'anim', delay:'d1'}, 'Straight', 'Top ↔ Bottom'],
+  ['LT',{liquid:'anim', delay:'d2'}, 'Corner', 'Left ↔ Top'],
+  ['LB',{liquid:'anim', delay:'d3'}, 'Corner', 'Left ↔ Bottom'],
+  ['RT',{liquid:'anim'}, 'Corner', 'Right ↔ Top'],
+  ['RB',{liquid:'anim', delay:'d1'}, 'Corner', 'Right ↔ Bottom'],
+  ['X',{liquid:'anim', liquidV:true, delay:'d2'}, 'Cross', 'Two independent channels'],
+  ['RES',{liquid:'anim', id:'g'}, 'Reservoir', 'Left ↔ Right · ×0.3 speed'],
+  ['START',{dir:'R'}, 'Start valve', 'Exit direction shown by chevron'],
+  ['FINISH',{dir:'L'}, 'Finish drain', 'Must be entered through the open port'],
+  ['BLOCKED',{}, 'Blocked', 'Nothing can be placed'],
+  ['EMPTY',{}, 'Empty', 'Tap to place the next piece'],
+];
+items.forEach(([t,o,name,ports])=>{
+  const card = document.createElement('div'); card.className='pipecard';
+  const cell = document.createElement('div'); cell.className='cell' + (t==='EMPTY'?' empty':'') + (t==='BLOCKED'?' blocked':'');
+  if(t!=='EMPTY') cell.innerHTML = pipeSVG(t,o);
+  card.appendChild(cell);
+  card.insertAdjacentHTML('beforeend', `<div class="name">${name}</div><div class="ports">${ports}</div>`);
+  gallery.appendChild(card);
+});
+
+/* Layer recipe steps */
+const ld = document.getElementById('layerDemo');
+[['1 · Shadow',1],['2 · Body',2],['3 · Bore',3],['4 · Liquid',4],['5 · Flanges',5],['Elbow · RB',5]].forEach(([cap,n],i)=>{
+  const type = i===5 ? 'RB' : 'LT';
+  ld.insertAdjacentHTML('beforeend', `<div class="step"><div class="cell">${pipeSVG(type,{upto:n, liquid:true, progress:.75})}</div><span class="caption">${cap}</span></div>`);
+});
+
+/* Rail demo */
+document.querySelectorAll('#railDemo .piece').forEach(p=> p.innerHTML = pipeSVG(p.dataset.type,{id:'r'+p.dataset.type}));
+
+/* ======================================================================
+   BOARD MOCKUP
+   ====================================================================== */
+const COLS=5, ROWS=9;
+const pool = ['H','H','V','V','LT','LB','RT','RB','X','RES'];
+let board, rail, score;
+function seedBoard(){
+  board = Array.from({length:ROWS},()=>Array(COLS).fill(null));
+  board[1][0] = {t:'START', dir:'R', fixed:true, liquid:true, progress:1};
+  board[1][1] = {t:'H', liquid:true, progress:1};
+  board[1][2] = {t:'LB', liquid:true, progress:1};
+  board[2][2] = {t:'V', liquid:'anim'};
+  board[3][2] = {t:'RES'};
+  board[3][3] = {t:'BLOCKED', fixed:true};
+  board[6][1] = {t:'BLOCKED', fixed:true};
+  board[7][4] = {t:'FINISH', dir:'L', fixed:true};
+  rail = ['LT','RB','H','X','V'];
+  score = 40;
+}
+function renderBoard(){
+  const g = document.getElementById('mockGrid'); g.innerHTML='';
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const cell = document.createElement('div');
+    const b = board[r][c];
+    cell.className = 'cell' + (!b ? ' empty' : '') + (b&&b.t==='BLOCKED' ? ' blocked' : '');
+    if(b) cell.innerHTML = pipeSVG(b.t, {dir:b.dir, liquid:b.liquid, progress:b.progress, id:`m${r}${c}`});
+    cell.addEventListener('pointerdown', ()=> tapCell(r,c,cell));
+    g.appendChild(cell);
+  }
+  const rl = document.getElementById('mockRail');
+  rl.querySelectorAll('.piece').forEach(p=>p.remove());
+  rail.forEach((t,i)=>{
+    const p = document.createElement('div'); p.className='piece'+(i===0?' top':''); p.style.width = i===0?'48px':'42px'; p.style.height = p.style.width;
+    p.innerHTML = pipeSVG(t,{id:'rail'+i}); rl.appendChild(p);
+  });
+  document.getElementById('mockScore').textContent = score;
+}
+function tapCell(r,c,el){
+  const b = board[r][c];
+  if(!b){
+    board[r][c] = {t:rail.shift()};
+    rail.push(pool[Math.floor(Math.random()*pool.length)]);
+    score += 10;
+    renderBoard();
+    const n = document.getElementById('mockGrid').children[r*COLS+c];
+    n.classList.add('pop');
+  } else if(b.fixed || b.liquid){
+    el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
+  } else {
+    board[r][c] = {t:rail.shift()};
+    rail.push(pool[Math.floor(Math.random()*pool.length)]);
+    renderBoard();
+    document.getElementById('mockGrid').children[r*COLS+c].classList.add('pop');
+  }
+}
+function resetMock(){ seedBoard(); renderBoard(); }
+seedBoard(); renderBoard();
+
+/* ======================================================================
+   MOTION DEMOS
+   ====================================================================== */
+function demoPop(){ const c=document.getElementById('popCell'); c.innerHTML=pipeSVG('LT'); c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); }
+function demoShake(){ const c=document.getElementById('shakeCell'); if(!c.innerHTML) c.innerHTML=pipeSVG('H',{liquid:true,progress:1}); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake'); }
+function demoFlow(){ const c=document.getElementById('flowCell'); c.innerHTML=pipeSVG('RB',{liquid:'anim'}); }
+document.getElementById('shakeCell').innerHTML = pipeSVG('H',{liquid:true,progress:1});
+document.getElementById('flowCell').innerHTML = pipeSVG('RB');
+
+/* ======================================================================
+   THEME, NAV, COPY
+   ====================================================================== */
+const root=document.documentElement, sw=document.getElementById('themeSwitch'), tl=document.getElementById('themeLabel');
+function applyTheme(t){ root.dataset.theme=t; sw.classList.toggle('on', t==='dark'); sw.setAttribute('aria-checked', t==='dark'); tl.textContent = t==='dark' ? 'Deep theme' : 'Daylight theme'; try{localStorage.setItem('lo-theme',t)}catch(e){} }
+try{ const s=localStorage.getItem('lo-theme'); if(s) applyTheme(s); }catch(e){}
+sw.addEventListener('click', ()=> applyTheme(root.dataset.theme==='dark'?'light':'dark'));
+sw.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); sw.click(); } });
+
+document.querySelectorAll('.swatch').forEach(s=> s.addEventListener('click', async ()=>{
+  const hex=s.dataset.hex; try{ await navigator.clipboard.writeText(hex); }catch(e){}
+  const c=document.getElementById('copied'); c.textContent='Copied '+hex; c.classList.add('show'); clearTimeout(c._t); c._t=setTimeout(()=>c.classList.remove('show'),1400);
+}));
+
+const links=[...document.querySelectorAll('#nav a')];
+const obs=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ links.forEach(l=>l.classList.toggle('active', l.getAttribute('href')==='#'+e.target.id)); } }); },{rootMargin:'-30% 0px -60% 0px'});
+document.querySelectorAll('section.block').forEach(s=>obs.observe(s));
+</script>
+</body>
+</html>

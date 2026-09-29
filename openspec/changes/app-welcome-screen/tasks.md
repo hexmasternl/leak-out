@@ -10,9 +10,9 @@
 
 ## 3. Theme and components
 
-- [ ] 3.1 Add design-system color tokens (`ui/theme/Color.kt`)
-- [ ] 3.2 Bundle Fredoka font in `res/font/` and define typography styles (Title/Hero, Button text) in `ui/theme/Type.kt`
-- [ ] 3.3 Implement `LeakOutTheme`
+- [x] 3.1 Add design-system color tokens (`ui/theme/Color.kt`)
+- [x] 3.2 Bundle Fredoka font in `res/font/` and define typography styles (Title/Hero, Button text) in `ui/theme/Type.kt`
+- [x] 3.3 Implement `LeakOutTheme`
 - [ ] 3.4 Implement `CartoonButton` (ink border, 6dp bottom shadow, inner shine, pressed state translating down 4dp, min 48dp touch target) with primary / secondary / danger variants
 
 ## 4. Welcome screen

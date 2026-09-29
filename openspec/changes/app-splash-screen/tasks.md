@@ -18,7 +18,7 @@
 
 - [x] 3.1 Implement `ui/splash/LiquidWordmark.kt`: a single `Text` with centred lines, Wendy One, a vertical gradient `Brush` (stops 0 / 0.35 / 0.70 / 1.0 → glow / 300 / 500 / 700) and a `Shadow` glow (`liquid500` at 35 %, 6 dp offset, 24 dp blur)
 - [x] 3.2 Size the text from `BoxWithConstraints` (`min(h*0.30, w*0.22)`, at least 56 sp) so the system font scale does not change it
-- [ ] 3.3 Compare against `docs/design-system.html` on the emulator; if the glow is too weak, add the blurred-copy fallback (`Modifier.blur` on API 31+)
+- [x] 3.3 Compare against `docs/design-system.html` on the emulator; if the glow is too weak, add the blurred-copy fallback (`Modifier.blur` on API 31+) (checked on the Pixel_10 API 37 emulator: the Shadow glow is clearly visible, no fallback needed)
 
 ## 4. In-app splash screen and transition
 

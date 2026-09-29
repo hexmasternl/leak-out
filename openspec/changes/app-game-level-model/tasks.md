@@ -20,16 +20,16 @@
 
 ## 4. Validation
 
-- [ ] 4.1 Add a `ValidationError` type carrying the field name and a message, and a result type that holds all errors
-- [ ] 4.2 Validate id (positive), name (not blank) and grid (columns and rows each 4 to 50)
-- [ ] 4.3 Validate flow settings: `initialDelayMs` at least 0, `cellsPerSecond` above 0 and at most 10, `reservoirSpeedFactor` above 0 and at most 1, `speedRampPerCell` at least 0
-- [ ] 4.4 Validate stack settings (visible size 1 to 10, mandatory weights at least 1, no negative weight) and rules (replace penalty at least 0)
-- [ ] 4.5 Validate that start, finish and blocked cells are inside the grid, that start and finish differ, and that blocked cells do not cover start or finish
-- [ ] 4.6 Validate that each endpoint's facing cell is inside the grid and not blocked, and that neither endpoint faces the other's cell; allow a shared facing cell
-- [ ] 4.7 Validate that blocked cells are unique and that star thresholds are positive and strictly increasing
-- [ ] 4.8 Validate a set of levels for duplicate ids
-- [ ] 4.9 Make validation collect every error instead of stopping at the first, and test the multi-error scenario
-- [ ] 4.10 Write one unit test per validation scenario in the spec
+- [x] 4.1 Add a `ValidationError` type carrying the field name and a message, and a result type that holds all errors
+- [x] 4.2 Validate id (positive), name (not blank) and grid (columns and rows each 4 to 50)
+- [x] 4.3 Validate flow settings: `initialDelayMs` at least 0, `cellsPerSecond` above 0 and at most 10, `reservoirSpeedFactor` above 0 and at most 1, `speedRampPerCell` at least 0
+- [x] 4.4 Validate stack settings (visible size 1 to 10, mandatory weights at least 1, no negative weight) and rules (replace penalty at least 0)
+- [x] 4.5 Validate that start, finish and blocked cells are inside the grid, that start and finish differ, and that blocked cells do not cover start or finish
+- [x] 4.6 Validate that each endpoint's facing cell is inside the grid and not blocked, and that neither endpoint faces the other's cell; allow a shared facing cell
+- [x] 4.7 Validate that blocked cells are unique and that star thresholds are positive and strictly increasing
+- [x] 4.8 Validate a set of levels for duplicate ids
+- [x] 4.9 Make validation collect every error instead of stopping at the first, and test the multi-error scenario
+- [x] 4.10 Write one unit test per validation scenario in the spec
 
 ## 5. Sample levels
 

@@ -1,5 +1,13 @@
 schema: spec-driven
 
+context: |
+  Leak Out: a 2D pipe-building puzzle game for Android (Kotlin, Jetpack Compose).
+  The app is written in the `src/` directory of the repository. `src/` is the Gradle root
+  (settings, wrapper, gradle/libs.versions.toml) and holds the `core` (pure Kotlin) and
+  `app` (Android) modules. Paths like `core/...` or `app/...` in specs and tasks are relative
+  to `src/`, and Gradle commands run from `src/`.
+  See docs/project-plan.md for the design and architecture.
+
 # Project context (optional)
 # This is shown to AI when creating artifacts.
 # Add your tech stack, conventions, style guides, domain knowledge, etc.

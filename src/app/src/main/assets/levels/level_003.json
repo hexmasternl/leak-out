@@ -1,0 +1,18 @@
+{
+  "id": 3,
+  "name": "Crossroads",
+  "grid": { "columns": 9, "rows": 6 },
+  "start":  { "x": 1, "y": 1, "openSide": "BOTTOM" },
+  "finish": { "x": 7, "y": 4, "openSide": "TOP" },
+  "blocked": [ { "x": 4, "y": 0 }, { "x": 4, "y": 1 }, { "x": 4, "y": 4 }, { "x": 4, "y": 5 }, { "x": 6, "y": 2 } ],
+  "flow": {
+    "initialDelayMs": 13000,
+    "cellsPerSecond": 0.6,
+    "reservoirSpeedFactor": 0.3
+  },
+  "stack": {
+    "visibleSize": 5,
+    "weights": { "X": 2, "RES": 1 }
+  },
+  "stars": { "one": 110, "two": 180, "three": 260 }
+}

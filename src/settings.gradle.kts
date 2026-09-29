@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "LeakOut"
 include(":app")
+include(":core")

@@ -1,66 +1,134 @@
 ## Context
 
-Leak Out is an Android pipe-building puzzle, planned in `docs/project-plan.md`. The repository has no code yet. Levels must be data, one JSON file each, so that difficulty is tuned by authoring. This change defines that data and how it is loaded and validated. It does not run the game.
+Leak Out is an Android pipe-building puzzle, planned in `docs/project-plan.md`. Levels must be data, one JSON file each, so that difficulty is tuned by authoring. This change defines that data, its defaults and how it is loaded and validated. It does not run the game.
 
-The field set follows the request. `docs/project-plan.md` sketches a richer level file (rules, stack weights, replace penalty). This change deliberately keeps to the smaller set the request names and leaves the rest for later changes.
+The field set follows the level file sketched in the project plan (section 2.7), with three deliberate differences: coordinates are `x`/`y`, the endpoint side is called `openSide`, and there is a `stars.one` threshold so that a win can earn 0 stars.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- One JSON file per level with the fields: id, grid size, start, finish, initial delay, flow speed, allowed pipes, blocked cells, star benchmarks.
+- One JSON file per level with: id, name, grid size, start, finish, blocked cells, flow settings, stack settings, placement rules and star benchmarks.
+- Central engine defaults that a level can override field by field.
 - An immutable in-memory model with no Android dependency, so it is unit-testable on the JVM.
 - A parser that turns JSON into the model and a validator that rejects levels that cannot be played.
 - Clear, field-specific error messages for authors.
 
 **Non-Goals:**
-- Flow simulation, pipe stack generation, scoring, and the mapping from flow speed to real distance per second.
-- Level select UI, progress storage, and loading levels from Android assets. This change only parses text.
-- Solvability checking of a level.
-- Per-section stack weights, replace rules and reservoir speed factor.
+- Flow simulation, pipe stack generation, and the scoring formula that produces points.
+- Level select UI, progress storage, and reading assets through Android APIs. This change only parses text.
+- Solvability checking, and checking that the star thresholds are reachable.
+- A random seed per level.
 
 ## Decisions
 
-**JSON shape.** Flat and explicit, camelCase keys:
+**JSON shape.** Grouped, camelCase keys. A full level:
 
 ```json
 {
   "id": 3,
+  "name": "First Crossing",
   "grid": { "columns": 7, "rows": 9 },
-  "start":  { "x": 0, "y": 1, "direction": "RIGHT" },
-  "finish": { "x": 6, "y": 7, "direction": "LEFT" },
-  "initialDelayMs": 12000,
-  "flowSpeed": 0.4,
-  "allowedPipes": { "cross": true, "reservoir": false },
+  "start":  { "x": 0, "y": 1, "openSide": "RIGHT" },
+  "finish": { "x": 6, "y": 7, "openSide": "LEFT" },
   "blocked": [ { "x": 3, "y": 4 } ],
+  "flow": {
+    "initialDelayMs": 12000,
+    "cellsPerSecond": 0.6,
+    "reservoirSpeedFactor": 0.3,
+    "speedRampPerCell": 0.0
+  },
+  "stack": {
+    "visibleSize": 5,
+    "weights": { "H": 3, "V": 3, "LT": 2, "LB": 2, "RT": 2, "RB": 2, "X": 1, "RES": 1 }
+  },
+  "rules": { "allowReplace": true, "replacePenaltyMs": 500 },
   "stars": { "one": 100, "two": 200, "three": 350 }
 }
 ```
 
-**Coordinates.** `x` is the column and `y` is the row, both zero-based, origin at the top-left, `y` growing downward. This matches the project plan. Alternative considered: one-based coordinates. Rejected because zero-based maps directly onto array indexes and avoids off-by-one conversions.
+A minimal level leaves out every defaulted field:
 
-**Direction.** The `direction` of a start is the side the liquid exits through. The `direction` of a finish is the side the liquid must enter through. Values are `LEFT`, `RIGHT`, `TOP`, `BOTTOM`, the same names as the project plan. Alternative: `UP` and `DOWN`. Rejected to stay consistent with the plan's section names such as "left to top".
+```json
+{
+  "id": 1,
+  "name": "First Leak",
+  "grid": { "columns": 6, "rows": 4 },
+  "start":  { "x": 0, "y": 1, "openSide": "RIGHT" },
+  "finish": { "x": 5, "y": 2, "openSide": "LEFT" },
+  "blocked": [],
+  "flow": { "initialDelayMs": 15000, "cellsPerSecond": 0.5 },
+  "stars": { "one": 60, "two": 100, "three": 150 }
+}
+```
 
-**Initial delay unit.** Stored as integer milliseconds in `initialDelayMs`. The unit is in the key name so no author has to guess. Alternative: seconds as a float. Rejected because the engine ticks in milliseconds and integers avoid rounding.
+**Required and defaulted fields.** The values that make a level what it is are required: `id`, `name`, `grid`, `start`, `finish`, `blocked`, `flow.initialDelayMs`, `flow.cellsPerSecond` and `stars`. Engine settings are optional and fall back to the defaults:
 
-**Flow speed.** A float where `0 < flowSpeed <= 1`. Exactly zero is rejected because liquid that never moves makes the level unwinnable and untimeable. The model stores the raw value. How `flowSpeed` becomes cells per second is the engine's decision, so the level format does not have to change if the engine is retuned.
+| Field | Default |
+|-------|---------|
+| `flow.reservoirSpeedFactor` | 0.3 |
+| `flow.speedRampPerCell` | 0.0 |
+| `stack.visibleSize` | 5 |
+| `stack.weights.H`, `V` | 3 |
+| `stack.weights.LT`, `LB`, `RT`, `RB` | 2 |
+| `stack.weights.X`, `RES` | 0 |
+| `rules.allowReplace` | true |
+| `rules.replacePenaltyMs` | 500 |
 
-**Allowed pipes.** Only `cross` and `reservoir` are listed. Straight and corner sections are always on the stack per the game rules, so they are not configurable. Both keys are required so an author must make an explicit choice.
+Overrides are per field. A level can give `"stack": { "weights": { "X": 1 } }` and keep every other default. A whole group (`stack`, `rules`) can be left out. The defaults live in one `LevelDefaults` object in `core`. The parser resolves them, so a `Level` always holds concrete values and the engine never has to know which ones were defaulted. Alternative: require every field. Rejected, because every level file would repeat the same engine numbers, and retuning a default would mean editing every file.
 
-**Blocked cells.** An array of `{x, y}`. Empty array means none. Duplicates are rejected rather than silently merged, because a duplicate usually signals an authoring mistake.
+**Stack weights replace the allowed-pipes flags.** Each of the eight sections (`H`, `V`, `LT`, `LB`, `RT`, `RB`, `X`, `RES`, the ids from the project plan) has a non-negative integer weight. A section's draw chance is its weight divided by the sum. A weight of 0 means the section never appears, so "is the cross allowed" is simply `weights.X > 0`. The six straight and corner sections must have a weight of at least 1. Cross and reservoir default to 0, so a level only uses them when it opts in. Alternative: keep `allowedPipes` booleans next to the weights. Rejected, because the two could contradict each other (`cross: false` with `X: 3`).
 
-**Star benchmarks.** `stars.one`, `stars.two` and `stars.three` are point thresholds, each a positive integer with `one < two < three`. Reaching a threshold earns that many stars. The scoring formula that produces points is out of scope.
+**No random seed.** The level does not fix the stack sequence. Every attempt draws from a fresh random source, so a retry can deal the player an easier stack. The engine takes a `Random` as a constructor argument, so that tests can still be deterministic. Consequence: whether a level can be won, and how many stars are reachable, depends on the stack of an attempt. That is accepted.
 
-**Validation is separate from parsing.** Parsing checks shape and types (missing keys, wrong types, unknown direction names). Validation checks meaning (ranges, in-grid positions, start not on finish, port not facing a wall or blocked cell). Both report every problem found rather than stopping at the first, so an author fixes a file in one pass. Alternative: throw on the first error. Rejected as slower for authors.
+**Coordinates.** `x` is the column and `y` is the row, both zero-based, with the origin at the top-left and `y` growing downward. This matches the project plan. Alternative: one-based. Rejected because zero-based maps directly onto array indexes.
 
-**Validation rules for positions.** Start, finish and every blocked cell must lie inside the grid. Start and finish must not share a cell. Neither may sit on a blocked cell. The cell that the start exits into, and the cell that feeds the finish, must be inside the grid and not blocked, since otherwise the level is lost or won by nothing on the first tick.
+**Open side.** The start and the finish each have one open side, `openSide`, with the values `LEFT`, `RIGHT`, `TOP` and `BOTTOM`. For the start, liquid leaves through it. For the finish, liquid must enter through it. One term describes both, because in both cases it is the side of the cell that has an opening. The model type is a `Side` enum with `opposite()` and the cell offset `dx`/`dy`. The start and the finish are both an `Endpoint(position, openSide)`. The cell next to the open side is the endpoint's *facing cell*. Alternative: keep `direction`. Rejected as ambiguous, since it reads as a movement direction and means opposite things for start and finish.
 
-**Library.** kotlinx.serialization for JSON, with unknown keys rejected, so a misspelled key is an error instead of a silently ignored setting. Alternatives: Gson or Moshi. Rejected because kotlinx.serialization is Kotlin-native, works in a pure JVM module, and matches the project plan.
+**Name.** A required, non-blank display string, trimmed. It is not unique and not used as a key. The id stays the only identity.
 
-**Location.** Model, parser and validator live in a pure Kotlin module with no Android imports, package `nl.hexmaster.leakout.core.level`, as in the project plan. If the Android project has not been scaffolded when this is implemented, the scaffold task creates the module.
+**Grid size.** Columns and rows are each between 4 and 50 inclusive. Below 4 there is no room for a route. Above 50 the cells become too small to tap on a phone in landscape.
+
+**Initial delay.** Integer milliseconds in `flow.initialDelayMs`, zero or greater. The unit is in the key name.
+
+**Flow speed.** `flow.cellsPerSecond` is how many cell lengths the liquid front advances per second at base speed. It must be greater than 0 and at most 10. The upper bound catches typing mistakes such as `60` for `0.6`. The plan's typical range is 0.4 to 2.0. `flow.reservoirSpeedFactor` multiplies the speed inside a reservoir. It must be greater than 0 and at most 1, because a reservoir exists to slow the liquid. `flow.speedRampPerCell` is zero or greater.
+
+**Stack and rules.** `stack.visibleSize` is at least 1 and at most 10. `rules.replacePenaltyMs` is zero or greater.
+
+**Blocked cells.** An array of `{x, y}`. An empty array means none. Duplicates are rejected rather than silently merged, because a duplicate usually signals an authoring mistake.
+
+**Star benchmarks and 0-star wins.** `stars.one`, `stars.two` and `stars.three` are positive integer point thresholds with `one < two < three`. `starsFor(points)` returns 0 to 3. A won level whose points are below `stars.one` earns 0 stars and still counts as won. Stars reward longer, more elaborate routes: a short route may finish a level without reaching a high star count. So thresholds are a design choice, and the validator does not check that they can be reached.
+
+**Validation is separate from parsing.** Parsing checks shape and types: missing required keys, wrong types, unknown keys (including unknown weight ids), and unknown side names. Validation checks meaning: ranges, in-grid positions and the endpoint rules. Validation reports every problem it finds rather than stopping at the first.
+
+**Endpoint validation.** For both the start and the finish:
+1. The cell lies inside the grid and is not blocked.
+2. The start and the finish are different cells.
+3. The facing cell lies inside the grid. An open side that points at the grid edge can never be connected.
+4. The facing cell is not blocked.
+5. The start's facing cell is not the finish, and the finish's facing cell is not the start. Two endpoints that face each other directly would win on the first tick with no pipes placed. A start that faces the finish's closed side would leak on the first tick.
+
+```
+  valid                  rule 3                 rule 5
+  ┌───┬───┬───┬───┐      ┌───┬───┬───┬───┐      ┌───┬───┬───┬───┐
+  │ S→│ · │ · │ · │     ←│ S │ · │ · │ · │      │ S→│←F │ · │ · │
+  ├───┼───┼───┼───┤      ├───┼───┼───┼───┤      ├───┼───┼───┼───┤
+  │ · │ · │ · │←F │      │ · │ · │ · │←F │      │ · │ · │ · │ · │
+  └───┴───┴───┴───┘      └───┴───┴───┴───┘      └───┴───┴───┴───┘
+                         start opens onto        start and finish
+                         the grid edge           face each other
+```
+
+The start and the finish may share a facing cell. One pipe section then connects them.
+
+**Library.** kotlinx.serialization for JSON, with unknown keys rejected so that a misspelled key is an error rather than a silently ignored setting. Defaults are expressed as Kotlin default parameter values on the DTOs, taken from `LevelDefaults`.
+
+**Location.** Model, defaults, parser and validator live in the pure Kotlin `core` module, package `nl.hexmaster.leakout.core.level`. The bundled level files live in `app/src/main/assets/levels/level_NNN.json`. The `core` test that validates every bundled level reads that folder through a path that the Gradle test task passes in as a system property, so there is only one copy of the files.
 
 ## Risks / Trade-offs
 
-- [The field set is smaller than the plan's sketch and later changes may need more fields] → Unknown keys are rejected today, so adding an optional field later is an explicit, versioned change to the model, not an accident.
-- [Flow speed has no fixed real-world meaning until the engine exists] → The spec only fixes the range and stores the raw value, and the engine change owns the mapping.
-- [Rejecting unknown keys makes older app versions fail on newer level files] → Levels ship inside the app, so files and parser always come from the same build.
-- [Validation cannot prove a level is solvable] → Out of scope. A later headless solver test can cover it.
+- [Changing a default in `LevelDefaults` silently changes every level that does not override it] → That is the point of a default. The bundled-level test re-validates every level after any change, and `docs/level-format.md` lists the defaults.
+- [An unseeded stack means a level may be unwinnable on some attempts] → Accepted game design: a retry deals a new stack. Replacing sections (on by default) softens bad draws.
+- [Star thresholds may be unreachable with some stacks or grids] → Accepted. Thresholds are tuned by play-testing, not validated.
+- [Rejecting unknown keys makes older app versions fail on newer level files] → Levels ship inside the app, so the files and the parser always come from the same build.
+- [Validation cannot prove a level is solvable] → Out of scope.
+- [`game-level-history` rejects 0 stars today] → That change must accept 0 to 3 stars so a 0-star win can be recorded.

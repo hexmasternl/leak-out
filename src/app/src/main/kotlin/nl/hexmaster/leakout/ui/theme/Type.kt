@@ -35,8 +35,20 @@ val Fredoka = FontFamily(
     ),
 )
 
+/** Wendy One (OFL, see assets/licenses/wendy-one-OFL.txt): the Deep Flow display face, one weight. */
+val WendyOne = FontFamily(Font(R.font.wendy_one_regular, weight = FontWeight.Normal))
+
 /** Text styles from `docs/design-system-slim.md` section 3. Text transform is applied by callers. */
 object LeakOutTextStyles {
+    /** Deep Flow `display.hero` (docs/design-system.md 3.2): 56 sp, line height 1.0, 0.5 sp tracking. */
+    val DisplayHero = TextStyle(
+        fontFamily = WendyOne,
+        fontWeight = FontWeight.Normal,
+        fontSize = 56.sp,
+        lineHeight = 1.0.em,
+        letterSpacing = 0.5.sp,
+    )
+
     /** Title / Hero: 36-48 sp, bold, uppercase, line height 1.1. The welcome title scales it up. */
     val TitleHero = TextStyle(
         fontFamily = Fredoka,

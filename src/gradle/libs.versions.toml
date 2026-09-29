@@ -13,6 +13,7 @@ minSdk = "26"
 composeBom = "2026.09.00"
 activityCompose = "1.13.0"
 core = "1.19.0"
+coreSplashscreen = "1.2.0"
 
 # Test
 junit = "4.13.2"
@@ -36,6 +37,7 @@ androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-
 # AndroidX
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-core = { group = "androidx.core", name = "core", version.ref = "core" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 
 # Test
 junit = { group = "junit", name = "junit", version.ref = "junit" }

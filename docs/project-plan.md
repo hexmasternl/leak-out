@@ -441,7 +441,7 @@ Each milestone ends in something runnable. Estimates are in focused working days
 
 ### Milestone 6 – Release (2 days)
 
-- [ ] App icon, splash, Play Store listing assets.
+- [ ] App icon, splash, Play Store listing assets. (Splash done in change `app-splash-screen`.)
 - [ ] Release signing, ProGuard/R8 config, `versionCode` scheme.
 - [ ] Manual test matrix: small phone, large phone, tablet, Android 8 and latest.
 - [ ] Internal test track on Google Play.

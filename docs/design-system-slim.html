@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leak Out — Design System & Style Guide</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#013C60',
+              DEFAULT: '#0277BD',
+              mid: '#0288D1',
+              light: '#03A9F4',
+              soft: '#B2EBF2',
+              bg: '#E0F7FA',
+            },
+            accent: {
+              dark: '#F57F17',
+              DEFAULT: '#FBC02D',
+              light: '#FDD835',
+              soft: '#FFF59D',
+              bg: '#FFFDE7',
+            },
+            ink: {
+              DEFAULT: '#1E293B',
+              light: '#475569',
+            },
+            steel: {
+              DEFAULT: '#546E7A',
+              dark: '#37474F',
+              light: '#90A4AE',
+            },
+            reservoir: '#8E24AA',
+            gameSuccess: '#43A047',
+            gameError: '#E53935'
+          },
+          fontFamily: {
+            display: ['Fredoka', 'sans-serif'],
+            body: ['Nunito', 'sans-serif'],
+          },
+          boxShadow: {
+            'cartoon': '0px 6px 0px #1E293B',
+            'cartoon-sm': '0px 4px 0px #1E293B',
+            'cartoon-lg': '0px 8px 0px #1E293B',
+            'cartoon-primary': '0px 6px 0px #013C60',
+            'cartoon-accent': '0px 6px 0px #F57F17',
+            'cartoon-success': '0px 6px 0px #1B5E20',
+            'cartoon-danger': '0px 6px 0px #B71C1C',
+            'cartoon-inner': 'inset 0px 3px 0px rgba(255, 255, 255, 0.4)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom cartoon button interaction mechanics */
+    .btn-cartoon {
+      border: 3px solid #1E293B;
+      transition: all 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .btn-cartoon:active:not(:disabled) {
+      transform: translateY(4px);
+      box-shadow: 0px 2px 0px #1E293B !important;
+    }
+    
+    /* Custom tile grid styling */
+    .pipe-grid-cell {
+      background-image: radial-gradient(#B2EBF2 20%, transparent 20%);
+      background-size: 16px 16px;
+    }
+
+    /* Flow liquid progress fill animation */
+    @keyframes liquidFlowHorizontal {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+    .animate-liquid-flow {
+      animation: liquidFlowHorizontal 3s infinite linear;
+    }
+
+    @keyframes pulseGlint {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.08); opacity: 0.85; }
+    }
+    .pulse-glint {
+      animation: pulseGlint 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-brand-bg font-body text-ink min-h-screen p-4 md:p-8">
+
+  <!-- Header Section -->
+  <header class="max-w-7xl mx-auto mb-8 bg-white border-4 border-ink rounded-3xl p-6 shadow-cartoon-lg flex flex-col md:flex-row justify-between items-center gap-6">
+    <div class="flex items-center gap-4">
+      <div class="w-16 h-16 bg-brand border-4 border-ink rounded-2xl flex items-center justify-center text-white text-3xl font-display font-bold shadow-cartoon-primary transform -rotate-3">
+        💧
+      </div>
+      <div>
+        <h1 class="text-3xl md:text-5xl font-display font-bold text-brand uppercase tracking-wider drop-shadow-sm">
+          Leak Out
+        </h1>
+        <p class="text-ink-light font-bold text-sm md:text-base">Mobile Android Game Design System & Visual Specification</p>
+      </div>
+    </div>
+    
+    <div class="flex flex-wrap gap-2">
+      <span class="px-4 py-2 bg-brand-soft border-2 border-ink rounded-full font-bold text-brand-dark text-xs uppercase shadow-sm">
+        Android Native UI
+      </span>
+      <span class="px-4 py-2 bg-accent-soft border-2 border-ink rounded-full font-bold text-accent-dark text-xs uppercase shadow-sm">
+        Cartoon / Juicy Vibe
+      </span>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="max-w-7xl mx-auto mb-8 flex flex-wrap gap-3">
+    <button onclick="switchTab('colors')" id="tab-colors" class="tab-btn btn-cartoon px-5 py-3 rounded-2xl font-display font-bold text-base bg-brand text-white shadow-cartoon-primary">
+      🎨 Colors & Tokens
+    </button>
+    <button onclick="switchTab('typography')" id="tab-typography" class="tab-btn btn-cartoon px-5 py-3 rounded-2xl font-display font-bold text-base bg-white text-ink shadow-cartoon">
+      🔤 Typography & Buttons
+    </button>
+    <button onclick="switchTab('pipes')" id="tab-pipes" class="tab-btn btn-cartoon px-5 py-3 rounded-2xl font-display font-bold text-base bg-white text-ink shadow-cartoon">
+      🧩 Pipe Tiles & Assets
+    </button>
+    <button onclick="switchTab('components')" id="tab-components" class="tab-btn btn-cartoon px-5 py-3 rounded-2xl font-display font-bold text-base bg-white text-ink shadow-cartoon">
+      🕹️ UI Modals & HUD
+    </button>
+    <button onclick="switchTab('mockup')" id="tab-mockup" class="tab-btn btn-cartoon px-5 py-3 rounded-2xl font-display font-bold text-base bg-accent text-ink shadow-cartoon-accent">
+      🎮 Live Game Mockup
+    </button>
+  </nav>
+
+  <!-- TAB CONTENT CONTAINERS -->
+  <main class="max-w-7xl mx-auto">
+
+    <!-- 1. COLORS & TOKENS -->
+    <section id="content-colors" class="tab-content block space-y-8">
+      
+      <!-- Primary Palette -->
+      <div class="bg-white border-4 border-ink rounded-3xl p-6 shadow-cartoon-lg">
+        <h2 class="text-2xl font-display font-bold text-brand uppercase mb-2">Primary Palette — Hydro Blue (#0277BD)</h2>
+        <p class="text-ink-light mb-6">Main theme color representing water, game title branding, fluid streams, and primary screen headers.</p>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+          <div class="border-3 border-ink rounded-2xl p-3 bg-brand-dark text-white shadow-cartoon-sm">
+            <div class="h-16 rounded-xl bg-[#013C60] border-2 border-white/30 mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Primary Dark</p>
+            <p class="font-mono text-xs opacity-80">#013C60</p>
+          </div>
+          <div class="border-3 border-ink rounded-2xl p-3 bg-brand text-white shadow-cartoon-sm">
+            <div class="h-16 rounded-xl bg-[#0277BD] border-2 border-white/30 mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Primary Base</p>
+            <p class="font-mono text-xs opacity-80">#0277BD</p>
+          </div>
+          <div class="border-3 border-ink rounded-2xl p-3 bg-brand-mid text-white shadow-cartoon-sm">
+            <div class="h-16 rounded-xl bg-[#0288D1] border-2 border-white/30 mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Primary Mid</p>
+            <p class="font-mono text-xs opacity-80">#0288D1</p>
+          </div>
+          <div class="border-3 border-ink rounded-2xl p-3 bg-brand-light text-white shadow-cartoon-sm">
+            <div class="h-16 rounded-xl bg-[#03A9F4] border-2 border-white/30 mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Primary Light</p>
+            <p class="font-mono text-xs opacity-80">#03A9F4</p>
+          </div>
+          <div class="border-3 border-ink rounded-2xl p-3 bg-brand-soft text-ink shadow-cartoon-sm">
+            <div class="h-16 rounded-xl bg-[#B2EBF2] border-2 border-ink/20 mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Primary Soft</p>
+            <p class="font-mono text-xs opacity-80">#B2EBF2</p>
+          </div>
+          <div class="border-3 border-ink rounded-2xl p-3 bg-brand-bg text-ink shadow-cartoon-sm">
+            <div class="h-16 rounded-xl bg-[#E0F7FA] border-2 border-ink/20 mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Primary BG</p>
+            <p class="font-mono text-xs opacity-80">#E0F7FA</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secondary Palette -->
+      <div class="bg-white border-4 border-ink rounded-3xl p-6 shadow-cartoon-lg">
+        <h2 class="text-2xl font-display font-bold text-accent-dark uppercase mb-2">Secondary Palette — Brass Yellow (#FBC02D)</h2>
+        <p class="text-ink-light mb-6">High-energy accent color for play buttons, pipe stack queues, level clear stars, and warning indicators.</p>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+          <div class="border-3 border-ink rounded-2xl p-3 bg-accent-dark text-white shadow-cartoon-sm">
+            <div class="h-16 rounded-xl bg-[#F57F17] border-2 border-white/30 mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Accent Dark</p>
+            <p class="font-mono text-xs opacity-80">#F57F17</p>
+          </div>
+          <div class="border-3 border-ink rounded-2xl p-3 bg-accent text-ink shadow-cartoon-sm">
+            <div class="h-16 rounded-xl bg-[#FBC02D] border-2 border-ink/20 mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Accent Base</p>
+            <p class="font-mono text-xs opacity-80">#FBC02D</p>
+          </div>
+          <div class="border-3 border-ink rounded-2xl p-3 bg-accent-light text-ink shadow-cartoon-sm">
+            <div class="h-16 rounded-xl bg-[#FDD835] border-2 border-ink/20 mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Accent Light</p>
+            <p class="font-mono text-xs opacity-80">#FDD835</p>
+          </div>
+          <div class="border-3 border-ink rounded-2xl p-3 bg-accent-soft text-ink shadow-cartoon-sm">
+            <div class="h-16 rounded-xl bg-[#FFF59D] border-2 border-ink/20 mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Accent Soft</p>
+            <p class="font-mono text-xs opacity-80">#FFF59D</p>
+          </div>
+          <div class="border-3 border-ink rounded-2xl p-3 bg-accent-bg text-ink shadow-cartoon-sm">
+            <div class="h-16 rounded-xl bg-[#FFFDE7] border-2 border-ink/20 mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Accent BG</p>
+            <p class="font-mono text-xs opacity-80">#FFFDE7</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Functional & Neutral Palette -->
+      <div class="bg-white border-4 border-ink rounded-3xl p-6 shadow-cartoon-lg">
+        <h2 class="text-2xl font-display font-bold text-steel-dark uppercase mb-2">Neutrals, Metallic Steel & Status Colors</h2>
+        <p class="text-ink-light mb-6">Colors for dry steel pipes, reservoir fluid delays, success highlights, and leak error alerts.</p>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+          <div class="border-3 border-ink rounded-2xl p-3 bg-steel text-white shadow-cartoon-sm">
+            <div class="h-12 rounded-xl bg-[#546E7A] mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Steel Base</p>
+            <p class="font-mono text-xs opacity-80">#546E7A</p>
+          </div>
+          <div class="border-3 border-ink rounded-2xl p-3 bg-steel-dark text-white shadow-cartoon-sm">
+            <div class="h-12 rounded-xl bg-[#37474F] mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Steel Dark</p>
+            <p class="font-mono text-xs opacity-80">#37474F</p>
+          </div>
+          <div class="border-3 border-ink rounded-2xl p-3 bg-reservoir text-white shadow-cartoon-sm">
+            <div class="h-12 rounded-xl bg-[#8E24AA] mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Reservoir</p>
+            <p class="font-mono text-xs opacity-80">#8E24AA</p>
+          </div>
+          <div class="border-3 border-ink rounded-2xl p-3 bg-gameSuccess text-white shadow-cartoon-sm">
+            <div class="h-12 rounded-xl bg-[#43A047] mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Success</p>
+            <p class="font-mono text-xs opacity-80">#43A047</p>
+          </div>
+          <div class="border-3 border-ink rounded-2xl p-3 bg-gameError text-white shadow-cartoon-sm">
+            <div class="h-12 rounded-xl bg-[#E53935] mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Error Spill</p>
+            <p class="font-mono text-xs opacity-80">#E53935</p>
+          </div>
+          <div class="border-3 border-ink rounded-2xl p-3 bg-ink text-white shadow-cartoon-sm">
+            <div class="h-12 rounded-xl bg-[#1E293B] mb-2"></div>
+            <p class="font-display font-bold text-xs uppercase">Ink Outline</p>
+            <p class="font-mono text-xs opacity-80">#1E293B</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. TYPOGRAPHY & BUTTONS -->
+    <section id="content-typography" class="tab-content hidden space-y-8">
+      
+      <!-- Typography Showcase -->
+      <div class="bg-white border-4 border-ink rounded-3xl p-6 shadow-cartoon-lg">
+        <h2 class="text-2xl font-display font-bold text-brand uppercase mb-6">Typography Hierarchy</h2>
+
+        <div class="space-y-6">
+          <div class="border-b-2 border-slate-200 pb-4">
+            <span class="text-xs font-bold text-slate-400 uppercase">Hero Banner / Level Title (Fredoka 42px)</span>
+            <p class="font-display font-bold text-4xl md:text-5xl text-brand uppercase tracking-wider">
+              LEVEL 15 COMPLETED!
+            </p>
+          </div>
+          <div class="border-b-2 border-slate-200 pb-4">
+            <span class="text-xs font-bold text-slate-400 uppercase">Modal Heading 1 (Fredoka 28px)</span>
+            <p class="font-display font-bold text-2xl md:text-3xl text-ink uppercase">
+              PLUMBING EMERGENCY!
+            </p>
+          </div>
+          <div class="border-b-2 border-slate-200 pb-4">
+            <span class="text-xs font-bold text-slate-400 uppercase">HUD Label & Badges (Fredoka 20px)</span>
+            <p class="font-display font-semibold text-xl text-brand-dark">
+              NEXT PIPE IN QUEUE:
+            </p>
+          </div>
+          <div>
+            <span class="text-xs font-bold text-slate-400 uppercase">Body / Tooltip Text (Nunito 16px Bold)</span>
+            <p class="font-body font-bold text-base text-ink-light leading-relaxed max-w-2xl">
+              Connect the water flow from the brass starting valve to the exit drain before the pressure gauge reaches maximum capacity! Use reservoirs to delay flow speed.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Button Components Showcase -->
+      <div class="bg-white border-4 border-ink rounded-3xl p-6 shadow-cartoon-lg">
+        <h2 class="text-2xl font-display font-bold text-brand uppercase mb-2">Tactile Button States</h2>
+        <p class="text-ink-light mb-6">Buttons feature high-contrast cartoon drop shadows and spring down on click.</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+          
+          <!-- Primary Play Button -->
+          <div class="bg-brand-bg border-2 border-brand-soft p-4 rounded-2xl text-center space-y-3">
+            <p class="font-display font-bold text-sm text-brand-dark">PRIMARY (ACTION)</p>
+            <button class="btn-cartoon w-full py-4 bg-accent text-ink font-display font-bold text-xl rounded-2xl shadow-cartoon-accent">
+              PLAY NOW ➔
+            </button>
+            <span class="text-xs text-ink-light block">Standard CTA / Main menu</span>
+          </div>
+
+          <!-- Secondary Water Button -->
+          <div class="bg-brand-bg border-2 border-brand-soft p-4 rounded-2xl text-center space-y-3">
+            <p class="font-display font-bold text-sm text-brand-dark">SECONDARY (WATER)</p>
+            <button class="btn-cartoon w-full py-4 bg-brand text-white font-display font-bold text-xl rounded-2xl shadow-cartoon-primary">
+              RETRY LEVEL
+            </button>
+            <span class="text-xs text-ink-light block">Level reset / Retry</span>
+          </div>
+
+          <!-- Success Button -->
+          <div class="bg-brand-bg border-2 border-brand-soft p-4 rounded-2xl text-center space-y-3">
+            <p class="font-display font-bold text-sm text-brand-dark">SUCCESS STATE</p>
+            <button class="btn-cartoon w-full py-4 bg-gameSuccess text-white font-display font-bold text-xl rounded-2xl shadow-cartoon-success">
+              NEXT LEVEL ★
+            </button>
+            <span class="text-xs text-ink-light block">Win dialog confirm</span>
+          </div>
+
+          <!-- Danger Button -->
+          <div class="bg-brand-bg border-2 border-brand-soft p-4 rounded-2xl text-center space-y-3">
+            <p class="font-display font-bold text-sm text-brand-dark">DANGER / QUIT</p>
+            <button class="btn-cartoon w-full py-4 bg-gameError text-white font-display font-bold text-xl rounded-2xl shadow-cartoon-danger">
+              GIVE UP ✖
+            </button>
+            <span class="text-xs text-ink-light block">Quit level action</span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. PIPE TILES & ASSETS -->
+    <section id="content-pipes" class="tab-content hidden space-y-8">
+      <div class="bg-white border-4 border-ink rounded-3xl p-6 shadow-cartoon-lg">
+        <h2 class="text-2xl font-display font-bold text-brand uppercase mb-2">Pipe Section Visual Taxonomy</h2>
+        <p class="text-ink-light mb-6">Each pipe is rendered with steel outer walls (`#546E7A`), dark flanges, and animated internal water flow.</p>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+
+          <!-- 1. Straight H -->
+          <div class="pipe-grid-cell border-3 border-ink rounded-2xl p-4 flex flex-col items-center justify-between h-52 bg-brand-bg">
+            <span class="font-display font-bold text-sm text-ink uppercase">Straight (H)</span>
+            <!-- Pipe Visual -->
+            <div class="w-24 h-24 relative flex items-center justify-center">
+              <div class="w-full h-10 bg-steel border-3 border-ink rounded-sm relative shadow-inner">
+                <div class="absolute inset-y-0 left-0 w-full bg-brand animate-liquid-flow opacity-90 border-y-2 border-brand-light"></div>
+                <div class="absolute inset-y-0 left-0 w-2 bg-steel-dark border-r-2 border-ink"></div>
+                <div class="absolute inset-y-0 right-0 w-2 bg-steel-dark border-l-2 border-ink"></div>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-brand bg-white px-2 py-1 rounded-full border border-ink">Left ↔ Right</span>
+          </div>
+
+          <!-- 2. Straight V -->
+          <div class="pipe-grid-cell border-3 border-ink rounded-2xl p-4 flex flex-col items-center justify-between h-52 bg-brand-bg">
+            <span class="font-display font-bold text-sm text-ink uppercase">Straight (V)</span>
+            <div class="w-24 h-24 relative flex items-center justify-center">
+              <div class="h-full w-10 bg-steel border-3 border-ink rounded-sm relative shadow-inner">
+                <div class="absolute inset-x-0 top-0 h-full bg-brand opacity-90 border-x-2 border-brand-light"></div>
+                <div class="absolute inset-x-0 top-0 h-2 bg-steel-dark border-b-2 border-ink"></div>
+                <div class="absolute inset-x-0 bottom-0 h-2 bg-steel-dark border-t-2 border-ink"></div>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-brand bg-white px-2 py-1 rounded-full border border-ink">Top ↔ Bottom</span>
+          </div>
+
+          <!-- 3. Corner Section -->
+          <div class="pipe-grid-cell border-3 border-ink rounded-2xl p-4 flex flex-col items-center justify-between h-52 bg-brand-bg">
+            <span class="font-display font-bold text-sm text-ink uppercase">Corner (L-T)</span>
+            <div class="w-24 h-24 relative flex items-center justify-center">
+              <div class="absolute left-0 bottom-7 w-14 h-10 bg-steel border-3 border-ink border-r-0"></div>
+              <div class="absolute top-0 left-7 w-10 h-14 bg-steel border-3 border-ink border-b-0"></div>
+              <div class="absolute top-7 left-7 w-10 h-10 bg-brand border-2 border-brand-light rounded-tl-xl z-10"></div>
+            </div>
+            <span class="text-xs font-bold text-brand bg-white px-2 py-1 rounded-full border border-ink">Left ↔ Top</span>
+          </div>
+
+          <!-- 4. Cross Section -->
+          <div class="pipe-grid-cell border-3 border-ink rounded-2xl p-4 flex flex-col items-center justify-between h-52 bg-brand-bg">
+            <span class="font-display font-bold text-sm text-ink uppercase">Cross Pipe</span>
+            <div class="w-24 h-24 relative flex items-center justify-center">
+              <div class="w-full h-10 bg-steel border-3 border-ink absolute z-10"></div>
+              <div class="h-full w-10 bg-steel-dark border-3 border-ink absolute"></div>
+              <div class="w-4 h-4 rounded-full bg-brand-light z-20 pulse-glint border border-ink"></div>
+            </div>
+            <span class="text-xs font-bold text-brand bg-white px-2 py-1 rounded-full border border-ink">Dual independent</span>
+          </div>
+
+          <!-- 5. Reservoir Section -->
+          <div class="pipe-grid-cell border-3 border-ink rounded-2xl p-4 flex flex-col items-center justify-between h-52 bg-brand-bg">
+            <span class="font-display font-bold text-sm text-reservoir uppercase">Reservoir Tile</span>
+            <div class="w-24 h-24 relative flex items-center justify-center">
+              <div class="w-full h-8 bg-steel border-2 border-ink absolute"></div>
+              <div class="w-16 h-16 rounded-full bg-reservoir border-3 border-ink z-10 flex items-center justify-center shadow-inner">
+                <div class="w-10 h-10 rounded-full bg-purple-400/40 border border-white/60 animate-pulse flex items-center justify-center text-white text-xs font-bold">
+                  0.35x
+                </div>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-reservoir bg-purple-100 px-2 py-1 rounded-full border border-reservoir">Delays Flow Speed</span>
+          </div>
+
+          <!-- 6. Start Valve -->
+          <div class="pipe-grid-cell border-3 border-ink rounded-2xl p-4 flex flex-col items-center justify-between h-52 bg-brand-bg">
+            <span class="font-display font-bold text-sm text-accent-dark uppercase">Start Valve</span>
+            <div class="w-24 h-24 relative flex items-center justify-center">
+              <div class="w-14 h-10 bg-steel border-3 border-ink absolute right-0"></div>
+              <div class="w-12 h-12 rounded-full bg-accent border-3 border-ink z-10 flex items-center justify-center shadow-cartoon-accent">
+                <div class="w-4 h-4 bg-accent-dark rounded-full"></div>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-accent-dark bg-accent-soft px-2 py-1 rounded-full border border-accent-dark">Start Point</span>
+          </div>
+
+          <!-- 7. Finish Drain -->
+          <div class="pipe-grid-cell border-3 border-ink rounded-2xl p-4 flex flex-col items-center justify-between h-52 bg-brand-bg">
+            <span class="font-display font-bold text-sm text-gameSuccess uppercase">Finish Drain</span>
+            <div class="w-24 h-24 relative flex items-center justify-center">
+              <div class="w-14 h-10 bg-steel border-3 border-ink absolute left-0"></div>
+              <div class="w-12 h-12 rounded-2xl bg-gameSuccess border-3 border-ink z-10 flex items-center justify-center text-white font-bold text-lg shadow-cartoon-success">
+                🏁
+              </div>
+            </div>
+            <span class="text-xs font-bold text-gameSuccess bg-green-100 px-2 py-1 rounded-full border border-gameSuccess">Target Goal</span>
+          </div>
+
+          <!-- 8. Empty Cell -->
+          <div class="pipe-grid-cell border-3 border-ink rounded-2xl p-4 flex flex-col items-center justify-between h-52 bg-brand-bg">
+            <span class="font-display font-bold text-sm text-ink-light uppercase">Empty Cell</span>
+            <div class="w-20 h-20 border-2 border-dashed border-ink/40 rounded-2xl flex items-center justify-center text-ink-light/40 text-2xl font-bold">
+              +
+            </div>
+            <span class="text-xs font-bold text-ink-light bg-white px-2 py-1 rounded-full border border-ink/30">Tap to place</span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. UI MODALS & HUD -->
+    <section id="content-components" class="tab-content hidden space-y-8">
+      
+      <!-- HUD Gauge Bar -->
+      <div class="bg-white border-4 border-ink rounded-3xl p-6 shadow-cartoon-lg">
+        <h2 class="text-2xl font-display font-bold text-brand uppercase mb-4">In-Game HUD Bar</h2>
+        
+        <div class="bg-brand-bg border-3 border-ink rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+          <!-- Level Badge -->
+          <div class="flex items-center gap-3 bg-white px-4 py-2 border-3 border-ink rounded-xl shadow-cartoon-sm">
+            <span class="text-2xl">🏆</span>
+            <div>
+              <p class="text-xs text-ink-light font-bold">LEVEL</p>
+              <p class="font-display font-bold text-lg text-brand">05 / 50</p>
+            </div>
+          </div>
+
+          <!-- Flow Progress Gauge -->
+          <div class="w-full md:w-1/2 bg-white border-3 border-ink rounded-2xl p-3 shadow-cartoon-sm">
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-display font-bold text-xs text-brand uppercase">WATER FLOW DELAY</span>
+              <span class="font-mono font-bold text-xs text-brand-dark">6.5s</span>
+            </div>
+            <div class="w-full h-5 bg-slate-200 border-2 border-ink rounded-full overflow-hidden p-0.5">
+              <div class="h-full bg-brand-light rounded-full border border-brand-dark animate-pulse" style="width: 65%;"></div>
+            </div>
+          </div>
+
+          <!-- Pipe Queue -->
+          <div class="flex items-center gap-2 bg-white px-4 py-2 border-3 border-ink rounded-xl shadow-cartoon-sm">
+            <span class="font-display font-bold text-xs text-ink uppercase">NEXT:</span>
+            <div class="w-10 h-10 bg-accent border-2 border-ink rounded-lg flex items-center justify-center font-bold text-lg shadow-sm">
+              ╔
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Examples Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <!-- Level Win Modal -->
+        <div class="bg-white border-4 border-ink rounded-3xl p-6 shadow-cartoon-lg text-center space-y-4 relative overflow-hidden">
+          <div class="inline-block px-4 py-1 bg-gameSuccess text-white font-display font-bold text-sm uppercase border-2 border-ink rounded-full shadow-cartoon-sm mb-2">
+            LEVEL COMPLETED!
+          </div>
+          <div class="flex justify-center gap-2 text-4xl my-2">
+            <span class="transform -rotate-12">⭐</span>
+            <span class="transform scale-125 -translate-y-2">⭐</span>
+            <span class="transform rotate-12">⭐</span>
+          </div>
+          <h3 class="text-2xl font-display font-bold text-ink">PERFECT FLOW!</h3>
+          <p class="text-ink-light text-sm font-bold">You routed the liquid through 12 pipes with 0 leaks!</p>
+
+          <div class="pt-2 flex gap-3">
+            <button class="btn-cartoon flex-1 py-3 bg-brand text-white font-display font-bold text-base rounded-xl shadow-cartoon-primary">
+              REPLAY
+            </button>
+            <button class="btn-cartoon flex-1 py-3 bg-accent text-ink font-display font-bold text-base rounded-xl shadow-cartoon-accent">
+              NEXT ➔
+            </button>
+          </div>
+        </div>
+
+        <!-- Game Over Modal -->
+        <div class="bg-white border-4 border-ink rounded-3xl p-6 shadow-cartoon-lg text-center space-y-4 relative overflow-hidden">
+          <div class="inline-block px-4 py-1 bg-gameError text-white font-display font-bold text-sm uppercase border-2 border-ink rounded-full shadow-cartoon-sm mb-2">
+            PIPE BURST!
+          </div>
+          <div class="text-5xl my-2">💦</div>
+          <h3 class="text-2xl font-display font-bold text-gameError">LEAK DETECTED!</h3>
+          <p class="text-ink-light text-sm font-bold">The liquid spilled before reaching the finish drain.</p>
+
+          <div class="pt-2 flex gap-3">
+            <button class="btn-cartoon w-full py-3 bg-brand text-white font-display font-bold text-base rounded-xl shadow-cartoon-primary">
+              TRY AGAIN ↺
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 5. LIVE GAME MOCKUP -->
+    <section id="content-mockup" class="tab-content hidden">
+      <div class="bg-white border-4 border-ink rounded-3xl p-6 shadow-cartoon-lg">
+        <div class="flex justify-between items-center mb-6 border-b-4 border-brand-bg pb-4">
+          <div>
+            <h2 class="text-2xl font-display font-bold text-brand uppercase">Live Gameplay Preview</h2>
+            <p class="text-ink-light text-sm">Interactive demo showing the actual pipe puzzle layout.</p>
+          </div>
+          <button onclick="resetGameMockup()" class="btn-cartoon px-4 py-2 bg-accent text-ink font-display font-bold text-sm rounded-xl shadow-cartoon-accent">
+            ↺ RESET GRID
+          </button>
+        </div>
+
+        <!-- Simulated Mobile Game Screen Frame -->
+        <div class="max-w-md mx-auto bg-brand-bg border-4 border-ink rounded-3xl p-4 shadow-cartoon-lg relative">
+          
+          <!-- Game HUD -->
+          <div class="bg-white border-3 border-ink rounded-2xl p-3 mb-4 flex justify-between items-center shadow-cartoon-sm">
+            <div>
+              <p class="text-xs font-bold text-ink-light">LEVEL 01</p>
+              <p class="font-display font-bold text-brand text-sm">FLOW IN: <span id="flow-timer" class="text-gameError">5s</span></p>
+            </div>
+            
+            <!-- Stack Preview -->
+            <div class="flex items-center gap-2">
+              <span class="font-display font-bold text-xs text-ink">TOP PIECE:</span>
+              <div id="top-stack-piece" class="w-10 h-10 bg-accent border-2 border-ink rounded-xl flex items-center justify-center font-bold text-xl shadow-cartoon-accent">
+                ═
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive 4x4 Grid -->
+          <div class="grid grid-cols-4 gap-2 bg-brand-soft border-3 border-ink p-3 rounded-2xl">
+            
+            <!-- Cell 0: Start Valve -->
+            <div class="h-16 bg-white border-2 border-ink rounded-xl flex items-center justify-center font-bold text-xl shadow-sm relative">
+              <span class="absolute top-1 left-1 text-[9px] font-bold text-accent-dark">START</span>
+              🚰
+            </div>
+
+            <!-- Cell 1 -->
+            <button onclick="placePipe(1)" id="cell-1" class="pipe-grid-cell h-16 bg-white border-2 border-ink rounded-xl flex items-center justify-center font-bold text-2xl hover:bg-brand-soft transition">
+              
+            </button>
+
+            <!-- Cell 2 -->
+            <button onclick="placePipe(2)" id="cell-2" class="pipe-grid-cell h-16 bg-white border-2 border-ink rounded-xl flex items-center justify-center font-bold text-2xl hover:bg-brand-soft transition">
+              
+            </button>
+
+            <!-- Cell 3 -->
+            <button onclick="placePipe(3)" id="cell-3" class="pipe-grid-cell h-16 bg-white border-2 border-ink rounded-xl flex items-center justify-center font-bold text-2xl hover:bg-brand-soft transition">
+              
+            </button>
+
+            <!-- Cell 4 -->
+            <button onclick="placePipe(4)" id="cell-4" class="pipe-grid-cell h-16 bg-white border-2 border-ink rounded-xl flex items-center justify-center font-bold text-2xl hover:bg-brand-soft transition">
+              
+            </button>
+
+            <!-- Cell 5 (Reservoir pre-placed) -->
+            <div class="h-16 bg-purple-100 border-2 border-reservoir rounded-xl flex flex-col items-center justify-center shadow-sm">
+              <span class="text-xs">🌀</span>
+              <span class="text-[9px] font-bold text-reservoir">SLOW</span>
+            </div>
+
+            <!-- Cell 6 -->
+            <button onclick="placePipe(6)" id="cell-6" class="pipe-grid-cell h-16 bg-white border-2 border-ink rounded-xl flex items-center justify-center font-bold text-2xl hover:bg-brand-soft transition">
+              
+            </button>
+
+            <!-- Cell 7 -->
+            <button onclick="placePipe(7)" id="cell-7" class="pipe-grid-cell h-16 bg-white border-2 border-ink rounded-xl flex items-center justify-center font-bold text-2xl hover:bg-brand-soft transition">
+              
+            </button>
+
+            <!-- Cell 8 -->
+            <button onclick="placePipe(8)" id="cell-8" class="pipe-grid-cell h-16 bg-white border-2 border-ink rounded-xl flex items-center justify-center font-bold text-2xl hover:bg-brand-soft transition">
+              
+            </button>
+
+            <!-- Cell 9 -->
+            <button onclick="placePipe(9)" id="cell-9" class="pipe-grid-cell h-16 bg-white border-2 border-ink rounded-xl flex items-center justify-center font-bold text-2xl hover:bg-brand-soft transition">
+              
+            </button>
+
+            <!-- Cell 10 -->
+            <button onclick="placePipe(10)" id="cell-10" class="pipe-grid-cell h-16 bg-white border-2 border-ink rounded-xl flex items-center justify-center font-bold text-2xl hover:bg-brand-soft transition">
+              
+            </button>
+
+            <!-- Cell 11: Finish Drain -->
+            <div class="h-16 bg-green-100 border-2 border-gameSuccess rounded-xl flex items-center justify-center font-bold text-xl shadow-sm relative">
+              <span class="absolute top-1 right-1 text-[9px] font-bold text-gameSuccess">EXIT</span>
+              🏁
+            </div>
+
+          </div>
+
+          <!-- Controls Help -->
+          <p class="text-center text-xs font-bold text-ink-light mt-3">
+            Tap any empty cell to place the top piece from your stack!
+          </p>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Interactive JavaScript Logic -->
+  <script>
+    // Tab switching controller
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-brand', 'text-white', 'shadow-cartoon-primary', 'bg-accent', 'shadow-cartoon-accent');
+        btn.classList.add('bg-white', 'text-ink', 'shadow-cartoon');
+      });
+
+      const activeContent = document.getElementById(`content-${tabName}`);
+      const activeTab = document.getElementById(`tab-${tabName}`);
+
+      if (activeContent) activeContent.classList.remove('hidden');
+      if (activeTab) {
+        activeTab.classList.remove('bg-white', 'text-ink', 'shadow-cartoon');
+        if (tabName === 'mockup') {
+          activeTab.classList.add('bg-accent', 'text-ink', 'shadow-cartoon-accent');
+        } else {
+          activeTab.classList.add('bg-brand', 'text-white', 'shadow-cartoon-primary');
+        }
+      }
+    }
+
+    // Mini Pipe placement gameplay simulator logic
+    const pipeTypes = ['═', '║', '╔', '╗', '╚', '╝', '╬'];
+    let currentTopPiece = '═';
+
+    function getRandomPipe() {
+      return pipeTypes[Math.floor(Math.random() * pipeTypes.length)];
+    }
+
+    function placePipe(cellId) {
+      const cell = document.getElementById(`cell-${cellId}`);
+      if (cell && !cell.textContent.trim()) {
+        cell.textContent = currentTopPiece;
+        cell.classList.add('bg-accent-soft', 'text-brand-dark');
+        
+        // Generate new top piece
+        currentTopPiece = getRandomPipe();
+        document.getElementById('top-stack-piece').textContent = currentTopPiece;
+      }
+    }
+
+    function resetGameMockup() {
+      for (let i = 1; i <= 10; i++) {
+        const cell = document.getElementById(`cell-${i}`);
+        if (cell) {
+          cell.textContent = '';
+          cell.classList.remove('bg-accent-soft', 'text-brand-dark');
+        }
+      }
+      currentTopPiece = '═';
+      document.getElementById('top-stack-piece').textContent = currentTopPiece;
+    }
+  </script>
+</body>
+</html>

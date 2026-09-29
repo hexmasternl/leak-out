@@ -33,9 +33,9 @@
 
 ## 5. Sample levels
 
-- [ ] 5.1 Add level files `level_001.json` to `level_003.json` in `app/src/main/assets/levels/`, with increasing difficulty; level 1 relies on defaults, and cross and reservoir are enabled through weights from level 2 or 3
-- [ ] 5.2 Pass the `app/src/main/assets/levels` path to the `core` test task as a system property, and add a parameterized test that parses and validates every bundled level file with no errors
-- [ ] 5.3 Add a test that the bundled set has no duplicate ids
+- [x] 5.1 Add level files `level_001.json` to `level_003.json` in `app/src/main/assets/levels/`, with increasing difficulty; level 1 relies on defaults, and cross and reservoir are enabled through weights from level 2 or 3
+- [x] 5.2 Pass the `app/src/main/assets/levels` path to the `core` test task as a system property, and add a parameterized test that parses and validates every bundled level file with no errors
+- [x] 5.3 Add a test that the bundled set has no duplicate ids
 
 ## 6. Wrap up
 

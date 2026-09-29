@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#122538"/><stop offset="0.5" stop-color="#0C1A2A"/><stop offset="1" stop-color="#07111C"/></linearGradient>
+  <linearGradient id="liquidV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5EE7FF"/><stop offset="0.5" stop-color="#19C6F2"/><stop offset="1" stop-color="#0A8DC2"/></linearGradient>
+  <linearGradient id="brass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFCF5C"/><stop offset="1" stop-color="#F5A623"/></linearGradient>
+  <radialGradient id="brassR" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFCF5C"/><stop offset="1" stop-color="#C97A12"/></radialGradient>
+  <radialGradient id="floorGlow" cx="0.5" cy="0.95" r="0.75"><stop offset="0" stop-color="#19C6F2" stop-opacity="0.28"/><stop offset="1" stop-color="#19C6F2" stop-opacity="0"/></radialGradient>
+  <radialGradient id="edgeDark" cx="0.5" cy="0.5" r="0.72"><stop offset="0.55" stop-color="#07111C" stop-opacity="0"/><stop offset="1" stop-color="#03080E" stop-opacity="0.75"/></radialGradient>
+  <filter id="blur8" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="8"/></filter>
+  <filter id="blur20" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="20"/></filter>
+  <filter id="blur24" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="24"/></filter>
+  <clipPath id="squircle"><rect width="1024" height="1024" rx="228"/></clipPath>
+</defs>
+<rect width="1024" height="1024" rx="0" fill="url(#bg)"/>
+<g stroke="#ffffff" stroke-opacity="0.045" stroke-width="3" clip-path="url(#squircle)"><path d="M171,0 V1024" /><path d="M0,171 H1024" /><path d="M341,0 V1024" /><path d="M0,341 H1024" /><path d="M512,0 V1024" /><path d="M0,512 H1024" /><path d="M683,0 V1024" /><path d="M0,683 H1024" /><path d="M853,0 V1024" /><path d="M0,853 H1024" /></g>
+<rect width="1024" height="1024" rx="0" fill="url(#floorGlow)"/>
+<rect width="1024" height="1024" rx="0" fill="url(#edgeDark)"/>
+</svg>

@@ -21,13 +21,13 @@
 - [x] 4.2 Implement title composable: "LEAK OUT" large, centered, outlined with drop shadow, scaled to available size
 - [x] 4.3 Implement `WelcomeScreen(onPlay, onSettings, onExit)` with title centered and Play / Settings / Exit buttons below in that order
 - [x] 4.4 Handle short landscape heights via `BoxWithConstraints` scaling and safe-drawing insets/cutouts
-- [ ] 4.5 Enable edge-to-edge / immersive mode in `MainActivity`
+- [x] 4.5 Enable edge-to-edge / immersive mode in `MainActivity`
 - [x] 4.6 Add `@Preview`s for a standard (e.g. 800×360dp) and small (640×320dp) landscape size
 
 ## 5. Wiring
 
-- [ ] 5.1 Set `WelcomeScreen` as the content of `MainActivity`
-- [ ] 5.2 Exit calls `finishAffinity()`; Play and Settings are stubbed callbacks (TODO for future screens)
+- [x] 5.1 Set `WelcomeScreen` as the content of `MainActivity`
+- [x] 5.2 Exit calls `finishAffinity()`; Play and Settings are stubbed callbacks (TODO for future screens)
 
 ## 6. Tests and docs
 

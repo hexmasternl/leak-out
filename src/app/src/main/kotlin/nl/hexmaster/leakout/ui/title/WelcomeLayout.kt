@@ -27,8 +27,8 @@ data class WelcomeLayout(
         const val TITLE_LINE_HEIGHT = 1.1f
 
         /**
-         * "LEAK OUT" in Fredoka Bold with its outline measures a little under 5 em wide; 5.2 leaves
-         * margin for the stroke and the drop shadow.
+         * "LEAK OUT" in Wendy One with the wordmark's letter spacing measures about 4.8 em wide;
+         * 5.2 leaves margin for the glow.
          */
         const val TITLE_WIDTH_EM = 5.2f
         const val BUTTON_SHADOW_DP = 6f

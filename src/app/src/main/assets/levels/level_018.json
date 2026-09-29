@@ -1,0 +1,11 @@
+{
+  "id": 18,
+  "name": "The Maze",
+  "grid": { "columns": 14, "rows": 10 },
+  "start":  { "x": 3, "y": 0, "openSide": "BOTTOM" },
+  "finish": { "x": 12, "y": 9, "openSide": "TOP" },
+  "blocked": [ { "x": 10, "y": 0 }, { "x": 4, "y": 1 }, { "x": 10, "y": 1 }, { "x": 11, "y": 1 }, { "x": 1, "y": 3 }, { "x": 5, "y": 3 }, { "x": 8, "y": 3 }, { "x": 8, "y": 5 }, { "x": 9, "y": 5 }, { "x": 2, "y": 7 }, { "x": 3, "y": 9 } ],
+  "flow": { "initialDelayMs": 12500, "cellsPerSecond": 0.75 },
+  "stack": { "weights": { "X": 2, "RES": 0 } },
+  "stars": { "one": 200, "two": 320, "three": 480 }
+}

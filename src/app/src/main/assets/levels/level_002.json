@@ -1,0 +1,11 @@
+{
+  "id": 2,
+  "name": "Around the Corner",
+  "grid": { "columns": 8, "rows": 6 },
+  "start":  { "x": 3, "y": 0, "openSide": "BOTTOM" },
+  "finish": { "x": 5, "y": 5, "openSide": "TOP" },
+  "blocked": [],
+  "flow": { "initialDelayMs": 19500, "cellsPerSecond": 0.4 },
+  "stack": { "weights": { "X": 0, "RES": 0 } },
+  "stars": { "one": 70, "two": 110, "three": 160 }
+}

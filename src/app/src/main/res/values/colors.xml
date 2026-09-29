@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Deep Flow surface.deep. Only the Deep value lives here, so XML themes (launch window,
+         splash) stay dark whatever in-app theme is selected. -->
+    <color name="surface_deep">#FF0C1A2A</color>
+</resources>

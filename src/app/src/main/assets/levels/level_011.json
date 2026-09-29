@@ -1,0 +1,11 @@
+{
+  "id": 11,
+  "name": "Pressure Rising",
+  "grid": { "columns": 11, "rows": 9 },
+  "start":  { "x": 1, "y": 1, "openSide": "BOTTOM" },
+  "finish": { "x": 9, "y": 7, "openSide": "TOP" },
+  "blocked": [],
+  "flow": { "initialDelayMs": 15500, "cellsPerSecond": 0.6 },
+  "stack": { "weights": { "X": 0, "RES": 0 } },
+  "stars": { "one": 140, "two": 230, "three": 340 }
+}

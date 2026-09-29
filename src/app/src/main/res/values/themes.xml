@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark window background matches the splash and welcome art, so no white flash before the
+         first frame or on recreation. -->
+    <style name="Theme.LeakOut" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/surface_deep</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- System splash (core-splashscreen backports it to API 26-30): a plain surface_deep screen
+         with no visible icon. installSplashScreen() switches to postSplashScreenTheme. -->
+    <style name="Theme.LeakOut.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/surface_deep</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_blank</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/surface_deep</item>
+        <item name="postSplashScreenTheme">@style/Theme.LeakOut</item>
+    </style>
+</resources>

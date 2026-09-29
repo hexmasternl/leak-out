@@ -14,9 +14,9 @@
 
 ## 3. JSON parsing
 
-- [ ] 3.1 Add serializable DTOs matching the JSON shape in the design: required fields without defaults, optional fields defaulting to `LevelDefaults`, unknown keys rejected (also inside `stack.weights`)
-- [ ] 3.2 Implement `LevelParser.parse(text)` that maps DTOs to the `Level` model, trims the name, and returns field-named errors for missing fields, wrong types, unknown keys, invalid open sides and malformed JSON
-- [ ] 3.3 Test parsing of a complete level, a minimal level (all defaults), single-field overrides, a single-weight override, and each parse failure scenario in the spec
+- [x] 3.1 Add serializable DTOs matching the JSON shape in the design: required fields without defaults, optional fields defaulting to `LevelDefaults`, unknown keys rejected (also inside `stack.weights`)
+- [x] 3.2 Implement `LevelParser.parse(text)` that maps DTOs to the `Level` model, trims the name, and returns field-named errors for missing fields, wrong types, unknown keys, invalid open sides and malformed JSON
+- [x] 3.3 Test parsing of a complete level, a minimal level (all defaults), single-field overrides, a single-weight override, and each parse failure scenario in the spec
 
 ## 4. Validation
 

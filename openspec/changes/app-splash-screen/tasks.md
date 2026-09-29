@@ -22,15 +22,15 @@
 
 ## 4. In-app splash screen and transition
 
-- [ ] 4.1 Implement `ui/splash/SplashScreen.kt`: a full-size `surface.deep` background (Deep palette forced) with `LiquidWordmark("LEAK\nOUT")` centred both ways
-- [ ] 4.2 In `MainActivity`, call `enableEdgeToEdge` with dark, transparent status and navigation bar styles
-- [ ] 4.3 Add splash → welcome state held with `rememberSaveable`, a `LaunchedEffect` enforcing the 1 200 ms minimum, and a 320 ms `Crossfade` into `WelcomeScreen`
-- [ ] 4.4 Reduced motion: detect `ANIMATOR_DURATION_SCALE == 0` and use `snap()` instead of the fade, keeping the static glow
-- [ ] 4.5 Add `@Preview`s at 800×360 dp and 640×320 dp, plus one with font scale 1.3
+- [x] 4.1 Implement `ui/splash/SplashScreen.kt`: a full-size `surface.deep` background (Deep palette forced) with `LiquidWordmark("LEAK\nOUT")` centred both ways
+- [x] 4.2 In `MainActivity`, call `enableEdgeToEdge` with dark, transparent status and navigation bar styles
+- [x] 4.3 Add splash → welcome state held with `rememberSaveable`, a `LaunchedEffect` enforcing the 1 200 ms minimum, and a 320 ms `Crossfade` into `WelcomeScreen`
+- [x] 4.4 Reduced motion: detect `ANIMATOR_DURATION_SCALE == 0` and use `snap()` instead of the fade, keeping the static glow
+- [x] 4.5 Add `@Preview`s at 800×360 dp and 640×320 dp, plus one with font scale 1.3
 
 ## 5. Tests and verification
 
-- [ ] 5.1 JVM unit test for the minimum-duration logic (remaining delay = `max(0, 1200 − elapsed)`), extracted to a small pure function
+- [x] 5.1 JVM unit test for the minimum-duration logic (remaining delay = `max(0, 1200 − elapsed)`), extracted to a small pure function
 - [ ] 5.2 Compose UI test: the splash shows "LEAK" and "OUT" (as one centred text node), then the welcome screen appears after the minimum duration (using the test clock)
 - [ ] 5.3 Compose UI test: after recreating the activity once the welcome screen is shown, the splash is not shown again
 - [ ] 5.4 Compose UI test: with animations disabled, the welcome screen replaces the splash without a cross-fade

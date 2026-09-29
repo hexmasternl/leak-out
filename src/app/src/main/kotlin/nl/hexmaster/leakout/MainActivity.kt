@@ -1,13 +1,16 @@
 package nl.hexmaster.leakout
 
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import nl.hexmaster.leakout.ui.splash.SplashGate
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import nl.hexmaster.leakout.ui.title.WelcomeScreen
 
@@ -17,15 +20,21 @@ class MainActivity : ComponentActivity() {
         // dismissed on the first frame, which is the Compose splash on the same colour.
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // Dark styles: transparent bars with light icons over surface.deep whenever they show.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+        )
         hideSystemBars()
         setContent {
             LeakOutTheme {
-                WelcomeScreen(
-                    onPlay = { /* TODO: navigate to level select / game once those screens exist. */ },
-                    onSettings = { /* TODO: navigate to settings once that screen exists. */ },
-                    onExit = { finishAffinity() },
-                )
+                SplashGate {
+                    WelcomeScreen(
+                        onPlay = { /* TODO: navigate to level select / game once those screens exist. */ },
+                        onSettings = { /* TODO: navigate to settings once that screen exists. */ },
+                        onExit = { finishAffinity() },
+                    )
+                }
             }
         }
     }

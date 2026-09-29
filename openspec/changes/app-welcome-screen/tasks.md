@@ -1,11 +1,11 @@
 ## 1. Project scaffolding
 
-- [ ] 1.1 Create the Android `app` module (Gradle Kotlin DSL, version catalog, Compose + Material 3, min SDK 26) if not present
-- [ ] 1.2 Add `MainActivity` and `AndroidManifest.xml` with launcher intent filter
+- [x] 1.1 Create the Android `app` module (Gradle Kotlin DSL, version catalog, Compose + Material 3, min SDK 26) if not present
+- [x] 1.2 Add `MainActivity` and `AndroidManifest.xml` with launcher intent filter
 
 ## 2. Landscape orientation
 
-- [ ] 2.1 Set `android:screenOrientation="sensorLandscape"` on `MainActivity` in the manifest
+- [x] 2.1 Set `android:screenOrientation="sensorLandscape"` on `MainActivity` in the manifest
 - [ ] 2.2 Verify on device/emulator: launches landscape while held in portrait, never rotates to portrait, flips between both landscape sides
 
 ## 3. Theme and components

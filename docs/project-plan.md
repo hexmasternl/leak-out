@@ -23,7 +23,7 @@ This document is the working plan for building the game from an empty repository
 
 ### 1.2 The board
 
-- Rectangular grid of `columns × rows` cells, portrait orientation. Default 7 × 9; configurable per level.
+- Rectangular grid of `columns × rows` cells. The app runs in landscape only (see 1.11), so the board layout must fit a landscape screen; revisit the default 7 × 9 when the game screen is built. Configurable per level.
 - Each cell is one of:
   - **Empty** – a pipe can be placed here.
   - **Pipe** – holds one pipe section and its fill state.
@@ -115,6 +115,8 @@ A **countdown** for the initial delay is shown on screen. Optionally the player 
 Difficulty grows through the level definitions, not through code: bigger grids, further apart start/finish, shorter initial delay, faster flow, blocked cells, fewer reservoirs.
 
 ### 1.11 Screens
+
+All screens are landscape only: `MainActivity` uses `android:screenOrientation="sensorLandscape"`, so the app never shows portrait and follows the sensor between both landscape sides.
 
 1. **Title** – play, level select, settings (sound on/off).
 2. **Level select** – grid of level tiles.

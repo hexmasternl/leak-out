@@ -18,11 +18,11 @@
 ## 4. Welcome screen
 
 - [x] 4.1 Implement `WelcomeBackground` composable showing the prepared `assets/welcome` illustration (bundled as a downscaled drawable, `ContentScale.Crop`) so it fills any landscape size
-- [ ] 4.2 Implement title composable: "LEAK OUT" large, centered, outlined with drop shadow, scaled to available size
-- [ ] 4.3 Implement `WelcomeScreen(onPlay, onSettings, onExit)` with title centered and Play / Settings / Exit buttons below in that order
-- [ ] 4.4 Handle short landscape heights via `BoxWithConstraints` scaling and safe-drawing insets/cutouts
+- [x] 4.2 Implement title composable: "LEAK OUT" large, centered, outlined with drop shadow, scaled to available size
+- [x] 4.3 Implement `WelcomeScreen(onPlay, onSettings, onExit)` with title centered and Play / Settings / Exit buttons below in that order
+- [x] 4.4 Handle short landscape heights via `BoxWithConstraints` scaling and safe-drawing insets/cutouts
 - [ ] 4.5 Enable edge-to-edge / immersive mode in `MainActivity`
-- [ ] 4.6 Add `@Preview`s for a standard (e.g. 800×360dp) and small (640×320dp) landscape size
+- [x] 4.6 Add `@Preview`s for a standard (e.g. 800×360dp) and small (640×320dp) landscape size
 
 ## 5. Wiring
 

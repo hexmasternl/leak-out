@@ -7,12 +7,12 @@
 
 ## 2. System splash
 
-- [ ] 2.1 Add `surface_deep` (`#0C1A2A`) to `res/values/colors.xml`
-- [ ] 2.2 Add a transparent vector drawable `ic_splash_blank.xml` for the splash icon
-- [ ] 2.3 Define `Theme.LeakOut.Splash` (parent `Theme.SplashScreen`) with `windowSplashScreenBackground=@color/surface_deep`, `windowSplashScreenAnimatedIcon=@drawable/ic_splash_blank`, `windowSplashScreenIconBackgroundColor=@color/surface_deep` and `postSplashScreenTheme` set to the app theme
-- [ ] 2.4 Set the app theme's `android:windowBackground` to `@color/surface_deep`
-- [ ] 2.5 Set `android:theme="@style/Theme.LeakOut.Splash"` on `MainActivity` in `AndroidManifest.xml`
-- [ ] 2.6 Call `installSplashScreen()` in `MainActivity.onCreate` before `super.onCreate`
+- [x] 2.1 Add `surface_deep` (`#0C1A2A`) to `res/values/colors.xml`
+- [x] 2.2 Add a transparent vector drawable `ic_splash_blank.xml` for the splash icon
+- [x] 2.3 Define `Theme.LeakOut.Splash` (parent `Theme.SplashScreen`) with `windowSplashScreenBackground=@color/surface_deep`, `windowSplashScreenAnimatedIcon=@drawable/ic_splash_blank`, `windowSplashScreenIconBackgroundColor=@color/surface_deep` and `postSplashScreenTheme` set to the app theme
+- [x] 2.4 Set the app theme's `android:windowBackground` to `@color/surface_deep`
+- [x] 2.5 Set `android:theme="@style/Theme.LeakOut.Splash"` on `MainActivity` in `AndroidManifest.xml`
+- [x] 2.6 Call `installSplashScreen()` in `MainActivity.onCreate` before `super.onCreate`
 
 ## 3. Liquid wordmark
 

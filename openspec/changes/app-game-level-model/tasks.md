@@ -6,11 +6,11 @@
 
 ## 2. Level model
 
-- [ ] 2.1 Add a `Side` enum with `LEFT`, `RIGHT`, `TOP`, `BOTTOM` and helpers for the opposite side and the cell offset (dx, dy)
-- [ ] 2.2 Add immutable `Position` (x, y), `Endpoint` (position plus `openSide`, with a `facingCell`), `GridSize`, `FlowSettings`, `StackSettings` (visible size and a weight per section id), `PlacementRules` and `StarBenchmarks`
-- [ ] 2.3 Add the immutable `Level` class with id, name, grid, start, finish, blocked set, flow, stack, rules and star benchmarks, plus `isAllowed(section)` derived from the weight
-- [ ] 2.4 Add a `LevelDefaults` object holding every default from the design (reservoir speed factor 0.3, speed ramp 0.0, visible size 5, stack weights, allow replace, replace penalty 500 ms)
-- [ ] 2.5 Implement `starsFor(points)` returning 0 to 3 and cover the boundary cases from the spec, including a 0-star win
+- [x] 2.1 Add a `Side` enum with `LEFT`, `RIGHT`, `TOP`, `BOTTOM` and helpers for the opposite side and the cell offset (dx, dy)
+- [x] 2.2 Add immutable `Position` (x, y), `Endpoint` (position plus `openSide`, with a `facingCell`), `GridSize`, `FlowSettings`, `StackSettings` (visible size and a weight per section id), `PlacementRules` and `StarBenchmarks`
+- [x] 2.3 Add the immutable `Level` class with id, name, grid, start, finish, blocked set, flow, stack, rules and star benchmarks, plus `isAllowed(section)` derived from the weight
+- [x] 2.4 Add a `LevelDefaults` object holding every default from the design (reservoir speed factor 0.3, speed ramp 0.0, visible size 5, stack weights, allow replace, replace penalty 500 ms)
+- [x] 2.5 Implement `starsFor(points)` returning 0 to 3 and cover the boundary cases from the spec, including a 0-star win
 
 ## 3. JSON parsing
 

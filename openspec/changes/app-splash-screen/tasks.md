@@ -31,8 +31,8 @@
 ## 5. Tests and verification
 
 - [x] 5.1 JVM unit test for the minimum-duration logic (remaining delay = `max(0, 1200 − elapsed)`), extracted to a small pure function
-- [ ] 5.2 Compose UI test: the splash shows "LEAK" and "OUT" (as one centred text node), then the welcome screen appears after the minimum duration (using the test clock)
-- [ ] 5.3 Compose UI test: after recreating the activity once the welcome screen is shown, the splash is not shown again
-- [ ] 5.4 Compose UI test: with animations disabled, the welcome screen replaces the splash without a cross-fade
+- [x] 5.2 Compose UI test: the splash shows "LEAK" and "OUT" (as one centred text node), then the welcome screen appears after the minimum duration (using the test clock)
+- [x] 5.3 Compose UI test: after recreating the activity once the welcome screen is shown, the splash is not shown again
+- [x] 5.4 Compose UI test: with animations disabled, the welcome screen replaces the splash without a cross-fade
 - [ ] 5.5 Manual check on API 31+ and API 26–30 emulators: a dark `#0C1A2A` launch with no icon, no white flash, a seamless handoff to the wordmark, and dark system bars
 - [ ] 5.6 Manual check with the Daylight theme selected: the splash still uses the Deep palette

@@ -33,4 +33,4 @@
 
 - [x] 6.1 Compose UI test: Play, Settings, Exit are displayed and each click invokes exactly its callback once
 - [x] 6.2 Compose UI test: title text is displayed
-- [ ] 6.3 Update `docs/project-plan.md` orientation statements (sections 1.2 and 1.11) to landscape
+- [x] 6.3 Update `docs/project-plan.md` orientation statements (sections 1.2 and 1.11) to landscape

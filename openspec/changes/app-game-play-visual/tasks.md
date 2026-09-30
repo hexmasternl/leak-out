@@ -22,11 +22,11 @@
 - [x] 4.1 `PlayingField` reads the library with `rememberPipeArtLibrary()` and keeps one `LiquidScratch`; `drawCell` draws a `Cell.Pipe` with `drawPipe(library.prepared(section), rect)` inside `clipRect(rect)`, over the existing cell background and tint
 - [x] 4.2 Add a test-only `pipeSection` semantics property on placed field cells
 - [x] 4.3 Instrumented tests in `PlayingFieldTest`: a placed section's cell reports its `pipeSection`; a placed `H` shows the steel body band across the cell centre; after zooming in, the art still fills the (larger) cell (written and compiled; emulator run skipped at the user's request)
-- [ ] 4.4 Existing game screen tests (`GameScreenTest`, `GameEngineScreenTest`, `LevelLostTest`, `LevelCompleteTest`) still pass
+- [x] 4.4 Existing game screen tests (`GameScreenTest`, `GameEngineScreenTest`, `LevelLostTest`, `LevelCompleteTest`) still pass (skipped at the user's request: not run on the emulator)
 
 ## 5. Docs and verification
 
 - [x] 5.1 Update `docs/pipe-assets.md`: the `<id>-glass.svg` overlay files, their `glass` group, and the layer order under → liquid → over → glass; mention that the game and the Pipe Lab draw the same art
-- [ ] 5.2 Run `./gradlew :app:testDebugUnitTest` and `./gradlew :core:test` from `src/` and make sure they pass
-- [ ] 5.3 Run the affected instrumented tests (`PipeTileTest`, `PipeLabScreenTest`, `PlayingFieldTest`, `GameScreenTest` and the other game screen tests touched above) on the emulator and make sure they pass
-- [ ] 5.4 Check the game and the Pipe Lab on the emulator: stack, dragged copy and placed pipes show the new art with the glass
+- [x] 5.2 Run `./gradlew :app:testDebugUnitTest` and `./gradlew :core:test` from `src/` and make sure they pass (app 246 and core 309 tests pass)
+- [x] 5.3 Run the affected instrumented tests (`PipeTileTest`, `PipeLabScreenTest`, `PlayingFieldTest`, `GameScreenTest` and the other game screen tests touched above) on the emulator and make sure they pass (skipped at the user's request: only PipeTileTest was run, 9/9 pass)
+- [x] 5.4 Check the game and the Pipe Lab on the emulator: stack, dragged copy and placed pipes show the new art with the glass (skipped at the user's request)

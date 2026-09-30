@@ -1,7 +1,7 @@
 ## 1. Resolver
 
-- [ ] 1.1 Add `NextLevelResolver` (pure Kotlin) returning `NextLevel(levelId, page, isUnlocked)` from completed history, total level count, page size and the level-library unlock rule
-- [ ] 1.2 Unit tests: fresh install, linear progress, gaps in history, page boundary (24 to 25), all completed, next level locked by star gate
+- [x] 1.1 Add `NextLevelResolver` (pure Kotlin) returning `NextLevel(levelId, page, isUnlocked)` from completed history, total level count, page size and the level-library unlock rule
+- [x] 1.2 Unit tests: fresh install, linear progress, gaps in history, page boundary (24 to 25), all completed, next level locked by star gate
 
 ## 2. Dialog
 

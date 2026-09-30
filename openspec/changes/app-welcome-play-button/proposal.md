@@ -5,7 +5,7 @@ The welcome screen's **Play** button currently only emits a stubbed navigation e
 ## What Changes
 
 - Tapping **Play** on the welcome screen opens a modal dialog with two actions: **Continue** and **Select level**. The dialog can be dismissed (tap outside or back) without navigating.
-- **Continue** starts the next level after the highest completed level, where "completed" means a history record exists (1-3 stars). With no completed level, Continue starts level 1.
+- **Continue** starts the next level after the highest completed level, where "completed" means a history record exists (0-3 stars, as the level library counts it). With no completed level, Continue starts level 1.
 - If the next level does not exist (all levels completed), Continue starts the last level. If the next level is still locked (first level of a page whose star threshold is not met), Continue opens the level library on that page instead of starting a level.
 - **Select level** opens the level library (24 levels per page, leafable) on the page that contains the next level to be played.
 - The welcome screen's Play event now opens the dialog instead of navigating directly.

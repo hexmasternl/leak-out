@@ -28,11 +28,11 @@
 
 ## 5. App: level lost dialog and screen wiring
 
-- [ ] 5.1 Add string resources: "Leaked!", "The pipe is leaking. Level lost.", "Score %1$s", "Restart", "Exit" and the pane title "Level lost".
-- [ ] 5.2 Add `LevelLostDialog(score, onRestart, onExit)` as a Compose `Dialog` with `dismissOnClickOutside = false` and `dismissOnBackPress = true` (`onDismissRequest = onExit`), in the design-system card: red Fredoka title, a small leaking pipe drawing, the message, the score, Restart as the primary `CartoonButton`, Exit in the error-red style, both at least 48 dp high, and `paneTitle` "Level lost".
-- [ ] 5.3 In `GameScreen`: show `LevelLostDialog` while `showLostDialog`; Restart calls `session.restart()`, Exit calls `onExit`; cancel the drag when `isStopped` becomes true; pass `enabled = !session.isStopped` to `StackPanel`; disable the cog wheel and hide the fast forward button while lost.
-- [ ] 5.4 In `GameScreen`: limit the pause `BackHandler` to `outcome is Playing`, add a `BackHandler` that does nothing during the leak effect, and make `ON_STOP` call `skipLeakEffect()` when lost and `pause()` otherwise.
-- [ ] 5.5 Add a `@Preview` of `LevelLostDialog` with a score of 85.
+- [x] 5.1 Add string resources: "Leaked!", "The pipe is leaking. Level lost.", "Score %1$s", "Restart", "Exit" and the pane title "Level lost".
+- [x] 5.2 Add `LevelLostDialog(score, onRestart, onExit)` as a Compose `Dialog` with `dismissOnClickOutside = false` and `dismissOnBackPress = true` (`onDismissRequest = onExit`), in the design-system card: red Fredoka title, a small leaking pipe drawing, the message, the score, Restart as the primary `CartoonButton`, Exit in the error-red style, both at least 48 dp high, and `paneTitle` "Level lost".
+- [x] 5.3 In `GameScreen`: show `LevelLostDialog` while `showLostDialog`; Restart calls `session.restart()`, Exit calls `onExit`; cancel the drag when `isStopped` becomes true; pass `enabled = !session.isStopped` to `StackPanel`; disable the cog wheel and hide the fast forward button while lost.
+- [x] 5.4 In `GameScreen`: limit the pause `BackHandler` to `outcome is Playing`, add a `BackHandler` that does nothing during the leak effect, and make `ON_STOP` call `skipLeakEffect()` when lost and `pause()` otherwise.
+- [x] 5.5 Add a `@Preview` of `LevelLostDialog` with a score of 85.
 
 ## 6. Tests and docs
 

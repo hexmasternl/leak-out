@@ -31,6 +31,14 @@
     <string name="pause_restart">Restart</string>
     <string name="pause_exit">Exit</string>
 
+    <!-- Level lost dialog -->
+    <string name="lost_title">Leaked!</string>
+    <string name="lost_message">The pipe is leaking. Level lost.</string>
+    <string name="lost_score">Score %1$s</string>
+    <string name="lost_restart">Restart</string>
+    <string name="lost_exit">Exit</string>
+    <string name="lost_pane_title">Level lost</string>
+
     <!-- Fast forward -->
     <string name="fast_forward">Fast forward</string>
     <string name="fast_forward_on">Fast forward on</string>

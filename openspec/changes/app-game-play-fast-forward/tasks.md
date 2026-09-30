@@ -28,18 +28,20 @@
   - pause and resume keep fast forward;
   - restart clears everything;
   - `elapsedMs` still advances by `dtMs`, not by 10 × `dtMs`.
+- [ ] 4.6 Add `stopFastForward()` (turns it off when not paused) and `toggleFastForward()` (start when off, stop when on). Unit test: toggling on and off switches `flowTimeScale` between 10 and 1, keeps the button shown while the route is complete, does nothing while paused, and placing works again after turning it off.
+- [ ] 4.7 Add the string resources `fast_forward_normal_speed` ("Normal speed"), change `fast_forward_on` to "Fast forward on", and add the `ic_slow.xml` vector drawable.
 
 ## 5. App: fast forward button
 
-- [ ] 5.1 Add `FastForwardButton(active, onClick, modifier)`: a 56 dp circular cartoon-style button with the icon, a pulse while not active, the filled accent style while active, the content description and state description, and the test tag `fast_forward`.
+- [ ] 5.1 Add `FastForwardButton(active, onClick, modifier)`: a 56 dp circular cartoon-style button. Not active: the brass fast forward button with a pulse and the description "Fast forward". Active: the liquid-blue slow button with the slow icon, no pulse, the description "Normal speed" and the state "Fast forward on". Test tag `fast_forward` in both states.
 - [ ] 5.2 Wrap `GameScreen`'s layout in a `Box` and place `FastForwardButton` with `align(Alignment.BottomEnd)` and 16 dp padding, inside `AnimatedVisibility(session.showFastForward)` with scale and fade in and out.
-- [ ] 5.3 Wire `onClick` to `session.startFastForward()` followed by `dragState.cancel()`, and set `StackPanel`'s `enabled` to `!session.paused && !session.fastForward`.
+- [ ] 5.3 Wire `onClick` to `session.toggleFastForward()`, followed by `dragState.cancel()` when fast forward is now on, and set `StackPanel`'s `enabled` to `!session.paused && !session.fastForward`.
 
 ## 6. Instrumented tests (emulator)
 
 - [ ] 6.1 With a scripted level and a seeded stack, placing the section that completes the route shows the button; its bounds end 16 dp from the right and bottom edges of the screen and are at least 56 dp square.
 - [ ] 6.2 Without a complete route, no button is shown. Replacing a route section so that the route breaks hides the button again.
-- [ ] 6.3 Tapping the button sets `flowTimeScale` to 10, shows the active state, and reports "On" to accessibility. Tapping it again changes nothing.
+- [ ] 6.3 Tapping the button sets `flowTimeScale` to 10 and shows the slow button ("Normal speed", state "Fast forward on"). Tapping the slow button sets `flowTimeScale` back to 1 and shows the fast forward button again, and placing works again.
 - [ ] 6.4 After fast forward is on: dragging the next section does nothing and no tile is highlighted; pan and pinch still move the field.
 - [ ] 6.5 Pause and resume keep fast forward on. Restart hides the button and sets `flowTimeScale` back to 1.
 - [ ] 6.6 Run `./gradlew :app:testDebugUnitTest :app:connectedDebugAndroidTest` on the emulator and record the results.
@@ -47,7 +49,7 @@
 ## 7. Wrap up
 
 - [ ] 7.1 Update `docs/project-plan.md`:
-  - section 1.8: once the route is complete, a fast forward button runs the countdown and the flow at 10x and locks placing;
+  - section 1.8: once the route is complete, a fast forward button runs the countdown and the flow at 10x and locks placing; it then becomes a slow button that restores the normal speed and unlocks placing;
   - section 1.11: the game screen has a fast forward button at the bottom right;
   - section 2.5: the flow step uses `dt × flowTimeScale` and loops over whole cells.
 - [ ] 7.2 Run `openspec validate app-game-play-fast-forward` and fix any issues.

@@ -1,15 +1,15 @@
 ## 1. Setup
 
-- [ ] 1.1 Check that `app-game-play-stack`, `app-game-play-hud`, `app-game-play-playing-field`, `app-game-play-fast-forward` and `app-game-play-points` are merged into `development` (`GameScreen`, `GameSession` with `pause`, `restart`, `elapsedMs` and `liquidExited`, `Board` and `Cell` in `core.board`, `PipeSection.exitFor`, `RouteTracer`, `PlayingField` with popups). If not, stop and merge them first.
+- [x] 1.1 Check that `app-game-play-stack`, `app-game-play-hud`, `app-game-play-playing-field`, `app-game-play-fast-forward` and `app-game-play-points` are merged into `development` (`GameScreen`, `GameSession` with `pause`, `restart`, `elapsedMs` and `liquidExited`, `Board` and `Cell` in `core.board`, `PipeSection.exitFor`, `RouteTracer`, `PlayingField` with popups). If not, stop and merge them first.
 
 ## 2. Core: leak rule
 
-- [ ] 2.1 Create the package `nl.hexmaster.leakout.core.flow` with `ChannelUse(position, channel)` and a helper that gives the channel a section uses for an entry side (horizontal or vertical for a cross, the single channel for every other section).
-- [ ] 2.2 Add `FlowStep.after(board, from, exit, usedChannels)` returning `Enter(next, entry)`, `Finish` or `Leak(at, side)`, as an exhaustive `when` over `Cell` without `else`.
-- [ ] 2.3 Unit test `FlowStep`: enter `H` from the left; reach the finish through its open side; leak into an empty tile, a blocked tile and the start tile; leak over each of the four grid edges; leak into `V` from the left; leak into a reservoir from above; leak into the finish from the wrong side; leak into a used cross channel from the opposite side; enter a cross on its free channel; the leak is reported at the tile left and the side left through.
-- [ ] 2.4 Unit test the start check: `after(board, start.position, start.openSide, emptySet())` leaks when the tile next to the start is empty and enters when it holds a matching section.
-- [ ] 2.5 Unit test that `FlowStep` and `RouteTracer` agree: for each scripted route board, following `FlowStep` from the start ends in `Finish` exactly when `RouteTracer` says the route is complete.
-- [ ] 2.6 Run `./gradlew :core:test` and check that everything passes.
+- [x] 2.1 Create the package `nl.hexmaster.leakout.core.flow` with `ChannelUse(position, channel)` and a helper that gives the channel a section uses for an entry side (horizontal or vertical for a cross, the single channel for every other section).
+- [x] 2.2 Add `FlowStep.after(board, from, exit, usedChannels)` returning `Enter(next, entry)`, `Finish` or `Leak(at, side)`, as an exhaustive `when` over `Cell` without `else`.
+- [x] 2.3 Unit test `FlowStep`: enter `H` from the left; reach the finish through its open side; leak into an empty tile, a blocked tile and the start tile; leak over each of the four grid edges; leak into `V` from the left; leak into a reservoir from above; leak into the finish from the wrong side; leak into a used cross channel from the opposite side; enter a cross on its free channel; the leak is reported at the tile left and the side left through.
+- [x] 2.4 Unit test the start check: `after(board, start.position, start.openSide, emptySet())` leaks when the tile next to the start is empty and enters when it holds a matching section.
+- [x] 2.5 Unit test that `FlowStep` and `RouteTracer` agree: for each scripted route board, following `FlowStep` from the start ends in `Finish` exactly when `RouteTracer` says the route is complete.
+- [x] 2.6 Run `./gradlew :core:test` and check that everything passes.
 
 ## 3. App: game session
 

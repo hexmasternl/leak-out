@@ -27,4 +27,4 @@
 - [x] 4.1 Call `recordCompletion` from the win path with the game score and stars derived from the level's star thresholds
 - [x] 4.2 Expose the `RecordResult` to the level-complete overlay so it can show "new best"
 - [x] 4.3 Make history available to level select for completed status, highscore and stars
-- [ ] 4.4 Update `docs/project-plan.md` section 2.10 to say per-level progress uses Room and DataStore holds settings only
+- [x] 4.4 Update `docs/project-plan.md` section 2.10 to say per-level progress uses Room and DataStore holds settings only

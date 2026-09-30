@@ -1,0 +1,172 @@
+package nl.hexmaster.leakout.core.level
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+class LevelParserTest {
+    private fun parsed(text: String): Level = assertIs<ParseResult.Success>(LevelParser.parse(text)).level
+
+    private fun failed(text: String): ParseError = assertIs<ParseResult.Failure>(LevelParser.parse(text)).error
+
+    @Test
+    fun `complete level is parsed with every value from the document`() {
+        val expected = TestLevels.valid(
+            flow = FlowSettings(12_000, 0.6, reservoirSpeedFactor = 0.25, speedRampPerCell = 0.02),
+            stack = StackSettings(
+                visibleSize = 4,
+                weights = mapOf(
+                    PipeSection.H to 4, PipeSection.V to 4,
+                    PipeSection.LT to 1, PipeSection.LB to 1, PipeSection.RT to 1, PipeSection.RB to 1,
+                    PipeSection.X to 1, PipeSection.RES to 2,
+                ),
+            ),
+            rules = PlacementRules(allowReplace = false, replacePenaltyMs = 750),
+        )
+        assertEquals(expected, parsed(TestLevels.FULL_JSON))
+    }
+
+    @Test
+    fun `minimal level gets all defaults`() {
+        val level = parsed(TestLevels.minimalJson())
+        assertEquals(0.3, level.flow.reservoirSpeedFactor)
+        assertEquals(0.0, level.flow.speedRampPerCell)
+        assertEquals(5, level.stack.visibleSize)
+        assertEquals(LevelDefaults.STACK_WEIGHTS, level.stack.weights)
+        assertEquals(true, level.rules.allowReplace)
+        assertEquals(500, level.rules.replacePenaltyMs)
+        assertEquals(emptyList(), level.blocked)
+    }
+
+    @Test
+    fun `single flow field is overridden and the rest keep their defaults`() {
+        val level = parsed(TestLevels.minimalJson(extraFlow = """, "reservoirSpeedFactor": 0.5"""))
+        assertEquals(0.5, level.flow.reservoirSpeedFactor)
+        assertEquals(LevelDefaults.SPEED_RAMP_PER_CELL, level.flow.speedRampPerCell)
+        assertEquals(StackSettings(), level.stack)
+        assertEquals(PlacementRules(), level.rules)
+    }
+
+    @Test
+    fun `single stack weight is overridden and the rest keep their defaults`() {
+        val level = parsed(TestLevels.minimalJson(extra = """, "stack": { "weights": { "X": 1 } }"""))
+        assertEquals(TestLevels.weights(PipeSection.X to 1), level.stack.weights)
+        assertEquals(LevelDefaults.VISIBLE_STACK_SIZE, level.stack.visibleSize)
+    }
+
+    @Test
+    fun `cross and reservoir are not allowed without a stack field`() {
+        val level = parsed(TestLevels.minimalJson())
+        assertEquals(false, level.isAllowed(PipeSection.X))
+        assertEquals(false, level.isAllowed(PipeSection.RES))
+        assertTrue(PipeSection.entries.filter { it.mandatory }.all(level::isAllowed))
+    }
+
+    @Test
+    fun `replacing can be disabled`() {
+        val level = parsed(TestLevels.minimalJson(extra = """, "rules": { "allowReplace": false }"""))
+        assertEquals(false, level.rules.allowReplace)
+        assertEquals(LevelDefaults.REPLACE_PENALTY_MS, level.rules.replacePenaltyMs)
+    }
+
+    @Test
+    fun `name is trimmed`() {
+        val level = parsed(TestLevels.minimalJson().replace("\"First Leak\"", "\"  First Crossing \""))
+        assertEquals("First Crossing", level.name)
+    }
+
+    @Test
+    fun `missing required field is named with its path`() {
+        val error = failed(TestLevels.minimalJson().replace(""", "cellsPerSecond": 0.5""", ""))
+        assertEquals("flow.cellsPerSecond", error.field)
+        assertTrue("flow.cellsPerSecond" in error.message)
+    }
+
+    @Test
+    fun `missing top-level field is named`() {
+        val error = failed(TestLevels.minimalJson().replace(""""name": "First Leak",""", ""))
+        assertEquals("name", error.field)
+    }
+
+    @Test
+    fun `missing star threshold is named`() {
+        val error = failed(TestLevels.minimalJson().replace(""", "three": 150""", ""))
+        assertEquals("stars.three", error.field)
+    }
+
+    @Test
+    fun `unknown field is named`() {
+        val error = failed(TestLevels.minimalJson(extra = """, "flowSpeed": 0.4"""))
+        assertEquals("flowSpeed", error.field)
+        assertTrue("flowSpeed" in error.message)
+    }
+
+    @Test
+    fun `unknown nested field is named with its path`() {
+        val error = failed(TestLevels.minimalJson(extraFlow = """, "speed": 1"""))
+        assertEquals("flow.speed", error.field)
+    }
+
+    @Test
+    fun `unknown section id in weights is named`() {
+        val error = failed(TestLevels.minimalJson(extra = """, "stack": { "weights": { "Z": 1 } }"""))
+        assertEquals("stack.weights.Z", error.field)
+    }
+
+    @Test
+    fun `unknown open side is named`() {
+        val error = failed(TestLevels.minimalJson().replace("\"RIGHT\"", "\"UP\""))
+        assertEquals("start.openSide", error.field)
+        assertTrue("'UP'" in error.message)
+    }
+
+    @Test
+    fun `old direction key is rejected`() {
+        val error = failed(TestLevels.minimalJson().replace("\"openSide\": \"RIGHT\"", "\"direction\": \"RIGHT\""))
+        assertEquals("start.direction", error.field)
+    }
+
+    @Test
+    fun `string replace flag is rejected`() {
+        val error = failed(TestLevels.minimalJson(extra = """, "rules": { "allowReplace": "yes" }"""))
+        assertEquals("rules.allowReplace", error.field)
+    }
+
+    @Test
+    fun `quoted boolean replace flag is rejected`() {
+        val error = failed(TestLevels.minimalJson(extra = """, "rules": { "allowReplace": "true" }"""))
+        assertEquals("rules.allowReplace", error.field)
+    }
+
+    @Test
+    fun `numeric replace flag is rejected`() {
+        val error = failed(TestLevels.minimalJson(extra = """, "rules": { "allowReplace": 1 }"""))
+        assertEquals("rules.allowReplace", error.field)
+    }
+
+    @Test
+    fun `wrong number type is named`() {
+        val error = failed(TestLevels.minimalJson().replace("\"id\": 1", "\"id\": 1.5"))
+        assertEquals("id", error.field)
+    }
+
+    @Test
+    fun `missing coordinate in a blocked cell is named with its index`() {
+        val error = failed(TestLevels.minimalJson().replace("\"blocked\": []", """"blocked": [ { "x": 1, "y": 1 }, { "x": 2 } ]"""))
+        assertEquals("blocked[1].y", error.field)
+    }
+
+    @Test
+    fun `malformed JSON is rejected without a field`() {
+        val error = failed("""{ "id": """)
+        assertNull(error.field)
+        assertTrue("not valid JSON" in error.message)
+    }
+
+    @Test
+    fun `non-object document is rejected`() {
+        assertIs<ParseResult.Failure>(LevelParser.parse("[1, 2]"))
+    }
+}

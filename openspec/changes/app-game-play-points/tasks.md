@@ -37,5 +37,5 @@
 - [x] 6.2 Instrumented test: two exits 300 ms apart on two tiles show both popups at the same time, and the first one is gone 300 ms before the second.
 - [x] 6.3 Instrumented test: pause while a popup is shown, wait, resume, and check that it is still visible and disappears after the rest of its 1,000 ms of play; restart removes all popups and the HUD shows 0.
 - [x] 6.4 Instrumented test: pan the field while a popup is shown and check that it stays on its tile; start a pan on a tile with a popup and check that the field pans.
-- [ ] 6.5 Update `docs/project-plan.md` section 1.9 with the new points (10, 15, 25, cross 10 then 50, awarded on exit, none for start and finish, the last section before a leak still scores) and mention the popup in section 2.8.
-- [ ] 6.6 Run `./gradlew test` and the instrumented tests on the emulator, and check that everything passes.
+- [x] 6.5 Update `docs/project-plan.md` section 1.9 with the new points (10, 15, 25, cross 10 then 50, awarded on exit, none for start and finish, the last section before a leak still scores) and mention the popup in section 2.8.
+- [x] 6.6 Run `./gradlew test` and the instrumented tests on the emulator, and check that everything passes.

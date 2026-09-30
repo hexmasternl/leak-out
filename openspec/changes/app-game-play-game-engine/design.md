@@ -44,6 +44,7 @@ sealed interface GameCommand {
     data object Resume : GameCommand
     data object Restart : GameCommand
     data object FastForward : GameCommand
+    data object NormalSpeed : GameCommand
     data class Tick(val dtMs: Long) : GameCommand
 }
 ```
@@ -75,12 +76,12 @@ sealed interface FlowState {
     data class Waiting(val remainingMs: Long) : FlowState
     data class Flowing(
         val position: Position, val entry: Side, val channel: Channel,
-        val progress: Double, val sectionsLeft: Int, val used: Set<ChannelUse>,
+        val progress: Double, val used: Set<ChannelUse>,
     ) : FlowState
-    data object Ended : FlowState
+    data class Ended(val used: Set<ChannelUse>) : FlowState
 }
 ```
-`Channel` is the one from `core.flow` (horizontal or vertical for a cross, the single channel otherwise). `used` is the `usedChannels` set that `FlowStep` already takes, so the cross rule is not written twice. `sectionsLeft` drives the ramp. The start tile gets a synthetic channel from the side opposite its open side to the open side, as in the plan, so the liquid visibly crosses it. When the head enters a pipe, the board is updated with `markLiquidEntered`, which makes the placement rule refuse it at once (spec: "entered as soon as liquid reaches it").
+`Channel` is the one from `core.flow` (horizontal or vertical for a cross, the single channel otherwise). `used` is the `usedChannels` set that `FlowStep` already takes, so the cross rule is not written twice. The ramp uses `GameState.sectionsLeft`, derived from the score sheet (the sum of its exit counts, so a cross passed twice counts twice), so it is not stored twice and the HUD speed stays right after the flow has ended. `Ended` keeps `used`, so a later liquid drawing can still fill the channels after a win or a loss; every `FlowState` exposes `used`. The start tile gets a synthetic channel from the side opposite its open side to the open side, as in the plan, so the liquid visibly crosses it. When the head enters a pipe, the board is updated with `markLiquidEntered`, which makes the placement rule refuse it at once (spec: "entered as soon as liquid reaches it").
 
 **4. `FlowSimulation.advance` walks tile borders inside one tick.**
 `FlowSimulation.advance(state, flowDtMs): GameState` is a loop:
@@ -109,9 +110,9 @@ In `GameScreen`, the stack column and the playing field sit inside `key(state.at
 - `StackPanel(stack = state.stack, enabled = !state.isStopped && !state.fastForward)`.
 - `PlayingField(board, flow, awards, outcome, clockMs, …)`; the drop target is `canPlace = session::canPlace`, `tryPlace = { session.send(Place(it)) }`.
 - `GameHud(level.id, flowSpeed, stars, score, onPause = { send(Pause) })`.
-- `FastForwardButton(visible = routeComplete && !fastForward && outcome is Playing, onClick = { send(FastForward) })`.
+- `FastForwardButton(visible = outcome is Playing && (routeComplete || fastForward), active = fastForward)`: a tap sends `FastForward`, or `NormalSpeed` while it is on, keeping the slow button of `app-game-play-fast-forward`.
 - `PauseDialog` sends `Resume` and `Restart`; `LevelLostDialog` sends `Restart`; Exit stays the `onExit` callback.
-- `BackHandler` and `LifecycleEventEffect(ON_STOP)` send `Pause` (or skip the leak effect when lost), as before.
+- `BackHandler` and `LifecycleEventEffect(ON_STOP)` send `Pause` (or skip the leak effect when lost), as before. After a win there is no dialog yet (that is `app-game-play-level-complete`), so Back leaves the level.
 
 ## Risks / Trade-offs
 

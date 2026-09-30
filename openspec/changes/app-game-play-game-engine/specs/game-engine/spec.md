@@ -12,7 +12,7 @@ The system SHALL keep all data of the running attempt in one game state owned by
 - **THEN** both end with equal game states
 
 ### Requirement: Every change goes through a command
-The system SHALL change the game state only by sending a command to the game engine. The commands SHALL be: start a level, place the next section on a tile, pause, resume, restart, turn fast forward on, and tick (advance the game clock by a number of milliseconds). A command that is not allowed in the current state SHALL leave the game state unchanged.
+The system SHALL change the game state only by sending a command to the game engine. The commands SHALL be: start a level, place the next section on a tile, pause, resume, restart, turn fast forward on, go back to normal speed, and tick (advance the game clock by a number of milliseconds). A command that is not allowed in the current state SHALL leave the game state unchanged.
 
 #### Scenario: Refused command
 - **WHEN** the game is paused and a place command is sent
@@ -78,7 +78,7 @@ When a place command for a tile is sent, the engine SHALL decide whether the sta
 - **THEN** the route is marked complete in the new state
 
 ### Requirement: Fast forward through the engine
-When fast forward is sent while the route is complete, the outcome is playing and the game is not paused, the engine SHALL turn fast forward on and keep it on until the attempt ends. While fast forward is on, place commands SHALL be refused. Fast forward SHALL be refused when the route is not complete.
+When fast forward is sent while the route is complete, the outcome is playing and the game is not paused, the engine SHALL turn fast forward on. While fast forward is on, place commands SHALL be refused. When normal speed is sent while fast forward is on, the outcome is playing and the game is not paused, the engine SHALL turn fast forward off, which unlocks placing again (the slow button of the fast-forward change). Pause and resume SHALL keep fast forward as it is; a new attempt SHALL start with it off. Fast forward SHALL be refused when the route is not complete.
 
 #### Scenario: Fast forward on a complete route
 - **WHEN** the route is complete and fast forward is sent
@@ -87,6 +87,10 @@ When fast forward is sent while the route is complete, the outcome is playing an
 #### Scenario: Fast forward on an open route
 - **WHEN** the route is not complete and fast forward is sent
 - **THEN** fast forward stays off
+
+#### Scenario: Back to normal speed
+- **WHEN** fast forward is on and normal speed is sent
+- **THEN** fast forward is off and a place command on an empty tile is accepted
 
 ### Requirement: The game clock advances with ticks
 A tick of `dt` milliseconds SHALL advance the game clock by `dt` while the game is not paused. The replace lock and the points popups SHALL use the game clock. After a win or a loss the game clock SHALL keep advancing, so the end effects can play, but the flow, the countdown and the score SHALL NOT change.
@@ -100,7 +104,7 @@ A tick of `dt` milliseconds SHALL advance the game clock by `dt` while the game 
 - **THEN** the game clock is 300 ms further and the score and the flow are unchanged
 
 ### Requirement: The outcome ends the attempt once
-The outcome SHALL start as playing. It SHALL become won when the liquid enters the finish, and lost when the liquid leaks. Once won or lost, the outcome SHALL NOT change again until the next attempt starts, and place, pause, resume and fast forward commands SHALL be refused.
+The outcome SHALL start as playing. It SHALL become won when the liquid enters the finish, and lost when the liquid leaks. Once won or lost, the outcome SHALL NOT change again until the next attempt starts, and place, pause, resume, fast forward and normal speed commands SHALL be refused.
 
 #### Scenario: Win
 - **WHEN** the liquid enters the finish through its open side

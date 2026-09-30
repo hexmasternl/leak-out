@@ -69,7 +69,7 @@ class FastForwardTest {
 
         compose.dropOnCell(lastGap)
 
-        compose.runOnIdle { assertTrue(session.routeComplete) }
+        compose.runOnIdle { assertTrue(session.state.routeComplete) }
         button().assertIsDisplayed().assertContentDescriptionEquals("Fast forward")
         val bounds = button().fetchSemanticsNode().boundsInRoot
         val screen = compose.onNodeWithTag(GameScreenTags.SCREEN).fetchSemanticsNode().boundsInRoot
@@ -90,7 +90,7 @@ class FastForwardTest {
         compose.dropOnCell(lastGap)
         button().assertIsDisplayed()
 
-        compose.runOnIdle { assertTrue(session.place(PipeSection.V, Position(7, 5))) }
+        compose.runOnIdle { assertTrue(session.placeSection(PipeSection.V, Position(7, 5))) }
         compose.waitForIdle()
         button().assertDoesNotExist()
     }
@@ -102,14 +102,14 @@ class FastForwardTest {
         completeRoute()
 
         button().performClick()
-        compose.runOnIdle { assertEquals(10, session.flowTimeScale) }
+        compose.runOnIdle { assertEquals(10, session.state.flowTimeScale) }
         button()
             .assertIsDisplayed()
             .assertContentDescriptionEquals("Normal speed")
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Fast forward on"))
 
         button().performClick()
-        compose.runOnIdle { assertEquals(1, session.flowTimeScale) }
+        compose.runOnIdle { assertEquals(1, session.state.flowTimeScale) }
         button()
             .assertIsDisplayed()
             .assertContentDescriptionEquals("Fast forward")
@@ -118,7 +118,7 @@ class FastForwardTest {
         // Placing works again at normal speed.
         val target = Position(3, 3)
         compose.dropOnCell(target)
-        compose.runOnIdle { assertEquals(Cell.Pipe(PipeSection.H), session.board[target]) }
+        compose.runOnIdle { assertEquals(Cell.Pipe(PipeSection.H), session.state.board[target]) }
     }
 
     // 6.4
@@ -127,16 +127,16 @@ class FastForwardTest {
         show()
         completeRoute()
         button().performClick()
-        val board = compose.runOnIdle { session.board }
-        val stack = compose.runOnIdle { session.stack }
+        val board = compose.runOnIdle { session.state.board }
+        val stack = compose.runOnIdle { session.state.stack }
 
         compose.beginDragTo(compose.cellRect(Position(3, 3)).center)
         compose.onNodeWithTag(GameScreenTags.DRAGGED).assertDoesNotExist()
         compose.assertNothingHighlighted()
         compose.releaseDrag()
         compose.runOnIdle {
-            assertEquals(board, session.board)
-            assertEquals(stack, session.stack)
+            assertEquals(board, session.state.board)
+            assertEquals(stack, session.state.stack)
         }
 
         val before = compose.cellRect(Position(0, 5))
@@ -161,11 +161,11 @@ class FastForwardTest {
         button().performClick()
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
-        compose.runOnIdle { assertTrue(session.fastForward) }
+        compose.runOnIdle { assertTrue(session.state.fastForward) }
         compose.onNodeWithTag(PauseTags.RESUME).performClick()
         compose.runOnIdle {
-            assertTrue(session.fastForward)
-            assertEquals(10, session.flowTimeScale)
+            assertTrue(session.state.fastForward)
+            assertEquals(10, session.state.flowTimeScale)
         }
         button().assertIsDisplayed().assertContentDescriptionEquals("Normal speed")
 
@@ -174,8 +174,8 @@ class FastForwardTest {
         compose.waitForIdle()
 
         compose.runOnIdle {
-            assertFalse(session.fastForward)
-            assertEquals(1, session.flowTimeScale)
+            assertFalse(session.state.fastForward)
+            assertEquals(1, session.state.flowTimeScale)
         }
         button().assertDoesNotExist()
     }
@@ -196,8 +196,8 @@ class FastForwardTest {
     /** Places `H` on row 5 from column 2 to 14, most of it out of view, leaving [lastGap] open. */
     private fun buildRouteExceptLastGap() {
         compose.runOnIdle {
-            for (x in 2..14) assertTrue(session.place(PipeSection.H, Position(x, 5)))
-            assertFalse(session.routeComplete)
+            for (x in 2..14) assertTrue(session.placeSection(PipeSection.H, Position(x, 5)))
+            assertFalse(session.state.routeComplete)
         }
     }
 

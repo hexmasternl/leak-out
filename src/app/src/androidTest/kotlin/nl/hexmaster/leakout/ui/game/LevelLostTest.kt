@@ -36,11 +36,11 @@ import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlin.random.Random
+import nl.hexmaster.leakout.core.engine.Outcome
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
-import nl.hexmaster.leakout.core.score.ScoreSheet
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import nl.hexmaster.leakout.ui.title.WelcomeScreen
 import nl.hexmaster.leakout.ui.title.WelcomeScreenTags
@@ -53,7 +53,7 @@ import org.junit.runner.RunWith
 
 /**
  * The level lost state on the game screen. The frame loop does not run in these tests, so the game
- * clock is moved with [GameSession.tick] and the leak effect timing is exact. The game screen sits
+ * clock is moved with tick commands and the leak effect timing is exact. The game screen sits
  * in a small host that shows the welcome screen after Exit, like `MainActivity`.
  */
 @RunWith(AndroidJUnit4::class)
@@ -69,9 +69,9 @@ class LevelLostTest {
     fun leakShowsTheEffectThenTheDialogAfterOneSecond() {
         show()
         compose.runOnIdle {
-            assertTrue(session.place(PipeSection.H, placed))
-            session.sheet = ScoreSheet(total = 85)
-            session.liquidLeaked(placed, Side.RIGHT)
+            assertTrue(session.placeSection(PipeSection.H, placed))
+            session.flowToEnd()
+            session.setScore(85)
         }
         compose.waitForIdle()
 
@@ -102,7 +102,7 @@ class LevelLostTest {
     fun whileLostNoDragStartsAndTheCogWheelDoesNothing() {
         show()
         lose()
-        val stack = compose.runOnIdle { session.stack }
+        val stack = compose.runOnIdle { session.state.stack }
 
         compose.dropOnCell(Position(1, 1))
         compose.onNodeWithTag(GameScreenTags.DRAGGED).assertDoesNotExist()
@@ -112,9 +112,9 @@ class LevelLostTest {
         compose.waitForIdle()
         compose.onNodeWithTag(PauseTags.DIALOG).assertDoesNotExist()
         compose.runOnIdle {
-            assertFalse(session.paused)
-            assertEquals(stack, session.stack)
-            assertEquals(1, session.board.pipes.size)
+            assertFalse(session.state.paused)
+            assertEquals(stack, session.state.stack)
+            assertEquals(1, session.state.board.pipes.size)
         }
     }
 
@@ -122,8 +122,8 @@ class LevelLostTest {
     @Test
     fun dragGoingOnWhenTheLeakHappensReturnsToItsSlot() {
         show()
-        compose.runOnIdle { assertTrue(session.place(PipeSection.H, placed)) }
-        val stack = compose.runOnIdle { session.stack }
+        compose.runOnIdle { assertTrue(session.placeSection(PipeSection.H, placed)) }
+        val stack = compose.runOnIdle { session.state.stack }
         val target = compose.cellRect(Position(1, 1)).center + Offset(0f, compose.px(DraggedCopyYOffset))
         val next = compose.nextNode()
         val nextBounds = next.getUnclippedBoundsInRoot()
@@ -132,7 +132,7 @@ class LevelLostTest {
             down(center)
             moveBy(Offset(60f, 0f))
         }
-        compose.runOnIdle { session.liquidLeaked(placed, Side.RIGHT) }
+        compose.runOnIdle { session.flowToEnd() }
         compose.waitForIdle()
         next.performTouchInput {
             moveTo(Offset(target.x - compose.px(nextBounds.left), target.y - compose.px(nextBounds.top)))
@@ -143,7 +143,7 @@ class LevelLostTest {
 
         compose.onNodeWithTag(GameScreenTags.DRAGGED).assertDoesNotExist()
         compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Empty")
-        compose.runOnIdle { assertEquals(stack, session.stack) }
+        compose.runOnIdle { assertEquals(stack, session.state.stack) }
     }
 
     // 6.3
@@ -160,7 +160,7 @@ class LevelLostTest {
         compose.cellNode(placed).assertContentDescriptionEquals("Empty")
         compose.cellNode(placed).assert(SemanticsMatcher.keyNotDefined(LeakAt))
         compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 0")
-        compose.runOnIdle { assertEquals(Outcome.Playing, session.outcome) }
+        compose.runOnIdle { assertEquals(Outcome.Playing, session.state.outcome) }
 
         compose.dropOnCell(Position(1, 1))
         compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
@@ -226,7 +226,7 @@ class LevelLostTest {
         compose.onNodeWithTag(GameScreenTags.SCREEN).assertIsDisplayed()
         compose.onNodeWithTag(PauseTags.DIALOG).assertDoesNotExist()
         compose.onNodeWithTag(LevelLostTags.DIALOG).assertDoesNotExist()
-        compose.runOnIdle { assertFalse(session.paused) }
+        compose.runOnIdle { assertFalse(session.state.paused) }
         assertFalse(compose.activity.isFinishing)
 
         tick(700)
@@ -247,23 +247,28 @@ class LevelLostTest {
         compose.onNodeWithTag(LevelLostTags.DIALOG).assertIsDisplayed()
         compose.onNodeWithTag(PauseTags.DIALOG).assertDoesNotExist()
         compose.runOnIdle {
-            assertFalse(session.paused)
-            assertTrue(session.outcome is Outcome.Lost)
+            assertFalse(session.state.paused)
+            assertTrue(session.state.outcome is Outcome.Lost)
         }
     }
 
-    /** Places H on [placed] and leaks it to the right, with the score at [score]. */
+    /**
+     * Places H on [placed] and runs the flow until it leaks to the right, into the empty tile
+     * after it. Then sets the score to [score].
+     */
     private fun lose(score: Int = 0) {
         compose.runOnIdle {
-            assertTrue(session.place(PipeSection.H, placed))
-            session.sheet = ScoreSheet(total = score)
-            session.liquidLeaked(placed, Side.RIGHT)
+            assertTrue(session.placeSection(PipeSection.H, placed))
+            session.flowToEnd()
+            val lost = session.state.outcome as Outcome.Lost
+            assertEquals(placed to Side.RIGHT, lost.at to lost.side)
+            session.setScore(score)
         }
         compose.waitForIdle()
     }
 
     private fun tick(ms: Long) {
-        compose.runOnIdle { session.tick(ms) }
+        compose.runOnIdle { session.sendTick(ms) }
         compose.waitForIdle()
     }
 

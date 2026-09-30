@@ -12,6 +12,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.toSize
+import nl.hexmaster.leakout.core.engine.FlowState
+import nl.hexmaster.leakout.core.engine.GameCommand
+import nl.hexmaster.leakout.core.engine.Outcome
 import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.FlowSettings
 import nl.hexmaster.leakout.core.level.GridSize
@@ -22,6 +25,7 @@ import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.level.StackSettings
 import nl.hexmaster.leakout.core.level.StarBenchmarks
+import nl.hexmaster.leakout.core.score.ScoreSheet
 
 /** Levels and gestures shared by the game screen tests. Positions are in root pixels. */
 internal object FieldTest {
@@ -52,11 +56,21 @@ internal object FieldTest {
     )
 
     /** The 16 × 12 level used for pan and zoom, with the start on the left edge halfway down. */
-    fun large(rules: PlacementRules = PlacementRules()): Level = level(
+    fun large(rules: PlacementRules = PlacementRules(), cellsPerSecond: Double = 0.8): Level = level(
         grid = GridSize(16, 12),
         start = Endpoint(Position(0, 5), Side.RIGHT),
         finish = Endpoint(Position(15, 6), Side.LEFT),
         rules = rules,
+        cellsPerSecond = cellsPerSecond,
+    )
+
+    /** The route of [level] with its default grid: start (0, 0) → (1, 0) → (2, 0) → down to (2, 3) → finish (3, 3). */
+    val ROUTE: List<Pair<Position, PipeSection>> = listOf(
+        Position(1, 0) to PipeSection.H,
+        Position(2, 0) to PipeSection.LB,
+        Position(2, 1) to PipeSection.V,
+        Position(2, 2) to PipeSection.V,
+        Position(2, 3) to PipeSection.RT,
     )
 }
 
@@ -141,4 +155,40 @@ internal class LandscapeRule : org.junit.rules.ExternalResource() {
     override fun after() {
         automation.setRotation(android.app.UiAutomation.ROTATION_UNFREEZE)
     }
+}
+
+/**
+ * Makes [section] the stack's next section, as if it had been drawn, and places it on [at] with a
+ * place command. Returns whether the engine accepted the placement.
+ */
+internal fun GameSession.placeSection(section: PipeSection, at: Position): Boolean {
+    state = state.copy(stack = state.stack.copy(sections = state.stack.sections.dropLast(1) + section))
+    return send(GameCommand.Place(at))
+}
+
+internal fun GameSession.sendTick(dtMs: Long): Boolean = send(GameCommand.Tick(dtMs))
+
+/** Sets the score of the attempt directly, for the HUD tests. The game only scores through the flow. */
+internal fun GameSession.setScore(total: Int) {
+    state = state.copy(sheet = ScoreSheet(total = total))
+}
+
+/** Ends the countdown, so the liquid is at the very start of the start tile. */
+internal fun GameSession.endCountdown() {
+    val waiting = state.flow as FlowState.Waiting
+    send(GameCommand.Tick(waiting.remainingMs / state.flowTimeScale))
+}
+
+/** Runs the flow in ticks of [stepMs] until the level is won or lost. The outcome happens at the last tick. */
+internal fun GameSession.flowToEnd(stepMs: Long = 100) {
+    var guard = 0
+    while (state.outcome is Outcome.Playing) {
+        check(++guard < 100_000) { "the flow did not end" }
+        check(send(GameCommand.Tick(stepMs))) { "a tick was refused" }
+    }
+}
+
+/** Marks the section on [at] as entered by liquid, as the flow would, for the placement tests. */
+internal fun GameSession.markLiquidEntered(at: Position) {
+    state = state.copy(board = state.board.markLiquidEntered(at))
 }

@@ -1,5 +1,6 @@
 package nl.hexmaster.leakout.ui.game
 
+import nl.hexmaster.leakout.core.engine.Award
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -12,6 +13,8 @@ class PointsPopupTest {
     @Test
     fun `timing adds up to 1000 ms`() {
         assertEquals(1_000L, PopupTiming.TOTAL_MS)
+        assertEquals(PopupTiming.TOTAL_MS, PopupTiming.FADE_IN_MS + PopupTiming.HOLD_MS + PopupTiming.FADE_OUT_MS)
+        assertEquals(Award.VISIBLE_MS, PopupTiming.TOTAL_MS)
     }
 
     @Test

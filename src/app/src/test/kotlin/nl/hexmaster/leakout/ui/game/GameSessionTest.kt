@@ -1,6 +1,8 @@
 package nl.hexmaster.leakout.ui.game
 
 import kotlin.random.Random
+import nl.hexmaster.leakout.core.board.Board
+import nl.hexmaster.leakout.core.board.Cell
 import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.FlowSettings
 import nl.hexmaster.leakout.core.level.GridSize
@@ -42,7 +44,7 @@ class GameSessionTest {
         assertEquals(0.8, session.flowSpeed, 0.0)
         assertEquals(0L, session.elapsedMs)
         assertEquals(5, session.stack.size)
-        assertTrue(session.placed.isEmpty())
+        assertTrue(session.board.pipes.isEmpty())
     }
 
     @Test
@@ -58,10 +60,10 @@ class GameSessionTest {
     fun `resume keeps stack, placed sections, score and clock`() {
         val session = session()
         session.tick(250)
-        assertTrue(session.place(Position(1, 1), session.stack.next))
+        assertTrue(session.place(session.stack.next, Position(1, 1)))
         session.score = 40
         val stack = session.stack
-        val placed = session.placed.toMap()
+        val board = session.board
 
         session.pause()
         session.resume()
@@ -69,7 +71,7 @@ class GameSessionTest {
         assertFalse(session.paused)
         assertFalse(session.pauseMenuOpen)
         assertEquals(stack, session.stack)
-        assertEquals(placed, session.placed)
+        assertEquals(board, session.board)
         assertEquals(40, session.score)
         assertEquals(250L, session.elapsedMs)
         session.tick(50)
@@ -80,7 +82,7 @@ class GameSessionTest {
     fun `restart resets everything and unpauses`() {
         val session = session()
         session.tick(900)
-        session.place(Position(1, 1), session.stack.next)
+        session.place(session.stack.next, Position(1, 1))
         session.score = 220
         session.flowSpeed = 1.4
         session.pause()
@@ -89,7 +91,7 @@ class GameSessionTest {
 
         assertFalse(session.paused)
         assertFalse(session.pauseMenuOpen)
-        assertTrue(session.placed.isEmpty())
+        assertTrue(session.board.pipes.isEmpty())
         assertEquals(5, session.stack.size)
         assertEquals(0, session.score)
         assertEquals(0.8, session.flowSpeed, 0.0)
@@ -110,19 +112,97 @@ class GameSessionTest {
         val session = session()
         val stack = session.stack
         session.pause()
-        assertFalse(session.place(Position(1, 1), PipeSection.H))
-        assertTrue(session.placed.isEmpty())
+        assertFalse(session.place(PipeSection.H, Position(1, 1)))
+        assertTrue(session.board.pipes.isEmpty())
         assertEquals(stack, session.stack)
     }
 
     @Test
-    fun `place advances the stack and refuses an occupied cell`() {
+    fun `place advances the stack and refuses fixed cells`() {
         val session = session()
         val stack = session.stack
-        assertTrue(session.place(Position(1, 1), stack.next))
+        assertTrue(session.place(stack.next, Position(1, 1)))
         assertEquals(stack.sections.dropLast(1), session.stack.sections.drop(1))
-        assertFalse(session.place(Position(1, 1), PipeSection.V))
-        assertEquals(stack.next, session.placed[Position(1, 1)])
+        assertEquals(Cell.Pipe(stack.next), session.board[Position(1, 1)])
+        for (fixed in listOf(level.start.position, level.finish.position, Position(-1, 0))) {
+            assertFalse(session.canPlace(fixed))
+            assertFalse(session.place(PipeSection.V, fixed))
+        }
+    }
+
+    @Test
+    fun `a drop on an empty tile does not start the lock`() {
+        val session = session()
+        session.place(PipeSection.H, Position(1, 1))
+        assertEquals(0L, session.replaceLockUntilMs)
+        assertTrue(session.canPlace(Position(2, 1)))
+    }
+
+    @Test
+    fun `a replacement swaps the section, advances the stack and starts the lock`() {
+        val session = session()
+        session.tick(1_000)
+        session.place(PipeSection.H, Position(1, 1))
+        val stack = session.stack
+
+        assertTrue(session.place(PipeSection.V, Position(1, 1)))
+
+        assertEquals(Cell.Pipe(PipeSection.V), session.board[Position(1, 1)])
+        assertEquals(stack.sections.dropLast(1), session.stack.sections.drop(1))
+        assertEquals(1_500L, session.replaceLockUntilMs)
+        assertFalse(session.canPlace(Position(2, 1)))
+        assertFalse(session.place(PipeSection.H, Position(2, 1)))
+    }
+
+    @Test
+    fun `the lock does not run out while paused and ends after the penalty`() {
+        val session = session()
+        session.place(PipeSection.H, Position(1, 1))
+        session.place(PipeSection.V, Position(1, 1))
+        session.pause()
+        session.tick(5_000)
+        session.resume()
+        assertFalse(session.canPlace(Position(2, 1)))
+
+        session.tick(499)
+        assertFalse(session.canPlace(Position(2, 1)))
+        session.tick(1)
+        assertTrue(session.canPlace(Position(2, 1)))
+        assertTrue(session.place(PipeSection.H, Position(2, 1)))
+    }
+
+    @Test
+    fun `nothing can be placed while paused`() {
+        val session = session()
+        session.pause()
+        assertFalse(session.canPlace(Position(1, 1)))
+    }
+
+    @Test
+    fun `a section with liquid cannot be replaced`() {
+        val session = session()
+        session.place(PipeSection.H, Position(1, 1))
+        session.markLiquidEntered(Position(1, 1))
+        assertFalse(session.canPlace(Position(1, 1)))
+        assertFalse(session.place(PipeSection.V, Position(1, 1)))
+        assertEquals(Cell.Pipe(PipeSection.H, liquidEntered = true), session.board[Position(1, 1)])
+    }
+
+    @Test
+    fun `restart clears the board, the lock and counts the attempt`() {
+        val session = session()
+        session.place(PipeSection.H, Position(1, 1))
+        session.markLiquidEntered(Position(1, 1))
+        session.place(PipeSection.H, Position(2, 1))
+        session.place(PipeSection.V, Position(2, 1))
+        assertEquals(1, session.attempt)
+
+        session.restart()
+
+        assertEquals(Board.from(level), session.board)
+        assertEquals(0L, session.replaceLockUntilMs)
+        assertEquals(2, session.attempt)
+        assertTrue(session.canPlace(Position(1, 1)))
     }
 
     @Test

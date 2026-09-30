@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -19,7 +20,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -32,6 +35,8 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import kotlin.math.roundToInt
 import kotlin.random.Random
 import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.core.level.PipeSection
+import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 
 /**
@@ -78,13 +83,22 @@ fun GameScreen(
                         StackLayout.metrics(360.dp - HudLayout.HEIGHT, level.stack.visibleSize).columnWidth + 16.dp,
                     ),
                 )
-                val target = PlaceholderBoard(
-                    level = level,
-                    placed = session.placed,
-                    onPlace = session::place,
-                    modifier = Modifier.padding(start = 12.dp).weight(1f),
-                )
-                dragState.dropTarget = target
+                // Keyed on the attempt: a restart starts the field at its starting view, a pause keeps it.
+                key(session.attempt) {
+                    val fieldState = rememberPlayingFieldState(level.grid, level.start.position)
+                    val target = remember(session, fieldState) { FieldDropTarget(session, fieldState) }
+                    dragState.dropTarget = target
+                    val highlighted by remember(dragState, target) {
+                        derivedStateOf { dragState.dropPoint?.let(target::hoverCell) }
+                    }
+                    PlayingField(
+                        board = session.board,
+                        state = fieldState,
+                        highlighted = highlighted,
+                        enabled = !session.paused && !dragState.isBusy,
+                        modifier = Modifier.padding(start = 12.dp).weight(1f).fillMaxHeight(),
+                    )
+                }
             }
         }
         DragOverlay(dragState)
@@ -119,6 +133,22 @@ private fun GameClock(session: GameSession) {
         }
     }
 }
+
+/**
+ * Drops on the playing field. The hover highlight and the drop both map the screen point to a
+ * cell and ask the session's placement rule, so they cannot disagree.
+ */
+private class FieldDropTarget(private val session: GameSession, private val field: PlayingFieldState) : SectionDropTarget {
+    fun hoverCell(position: Offset): Position? = field.cellAt(position)?.takeIf(session::canPlace)
+
+    override fun canPlace(section: PipeSection, position: Offset): Boolean = hoverCell(position) != null
+
+    override fun tryPlace(section: PipeSection, position: Offset): Boolean {
+        val cell = field.cellAt(position) ?: return false
+        return session.place(section, cell)
+    }
+}
+
 @Composable
 private fun DragOverlay(dragState: SectionDragState) {
     val section = dragState.draggedSection ?: return

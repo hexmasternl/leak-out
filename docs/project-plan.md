@@ -31,6 +31,7 @@ This document is the working plan for building the game from an empty repository
   - **Finish** – fixed, cannot be replaced. Has exactly one open port (the direction liquid must enter from).
   - **Blocked** (optional, later levels) – a wall; nothing can be placed here.
 - Start and finish are placed by the level definition. They may sit anywhere on the grid, not only on the edge, as long as their open port points at a cell inside the grid.
+- On screen, cells are always between 40 dp and 120 dp. A level that fits at that size is shown completely and centred. A larger level (the bundled levels go up to 16 × 12) starts at 40 dp around the start cell; the player pans with one finger and pinch-zooms with two, but can't zoom out further than the size at which the whole level fits. The board never rotates.
 
 ### 1.3 Pipe sections
 
@@ -78,6 +79,7 @@ Rules that follow from this:
 ### 1.7 Placing sections
 
 - Dragging the next section onto an **Empty** cell places it there. Tap-to-place is not supported.
+- While dragging, the cell under the dragged section is highlighted when the drop would be accepted there. Cells that refuse the section are not highlighted. The highlight and the drop use the same rule (`Placement.check` in `core.board`), so they always agree.
 - Dropping on a cell that holds an **unfilled** pipe **replaces** it, if the level allows replacing (`allowReplace`, default `true`). Replacing costs a small time penalty (`replacePenaltyMs`, default 500 ms) during which no new placement is accepted, to stop the player from spamming replacements. This is the classic Pipe Mania rule and keeps the stack from becoming a dead end.
 - Cells that are Start, Finish, Blocked, or contain a pipe that is filled or currently being filled cannot be changed.
 - There is no discard action; the only way to get rid of an unwanted section is to place it somewhere.
@@ -334,7 +336,7 @@ A `docs/levels.md` sheet will track the intended difficulty curve (grid size, de
 
 ### 2.8 Rendering (app)
 
-- The board composable measures its available size, computes `cellSize = min(width / columns, height / rows)`, and centres the grid.
+- The `PlayingField` composable fills the space right of the stack and below the HUD. A pure `FieldViewport` holds the cell size and offset: it starts at `min(width / columns, height / rows)` clamped to 40–120 dp, centres every axis on which the grid fits, clamps panning to the grid edges, zooms around the pinch centre, and maps screen points to cells. Only the visible cells are drawn, clipped to the field.
 - **Pipes** come from SVG assets, one per section, in `app/src/main/assets/pipes/` (format in [pipe-assets.md](pipe-assets.md)). `PipeArtParser` reads the small SVG subset they use, `PipeArtLibrary` turns them into Compose `Path`s once per process, and `PipeTile` scales them to any cell size. The art can be edited in an SVG editor without touching code.
 - **Liquid** is drawn in code on top of the art, along the channel centre lines marked in each SVG, from a `ChannelFill(progress, entry)` per channel. It starts at the entry side, so every channel flows both ways:
   - Straight and corner: the first `progress` part of the channel, measured from the entry side.

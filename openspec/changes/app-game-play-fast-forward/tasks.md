@@ -16,11 +16,11 @@
 
 ## 4. App: game session
 
-- [ ] 4.1 Add `routeComplete`, `fastForward`, `FAST_FORWARD_FACTOR = 10`, `flowTimeScale` and `showFastForward` to `GameSession`. Recompute `routeComplete` at the end of every accepted `place(...)`.
-- [ ] 4.2 Add `startFastForward()`: it turns fast forward on only when the route is complete, the game is not paused and fast forward is off.
-- [ ] 4.3 Make `place(...)` and `canPlace(...)` reject while fast forward is on, and make `restart()` clear `routeComplete` and `fastForward`.
-- [ ] 4.4 Document the flow contract in `GameSession`'s KDoc: the flow uses `dtMs * flowTimeScale` for the countdown and the head, and everything else uses `dtMs`.
-- [ ] 4.5 Unit test `GameSession`:
+- [x] 4.1 Add `routeComplete`, `fastForward`, `FAST_FORWARD_FACTOR = 10`, `flowTimeScale` and `showFastForward` to `GameSession`. Recompute `routeComplete` at the end of every accepted `place(...)`.
+- [x] 4.2 Add `startFastForward()`: it turns fast forward on only when the route is complete, the game is not paused and fast forward is off.
+- [x] 4.3 Make `place(...)` and `canPlace(...)` reject while fast forward is on, and make `restart()` clear `routeComplete` and `fastForward`.
+- [x] 4.4 Document the flow contract in `GameSession`'s KDoc: the flow uses `dtMs * flowTimeScale` for the countdown and the head, and everything else uses `dtMs`.
+- [x] 4.5 Unit test `GameSession`:
   - completing a route sets `routeComplete`;
   - a replacement that breaks the route clears it and hides the button;
   - `startFastForward` does nothing without a complete route or while paused, and sets `flowTimeScale` to 10 otherwise;

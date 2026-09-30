@@ -341,4 +341,138 @@ class GameSessionTest {
         session.liquidExited(Position(1, 1))
         assertEquals(10, session.score)
     }
+
+    /** Places the route start (0, 0) → (1, 0) → (2, 0) → down to (2, 3) → finish (3, 3), leaving out [skip]. */
+    private fun GameSession.buildRoute(skip: Position? = null) {
+        val route = listOf(
+            Position(1, 0) to PipeSection.H,
+            Position(2, 0) to PipeSection.LB,
+            Position(2, 1) to PipeSection.V,
+            Position(2, 2) to PipeSection.V,
+            Position(2, 3) to PipeSection.RT,
+        )
+        for ((at, section) in route) if (at != skip) assertTrue(place(section, at))
+    }
+
+    @Test
+    fun `a new session has no route and no fast forward`() {
+        val session = session()
+        assertFalse(session.routeComplete)
+        assertFalse(session.fastForward)
+        assertFalse(session.showFastForward)
+        assertEquals(1, session.flowTimeScale)
+    }
+
+    @Test
+    fun `placing the last missing section completes the route and shows the button`() {
+        val session = session()
+        session.buildRoute(skip = Position(2, 2))
+        assertFalse(session.routeComplete)
+        assertFalse(session.showFastForward)
+
+        assertTrue(session.place(PipeSection.V, Position(2, 2)))
+
+        assertTrue(session.routeComplete)
+        assertTrue(session.showFastForward)
+        assertFalse(session.fastForward)
+    }
+
+    @Test
+    fun `a replacement that breaks the route clears it and hides the button`() {
+        val session = session()
+        session.buildRoute()
+        assertTrue(session.showFastForward)
+
+        assertTrue(session.place(PipeSection.H, Position(2, 1)))
+
+        assertFalse(session.routeComplete)
+        assertFalse(session.showFastForward)
+    }
+
+    @Test
+    fun `fast forward does not start without a complete route`() {
+        val session = session()
+        session.buildRoute(skip = Position(2, 2))
+        session.startFastForward()
+        assertFalse(session.fastForward)
+        assertEquals(1, session.flowTimeScale)
+    }
+
+    @Test
+    fun `fast forward does not start while paused`() {
+        val session = session()
+        session.buildRoute()
+        session.pause()
+        session.startFastForward()
+        assertFalse(session.fastForward)
+    }
+
+    @Test
+    fun `fast forward with a complete route runs the flow 10 times as fast`() {
+        val session = session()
+        session.buildRoute()
+        session.startFastForward()
+        assertTrue(session.fastForward)
+        assertTrue(session.showFastForward)
+        assertEquals(10, session.flowTimeScale)
+        assertEquals(GameSession.FAST_FORWARD_FACTOR, session.flowTimeScale)
+
+        session.startFastForward()
+        assertTrue(session.fastForward)
+        assertEquals(10, session.flowTimeScale)
+    }
+
+    @Test
+    fun `placing is rejected while fast forward is on`() {
+        val session = session()
+        session.buildRoute()
+        session.startFastForward()
+        val board = session.board
+        val stack = session.stack
+
+        assertFalse(session.canPlace(Position(0, 3)))
+        assertFalse(session.place(session.stack.next, Position(0, 3)))
+        assertFalse(session.canPlace(Position(2, 1)))
+        assertFalse(session.place(PipeSection.H, Position(2, 1)))
+
+        assertEquals(board, session.board)
+        assertEquals(stack, session.stack)
+    }
+
+    @Test
+    fun `pause and resume keep fast forward on`() {
+        val session = session()
+        session.buildRoute()
+        session.startFastForward()
+        session.pause()
+        assertTrue(session.fastForward)
+        session.resume()
+        assertTrue(session.fastForward)
+        assertEquals(10, session.flowTimeScale)
+    }
+
+    @Test
+    fun `restart clears the route and fast forward`() {
+        val session = session()
+        session.buildRoute()
+        session.startFastForward()
+
+        session.restart()
+
+        assertFalse(session.routeComplete)
+        assertFalse(session.fastForward)
+        assertFalse(session.showFastForward)
+        assertEquals(1, session.flowTimeScale)
+        assertTrue(session.canPlace(Position(1, 0)))
+    }
+
+    @Test
+    fun `the game clock keeps real time with fast forward on`() {
+        val session = session()
+        session.buildRoute()
+        session.tick(100)
+        session.startFastForward()
+        session.tick(16)
+        assertEquals(116L, session.elapsedMs)
+    }
 }

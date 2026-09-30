@@ -6,7 +6,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Path
@@ -35,8 +37,7 @@ fun pipeTileTag(section: PipeSection) = "pipe-tile-${section.name}"
 /**
  * Draws [section] from its SVG asset, scaled to the tile, with the liquid of each channel in
  * [fills] (by channel id: `channel-main`, or `channel-h` / `channel-v` for the cross). A channel
- * without a fill is dry. Layers: the asset's `under` group, the liquid in channel order, the
- * `over` group.
+ * without a fill is dry. Layers are those of [drawPipe].
  */
 @Composable
 fun PipeTile(
@@ -56,31 +57,47 @@ fun PipeTile(
             .testTag(pipeTileTag(section))
             .semantics { pipeFills = fills },
     ) {
-        val cell = size.minDimension
-        val scale = cell / PipeArt.VIEW_BOX_SIZE
-        translate((size.width - cell) / 2f, (size.height - cell) / 2f) {
-            scale(scale, scale, pivot = Offset.Zero) {
-                drawShapes(art.under)
-                for (channel in art.channels) {
-                    val fill = fills[channel.channel.id] ?: continue
-                    val tank = art.art.tank
-                    if (tank != null && art.tankClip != null) {
-                        drawReservoirLiquid(channel, tank, art.tankClip, fill, scratch)
-                    } else {
-                        val bridges = art.art.bridges.filter { it.hides == channel.channel.id }
-                        drawWithout(bridges) {
-                            drawLiquid(channel, LiquidSpans.forChannel(channel.channel, fill), fill.clamped, scratch)
-                        }
+        drawPipe(art, size.toRect(), fills, scratch)
+    }
+}
+
+/**
+ * Draws [art] into [rect] of this canvas, scaled so the cell fills the shorter side and centred on
+ * the longer one, with the liquid of each channel in [fills]. Layers, bottom to top: the asset's
+ * `under` group, the liquid in channel order, the `over` group, the glass overlay. The tile and
+ * the playing field both draw pipes with this, so they look the same.
+ */
+internal fun DrawScope.drawPipe(
+    art: PreparedPipeArt,
+    rect: Rect,
+    fills: Map<String, ChannelFill> = emptyMap(),
+    scratch: LiquidScratch,
+) {
+    val cell = rect.minDimension
+    val scale = cell / PipeArt.VIEW_BOX_SIZE
+    translate(rect.left + (rect.width - cell) / 2f, rect.top + (rect.height - cell) / 2f) {
+        scale(scale, scale, pivot = Offset.Zero) {
+            drawShapes(art.under)
+            for (channel in art.channels) {
+                val fill = fills[channel.channel.id] ?: continue
+                val tank = art.art.tank
+                if (tank != null && art.tankClip != null) {
+                    drawReservoirLiquid(channel, tank, art.tankClip, fill, scratch)
+                } else {
+                    val bridges = art.art.bridges.filter { it.hides == channel.channel.id }
+                    drawWithout(bridges) {
+                        drawLiquid(channel, LiquidSpans.forChannel(channel.channel, fill), fill.clamped, scratch)
                     }
                 }
-                drawShapes(art.over)
             }
+            drawShapes(art.over)
+            drawShapes(art.glass)
         }
     }
 }
 
-/** Reused per tile so drawing the liquid does not allocate a path every frame. */
-private class LiquidScratch {
+/** Reused per canvas so drawing the liquid does not allocate a path every frame. */
+internal class LiquidScratch {
     val measure = PathMeasure()
     val segment = Path()
 }

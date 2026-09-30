@@ -48,6 +48,7 @@ import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.history.RecordResult
+import nl.hexmaster.leakout.ui.pipes.rememberPipeArtLibrary
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 
 /**
@@ -71,6 +72,9 @@ fun GameScreen(
     session: GameSession = remember(level, random) { GameSession(level, random) },
 ) {
     val dragState = remember(session) { SectionDragState() }
+    // Parse every pipe asset once up front, so no frame mid-game pays for a section's first draw.
+    val pipes = rememberPipeArtLibrary()
+    remember(pipes) { pipes.preloadAll() }
 
     // Each value is derived, so a clock tick recomposes only what changed, not the whole screen.
     val attempt = session.select { state.attempt }

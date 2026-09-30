@@ -120,6 +120,14 @@ class PipeAssetsTest {
     }
 
     @Test
+    fun `every section has a glass overlay that loads`() {
+        for (section in PipeSection.entries) {
+            assertEquals("pipes/${glassFile(section).name}", PipeArtLibrary.glassFileName(section))
+            assertTrue("$section's glass overlay draws nothing", library.glass(section).isNotEmpty())
+        }
+    }
+
+    @Test
     fun `every section has a glass overlay in the supported SVG subset`() {
         val elements = setOf("svg", "g", "path", "rect", "circle")
         val attributes = setOf(

@@ -304,6 +304,7 @@ Every pipe section is drawn from the same layers, in this order. Sizes are relat
 4. **Liquid** – stroke gradient (2.3), width 0.21 c, clipped by progress (7.3). Glow when this segment is the active one.
 5. **Specular** – stroke `steel.100` at 55 %, width 0.04 c, offset 0.12 c toward the top-left, drawn on top of the body but under the bore.
 6. **Flanges** – at every open port, a `steel.300` band 0.1 c long across the pipe width plus 0.04 c, with a `steel.700` edge line.
+7. **Glass** – the section's glass overlay (`<id>-glass.svg`), translucent white tint, rim lines and a specular streak, drawn above everything else, liquid and flanges included.
 
 ### 6.4 The eight sections plus fixed cells
 

@@ -8,13 +8,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.PixelMap
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.pinch
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -320,6 +324,50 @@ class PlayingFieldTest {
         compose.waitForIdle()
         assertSameRect(initial, compose.cellRect(start))
         compose.onAllNodes(hasContentDescription("Placed H"), useUnmergedTree = true).assertCountEquals(0)
+    }
+
+    @Test
+    fun placedSectionIsDrawnWithItsPipeArt() {
+        show()
+        val cell = Position(1, 1)
+        assertTrue(session.placeSection(PipeSection.H, cell))
+        compose.waitForIdle()
+
+        compose.cellNode(cell).assert(SemanticsMatcher.expectValue(FieldPipeSection, PipeSection.H))
+        compose.cellNode(Position(2, 2)).assert(SemanticsMatcher.keyNotDefined(FieldPipeSection))
+        assertPipeArtOfH(cell)
+    }
+
+    @Test
+    fun pipeArtFollowsZoom() {
+        show(FieldTest.large())
+        pinchField(outwards = true)
+        val cell = cellAt(compose.fieldRect().center)
+        assertTrue(session.placeSection(PipeSection.H, cell))
+        compose.waitForIdle()
+
+        assertTrue("zoomed in", compose.cellRect(cell).width > compose.px(40.dp) + 1)
+        assertPipeArtOfH(cell)
+    }
+
+    /**
+     * The H art spans the whole cell: at its centre line the dark bore, just above it the lighter
+     * steel body (view box y ≈ 34, which the old stand-in left as background), from edge to edge.
+     */
+    private fun assertPipeArtOfH(cell: Position) {
+        val field = compose.fieldRect()
+        val image = compose.onNodeWithTag(GameScreenTags.FIELD).captureToImage().toPixelMap()
+        val rect = compose.cellRect(cell).translate(-field.left, -field.top)
+        for (fx in listOf(0.2f, 0.5f, 0.8f)) {
+            val bore = image.brightnessAt(rect, fx, 0.5f)
+            val body = image.brightnessAt(rect, fx, 0.34f)
+            assertTrue("steel body $body brighter than the bore $bore at $fx", body > bore + 0.15f)
+        }
+    }
+
+    private fun PixelMap.brightnessAt(rect: Rect, fx: Float, fy: Float): Float {
+        val c = this[(rect.left + rect.width * fx).toInt(), (rect.top + rect.height * fy).toInt()]
+        return c.red + c.green + c.blue
     }
 
     private fun show(level: Level = FieldTest.level()) {

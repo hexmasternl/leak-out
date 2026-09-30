@@ -28,12 +28,12 @@
 
 ## 5. App: stars, button style and dialog
 
-- [ ] 5.1 Extract `StarIcon(earned, scale, size, modifier)` from `HudStars` (tint, brass glow and `StarEarned` semantics) and keep `HudStars` behaviour and tests unchanged.
-- [ ] 5.2 Add `WinStars(lit, scales)`: three 40 dp `StarIcon`s 12 dp apart with test tags `win_star_1` to `win_star_3` and the row content description "%1$d of 3 stars".
-- [ ] 5.3 Add `LeakOutColors.SuccessGreenDark` and a success-green `CartoonButton` style, with the disabled look unchanged; add a unit test case for its metrics if `CartoonButtonMetricsTest` covers styles.
-- [ ] 5.4 Add string resources: eyebrow "LEVEL COMPLETE", "Level complete!", "You kept the water flowing.", "Pipe points", "Unused pipes", "Total", "Next level", "Restart", "Exit", the pane title "Level complete" and the row content descriptions with placeholders.
-- [ ] 5.5 Add `LevelCompleteDialog(levelId, score, stars, frame, hasNextLevel, onNextLevel, onRestart, onExit)` as a Compose `Dialog` with `dismissOnClickOutside = false`, `dismissOnBackPress = frame.buttonsEnabled` and `onDismissRequest = onExit`, in the design-system card: eyebrow and title, `WinStars`, the three score rows with `HudFormat.score` ("-0" for the penalty before it starts), a divider before the total, and Next level (success), Restart (primary) and Exit (error-red) `CartoonButton`s at least 48 dp high, enabled from `frame.buttonsEnabled` (and `hasNextLevel`), with `paneTitle` "Level complete".
-- [ ] 5.6 Add `@Preview`s of `LevelCompleteDialog` at the start of the animation and at the end with 2 stars.
+- [x] 5.1 Extract `StarIcon(earned, scale, size, modifier)` from `HudStars` (the scale as a lambda read while drawing) (tint, brass glow and `StarEarned` semantics) and keep `HudStars` behaviour and tests unchanged.
+- [x] 5.2 Add `WinStars(lit, scales)`: three 40 dp `StarIcon`s 12 dp apart with test tags `win_star_1` to `win_star_3` and the row content description "%1$d of 3 stars".
+- [x] 5.3 Add `LeakOutColors.SuccessGreenDark` and a success-green `CartoonButton` style and an `enabled` flag with the `DisabledFill`/`DisabledShadow` look; add a unit test case for its metrics if `CartoonButtonMetricsTest` covers styles.
+- [x] 5.4 Add string resources: eyebrow "LEVEL COMPLETE", "Level complete!", "You kept the water flowing.", "Pipe points", "Unused pipes", "Total", "Next level", "Restart", "Exit", the pane title "Level complete" and the row content descriptions with placeholders.
+- [x] 5.5 Add `LevelCompleteDialog(score, frame, hasNextLevel, onNextLevel, onRestart, onExit)` as a Compose `Dialog` with `dismissOnClickOutside = false`, `dismissOnBackPress = frame.buttonsEnabled` and `onDismissRequest = onExit`, in the design-system card: eyebrow and title, `WinStars`, the three score rows with `HudFormat.score` ("-0" for the penalty before it starts), a divider before the total, and Next level (success), Restart (primary) and Exit (error-red) `CartoonButton`s at least 48 dp high, enabled from `frame.buttonsEnabled` (and `hasNextLevel`), with `paneTitle` "Level complete".
+- [x] 5.6 Add `@Preview`s of `LevelCompleteDialog` at the start of the animation and at the end with 2 stars.
 
 ## 6. App: field and screen wiring
 

@@ -8,6 +8,7 @@ import nl.hexmaster.leakout.core.flow.channelFor
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.level.exitFor
+import nl.hexmaster.leakout.core.score.FinalScore
 
 /**
  * Runs the countdown and moves the liquid head. One call walks from tile border to tile border, so
@@ -74,7 +75,11 @@ object FlowSimulation {
                     flow = FlowState.Flowing(result.next, result.entry, section.channelFor(result.entry), 0.0, used),
                 )
             }
-            FlowStep.Result.Finish -> next.copy(flow = FlowState.Ended(used), outcome = Outcome.Won(state.clockMs))
+            FlowStep.Result.Finish -> next.copy(
+                flow = FlowState.Ended(used),
+                outcome = Outcome.Won(state.clockMs),
+                finalScore = FinalScore.of(next.sheet.total, next.board),
+            )
             is FlowStep.Result.Leak ->
                 next.copy(flow = FlowState.Ended(used), outcome = Outcome.Lost(result.at, result.side, state.clockMs))
         }

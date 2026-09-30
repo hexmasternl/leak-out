@@ -37,6 +37,8 @@ class GameEngine(private val random: Random = Random.Default) {
         fastForward = false,
         routeComplete = false,
         outcome = Outcome.Playing,
+        finalScore = null,
+        sectionsRemoved = 0,
     )
 
     fun handle(state: GameState, command: GameCommand): GameState = when (command) {
@@ -49,6 +51,7 @@ class GameEngine(private val random: Random = Random.Default) {
         GameCommand.NormalSpeed -> if (state.fastForward && !state.isStopped) state.copy(fastForward = false) else state
         is GameCommand.Place -> place(state, command.at)
         is GameCommand.Tick -> tick(state, command.dtMs)
+        is GameCommand.RemoveUnused -> removeUnused(state, command.upTo)
     }
 
     /** Whether a [GameCommand.Place] on [at] would be accepted now. */
@@ -88,5 +91,19 @@ class GameEngine(private val random: Random = Random.Default) {
         val clockMs = state.clockMs + dtMs
         val moved = state.copy(clockMs = clockMs, awards = state.awards.filter { it.ageAt(clockMs) < Award.VISIBLE_MS })
         return if (state.outcome is Outcome.Playing) FlowSimulation.advance(moved, dtMs * state.flowTimeScale) else moved
+    }
+
+    /**
+     * Empties the next unused sections of a won attempt, in the final score's order, until [upTo]
+     * are gone. Refused while not won and when [upTo] is not ahead of what is already removed.
+     */
+    private fun removeUnused(state: GameState, upTo: Int): GameState {
+        val score = state.finalScore ?: return state
+        if (state.outcome !is Outcome.Won) return state
+        val target = upTo.coerceAtMost(score.unusedCount)
+        if (target <= state.sectionsRemoved) return state
+        val board = score.unusedSections.subList(state.sectionsRemoved, target)
+            .fold(state.board) { board, at -> board.with(at, Cell.Empty) }
+        return state.copy(board = board, sectionsRemoved = target)
     }
 }

@@ -533,4 +533,137 @@ class GameSessionTest {
         session.tick(16)
         assertEquals(116L, session.elapsedMs)
     }
+
+    @Test
+    fun `a new session is playing and not stopped`() {
+        val session = session()
+        assertEquals(Outcome.Playing, session.outcome)
+        assertFalse(session.isStopped)
+        assertFalse(session.showLostDialog)
+        assertEquals(0L, session.lossAgeMs)
+    }
+
+    @Test
+    fun `a leak loses the level at the given tile and side`() {
+        val session = session()
+        session.tick(300)
+        session.liquidLeaked(Position(1, 0), Side.RIGHT)
+        assertEquals(Outcome.Lost(Position(1, 0), Side.RIGHT, atMs = 300L), session.outcome)
+        assertTrue(session.isStopped)
+        assertFalse(session.paused)
+    }
+
+    @Test
+    fun `a second leak changes nothing`() {
+        val session = session()
+        session.liquidLeaked(Position(1, 0), Side.RIGHT)
+        session.tick(200)
+        session.liquidLeaked(Position(2, 2), Side.TOP)
+        assertEquals(Outcome.Lost(Position(1, 0), Side.RIGHT, atMs = 0L), session.outcome)
+    }
+
+    @Test
+    fun `a leak while paused changes nothing`() {
+        val session = session()
+        session.pause()
+        session.liquidLeaked(Position(1, 0), Side.RIGHT)
+        assertEquals(Outcome.Playing, session.outcome)
+    }
+
+    @Test
+    fun `after a loss placing, scoring and pausing are refused`() {
+        val session = session()
+        assertTrue(session.place(PipeSection.H, Position(1, 0)))
+        session.liquidLeaked(Position(1, 0), Side.RIGHT)
+
+        assertFalse(session.canPlace(Position(2, 0)))
+        assertFalse(session.place(PipeSection.H, Position(2, 0)))
+        assertEquals(Cell.Empty, session.board[Position(2, 0)])
+
+        session.liquidExited(Position(1, 0))
+        assertEquals(0, session.score)
+        assertTrue(session.popups.isEmpty())
+
+        session.pause()
+        assertFalse(session.paused)
+        assertFalse(session.pauseMenuOpen)
+    }
+
+    @Test
+    fun `fast forward does not start or stop after a loss`() {
+        val session = session()
+        session.buildRoute()
+        session.liquidLeaked(Position(2, 3), Side.BOTTOM)
+        session.toggleFastForward()
+        assertFalse(session.fastForward)
+
+        val fast = session()
+        fast.buildRoute()
+        fast.startFastForward()
+        fast.liquidLeaked(Position(2, 3), Side.BOTTOM)
+        fast.toggleFastForward()
+        assertTrue(fast.fastForward)
+    }
+
+    @Test
+    fun `the lost dialog shows after 1000 ms of ticks`() {
+        val session = session()
+        session.tick(250)
+        session.liquidLeaked(Position(1, 0), Side.RIGHT)
+        session.tick(999)
+        assertEquals(999L, session.lossAgeMs)
+        assertFalse(session.showLostDialog)
+        session.tick(1)
+        assertTrue(session.showLostDialog)
+    }
+
+    @Test
+    fun `skipping the leak effect shows the dialog at once`() {
+        val session = session()
+        session.tick(250)
+        session.liquidLeaked(Position(1, 0), Side.RIGHT)
+        session.tick(100)
+        session.skipLeakEffect()
+        assertTrue(session.showLostDialog)
+        assertEquals(LeakTiming.EFFECT_MS, session.lossAgeMs)
+        assertEquals(Position(1, 0), (session.outcome as Outcome.Lost).at)
+    }
+
+    @Test
+    fun `skipping the leak effect while playing changes nothing`() {
+        val session = session()
+        session.skipLeakEffect()
+        assertEquals(Outcome.Playing, session.outcome)
+    }
+
+    @Test
+    fun `an exit from a corner then a leak scores 15 more and loses`() {
+        val session = session()
+        session.sheet = ScoreSheet(total = 40)
+        assertTrue(session.place(PipeSection.LB, Position(1, 0)))
+
+        session.liquidExited(Position(1, 0))
+        session.liquidLeaked(Position(1, 0), Side.BOTTOM)
+
+        assertEquals(55, session.score)
+        assertTrue(session.outcome is Outcome.Lost)
+    }
+
+    @Test
+    fun `restart after a loss plays again from scratch`() {
+        val session = session()
+        session.place(PipeSection.H, Position(1, 0))
+        session.liquidExited(Position(1, 0))
+        session.liquidLeaked(Position(1, 0), Side.RIGHT)
+        session.tick(1_000)
+
+        session.restart()
+
+        assertEquals(Outcome.Playing, session.outcome)
+        assertFalse(session.isStopped)
+        assertFalse(session.showLostDialog)
+        assertEquals(0, session.score)
+        assertTrue(session.board.pipes.isEmpty())
+        assertTrue(session.place(PipeSection.H, Position(1, 0)))
+    }
 }

@@ -13,11 +13,11 @@
 
 ## 3. App: game session
 
-- [ ] 3.1 Add `Outcome` (`Playing`, `Lost(at, side, atMs)`) and `LeakTiming.EFFECT_MS = 1000`.
-- [ ] 3.2 Give `GameSession` `outcome` in Compose state, a read-only `isStopped` (`paused || outcome is Lost`), `lossAgeMs` and `showLostDialog`.
-- [ ] 3.3 Add `GameSession.liquidLeaked(at, side)`: ignored while paused or already lost; otherwise sets `Lost` with `atMs = elapsedMs`. Write the flow contract (`liquidExited` first, then `FlowStep.after`, then `liquidLeaked` on `Leak`) in its KDoc.
-- [ ] 3.4 Replace the `paused` checks in `place`, `canPlace` and `liquidExited` with `isStopped`, make `pause()` do nothing while lost, add `skipLeakEffect()`, and make `restart()` set `outcome` back to `Playing`.
-- [ ] 3.5 Unit test `GameSession`: a leak sets `Lost` at the given tile and side; a second leak changes nothing; a leak while paused changes nothing; after a loss `place` is refused, `liquidExited` adds no points and `pause()` does not open the pause menu; `showLostDialog` is false at 999 ms of ticks and true at 1,000 ms; `skipLeakEffect()` makes it true at once; exit from a corner then leak gives 15 more points and a loss; restart after a loss gives `Playing`, score 0, an empty board and accepts placements again.
+- [x] 3.1 Add `Outcome` (`Playing`, `Lost(at, side, atMs)`) and `LeakTiming.EFFECT_MS = 1000`.
+- [x] 3.2 Give `GameSession` `outcome` in Compose state, a read-only `isStopped` (`paused || outcome is Lost`), `lossAgeMs` and `showLostDialog`.
+- [x] 3.3 Add `GameSession.liquidLeaked(at, side)`: ignored while paused or already lost; otherwise sets `Lost` with `atMs = elapsedMs`. Write the flow contract (`liquidExited` first, then `FlowStep.after`, then `liquidLeaked` on `Leak`) in its KDoc.
+- [x] 3.4 Replace the `paused` checks in `place`, `canPlace` and `liquidExited` with `isStopped`, make `pause()` do nothing while lost, add `skipLeakEffect()`, and make `restart()` set `outcome` back to `Playing`.
+- [x] 3.5 Unit test `GameSession`: a leak sets `Lost` at the given tile and side; a second leak changes nothing; a leak while paused changes nothing; after a loss `place` is refused, `liquidExited` adds no points and `pause()` does not open the pause menu; `showLostDialog` is false at 999 ms of ticks and true at 1,000 ms; `skipLeakEffect()` makes it true at once; exit from a corner then leak gives 15 more points and a loss; restart after a loss gives `Playing`, score 0, an empty board and accepts placements again.
 
 ## 4. App: leak effect
 

@@ -15,6 +15,7 @@ import nl.hexmaster.leakout.core.board.PlacementCheck
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.route.Route
 import nl.hexmaster.leakout.core.route.RouteTracer
 import nl.hexmaster.leakout.core.score.ScoreSheet
@@ -23,7 +24,7 @@ import nl.hexmaster.leakout.core.stack.WeightedPool
 
 /**
  * The single owner of a running level: stack, board, replace lock, score, flow speed, game clock,
- * the paused state and fast forward. The future `GameEngine` takes over its insides; the HUD, the
+ * the paused state, fast forward and the outcome. The future `GameEngine` takes over its insides; the HUD, the
  * field and the pause dialog only depend on the values and actions here.
  *
  * Contract for the flow: the countdown and the liquid head run on `dtMs * flowTimeScale`
@@ -75,6 +76,19 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
     var pauseMenuOpen: Boolean by mutableStateOf(false)
         private set
 
+    /** [Outcome.Playing] until the pipe leaks. Only a restart makes a lost attempt play again. */
+    var outcome: Outcome by mutableStateOf(Outcome.Playing)
+        private set
+
+    /** Whether the game stands still for the player: paused or lost. Placing and scoring are refused. */
+    val isStopped: Boolean get() = paused || outcome is Outcome.Lost
+
+    /** Game time since the leak, which drives the leak effect; 0 while playing. */
+    val lossAgeMs: Long get() = (outcome as? Outcome.Lost)?.let { elapsedMs - it.atMs } ?: 0L
+
+    /** Whether the level lost dialog is shown: once the leak effect has run for [LeakTiming.EFFECT_MS]. */
+    val showLostDialog: Boolean get() = outcome is Outcome.Lost && lossAgeMs >= LeakTiming.EFFECT_MS
+
     /** Stars earned so far, derived from [score] so it can never disagree with a win. */
     val stars: Int get() = level.stars.starsFor(score)
 
@@ -94,12 +108,12 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
 
     /** Turns fast forward on when the route is complete and the game runs. Otherwise does nothing. */
     fun startFastForward() {
-        if (routeComplete && !paused && !fastForward) fastForward = true
+        if (routeComplete && !isStopped && !fastForward) fastForward = true
     }
 
-    /** Back to the level's normal speed, which unlocks placing. Does nothing while paused. */
+    /** Back to the level's normal speed, which unlocks placing. Does nothing while paused or lost. */
     fun stopFastForward() {
-        if (!paused) fastForward = false
+        if (!isStopped) fastForward = false
     }
 
     /** What the button does: fast forward when off, normal speed when on. */
@@ -107,8 +121,12 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
         if (fastForward) stopFastForward() else startFastForward()
     }
 
-    /** Pauses the game and opens the pause menu. Pausing twice is the same as once. */
+    /**
+     * Pauses the game and opens the pause menu. Pausing twice is the same as once. Does nothing once
+     * the level is lost: a lost attempt can only be restarted or left.
+     */
     fun pause() {
+        if (outcome is Outcome.Lost) return
         paused = true
         pauseMenuOpen = true
     }
@@ -120,7 +138,7 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
 
     /**
      * Starts the level again: new stack, empty board, no lock, no route and no fast forward, score 0
-     * and no popups, clock and speed reset, running.
+     * and no popups, clock and speed reset, playing and running.
      */
     fun restart() {
         stack = PipeStack.create(level.stack, random)
@@ -133,10 +151,14 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
         popups = emptyList()
         flowSpeed = level.flow.cellsPerSecond
         elapsedMs = 0L
+        outcome = Outcome.Playing
         resume()
     }
 
-    /** Moves the game clock by [dtMs] and drops the popups whose time is over. Does nothing while paused. */
+    /**
+     * Moves the game clock by [dtMs] and drops the popups whose time is over. Does nothing while
+     * paused. After a loss the clock still runs, but only for the leak effect ([lossAgeMs]).
+     */
     fun tick(dtMs: Long) {
         if (paused || dtMs <= 0) return
         elapsedMs += dtMs
@@ -147,7 +169,7 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
 
     /**
      * The liquid has left the tile [at]: awards the points for the section there and shows them on
-     * the tile. Refused while paused. Every cell that is not a placed section (start, finish, empty,
+     * the tile. Refused while paused or lost. Every cell that is not a placed section (start, finish, empty,
      * blocked) is ignored, so the flow can call this for every cell it leaves.
      *
      * Contract for the flow: call it exactly once each time the liquid head leaves a cell, after the
@@ -156,18 +178,40 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
      * exit from a cross counts as its second pass.
      */
     fun liquidExited(at: Position) {
-        if (paused) return
+        if (isStopped) return
         val pipe = board[at] as? Cell.Pipe ?: return
         val award = sheet.award(at, pipe.section)
         sheet = award.sheet
         popups = popups + PointsPopup(nextPopupId++, at, award.points, startedAtMs = elapsedMs)
     }
 
+    /**
+     * The pipe leaks at the tile [at] through [side]: the level is lost and everything stops. Ignored
+     * while paused and once lost, so an attempt is lost at most once.
+     *
+     * Contract for the flow: each time the liquid leaves a tile, call [liquidExited] first (so the
+     * last section still scores), then `FlowStep.after`, and on `FlowStep.Result.Leak` call this with
+     * its `at` and `side`. The start is checked the same way when the countdown ends.
+     */
+    fun liquidLeaked(at: Position, side: Side) {
+        if (isStopped) return
+        outcome = Outcome.Lost(at, side, atMs = elapsedMs)
+    }
+
+    /**
+     * Ends the leak effect at once, so the level lost dialog shows as soon as the player comes back
+     * to the app. Does nothing while playing or once the dialog is shown.
+     */
+    fun skipLeakEffect() {
+        val lost = outcome as? Outcome.Lost ?: return
+        if (lossAgeMs < LeakTiming.EFFECT_MS) outcome = lost.copy(atMs = elapsedMs - LeakTiming.EFFECT_MS)
+    }
+
     /** Whether the next section can be dropped on [at] now: the same check [place] runs. */
     fun canPlace(at: Position): Boolean = check(at).accepted
 
     /**
-     * Puts [section] on [at] and draws the next stack section. Refused while paused, while fast
+     * Puts [section] on [at] and draws the next stack section. Refused while paused or lost, while fast
      * forward is on, or when the placement rule rejects the tile. A replacement starts the level's
      * replace lock. Afterwards the route is checked again.
      */
@@ -186,9 +230,9 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
         board = board.markLiquidEntered(at)
     }
 
-    // Pause and fast forward are session state, not board rules, so they are checked here.
+    // Pause, loss and fast forward are session state, not board rules, so they are checked here.
     private fun check(at: Position): PlacementCheck =
-        if (paused || fastForward) {
+        if (isStopped || fastForward) {
             PlacementCheck.Rejected(PlacementCheck.Reason.LOCKED)
         } else {
             Placement.check(board, level.rules, at, elapsedMs, replaceLockUntilMs)

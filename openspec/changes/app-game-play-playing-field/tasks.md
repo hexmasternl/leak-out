@@ -43,13 +43,13 @@
 
 ## 8. Instrumented tests (emulator)
 
-- [ ] 8.1 Layout: the field starts right of the stack and below the HUD and reaches the right and bottom edges; an 8 × 6 level is shown completely and centred; a 16 × 12 level on a 360 dp tall screen shows 40 dp cells with the start cell visible and draws nothing over the HUD or the stack.
-- [ ] 8.2 Pan: on a 16 × 12 level, a swipe moves the level and stops at the edges; a short tap does not move it; on a level that fits, a swipe does not move it.
-- [ ] 8.3 Zoom: a pinch out makes cells larger and stops at 120 dp; a pinch in stops at the starting size; a two-finger twist does not rotate or move the level.
-- [ ] 8.4 Highlight: dragging over an empty tile highlights it; over a blocked, start or finish tile, over a section with liquid (set on the board), over the stack or the HUD, nothing is highlighted; moving to the next tile moves the highlight; letting go clears it.
-- [ ] 8.5 Drop and replace: dropping on a highlighted empty tile places the section; dropping on a placed section without liquid replaces it and advances the stack; dropping on a section with liquid is rejected and leaves the stack; right after a replacement nothing is highlighted and a drop is rejected; after the lock time a drop works again.
-- [ ] 8.6 Drag and view: dragging a section over the field does not pan it; after a pan and a zoom, a drop still lands on the tile under the drop point.
-- [ ] 8.7 Pause and restart: pausing during a drag clears the highlight; resume keeps the zoom and pan; restart resets the view and clears the board.
+- [x] 8.1 Layout: the field starts right of the stack and below the HUD and reaches the right and bottom edges; an 8 × 6 level is shown completely and centred; a 16 × 12 level on a 360 dp tall screen shows 40 dp cells with the start cell visible and draws nothing over the HUD or the stack.
+- [x] 8.2 Pan: on a 16 × 12 level, a swipe moves the level and stops at the edges; a short tap does not move it; on a level that fits, a swipe does not move it.
+- [x] 8.3 Zoom: a pinch out makes cells larger and stops at 120 dp; a pinch in stops at the starting size; a two-finger twist does not rotate or move the level.
+- [x] 8.4 Highlight: dragging over an empty tile highlights it; over a blocked, start or finish tile, over a section with liquid (set on the board), over the stack or the HUD, nothing is highlighted; moving to the next tile moves the highlight; letting go clears it.
+- [x] 8.5 Drop and replace: dropping on a highlighted empty tile places the section; dropping on a placed section without liquid replaces it and advances the stack; dropping on a section with liquid is rejected and leaves the stack; right after a replacement nothing is highlighted and a drop is rejected; after the lock time a drop works again.
+- [x] 8.6 Drag and view: dragging a section over the field does not pan it; after a pan and a zoom, a drop still lands on the tile under the drop point.
+- [x] 8.7 Pause and restart: pausing during a drag clears the highlight; resume keeps the zoom and pan; restart resets the view and clears the board.
 - [ ] 8.8 Run `./gradlew :app:testDebugUnitTest :app:connectedDebugAndroidTest` on the emulator and record the results.
 
 ## 9. Wrap up

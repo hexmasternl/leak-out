@@ -28,6 +28,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -58,6 +59,7 @@ fun StackPanel(
 ) {
     BoxWithConstraints(
         modifier = modifier
+            .testTag(GameScreenTags.STACK_PANEL)
             .fillMaxHeight()
             .background(LeakOutColors.SurfaceDeep.copy(alpha = 0.90f), RoundedCornerShape(24.dp))
             .border(1.dp, Color.White.copy(alpha = 0.16f), RoundedCornerShape(24.dp))

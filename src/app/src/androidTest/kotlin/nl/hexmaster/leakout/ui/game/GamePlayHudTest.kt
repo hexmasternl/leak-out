@@ -146,12 +146,12 @@ class GamePlayHudTest {
         val stack = compose.runOnIdle { session.pause(); session.stack }
         compose.waitForIdle()
 
-        dragNextToCell(Position(1, 1))
+        compose.dropOnCell(Position(1, 1))
 
-        compose.onNodeWithTag(GameScreenTags.PLACED_PREFIX + "1_1").assertDoesNotExist()
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Empty")
         compose.runOnIdle {
             assertEquals(stack, session.stack)
-            assertTrue(session.placed.isEmpty())
+            assertTrue(session.board.pipes.isEmpty())
         }
     }
 
@@ -160,7 +160,7 @@ class GamePlayHudTest {
     fun dragGoingOnWhenPausedReturnsToSlot() {
         show()
         val stack = compose.runOnIdle { session.stack }
-        val target = cellCenter(Position(1, 1))
+        val target = compose.cellRect(Position(1, 1)).center + Offset(0f, px(DraggedCopyYOffset))
         val next = nextNode()
         val nextBounds = next.getUnclippedBoundsInRoot()
 
@@ -178,10 +178,10 @@ class GamePlayHudTest {
         compose.waitForIdle()
 
         compose.onNodeWithTag(GameScreenTags.DRAGGED).assertDoesNotExist()
-        compose.onNodeWithTag(GameScreenTags.PLACED_PREFIX + "1_1").assertDoesNotExist()
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Empty")
         compose.runOnIdle {
             assertEquals(stack, session.stack)
-            assertTrue(session.placed.isEmpty())
+            assertTrue(session.board.pipes.isEmpty())
         }
     }
 
@@ -189,8 +189,8 @@ class GamePlayHudTest {
     @Test
     fun resumeKeepsBoardStackScoreAndStars() {
         show()
-        dragNextToCell(Position(1, 1))
-        compose.onNodeWithTag(GameScreenTags.PLACED_PREFIX + "1_1").assertIsDisplayed()
+        compose.dropOnCell(Position(1, 1))
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
         val stack = compose.runOnIdle { session.score = 150; session.stack }
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
@@ -198,7 +198,7 @@ class GamePlayHudTest {
         compose.waitForIdle()
 
         compose.onNodeWithTag(PauseTags.DIALOG).assertDoesNotExist()
-        compose.onNodeWithTag(GameScreenTags.PLACED_PREFIX + "1_1").assertIsDisplayed()
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
         compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 150")
         compose.onNodeWithTag(HudTags.STARS).assertContentDescriptionEquals("1 of 3 stars")
         compose.runOnIdle {
@@ -234,8 +234,8 @@ class GamePlayHudTest {
     @Test
     fun restartClearsBoardDrawsNewStackAndKeepsRunning() {
         show()
-        dragNextToCell(Position(1, 1))
-        compose.onNodeWithTag(GameScreenTags.PLACED_PREFIX + "1_1").assertIsDisplayed()
+        compose.dropOnCell(Position(1, 1))
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
         compose.runOnIdle { session.score = 250 }
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
@@ -243,14 +243,14 @@ class GamePlayHudTest {
         compose.waitForIdle()
 
         compose.onNodeWithTag(PauseTags.DIALOG).assertDoesNotExist()
-        compose.onNodeWithTag(GameScreenTags.PLACED_PREFIX + "1_1").assertDoesNotExist()
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Empty")
         compose.onNodeWithTag(HudTags.LEVEL).assertContentDescriptionEquals("Level 1")
         compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 0")
         compose.onNodeWithTag(HudTags.STARS).assertContentDescriptionEquals("0 of 3 stars")
         for (star in 1..3) starNode(star).assert(SemanticsMatcher.expectValue(StarEarned, false))
         compose.runOnIdle {
             assertFalse(session.paused)
-            assertTrue(session.placed.isEmpty())
+            assertTrue(session.board.pipes.isEmpty())
             assertEquals(5, session.stack.size)
         }
     }
@@ -337,30 +337,6 @@ class GamePlayHudTest {
     private fun nextNode() = compose.onNodeWithContentDescription("Next: Horizontal straight", useUnmergedTree = true)
 
     private fun bounds(tag: String): DpRect = compose.onNodeWithTag(tag).getUnclippedBoundsInRoot()
-
-    private fun dragNextToCell(cell: Position) {
-        val target = cellCenter(cell)
-        val next = nextNode()
-        val nextBounds = next.getUnclippedBoundsInRoot()
-        next.performTouchInput {
-            down(center)
-            moveTo(Offset(target.x - px(nextBounds.left), target.y - px(nextBounds.top)))
-            up()
-        }
-        compose.mainClock.advanceTimeBy(200)
-        compose.waitForIdle()
-    }
-
-    private fun cellCenter(cell: Position): Offset {
-        val board = compose.onNodeWithTag(GameScreenTags.BOARD).getUnclippedBoundsInRoot()
-        val width = px(board.right - board.left)
-        val height = px(board.bottom - board.top)
-        val cellSize = minOf(width / 4, height / 4)
-        val left = px(board.left) + (width - cellSize * 4) / 2f
-        val top = px(board.top) + (height - cellSize * 4) / 2f
-        // The drop point is a fixed offset above the finger.
-        return Offset(left + cellSize * (cell.x + 0.5f), top + cellSize * (cell.y + 0.5f) + px(DraggedCopyYOffset))
-    }
 
     private fun level(visibleSize: Int = 5): Level = Level(
         id = 1,

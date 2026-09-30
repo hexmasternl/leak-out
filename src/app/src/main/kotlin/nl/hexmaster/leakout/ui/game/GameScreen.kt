@@ -46,6 +46,8 @@ import nl.hexmaster.leakout.core.engine.Outcome
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.history.LevelHistoryRepository
+import nl.hexmaster.leakout.history.RecordResult
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 
 /**
@@ -53,7 +55,8 @@ import nl.hexmaster.leakout.ui.theme.LeakOutColors
  * the fast forward button in the bottom right corner once the route is complete. A leak shows the
  * spurt for [LeakTiming.EFFECT_MS] and then the level lost dialog. A win flashes the finish for
  * [WinTiming.FINISH_EFFECT_MS] and then shows the level complete dialog; its Next level button calls
- * [onNextLevel] and stays disabled when that is null (the last level).
+ * [onNextLevel] and stays disabled when that is null (the last level). The win is recorded in
+ * [history] as soon as it happens, and the dialog shows when it set a new best; a leak is never recorded.
  *
  * Every view shows only what it reads from the [GameSession]'s state, and every action is a
  * command to the engine. [session] owns the running level; tests pass their own to drive it.
@@ -63,6 +66,7 @@ fun GameScreen(
     level: Level,
     onExit: () -> Unit,
     onNextLevel: (() -> Unit)? = null,
+    history: LevelHistoryRepository? = null,
     random: Random = Random.Default,
     session: GameSession = remember(level, random) { GameSession(level, random) },
 ) {
@@ -80,6 +84,11 @@ fun GameScreen(
     val showWinDialog = session.select { showWinDialog }
 
     GameClock(session, paused)
+    // Keyed on the attempt: every won attempt is offered to the history, which keeps the best.
+    val won = outcome is Outcome.Won
+    LaunchedEffect(session, history, attempt, won) {
+        if (won && history != null) session.recordWin(history)
+    }
     LaunchedEffect(session, isStopped) {
         if (isStopped) dragState.cancel()
     }
@@ -195,6 +204,7 @@ fun GameScreen(
                 onNextLevel = { onNextLevel?.invoke() },
                 onRestart = { session.send(GameCommand.Restart) },
                 onExit = onExit,
+                newBest = session.select { recordResult is RecordResult.NewHighscore },
             )
         }
     }

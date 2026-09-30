@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import nl.hexmaster.leakout.core.library.LevelLibraryConfig
 import nl.hexmaster.leakout.core.library.TileState
+import nl.hexmaster.leakout.history.InMemoryLevelHistoryRepository
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -151,12 +152,33 @@ class LevelLibraryViewModelTest {
     }
 
     @Test
-    fun `in memory history keeps the best stars`() = runTest {
-        val history = InMemoryHistory()
-        history.record(1, 2)
-        history.record(1, 1)
-        assertEquals(mapOf(1 to 2), history.stars().first())
-        history.record(1, 3)
-        assertEquals(mapOf(1 to 3), history.stars().first())
+    fun `the level history is read as the stars of each highscore`() = runTest {
+        val history = InMemoryLevelHistoryRepository()
+        val reader = history.asHistoryReader()
+        history.recordCompletion(1, 200, 2)
+        history.recordCompletion(1, 100, 3)
+        assertEquals(mapOf(1 to 2), reader.stars().first())
+        history.recordCompletion(1, 300, 3)
+        history.recordCompletion(2, 5, 0)
+        assertEquals(mapOf(1 to 3, 2 to 0), reader.stars().first())
+    }
+
+    @Test
+    fun `a recorded win updates the library`() = runTest {
+        val history = InMemoryLevelHistoryRepository()
+        val vm = viewModel(history.asHistoryReader())
+        assertEquals(TileState.Locked, vm.uiState.value.library.tile(2)!!.state)
+        history.recordCompletion(1, 50, 1)
+        assertEquals(TileState.Completed(1), vm.uiState.value.library.tile(1)!!.state)
+        assertEquals(TileState.Unlocked, vm.uiState.value.library.tile(2)!!.state)
+    }
+
+    @Test
+    fun `a win with 0 stars completes the level and unlocks the next`() = runTest {
+        val history = InMemoryLevelHistoryRepository()
+        val vm = viewModel(history.asHistoryReader())
+        history.recordCompletion(1, 5, 0)
+        assertEquals(TileState.Completed(0), vm.uiState.value.library.tile(1)!!.state)
+        assertEquals(TileState.Unlocked, vm.uiState.value.library.tile(2)!!.state)
     }
 }

@@ -5,7 +5,7 @@ The game has numbered levels, scores and star benchmarks, but nothing remembers 
 ## What Changes
 
 - Add a local on-device database that stores one history record per level the player has successfully finished.
-- A record holds the level id, the personal highscore for that level and the number of stars (1-3) earned with that highscore.
+- A record holds the level id, the personal highscore for that level and the number of stars (0-3) earned with that highscore.
 - When a level is finished successfully, the result is recorded: a first completion creates the record, a later completion only updates it if the new score beats the stored highscore (stars are updated together with the score).
 - A failed level (leak) never creates or changes a record.
 - Provide read access: the record for one level, all records, and whether a level has been finished, for use by level select and the level-complete screen.

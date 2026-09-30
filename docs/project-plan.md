@@ -148,7 +148,7 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 | Board rendering | Compose `Canvas` with a frame-clock driven loop | Simple grid game; no need for a game engine. Can swap to a `SurfaceView` later if profiling shows the need |
 | Game loop | `withFrameNanos` inside a `LaunchedEffect` | Frame-synced delta time, pauses with the composable |
 | Serialization | `kotlinx.serialization` (JSON) | Level files |
-| Persistence | Jetpack DataStore (Preferences) | Level progress and settings |
+| Persistence | Room (SQLite) for level progress; Jetpack DataStore (Preferences) for settings | Progress is per-level rows updated conditionally; settings are a few flags |
 | Audio | `SoundPool` for effects, `MediaPlayer` for music | Low-latency, built in |
 | DI | None initially; manual construction in a small `AppContainer` | Project is small; add Hilt only if it grows |
 | Tests | JUnit 5 + kotlin.test for `core`; Compose UI tests for screens | Core logic must be testable without a device |
@@ -184,7 +184,8 @@ leak-out/
             ├── ui/game/            GameScreen, BoardCanvas, StackPanel, overlays
             ├── render/             PipeDrawer (paths per section), LiquidDrawer, palette
             ├── audio/
-            ├── data/               LevelRepository (assets), ProgressRepository (DataStore)
+            ├── history/            LevelHistoryRepository; data/: Room database, entity and DAO
+            ├── data/               LevelRepository (assets), SettingsRepository (DataStore)
             └── LeakOutApp.kt, MainActivity.kt
 ```
 
@@ -398,11 +399,16 @@ Target: core module ≥ 90 % line coverage; it is small and entirely determinist
 
 ### 2.10 Persistence
 
-`ProgressRepository` (DataStore Preferences):
+**Level progress: Room (SQLite).** `LevelHistoryRepository` keeps one row per finished level in the `level_history` table of `LeakOutDatabase`:
 
-- `highestUnlockedLevel: Int`
-- per level: `bestScore`, `stars`
-- settings: `soundEnabled`, `musicEnabled`
+- `level_id` (primary key), `highscore`, `stars` (0-3, the stars earned with that highscore)
+- a row exists only for finished levels, so "finished" means "has a row"; a leak is never recorded
+- a win replaces the row only when it scores strictly higher, updating highscore and stars together
+- unlocking is derived from these rows by the level library rules; nothing like `highestUnlockedLevel` is stored
+
+Room was chosen over DataStore because progress is per-level rows that are listed and updated conditionally. Every schema version is exported to `app/schemas` and a version bump needs a written migration.
+
+**Settings: DataStore (Preferences).** DataStore holds settings only: `soundEnabled`, `musicEnabled`.
 
 No accounts, no network in the first release.
 

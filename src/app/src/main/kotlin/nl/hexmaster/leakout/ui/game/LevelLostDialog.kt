@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -64,19 +65,23 @@ private fun LevelLostCard(score: Int, onRestart: () -> Unit, onExit: () -> Unit)
         modifier = Modifier
             .testTag(LevelLostTags.DIALOG)
             .semantics { paneTitle = paneName }
-            .widthIn(max = 360.dp)
+            .widthIn(max = 400.dp)
             .background(LeakOutColors.SurfaceCard, shape)
             .border(3.dp, LeakOutColors.InkDark, shape)
-            .padding(24.dp),
+            .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text(
-            text = stringResource(R.string.lost_title).uppercase(),
-            style = LeakOutTextStyles.Header1,
-            color = LeakOutColors.ErrorRed,
-        )
-        LeakingPipe(Modifier.size(width = 96.dp, height = 56.dp))
+        // The game runs in landscape, down to 360 dp high, so the card stays short: the pipe sits
+        // beside the title and the buttons side by side.
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            LeakingPipe(Modifier.size(width = 64.dp, height = 40.dp))
+            Text(
+                text = stringResource(R.string.lost_title).uppercase(),
+                style = LeakOutTextStyles.Header1,
+                color = LeakOutColors.ErrorRed,
+            )
+        }
         Text(
             text = stringResource(R.string.lost_message),
             style = LeakOutTextStyles.Header2,
@@ -89,17 +94,19 @@ private fun LevelLostCard(score: Int, onRestart: () -> Unit, onExit: () -> Unit)
             color = LeakOutColors.InkLight,
             modifier = Modifier.testTag(LevelLostTags.SCORE),
         )
-        CartoonButton(
-            text = stringResource(R.string.lost_restart),
-            onClick = onRestart,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag(LevelLostTags.RESTART),
-        )
-        CartoonButton(
-            text = stringResource(R.string.lost_exit),
-            onClick = onExit,
-            variant = CartoonButtonVariant.Danger,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag(LevelLostTags.EXIT),
-        )
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            CartoonButton(
+                text = stringResource(R.string.lost_restart),
+                onClick = onRestart,
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(LevelLostTags.RESTART),
+            )
+            CartoonButton(
+                text = stringResource(R.string.lost_exit),
+                onClick = onExit,
+                variant = CartoonButtonVariant.Danger,
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(LevelLostTags.EXIT),
+            )
+        }
     }
 }
 
@@ -122,7 +129,7 @@ private fun LeakingPipe(modifier: Modifier = Modifier) {
     }
 }
 
-@Preview(name = "Level lost", widthDp = 400, heightDp = 480)
+@Preview(name = "Level lost", widthDp = 440, heightDp = 300)
 @Composable
 private fun LevelLostDialogPreview() {
     LeakOutTheme {

@@ -36,10 +36,10 @@
 
 ## 6. Tests and docs
 
-- [ ] 6.1 Instrumented test: place a section, call `session.liquidLeaked` on its tile, and check that the leak effect is shown, that no dialog is shown before 1,000 ms of game time, and that the level lost dialog with "Leaked!", the score, Restart and Exit is shown after it.
-- [ ] 6.2 Instrumented test: while lost, a drag of the next section does not start, the cog wheel does not open the pause dialog and the stack stays the same; a drag in progress when the leak happens returns to its slot.
-- [ ] 6.3 Instrumented test: Restart closes the dialog, empties the board, shows score 0 and accepts a new drag; Exit shows the welcome screen.
-- [ ] 6.4 Instrumented test: tapping outside the dialog keeps it open; Back on the dialog shows the welcome screen; Back during the leak effect keeps the game screen open without the pause dialog.
-- [ ] 6.5 Instrumented test: move the app to the background after a loss and back, and check that the level lost dialog is shown and the pause dialog is not.
+- [x] 6.1 Instrumented test: place a section, call `session.liquidLeaked` on its tile, and check that the leak effect is shown, that no dialog is shown before 1,000 ms of game time, and that the level lost dialog with "Leaked!", the score, Restart and Exit is shown after it.
+- [x] 6.2 Instrumented test: while lost, a drag of the next section does not start, the cog wheel does not open the pause dialog and the stack stays the same; a drag in progress when the leak happens returns to its slot.
+- [x] 6.3 Instrumented test: Restart closes the dialog, empties the board, shows score 0 and accepts a new drag; Exit shows the welcome screen.
+- [x] 6.4 Instrumented test: tapping outside the dialog keeps it open; Back on the dialog shows the welcome screen; Back during the leak effect keeps the game screen open without the pause dialog.
+- [x] 6.5 Instrumented test: move the app to the background after a loss and back, and check that the level lost dialog is shown and the pause dialog is not.
 - [ ] 6.6 Run `./gradlew test` and `./gradlew connectedAndroidTest` on the emulator and check that everything passes.
 - [ ] 6.7 Update `docs/project-plan.md`: section 1.9 (a leak stops the game, shows the spurt for 1 second, then the level lost dialog with the score, Restart and Exit to the main menu) and section 1.11 item 5 (the failed overlay has Restart and Exit).

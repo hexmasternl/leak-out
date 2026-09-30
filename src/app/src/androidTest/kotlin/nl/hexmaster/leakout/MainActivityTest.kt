@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -15,6 +16,7 @@ import nl.hexmaster.leakout.ui.levels.LevelLibraryTags
 import nl.hexmaster.leakout.ui.levels.levelTileTag
 import nl.hexmaster.leakout.ui.splash.SplashScreenTags
 import nl.hexmaster.leakout.ui.splash.SplashTiming
+import nl.hexmaster.leakout.ui.title.PlayMenuTags
 import nl.hexmaster.leakout.ui.title.WelcomeScreenTags
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -87,11 +89,27 @@ class MainActivityTest {
         assertTrue(config.screenWidthDp > config.screenHeightDp)
     }
 
-    @Test
-    fun playOpensTheLevelLibraryAndBackReturnsToTheWelcomeScreen() {
-        skipSplash()
+    /** Play, then a choice on the play menu; the history is read off the main thread, so wait for [tag]. */
+    private fun playThen(choice: String, tag: String) {
         compose.onNodeWithTag(WelcomeScreenTags.PLAY).performClick()
-        compose.waitForIdle()
+        compose.onNodeWithTag(PlayMenuTags.DIALOG).assertIsDisplayed()
+        compose.onNodeWithTag(choice).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
+    fun continueStartsALevel() {
+        skipSplash()
+        playThen(PlayMenuTags.CONTINUE, GameScreenTags.SCREEN)
+        compose.onNodeWithTag(PlayMenuTags.DIALOG).assertDoesNotExist()
+        compose.onNodeWithTag(GameScreenTags.SCREEN).assertIsDisplayed()
+    }
+
+    @Test
+    fun selectLevelOpensTheLevelLibraryAndBackReturnsToTheWelcomeScreen() {
+        skipSplash()
+        playThen(PlayMenuTags.SELECT_LEVEL, LevelLibraryTags.SCREEN)
+        compose.onNodeWithTag(PlayMenuTags.DIALOG).assertDoesNotExist()
         compose.onNodeWithTag(LevelLibraryTags.SCREEN).assertIsDisplayed()
         compose.onNodeWithTag(levelTileTag(1)).assertIsDisplayed()
 
@@ -105,8 +123,7 @@ class MainActivityTest {
     @Test
     fun exitFromThePauseMenuShowsTheWelcomeScreen() {
         skipSplash()
-        compose.onNodeWithTag(WelcomeScreenTags.PLAY).performClick()
-        compose.waitForIdle()
+        playThen(PlayMenuTags.SELECT_LEVEL, LevelLibraryTags.SCREEN)
         compose.onNodeWithTag(levelTileTag(1)).performClick()
         compose.waitForIdle()
         compose.onNodeWithTag(GameScreenTags.SCREEN).assertIsDisplayed()

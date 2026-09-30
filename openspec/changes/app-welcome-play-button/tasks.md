@@ -5,19 +5,19 @@
 
 ## 2. Dialog
 
-- [ ] 2.1 Create `PlayMenuDialog` in `ui/title/` with "Continue" and "Select level" cartoon buttons per the design system; dismissible via outside tap and back
-- [ ] 2.2 Compose UI tests: dialog content, dismiss, each button invokes its callback once
+- [x] 2.1 Create `PlayMenuDialog` in `ui/title/` with "Continue" and "Select level" cartoon buttons per the design system; dismissible via outside tap and back
+- [x] 2.2 Compose UI tests: dialog content, dismiss, each button invokes its callback once
 
 ## 3. Welcome screen wiring
 
-- [ ] 3.1 Change `WelcomeScreen` Play to show the dialog (local `showPlayMenu` state) instead of emitting a navigation event
-- [ ] 3.2 Replace host callbacks with `onStartLevel(levelId)` and `onOpenLevelLibrary(page)`; on Continue or Select level resolve the next level from a history snapshot, close the dialog, and call the callback
-- [ ] 3.3 Continue falls back to `onOpenLevelLibrary` when the next level is locked
+- [x] 3.1 Change `WelcomeScreen` Play to show the dialog (local `showPlayMenu` state) instead of emitting a navigation event
+- [x] 3.2 Replace host callbacks with `onStartLevel(levelId)` and `onOpenLevelLibrary(page)`; on Continue or Select level resolve the next level from a history snapshot, close the dialog, and call the callback
+- [x] 3.3 Continue falls back to `onOpenLevelLibrary` when the next level is locked
 
 ## 4. Level library entry
 
-- [ ] 4.1 Add optional `initialPage` argument to the level library screen/view model, clamped to accessible pages; the default keeps the existing "useful page" rule
-- [ ] 4.2 Test that opening from the dialog lands on the page of the next level (highest completed 30 gives page 2, 24 gives page 2, none gives page 1)
+- [x] 4.1 Add optional `initialPage` argument to the level library screen/view model, clamped to accessible pages; the default keeps the existing "useful page" rule
+- [x] 4.2 Test that opening from the dialog lands on the page of the next level (highest completed 30 gives page 2, 24 gives page 2, none gives page 1)
 
 ## 5. Verification
 

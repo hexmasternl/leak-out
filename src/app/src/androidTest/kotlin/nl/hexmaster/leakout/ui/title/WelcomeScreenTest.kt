@@ -14,7 +14,12 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
+import androidx.test.espresso.Espresso
+import androidx.test.espresso.action.ViewActions
+import androidx.test.espresso.matcher.RootMatchers.isDialog
+import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import nl.hexmaster.leakout.core.library.NextLevel
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -28,22 +33,37 @@ class WelcomeScreenTest {
     @get:Rule
     val compose = createComposeRule()
 
-    private var plays = 0
+    private val startedLevels = mutableListOf<Int>()
+    private val openedPages = mutableListOf<Int>()
+    private var resolves = 0
     private var settings = 0
     private var exits = 0
+
+    /** What the play menu resolves to; throwing simulates a failed history read. */
+    private var nextLevel: () -> NextLevel = { NextLevel(levelId = 1, page = 1, isUnlocked = true, highestCompleted = 0) }
 
     private fun showScreen(widthDp: Int = 800, heightDp: Int = 360) {
         compose.setContent {
             LeakOutTheme {
                 Box(Modifier.size(widthDp.dp, heightDp.dp)) {
                     WelcomeScreen(
-                        onPlay = { plays++ },
+                        resolveNextLevel = {
+                            resolves++
+                            nextLevel()
+                        },
+                        onStartLevel = { startedLevels += it },
+                        onOpenLevelLibrary = { openedPages += it },
                         onSettings = { settings++ },
                         onExit = { exits++ },
                     )
                 }
             }
         }
+    }
+
+    private fun openPlayMenu() {
+        compose.onNodeWithTag(WelcomeScreenTags.PLAY).performClick()
+        compose.onNodeWithTag(PlayMenuTags.DIALOG).assertIsDisplayed()
     }
 
     @Test
@@ -69,24 +89,105 @@ class WelcomeScreenTest {
     }
 
     @Test
-    fun playInvokesOnlyOnPlayOnce() {
+    fun playOpensThePlayMenuWithoutNavigating() {
         showScreen()
-        compose.onNodeWithTag(WelcomeScreenTags.PLAY).performClick()
-        compose.runOnIdle { assertCounts(play = 1, settings = 0, exit = 0) }
+        openPlayMenu()
+        compose.onNodeWithTag(PlayMenuTags.CONTINUE).assertIsDisplayed()
+        compose.onNodeWithTag(PlayMenuTags.SELECT_LEVEL).assertIsDisplayed()
+        compose.runOnIdle {
+            assertNoNavigation()
+            assertEquals("history is read only on a choice", 0, resolves)
+            assertCounts(settings = 0, exit = 0)
+        }
+    }
+
+    @Test
+    fun continueStartsTheNextLevelAndClosesTheMenu() {
+        nextLevel = { NextLevel(levelId = 8, page = 1, isUnlocked = true, highestCompleted = 7) }
+        showScreen()
+        openPlayMenu()
+        compose.onNodeWithTag(PlayMenuTags.CONTINUE).performClick()
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(PlayMenuTags.DIALOG).assertDoesNotExist()
+        compose.runOnIdle {
+            assertEquals(listOf(8), startedLevels)
+            assertEquals(emptyList<Int>(), openedPages)
+        }
+    }
+
+    @Test
+    fun continueOnALockedNextLevelOpensTheLibraryOnThePageOfTheHighestCompleted() {
+        nextLevel = { NextLevel(levelId = 25, page = 2, isUnlocked = false, highestCompleted = 24) }
+        showScreen()
+        openPlayMenu()
+        compose.onNodeWithTag(PlayMenuTags.CONTINUE).performClick()
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(PlayMenuTags.DIALOG).assertDoesNotExist()
+        compose.runOnIdle {
+            assertEquals(emptyList<Int>(), startedLevels)
+            assertEquals(listOf(1), openedPages)
+        }
+    }
+
+    @Test
+    fun selectLevelOpensTheLibraryOnThePageOfTheNextLevel() {
+        nextLevel = { NextLevel(levelId = 31, page = 2, isUnlocked = true, highestCompleted = 30) }
+        showScreen()
+        openPlayMenu()
+        compose.onNodeWithTag(PlayMenuTags.SELECT_LEVEL).performClick()
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(PlayMenuTags.DIALOG).assertDoesNotExist()
+        compose.runOnIdle {
+            assertEquals(emptyList<Int>(), startedLevels)
+            assertEquals(listOf(2), openedPages)
+        }
+    }
+
+    @Test
+    fun aFailedHistoryReadKeepsTheMenuOpenAndNavigatesNowhere() {
+        nextLevel = { error("history unavailable") }
+        showScreen()
+        openPlayMenu()
+        compose.onNodeWithTag(PlayMenuTags.CONTINUE).performClick()
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(PlayMenuTags.DIALOG).assertIsDisplayed()
+        compose.runOnIdle { assertNoNavigation() }
+    }
+
+    @Test
+    fun backClosesThePlayMenuAndKeepsTheWelcomeScreen() {
+        showScreen()
+        openPlayMenu()
+        Espresso.onView(isRoot()).inRoot(isDialog()).perform(ViewActions.pressBack())
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(PlayMenuTags.DIALOG).assertDoesNotExist()
+        compose.onNodeWithTag(WelcomeScreenTags.SCREEN).assertIsDisplayed()
+        compose.runOnIdle { assertNoNavigation() }
     }
 
     @Test
     fun settingsInvokesOnlyOnSettingsOnce() {
         showScreen()
         compose.onNodeWithTag(WelcomeScreenTags.SETTINGS).performClick()
-        compose.runOnIdle { assertCounts(play = 0, settings = 1, exit = 0) }
+        compose.runOnIdle {
+            assertNoNavigation()
+            assertCounts(settings = 1, exit = 0)
+        }
     }
 
     @Test
     fun exitInvokesOnlyOnExitOnce() {
         showScreen()
         compose.onNodeWithTag(WelcomeScreenTags.EXIT).performClick()
-        compose.runOnIdle { assertCounts(play = 0, settings = 0, exit = 1) }
+        compose.runOnIdle {
+            assertNoNavigation()
+            assertCounts(settings = 0, exit = 1)
+        }
     }
 
     @Test
@@ -127,9 +228,13 @@ class WelcomeScreenTest {
         }
     }
 
-    private fun assertCounts(play: Int, settings: Int, exit: Int) {
-        assertEquals("onPlay", play, plays)
+    private fun assertCounts(settings: Int, exit: Int) {
         assertEquals("onSettings", settings, this.settings)
         assertEquals("onExit", exit, exits)
+    }
+
+    private fun assertNoNavigation() {
+        assertEquals("onStartLevel", emptyList<Int>(), startedLevels)
+        assertEquals("onOpenLevelLibrary", emptyList<Int>(), openedPages)
     }
 }

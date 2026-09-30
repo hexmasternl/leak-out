@@ -17,7 +17,12 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.core.library.NextLevel
+import nl.hexmaster.leakout.core.library.NextLevelResolver
 import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.history.data.LeakOutDatabase
 import nl.hexmaster.leakout.history.data.RoomLevelHistoryRepository
@@ -60,9 +65,9 @@ class MainActivity : ComponentActivity() {
             LeakOutTheme {
                 SplashGate {
                     var screen by remember { mutableStateOf<Screen>(Screen.Welcome) }
-                    // Every visit opens on the most useful page, not the one left last time.
-                    val openLibrary = {
-                        library.reopen()
+                    // Every visit opens on the page asked for, not the one left last time.
+                    val openLibrary = { page: Int ->
+                        library.reopen(page)
                         screen = Screen.Library
                     }
                     when (val current = screen) {
@@ -81,7 +86,9 @@ class MainActivity : ComponentActivity() {
                             onBack = { screen = Screen.Welcome },
                         )
                         Screen.Welcome -> WelcomeScreen(
-                            onPlay = openLibrary,
+                            resolveNextLevel = ::resolveNextLevel,
+                            onStartLevel = { id -> levels.load(id)?.let { screen = Screen.Game(it) } },
+                            onOpenLevelLibrary = openLibrary,
                             onSettings = { /* TODO: navigate to settings once that screen exists. */ },
                             onExit = { finishAffinity() },
                         )
@@ -89,6 +96,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /** The next level from a snapshot of the history, read when the player picks on the play menu. */
+    private suspend fun resolveNextLevel(): NextLevel = withContext(Dispatchers.IO) {
+        NextLevelResolver.resolve(levels.levelCount(), history.asHistoryReader().stars().first())
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {

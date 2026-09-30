@@ -44,6 +44,7 @@ import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.StarBenchmarks
+import nl.hexmaster.leakout.core.library.NextLevelResolver
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import nl.hexmaster.leakout.ui.title.WelcomeScreen
 import nl.hexmaster.leakout.ui.title.WelcomeScreenTags
@@ -401,7 +402,13 @@ class LevelCompleteTest {
                 // The test activity shows the system bars; the game hides them, so measure a bare 360 dp screen.
                 Box(Modifier.size(800.dp, 360.dp).consumeWindowInsets(WindowInsets.safeDrawing)) {
                     when (val shown = current) {
-                        null -> WelcomeScreen(onPlay = {}, onSettings = {}, onExit = {})
+                        null -> WelcomeScreen(
+                            resolveNextLevel = { NextLevelResolver.resolve(totalLevels = 1, stars = emptyMap()) },
+                            onStartLevel = {},
+                            onOpenLevelLibrary = {},
+                            onSettings = {},
+                            onExit = {},
+                        )
                         else -> key(shown) {
                             GameScreen(
                                 level = shown,

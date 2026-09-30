@@ -41,6 +41,7 @@ import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
+import nl.hexmaster.leakout.core.library.NextLevelResolver
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import nl.hexmaster.leakout.ui.title.WelcomeScreen
 import nl.hexmaster.leakout.ui.title.WelcomeScreenTags
@@ -282,7 +283,13 @@ class LevelLostTest {
                     if (inGame) {
                         GameScreen(level = level, onExit = { inGame = false }, session = session)
                     } else {
-                        WelcomeScreen(onPlay = {}, onSettings = {}, onExit = {})
+                        WelcomeScreen(
+                            resolveNextLevel = { NextLevelResolver.resolve(totalLevels = 1, stars = emptyMap()) },
+                            onStartLevel = {},
+                            onOpenLevelLibrary = {},
+                            onSettings = {},
+                            onExit = {},
+                        )
                     }
                 }
             }

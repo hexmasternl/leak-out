@@ -35,18 +35,7 @@ object PipeArtParser {
     private val SHAPES = setOf("path", "rect", "circle")
 
     fun parse(input: InputStream): PipeArt {
-        val factory = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
-        val root = factory.newDocumentBuilder().parse(input).documentElement
-        if (root.namespaceURI != SVG_NS || root.localName != "svg") {
-            throw UnsupportedSvgException("The root element must be an SVG <svg>")
-        }
-        checkAttributes(root)
-        if (root.getAttribute("viewBox").split(Regex("[\\s,]+")).map { it.toFloatOrNull() } !=
-            listOf(0f, 0f, 100f, 100f)
-        ) {
-            throw UnsupportedSvgException("The view box must be \"0 0 100 100\"")
-        }
-
+        val root = readRoot(input)
         val gradients = mutableMapOf<String, SvgLinearGradient>()
         collectGradients(root, gradients)
 
@@ -103,6 +92,60 @@ object PipeArtParser {
             }
         }
         return PipeArt(under, over, channels, tank, bridges)
+    }
+
+    /**
+     * Reads a glass overlay (`assets/pipes/<id>-glass.svg`): the shapes of its one `glass` group,
+     * drawn above everything else. It has no channels, tank or bridge.
+     */
+    fun parseGlass(input: InputStream): List<SvgShape> {
+        val root = readRoot(input)
+        val gradients = mutableMapOf<String, SvgLinearGradient>()
+        collectGradients(root, gradients)
+        var glass: List<SvgShape>? = null
+        for (child in svgChildren(root)) {
+            checkAttributes(child)
+            val id = child.getAttribute("id")
+            when {
+                child.localName == "defs" -> Unit
+                child.localName == "g" && id == "glass" -> {
+                    if (glass != null) throw UnsupportedSvgException("More than one group with id \"glass\"")
+                    rejectLiquidMarks(child)
+                    glass = shapes(child, SvgStyle().inherit(child, gradients), gradients)
+                }
+                else -> throw UnsupportedSvgException(
+                    "<${child.localName}${if (id.isNotEmpty()) " id=\"$id\"" else ""}> must be inside the " +
+                        "\"glass\" group",
+                )
+            }
+        }
+        return glass ?: throw UnsupportedSvgException("Missing the group with id \"glass\"")
+    }
+
+    /** A glass overlay only draws; channels, the tank and the bridge belong in the section asset. */
+    private fun rejectLiquidMarks(parent: Element) {
+        for (child in svgChildren(parent)) {
+            val id = child.getAttribute("id")
+            if (id.startsWith("channel-") || id == "tank" || id == "bridge") {
+                throw UnsupportedSvgException("A glass overlay cannot have '$id'; it belongs in the section asset")
+            }
+            rejectLiquidMarks(child)
+        }
+    }
+
+    private fun readRoot(input: InputStream): Element {
+        val factory = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+        val root = factory.newDocumentBuilder().parse(input).documentElement
+        if (root.namespaceURI != SVG_NS || root.localName != "svg") {
+            throw UnsupportedSvgException("The root element must be an SVG <svg>")
+        }
+        checkAttributes(root)
+        if (root.getAttribute("viewBox").split(Regex("[\\s,]+")).map { it.toFloatOrNull() } !=
+            listOf(0f, 0f, 100f, 100f)
+        ) {
+            throw UnsupportedSvgException("The view box must be \"0 0 100 100\"")
+        }
+        return root
     }
 
     private fun svgChildren(parent: Element): List<Element> {

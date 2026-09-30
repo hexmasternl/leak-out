@@ -1,9 +1,9 @@
 ## 1. Load the glass overlays
 
-- [ ] 1.1 Add `PipeArtParser.parseGlass(input): List<SvgShape>` that reads the supported subset, requires one `glass` group, and fails with a named error on a missing `glass` group, an unsupported element, or a channel, tank or bridge
-- [ ] 1.2 JVM tests in `PipeArtParserTest`: a valid overlay parses to its shapes with their styles; a missing `glass` group, a `text` element and a `channel-` path each fail with an error naming the problem
-- [ ] 1.3 `PipeArtLibrary`: add `glassFileName(section)` (`pipes/<id>-glass.svg`), load the overlay with the section's art, and add `glass: List<PreparedShape>` to `PreparedPipeArt`
-- [ ] 1.4 Extend `PipeAssetsTest` so every section's overlay loads through `parseGlass` and draws at least one shape
+- [x] 1.1 Add `PipeArtParser.parseGlass(input): List<SvgShape>` that reads the supported subset, requires one `glass` group, and fails with a named error on a missing `glass` group, an unsupported element, or a channel, tank or bridge
+- [x] 1.2 JVM tests in `PipeArtParserTest`: a valid overlay parses to its shapes with their styles; a missing `glass` group, a `text` element and a `channel-` path each fail with an error naming the problem
+- [x] 1.3 `PipeArtLibrary`: add `glassFileName(section)` (`pipes/<id>-glass.svg`), load the overlay with the section's art, and add `glass: List<PreparedShape>` to `PreparedPipeArt`
+- [x] 1.4 Extend `PipeAssetsTest` so every section's overlay loads through `parseGlass` and draws at least one shape
 
 ## 2. One pipe drawing
 

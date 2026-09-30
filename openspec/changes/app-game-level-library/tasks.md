@@ -1,10 +1,10 @@
 ## 1. Configuration and domain logic
 
-- [ ] 1.1 Add `LevelLibraryConfig(pageUnlockStars)` with a provisional default of 36 and a single place to change it
+- [x] 1.1 Add `LevelLibraryConfig(pageUnlockStars)` with a provisional default of 36 and a single place to change it
 - [ ] 1.2 Define small interfaces `LevelCatalog` (total level count) and `HistoryReader` (Flow of levelId to stars) with fakes for tests
-- [ ] 1.3 Implement the pure use case computing pages, tile states (locked/unlocked/completed+stars), page star totals and page accessibility
-- [ ] 1.4 Implement initial page selection (lowest unlocked unfinished level, else last accessible page)
-- [ ] 1.5 Unit tests: fresh install, sequential unlock, skipping, threshold reached/not reached, improved stars, partial last page, changed threshold, initial page
+- [x] 1.3 Implement the pure use case computing pages, tile states (locked/unlocked/completed+stars), page star totals and page accessibility
+- [x] 1.4 Implement initial page selection (lowest unlocked unfinished level, else last accessible page)
+- [x] 1.5 Unit tests: fresh install, sequential unlock, skipping, threshold reached/not reached, improved stars, partial last page, changed threshold, initial page
 
 ## 2. View model
 

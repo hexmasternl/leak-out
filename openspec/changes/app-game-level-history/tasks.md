@@ -1,10 +1,10 @@
 ## 1. Dependencies and database setup
 
-- [ ] 1.1 Add Room (runtime, ktx, compiler via KSP) and Room testing to the version catalog and app module
-- [ ] 1.2 Enable Room schema export to a `schemas/` directory and commit it
-- [ ] 1.3 Create `LevelHistoryEntity` (`level_history`: `level_id` PK, `highscore`, `stars`)
-- [ ] 1.4 Create `LevelHistoryDao` with get, observe, observeAll, insert and update queries
-- [ ] 1.5 Create `LeakOutDatabase` (version 1) and provide a single instance to the app
+- [x] 1.1 Add Room (runtime, ktx, compiler via KSP) and Room testing to the version catalog and app module
+- [x] 1.2 Enable Room schema export to a `schemas/` directory and commit it
+- [x] 1.3 Create `LevelHistoryEntity` (`level_history`: `level_id` PK, `highscore`, `stars`)
+- [x] 1.4 Create `LevelHistoryDao` with get, observe, observeAll, insert and update queries
+- [x] 1.5 Create `LeakOutDatabase` (version 1) and provide a single instance to the app
 
 ## 2. Domain model and repository
 

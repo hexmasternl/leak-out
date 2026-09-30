@@ -3,6 +3,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
 }
 
 android {
@@ -37,9 +39,19 @@ android {
         }
     }
 
+    // The exported schemas are test assets, so migration tests can open every past version.
+    sourceSets.getByName("androidTest") {
+        assets.directories.add("$projectDir/schemas")
+    }
+
     buildFeatures {
         compose = true
     }
+}
+
+// Every schema version is exported and committed; a version bump needs a written migration.
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 java {
@@ -62,6 +74,11 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.compose)
 
+    // Room: the on-device level history.
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
 
@@ -72,6 +89,8 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.room.testing)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 

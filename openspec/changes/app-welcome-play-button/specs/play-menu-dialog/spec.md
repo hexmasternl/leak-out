@@ -13,7 +13,7 @@ Tapping "Play" on the welcome screen SHALL open a modal dialog offering two acti
 - **THEN** the dialog closes and the welcome screen is shown unchanged
 
 ### Requirement: Continue starts the next level
-Tapping "Continue" SHALL start the level following the highest completed level. A level is completed when a history record with at least one star exists. With no completed level, "Continue" SHALL start level 1.
+Tapping "Continue" SHALL start the level following the highest completed level. A level is completed when a history record exists; a 0-star win counts, as in the `level-library` rules. With no completed level, "Continue" SHALL start level 1.
 
 #### Scenario: Progress exists
 - **WHEN** the highest completed level is 7 and the user taps "Continue"

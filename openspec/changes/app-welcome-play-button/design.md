@@ -25,7 +25,7 @@ The welcome screen (`app-welcome-screen`) is stateless: `WelcomeScreen(onPlay, o
 
 Continue: if `isUnlocked`, emit `onStartLevel(levelId)`; otherwise emit `onOpenLevelLibrary(page of highest)` so the player sees the star-gate hint. Select level: emit `onOpenLevelLibrary(page)`.
 
-"Completed with at least one star" equals "row exists" because history only records finished levels with 1-3 stars; the resolver still filters `stars >= 1` defensively.
+"Completed" equals "row exists", 0-star wins included, matching `LevelLibraryRules` and `asHistoryReader` (history accepts 0-star wins since `app-game-level-history`). By those rules the first level of a page also unlocks when the level before it is finished, so the locked fallback is defensive; it is kept and tested through `NextLevel.continueTarget`.
 
 **Library initial page argument.** The library screen takes an optional `initialPage`. When absent it uses its existing rule (page of the lowest unlocked unfinished level). With linear progress both give the same page; the explicit argument keeps the dialog's contract testable and avoids the library re-deriving it. `initialPage` is clamped to accessible pages.
 

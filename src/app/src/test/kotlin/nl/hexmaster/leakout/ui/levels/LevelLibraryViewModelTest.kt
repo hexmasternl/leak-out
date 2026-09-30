@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import nl.hexmaster.leakout.core.library.LevelLibraryConfig
+import nl.hexmaster.leakout.core.library.NextLevelResolver
 import nl.hexmaster.leakout.core.library.TileState
 import nl.hexmaster.leakout.history.InMemoryLevelHistoryRepository
 import org.junit.After
@@ -95,6 +96,46 @@ class LevelLibraryViewModelTest {
     @Test
     fun `reopen returns to the initial page`() {
         val vm = viewModel(FakeHistory(finished(1..24)))
+        vm.onPageChange(1)
+        vm.reopen()
+        assertEquals(2, vm.uiState.value.currentPage)
+    }
+
+    /** Opens the library as the play menu's Select level does: on the page of the next level. */
+    private fun openFromPlayMenu(stars: Map<Int, Int>, levels: Int = 72): LevelLibraryUiState {
+        val vm = viewModel(FakeHistory(stars), levels = levels)
+        vm.onPageChange(1)
+        vm.reopen(NextLevelResolver.resolve(levels, stars, LevelLibraryConfig(36)).page)
+        return vm.uiState.value
+    }
+
+    @Test
+    fun `opened from the play menu with highest completed 30 lands on page 2`() {
+        assertEquals(2, openFromPlayMenu(finished(1..30)).currentPage)
+    }
+
+    @Test
+    fun `opened from the play menu with highest completed 24 lands on page 2`() {
+        assertEquals(2, openFromPlayMenu(finished(1..24)).currentPage)
+    }
+
+    @Test
+    fun `opened from the play menu with nothing completed lands on page 1`() {
+        assertEquals(1, openFromPlayMenu(emptyMap()).currentPage)
+    }
+
+    @Test
+    fun `reopen on a page that cannot be entered is clamped to the nearest accessible page below`() {
+        val vm = viewModel(FakeHistory(finished(1..5)), levels = 72)
+        vm.reopen(3)
+        assertEquals(1, vm.uiState.value.currentPage)
+        vm.reopen(99)
+        assertEquals(1, vm.uiState.value.currentPage)
+    }
+
+    @Test
+    fun `reopen without a page keeps the useful page rule`() {
+        val vm = viewModel(FakeHistory(finished(1..30)), levels = 72)
         vm.onPageChange(1)
         vm.reopen()
         assertEquals(2, vm.uiState.value.currentPage)

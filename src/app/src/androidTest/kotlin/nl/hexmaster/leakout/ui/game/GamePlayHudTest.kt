@@ -42,6 +42,7 @@ import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.level.StackSettings
 import nl.hexmaster.leakout.core.level.StarBenchmarks
+import nl.hexmaster.leakout.core.score.ScoreSheet
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -107,7 +108,7 @@ class GamePlayHudTest {
         show()
         val expected = listOf(100 to 1, 199 to 1, 200 to 2, 350 to 3)
         for ((score, earned) in expected) {
-            compose.runOnIdle { session.score = score }
+            compose.runOnIdle { session.sheet = ScoreSheet(total = score) }
             compose.waitForIdle()
             for (star in 1..3) {
                 starNode(star).assert(SemanticsMatcher.expectValue(StarEarned, star <= earned))
@@ -191,7 +192,7 @@ class GamePlayHudTest {
         show()
         compose.dropOnCell(Position(1, 1))
         compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
-        val stack = compose.runOnIdle { session.score = 150; session.stack }
+        val stack = compose.runOnIdle { session.sheet = ScoreSheet(total = 150); session.stack }
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
         compose.onNodeWithTag(PauseTags.RESUME).performClick()
@@ -236,7 +237,7 @@ class GamePlayHudTest {
         show()
         compose.dropOnCell(Position(1, 1))
         compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
-        compose.runOnIdle { session.score = 250 }
+        compose.runOnIdle { session.sheet = ScoreSheet(total = 250) }
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
         compose.onNodeWithTag(PauseTags.RESTART).performClick()

@@ -12,17 +12,17 @@
 
 ## 3. App: game session
 
-- [ ] 3.1 Add `PointsPopup(id, position, points, startedAtMs)` and `PopupTiming` (`FADE_IN_MS = 150`, `HOLD_MS = 500`, `FADE_OUT_MS = 350`, `TOTAL_MS = 1000`).
-- [ ] 3.2 Give `GameSession` a `sheet: ScoreSheet` and `popups: List<PointsPopup>` in Compose state, and turn `score` into a read-only property that returns `sheet.total`.
-- [ ] 3.3 Add `GameSession.liquidExited(at)`: refused while paused; ignores every cell that is not `Cell.Pipe`; otherwise awards through the sheet and adds a popup with `startedAtMs = elapsedMs`. Write the flow contract from the design (once per exit, after marking the channel, before the leak or win check) in its KDoc.
-- [ ] 3.4 Make `tick(dtMs)` drop popups whose age has reached `PopupTiming.TOTAL_MS`, and make `restart()` reset the sheet and clear the popups.
-- [ ] 3.5 Unit test `GameSession`: exiting a straight on a placed pipe adds 10 and one popup at that tile; exiting the start or finish tile changes nothing; the second exit from a cross adds 50; nothing changes while paused; ticks while paused do not age or drop popups; a popup is dropped after 1,000 ms of ticks; restart sets the score to 0, clears popups, and the next cross exit on the same tile is a first pass again.
+- [x] 3.1 Add `PointsPopup(id, position, points, startedAtMs)` and `PopupTiming` (`FADE_IN_MS = 150`, `HOLD_MS = 500`, `FADE_OUT_MS = 350`, `TOTAL_MS = 1000`).
+- [x] 3.2 Give `GameSession` a `sheet: ScoreSheet` and `popups: List<PointsPopup>` in Compose state, and turn `score` into a read-only property that returns `sheet.total`.
+- [x] 3.3 Add `GameSession.liquidExited(at)`: refused while paused; ignores every cell that is not `Cell.Pipe`; otherwise awards through the sheet and adds a popup with `startedAtMs = elapsedMs`. Write the flow contract from the design (once per exit, after marking the channel, before the leak or win check) in its KDoc.
+- [x] 3.4 Make `tick(dtMs)` drop popups whose age has reached `PopupTiming.TOTAL_MS`, and make `restart()` reset the sheet and clear the popups.
+- [x] 3.5 Unit test `GameSession`: exiting a straight on a placed pipe adds 10 and one popup at that tile; exiting the start or finish tile changes nothing; the second exit from a cross adds 50; nothing changes while paused; ticks while paused do not age or drop popups; a popup is dropped after 1,000 ms of ticks; restart sets the score to 0, clears popups, and the next cross exit on the same tile is a first pass again.
 
 ## 4. App: popup animation
 
-- [ ] 4.1 Add the pure `PopupFrame(alpha, scale, rise)` and `popupFrame(ageMs)` with the easing from the design, returning `null` at or after `TOTAL_MS`.
-- [ ] 4.2 Unit test `popupFrame`: at 0 ms alpha 0 and scale 0.8; at 150 ms alpha 1 and scale 1; alpha stays 1 through 650 ms; alpha falls towards 0 during the fade-out; rise grows from 0 to 0.25 and never goes down; `null` at 1,000 ms and later; alpha and scale are always within their ranges.
-- [ ] 4.3 Add `PointsFormat.text(points)` that returns "+10", "+15", "+25" or "+50", and unit test it.
+- [x] 4.1 Add the pure `PopupFrame(alpha, scale, rise)` and `popupFrame(ageMs)` with the easing from the design, returning `null` at or after `TOTAL_MS`.
+- [x] 4.2 Unit test `popupFrame`: at 0 ms alpha 0 and scale 0.8; at 150 ms alpha 1 and scale 1; alpha stays 1 through 650 ms; alpha falls towards 0 during the fade-out; rise grows from 0 to 0.25 and never goes down; `null` at 1,000 ms and later; alpha and scale are always within their ranges.
+- [x] 4.3 Add `PointsFormat.text(points)` that returns "+10", "+15", "+25" or "+50", and unit test it.
 
 ## 5. App: drawing on the playing field
 

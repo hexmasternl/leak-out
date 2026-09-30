@@ -21,8 +21,8 @@
 
 ## 4. App: leak effect
 
-- [ ] 4.1 Add the pure `LeakFrame(length, spread, alpha)` and `leakFrame(ageMs)` that grows the spurt during the effect and keeps a small puddle from 1,000 ms on.
-- [ ] 4.2 Unit test `leakFrame`: at 0 ms the length is 0; the length grows and never goes down during the effect; alpha stays within 0 and 1; from 1,000 ms on the frame is the fixed puddle.
+- [x] 4.1 Add the pure `LeakFrame(length, spread, alpha)` and `leakFrame(ageMs)` that grows the spurt during the effect and keeps a small puddle from 1,000 ms on.
+- [x] 4.2 Unit test `leakFrame`: at 0 ms the length is 0; the length grows and never goes down during the effect; alpha stays within 0 and 1; from 1,000 ms on the frame is the fixed puddle.
 - [ ] 4.3 Pass the lost tile, side and a `() -> Long` for `lossAgeMs` to `PlayingField`, read them only inside the draw lambda, and draw the droplets from the middle of the leaking side outwards in the liquid color, after the pipes and before the popups.
 - [ ] 4.4 Add a `LeakAt` semantics property to the cell overlay of the leaking tile with its side, for the instrumented tests.
 

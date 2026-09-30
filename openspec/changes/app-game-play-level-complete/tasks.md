@@ -37,11 +37,11 @@
 
 ## 6. App: field and screen wiring
 
-- [ ] 6.1 Pass a `() -> Long?` for `winAgeMs` to `PlayingField`, read it only inside the draw lambda, and draw the success-green finish ring from `finishFlashFrame` on the finish tile after the pipes and before the popups.
-- [ ] 6.2 Add a `FinishFlash` semantics property to the cell overlay of the finish tile while won, for the instrumented tests.
-- [ ] 6.3 In `GameScreen`: show `LevelCompleteDialog` while `showWinDialog` with `session.winFrame`; Restart sends `GameCommand.Restart`, Exit calls `onExit`, Next level calls `onNextLevel`; keep the drag cancel, `StackPanel` `enabled`, the cog wheel and the fast forward button on `isStopped`.
-- [ ] 6.4 In `GameScreen`: widen the Back handling so Back does nothing while `outcome !is Playing` and the current dialog's buttons are not enabled, and make `ON_STOP` call `skipWinAnimation()` when won, `skipLeakEffect()` when lost and send `Pause` otherwise.
-- [ ] 6.5 Add `onNextLevel: (() -> Unit)?` to `GameScreen` and, in `MainActivity`, resolve the bundled level with id `level.id + 1` (null when there is none) and switch `screen` to `Game(nextLevel)` on Next level.
+- [x] 6.1 Pass `winAgeMs: (() -> Long)?` to `PlayingField` (null while not won), read it only inside the draw lambda, and draw the success-green finish ring from `finishFlashFrame` on the finish tile after the pipes and before the popups.
+- [x] 6.2 Add a `FinishFlash` semantics property to the cell overlay of the finish tile while won, for the instrumented tests.
+- [x] 6.3 In `GameScreen`: show `LevelCompleteDialog` while `showWinDialog` with `session.winFrame`; Restart sends `GameCommand.Restart`, Exit calls `onExit`, Next level calls `onNextLevel`; keep the drag cancel, `StackPanel` `enabled`, the cog wheel and the fast forward button on `isStopped`.
+- [x] 6.4 In `GameScreen`: widen the Back handling so Back does nothing while `outcome !is Playing` and the current dialog's buttons are not enabled, and make `ON_STOP` call `skipWinAnimation()` when won, `skipLeakEffect()` when lost and send `Pause` otherwise.
+- [x] 6.5 Add `onNextLevel: (() -> Unit)?` to `GameScreen` and, in `MainActivity`, resolve the bundled level with id `level.id + 1` through a small `BundledLevels` loader (null when there is none) and switch `screen` to `Game(nextLevel)` on Next level.
 
 ## 7. Tests and docs
 

@@ -59,4 +59,15 @@
     <string name="fast_forward">Fast forward</string>
     <string name="fast_forward_on">Fast forward on</string>
     <string name="fast_forward_normal_speed">Normal speed</string>
+
+    <!-- Level library -->
+    <string name="level_library_title">Levels</string>
+    <string name="level_library_page">Page %1$d</string>
+    <string name="level_library_previous">Previous page</string>
+    <string name="level_library_next">Next page</string>
+    <string name="level_library_star_progress">%1$d/%2$d stars to unlock page %3$d</string>
+    <string name="level_library_locked_message">Level %1$d is locked</string>
+    <string name="level_tile_locked">Level %1$d, locked</string>
+    <string name="level_tile_unlocked">Level %1$d, not played yet</string>
+    <string name="level_tile_completed">Level %1$d, completed, %2$d of 3 stars</string>
 </resources>

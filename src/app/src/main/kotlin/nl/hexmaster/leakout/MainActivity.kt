@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -14,21 +15,32 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.ui.game.GameScreen
+import nl.hexmaster.leakout.ui.levels.InMemoryHistory
+import nl.hexmaster.leakout.ui.levels.LevelLibraryScreen
+import nl.hexmaster.leakout.ui.levels.LevelLibraryViewModel
 import nl.hexmaster.leakout.ui.splash.SplashGate
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import nl.hexmaster.leakout.ui.title.WelcomeScreen
 
-/** The two screens until the play menu and level library bring their own navigation. */
+/** The screens, until a navigation library is worth adding. */
 private sealed interface Screen {
     data object Welcome : Screen
+    data object Library : Screen
     data class Game(val level: Level) : Screen
 }
 
 class MainActivity : ComponentActivity() {
     private val levels by lazy { BundledLevels(assets) }
-    private val firstLevel: Level by lazy { levels.load(1) ?: error("Level 1 is not bundled") }
+
+    // Stands in for the persistent level history until game-level-history provides it.
+    private val history = InMemoryHistory()
+    private val library: LevelLibraryViewModel by viewModels {
+        viewModelFactory { initializer { LevelLibraryViewModel(history, levels) } }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Before super.onCreate: swaps the splash theme for Theme.LeakOut. The system splash is
@@ -45,6 +57,11 @@ class MainActivity : ComponentActivity() {
             LeakOutTheme {
                 SplashGate {
                     var screen by remember { mutableStateOf<Screen>(Screen.Welcome) }
+                    // Every visit opens on the most useful page, not the one left last time.
+                    val openLibrary = {
+                        library.reopen()
+                        screen = Screen.Library
+                    }
                     when (val current = screen) {
                         is Screen.Game -> {
                             val next = remember(current.level) { levels.next(current.level) }
@@ -54,8 +71,13 @@ class MainActivity : ComponentActivity() {
                                 onNextLevel = next?.let { { screen = Screen.Game(it) } },
                             )
                         }
+                        Screen.Library -> LevelLibraryScreen(
+                            viewModel = library,
+                            onStartLevel = { id -> levels.load(id)?.let { screen = Screen.Game(it) } },
+                            onBack = { screen = Screen.Welcome },
+                        )
                         Screen.Welcome -> WelcomeScreen(
-                            onPlay = { screen = Screen.Game(firstLevel) },
+                            onPlay = openLibrary,
                             onSettings = { /* TODO: navigate to settings once that screen exists. */ },
                             onExit = { finishAffinity() },
                         )

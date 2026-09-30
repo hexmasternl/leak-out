@@ -11,6 +11,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import nl.hexmaster.leakout.ui.game.GameScreenTags
 import nl.hexmaster.leakout.ui.game.HudTags
 import nl.hexmaster.leakout.ui.game.PauseTags
+import nl.hexmaster.leakout.ui.levels.LevelLibraryTags
+import nl.hexmaster.leakout.ui.levels.levelTileTag
 import nl.hexmaster.leakout.ui.splash.SplashScreenTags
 import nl.hexmaster.leakout.ui.splash.SplashTiming
 import nl.hexmaster.leakout.ui.title.WelcomeScreenTags
@@ -86,9 +88,26 @@ class MainActivityTest {
     }
 
     @Test
+    fun playOpensTheLevelLibraryAndBackReturnsToTheWelcomeScreen() {
+        skipSplash()
+        compose.onNodeWithTag(WelcomeScreenTags.PLAY).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(LevelLibraryTags.SCREEN).assertIsDisplayed()
+        compose.onNodeWithTag(levelTileTag(1)).assertIsDisplayed()
+
+        compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(LevelLibraryTags.SCREEN).assertDoesNotExist()
+        compose.onNodeWithTag(WelcomeScreenTags.SCREEN).assertIsDisplayed()
+    }
+
+    @Test
     fun exitFromThePauseMenuShowsTheWelcomeScreen() {
         skipSplash()
         compose.onNodeWithTag(WelcomeScreenTags.PLAY).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(levelTileTag(1)).performClick()
         compose.waitForIdle()
         compose.onNodeWithTag(GameScreenTags.SCREEN).assertIsDisplayed()
 

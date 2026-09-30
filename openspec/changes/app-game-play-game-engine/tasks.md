@@ -45,9 +45,9 @@
 
 ## 6. Tests and docs
 
-- [ ] 6.1 Instrumented test: place a route, tick until the flow ends, and check that the HUD score and the popups follow the game state and the outcome is won.
-- [ ] 6.2 Instrumented test: zoom and pan the field, place sections, open the pause dialog and tap Restart; check that the field is back at its starting fit, the board is empty, the HUD shows 0 and three grey stars, no popup is shown and the dialog is closed.
-- [ ] 6.3 Instrumented test: start a drag, then restart from code; check that the drag is cancelled and the stack shows the new sections.
-- [ ] 6.4 Instrumented test: pause with the cog wheel and with `ON_STOP`, tick, and check that nothing moves until Resume.
+- [x] 6.1 Instrumented test: place a route, tick until the flow ends, and check that the HUD score and the popups follow the game state and the outcome is won.
+- [x] 6.2 Instrumented test: zoom and pan the field, place sections, open the pause dialog and tap Restart; check that the field is back at its starting fit, the board is empty, the HUD shows 0 and three grey stars, no popup is shown and the dialog is closed.
+- [x] 6.3 Instrumented test: start a drag, then restart from code; check that the drag is cancelled and the stack shows the new sections.
+- [x] 6.4 Instrumented test: pause with the cog wheel and with `ON_STOP`, tick, and check that nothing moves until Resume.
 - [x] 6.5 Update `docs/project-plan.md` sections 2.5 and 2.6 to the engine as built (drag to place, `Side`-based model, the commands, `Outcome`, awards).
-- [ ] 6.6 Run `./gradlew :core:test :app:testDebugUnitTest :app:connectedDebugAndroidTest` on the emulator and check that everything passes.
+- [x] 6.6 Run `./gradlew :core:test :app:testDebugUnitTest :app:connectedDebugAndroidTest` on the emulator and check that everything passes.

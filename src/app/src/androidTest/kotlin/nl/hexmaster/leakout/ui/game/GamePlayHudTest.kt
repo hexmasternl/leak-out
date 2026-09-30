@@ -32,6 +32,7 @@ import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlin.random.Random
+import nl.hexmaster.leakout.core.engine.GameCommand
 import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.FlowSettings
 import nl.hexmaster.leakout.core.level.GridSize
@@ -42,7 +43,6 @@ import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.level.StackSettings
 import nl.hexmaster.leakout.core.level.StarBenchmarks
-import nl.hexmaster.leakout.core.score.ScoreSheet
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -108,7 +108,7 @@ class GamePlayHudTest {
         show()
         val expected = listOf(100 to 1, 199 to 1, 200 to 2, 350 to 3)
         for ((score, earned) in expected) {
-            compose.runOnIdle { session.sheet = ScoreSheet(total = score) }
+            compose.runOnIdle { session.setScore(score) }
             compose.waitForIdle()
             for (star in 1..3) {
                 starNode(star).assert(SemanticsMatcher.expectValue(StarEarned, star <= earned))
@@ -117,7 +117,7 @@ class GamePlayHudTest {
             compose.onNodeWithTag(HudTags.STARS).assertContentDescriptionEquals("$earned of 3 stars")
         }
 
-        compose.runOnIdle { session.restart() }
+        compose.runOnIdle { session.send(GameCommand.Restart) }
         compose.waitForIdle()
         for (star in 1..3) starNode(star).assert(SemanticsMatcher.expectValue(StarEarned, false))
         compose.onNodeWithTag(HudTags.STARS).assertContentDescriptionEquals("0 of 3 stars")
@@ -137,22 +137,22 @@ class GamePlayHudTest {
         listOf(PauseTags.RESUME, PauseTags.RESTART, PauseTags.EXIT).forEach {
             assertTrue(bounds(it).bottom - bounds(it).top >= 48.dp)
         }
-        compose.runOnIdle { assertTrue(session.paused) }
+        compose.runOnIdle { assertTrue(session.state.paused) }
     }
 
     // 6.4
     @Test
     fun noDraggingWhilePaused() {
         show()
-        val stack = compose.runOnIdle { session.pause(); session.stack }
+        val stack = compose.runOnIdle { session.send(GameCommand.Pause); session.state.stack }
         compose.waitForIdle()
 
         compose.dropOnCell(Position(1, 1))
 
         compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Empty")
         compose.runOnIdle {
-            assertEquals(stack, session.stack)
-            assertTrue(session.board.pipes.isEmpty())
+            assertEquals(stack, session.state.stack)
+            assertTrue(session.state.board.pipes.isEmpty())
         }
     }
 
@@ -160,7 +160,7 @@ class GamePlayHudTest {
     @Test
     fun dragGoingOnWhenPausedReturnsToSlot() {
         show()
-        val stack = compose.runOnIdle { session.stack }
+        val stack = compose.runOnIdle { session.state.stack }
         val target = compose.cellRect(Position(1, 1)).center + Offset(0f, px(DraggedCopyYOffset))
         val next = nextNode()
         val nextBounds = next.getUnclippedBoundsInRoot()
@@ -169,7 +169,7 @@ class GamePlayHudTest {
             down(center)
             moveBy(Offset(60f, 0f))
         }
-        compose.runOnIdle { session.pause() }
+        compose.runOnIdle { session.send(GameCommand.Pause) }
         compose.waitForIdle()
         next.performTouchInput {
             moveTo(Offset(target.x - px(nextBounds.left), target.y - px(nextBounds.top)))
@@ -181,8 +181,8 @@ class GamePlayHudTest {
         compose.onNodeWithTag(GameScreenTags.DRAGGED).assertDoesNotExist()
         compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Empty")
         compose.runOnIdle {
-            assertEquals(stack, session.stack)
-            assertTrue(session.board.pipes.isEmpty())
+            assertEquals(stack, session.state.stack)
+            assertTrue(session.state.board.pipes.isEmpty())
         }
     }
 
@@ -192,7 +192,7 @@ class GamePlayHudTest {
         show()
         compose.dropOnCell(Position(1, 1))
         compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
-        val stack = compose.runOnIdle { session.sheet = ScoreSheet(total = 150); session.stack }
+        val stack = compose.runOnIdle { session.setScore(150); session.state.stack }
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
         compose.onNodeWithTag(PauseTags.RESUME).performClick()
@@ -203,8 +203,8 @@ class GamePlayHudTest {
         compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 150")
         compose.onNodeWithTag(HudTags.STARS).assertContentDescriptionEquals("1 of 3 stars")
         compose.runOnIdle {
-            assertFalse(session.paused)
-            assertEquals(stack, session.stack)
+            assertFalse(session.state.paused)
+            assertEquals(stack, session.state.stack)
         }
     }
 
@@ -214,20 +214,20 @@ class GamePlayHudTest {
         compose.mainClock.autoAdvance = false
         show()
         compose.mainClock.advanceTimeBy(1_000)
-        val running = compose.runOnIdle { session.elapsedMs }
+        val running = compose.runOnIdle { session.state.clockMs }
         assertTrue("clock should run, was $running", running > 0)
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
         compose.mainClock.advanceTimeBy(100)
-        val paused = compose.runOnIdle { session.elapsedMs }
+        val paused = compose.runOnIdle { session.state.clockMs }
         compose.mainClock.advanceTimeBy(5_000)
-        compose.runOnIdle { assertEquals(paused, session.elapsedMs) }
+        compose.runOnIdle { assertEquals(paused, session.state.clockMs) }
 
         compose.onNodeWithTag(PauseTags.RESUME).performClick()
         compose.mainClock.advanceTimeBy(1_000)
         compose.runOnIdle {
-            assertTrue(session.elapsedMs > paused)
-            assertTrue("no pause time leaked in", session.elapsedMs - paused <= 1_100)
+            assertTrue(session.state.clockMs > paused)
+            assertTrue("no pause time leaked in", session.state.clockMs - paused <= 1_100)
         }
     }
 
@@ -237,7 +237,7 @@ class GamePlayHudTest {
         show()
         compose.dropOnCell(Position(1, 1))
         compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
-        compose.runOnIdle { session.sheet = ScoreSheet(total = 250) }
+        compose.runOnIdle { session.setScore(250) }
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
         compose.onNodeWithTag(PauseTags.RESTART).performClick()
@@ -250,9 +250,9 @@ class GamePlayHudTest {
         compose.onNodeWithTag(HudTags.STARS).assertContentDescriptionEquals("0 of 3 stars")
         for (star in 1..3) starNode(star).assert(SemanticsMatcher.expectValue(StarEarned, false))
         compose.runOnIdle {
-            assertFalse(session.paused)
-            assertTrue(session.board.pipes.isEmpty())
-            assertEquals(5, session.stack.size)
+            assertFalse(session.state.paused)
+            assertTrue(session.state.board.pipes.isEmpty())
+            assertEquals(5, session.state.stack.size)
         }
     }
 
@@ -275,12 +275,12 @@ class GamePlayHudTest {
         compose.waitForIdle()
         compose.onNodeWithTag(PauseTags.DIALOG).assertIsDisplayed()
         compose.onNodeWithTag(GameScreenTags.SCREEN).assertExists()
-        compose.runOnIdle { assertTrue(session.paused) }
+        compose.runOnIdle { assertTrue(session.state.paused) }
 
         Espresso.pressBack()
         compose.waitForIdle()
         compose.onNodeWithTag(PauseTags.DIALOG).assertDoesNotExist()
-        compose.runOnIdle { assertFalse(session.paused) }
+        compose.runOnIdle { assertFalse(session.state.paused) }
         assertFalse(compose.activity.isFinishing)
     }
 
@@ -297,7 +297,7 @@ class GamePlayHudTest {
         compose.waitForIdle()
 
         compose.onNodeWithTag(PauseTags.DIALOG).assertIsDisplayed()
-        compose.runOnIdle { assertTrue(session.paused) }
+        compose.runOnIdle { assertTrue(session.state.paused) }
     }
 
     // 6.9
@@ -306,7 +306,7 @@ class GamePlayHudTest {
         compose.mainClock.autoAdvance = false
         show()
         compose.mainClock.advanceTimeBy(500)
-        val before = compose.runOnIdle { session.elapsedMs }
+        val before = compose.runOnIdle { session.state.clockMs }
 
         compose.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
         compose.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
@@ -314,9 +314,9 @@ class GamePlayHudTest {
 
         compose.onNodeWithTag(PauseTags.DIALOG).assertIsDisplayed()
         compose.runOnIdle {
-            assertTrue(session.paused)
-            assertTrue(session.pauseMenuOpen)
-            assertEquals(before, session.elapsedMs)
+            assertTrue(session.state.paused)
+            assertTrue(session.showPauseDialog)
+            assertEquals(before, session.state.clockMs)
         }
     }
 

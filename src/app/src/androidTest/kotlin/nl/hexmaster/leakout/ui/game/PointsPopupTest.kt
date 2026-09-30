@@ -29,8 +29,9 @@ import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 
 /**
- * Points popups on the playing field. The frame loop does not run in these tests, so the game
- * clock is moved with [GameSession.tick] and every timing is exact.
+ * Points popups on the playing field, awarded by the engine's flow as the liquid leaves a tile. The
+ * frame loop does not run in these tests, so the game clock is moved with tick commands, and the
+ * levels run at whole cells per second so every award lands on an exact tick.
  */
 @RunWith(AndroidJUnit4::class)
 class PointsPopupTest {
@@ -44,90 +45,106 @@ class PointsPopupTest {
     // 6.1
     @Test
     fun cornerExitShowsPlus15AndTheHudScoreThenThePopupGoes() {
-        show(FieldTest.level(section = PipeSection.LT))
-        val corner = Position(1, 1)
-        compose.runOnIdle { assertTrue(session.place(session.stack.next, corner)) }
-        compose.cellNode(corner).assertContentDescriptionEquals("Placed LT")
+        show(FieldTest.level(cellsPerSecond = 1.0))
+        val corner = Position(1, 0)
+        compose.runOnIdle {
+            assertTrue(session.placeSection(PipeSection.LB, corner))
+            assertTrue(session.placeSection(PipeSection.V, Position(1, 1)))
+        }
+        compose.cellNode(corner).assertContentDescriptionEquals("Placed LB")
 
-        compose.runOnIdle { session.liquidExited(corner) }
+        compose.runOnIdle { session.endCountdown() }
+        tick(1_000) // through the start
+        tick(1_000) // the liquid leaves the corner
 
         compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 15")
         assertPopups(corner, "+15")
 
         tick(999)
         assertPopups(corner, "+15")
-        tick(1)
-        assertPopups(corner)
         compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 15")
+        tick(1) // the popup is over, and the liquid leaves the V below
+        assertPopups(corner)
+        assertPopups(Position(1, 1), "+10")
+        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 25")
     }
 
     // 6.2
     @Test
     fun twoCloseExitsShowBothPopupsAndTheFirstGoesFirst() {
-        show()
+        show(FieldTest.level(cellsPerSecond = 2.0))
         val straight = Position(1, 0)
-        val next = Position(2, 0)
+        val corner = Position(2, 0)
         compose.runOnIdle {
-            session.place(PipeSection.H, straight)
-            session.place(PipeSection.LB, next)
-            session.liquidExited(straight)
+            session.placeSection(PipeSection.H, straight)
+            session.placeSection(PipeSection.LB, corner)
+            session.placeSection(PipeSection.V, Position(2, 1))
+            session.endCountdown()
         }
-        tick(300)
-        compose.runOnIdle { session.liquidExited(next) }
+        tick(500) // through the start
+        tick(500) // leaves the straight
+        tick(500) // leaves the corner
 
         assertPopups(straight, "+10")
-        assertPopups(next, "+15")
+        assertPopups(corner, "+15")
         compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 25")
 
-        tick(700)
+        tick(500)
         assertPopups(straight)
-        assertPopups(next, "+15")
-        tick(300)
-        assertPopups(next)
+        assertPopups(corner, "+15")
+        tick(500)
+        assertPopups(corner)
     }
 
     // 6.3
     @Test
     fun pauseFreezesAPopupAndRestartRemovesAll() {
-        show()
-        val cell = Position(1, 1)
+        show(FieldTest.level(cellsPerSecond = 0.5))
+        val straight = Position(1, 0)
         compose.runOnIdle {
-            session.place(PipeSection.V, cell)
-            session.liquidExited(cell)
+            for ((at, section) in FieldTest.ROUTE) assertTrue(session.placeSection(section, at))
+            session.endCountdown()
         }
+        tick(2_000) // through the start
+        tick(2_000) // leaves the straight
         tick(400)
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
         tick(5_000)
         compose.onNodeWithTag(PauseTags.RESUME).performClick()
         compose.waitForIdle()
-        assertPopups(cell, "+10")
+        assertPopups(straight, "+10")
 
         tick(599)
-        assertPopups(cell, "+10")
+        assertPopups(straight, "+10")
         tick(1)
-        assertPopups(cell)
+        assertPopups(straight)
 
-        compose.runOnIdle { session.liquidExited(cell) }
-        assertPopups(cell, "+10")
+        tick(1_000) // leaves the corner
+        val corner = Position(2, 0)
+        assertPopups(corner, "+15")
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
         compose.onNodeWithTag(PauseTags.RESTART).performClick()
         compose.waitForIdle()
 
         compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 0")
-        compose.runOnIdle { assertTrue(session.popups.isEmpty()) }
-        assertPopups(cell)
+        compose.runOnIdle { assertTrue(session.state.awards.isEmpty()) }
+        assertPopups(corner)
     }
 
     // 6.4
     @Test
     fun popupStaysOnItsTileWhileThePlayerPansFromIt() {
-        show(FieldTest.large())
+        show(FieldTest.large(cellsPerSecond = 1.0))
         val cell = Position(2, 5)
         compose.runOnIdle {
-            session.place(PipeSection.H, cell)
-            session.liquidExited(cell)
+            session.placeSection(PipeSection.H, Position(1, 5))
+            session.placeSection(PipeSection.H, cell)
+            session.endCountdown()
+            session.sendTick(2_000) // the start and (1, 5)
+            session.sendTick(1_000) // (2, 5); the popup of (1, 5) is just over
         }
+        compose.waitForIdle()
         val before = compose.cellRect(cell)
 
         // The pan starts on the tile that shows the popup.
@@ -142,11 +159,11 @@ class PointsPopupTest {
         assertTrue("field panned: ${before.top} -> ${after.top}", after.top < before.top - compose.px(20.dp))
         assertEquals(before.left, after.left, 1f)
         assertPopups(cell, "+10")
-        compose.runOnIdle { assertEquals(Position(2, 5), session.popups.single().position) }
+        compose.runOnIdle { assertEquals(Position(2, 5), session.state.awards.single().position) }
     }
 
     private fun tick(ms: Long) {
-        compose.runOnIdle { session.tick(ms) }
+        compose.runOnIdle { session.sendTick(ms) }
         compose.waitForIdle()
     }
 

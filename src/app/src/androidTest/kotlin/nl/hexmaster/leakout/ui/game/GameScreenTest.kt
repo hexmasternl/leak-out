@@ -1,6 +1,9 @@
 package nl.hexmaster.leakout.ui.game
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -105,8 +108,9 @@ class GameScreenTest {
     private fun show(level: Level = level()) {
         compose.setContent {
             LeakOutTheme {
-                Box(Modifier.size(800.dp, 360.dp)) {
-                    GameScreen(level = level, random = Random(7))
+                // The test activity shows the system bars; the game hides them, so measure a bare 360 dp screen.
+                Box(Modifier.size(800.dp, 360.dp).consumeWindowInsets(WindowInsets.safeDrawing)) {
+                    GameScreen(level = level, onExit = {}, random = Random(7))
                 }
             }
         }

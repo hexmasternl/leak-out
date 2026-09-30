@@ -25,27 +25,27 @@
 
 ## 5. Game screen wiring
 
-- [ ] 5.1 Change `GameScreen` to `GameScreen(level, onExit, random)`: create `GameSession` with `remember(level)`, lay out `Column { GameHud; Row { StackPanel; PlaceholderBoard } }`, and read the stack, placed sections, score and stars from the session.
-- [ ] 5.2 Add the frame loop: `LaunchedEffect(session.paused)` with `withFrameNanos` that calls `session.tick(dt)` while not paused, with a first delta of 0.
-- [ ] 5.3 Add `SectionDragState.cancel()` (slide back without `tryPlace`), an `enabled` flag on `StackPanel`, and cancel any drag when the session pauses.
-- [ ] 5.4 Show `PauseDialog` while `session.pauseMenuOpen`: Resume calls `session.resume()`, Restart calls `session.restart()`, Exit calls `onExit()`.
-- [ ] 5.5 Add `BackHandler(enabled = !session.pauseMenuOpen) { session.pause() }` and `LifecycleEventEffect(ON_STOP) { session.pause() }`.
-- [ ] 5.6 In `MainActivity`, replace the one-line Play wiring with a `Welcome` / `Game(level)` screen state; Play shows the game with level 1, and `onExit` goes back to `Welcome`.
+- [x] 5.1 Change `GameScreen` to `GameScreen(level, onExit, random)`: create `GameSession` with `remember(level)`, lay out `Column { GameHud; Row { StackPanel; PlaceholderBoard } }`, and read the stack, placed sections, score and stars from the session.
+- [x] 5.2 Add the frame loop: `LaunchedEffect(session.paused)` with `withFrameNanos` that calls `session.tick(dt)` while not paused, with a first delta of 0.
+- [x] 5.3 Add `SectionDragState.cancel()` (slide back without `tryPlace`), an `enabled` flag on `StackPanel`, and cancel any drag when the session pauses.
+- [x] 5.4 Show `PauseDialog` while `session.pauseMenuOpen`: Resume calls `session.resume()`, Restart calls `session.restart()`, Exit calls `onExit()`.
+- [x] 5.5 Add `BackHandler(enabled = !session.pauseMenuOpen) { session.pause() }` and `LifecycleEventEffect(ON_STOP) { session.pause() }`.
+- [x] 5.6 In `MainActivity`, replace the one-line Play wiring with a `Welcome` / `Game(level)` screen state; Play shows the game with level 1, and `onExit` goes back to `Welcome`.
 
 ## 6. Instrumented tests (emulator)
 
-- [ ] 6.1 HUD: level 1 shows "Level 1", the level's speed, three not-earned stars and a score of 0; the level is left of the speed, the stars are left of the score, the score is left of the cog wheel, and the cog wheel is at the right edge; content descriptions are as in the spec, including "0 of 3 stars"; with `visibleSize` 10 on a 360 dp tall screen all sections and the HUD are visible.
-- [ ] 6.2 Stars: with a level whose thresholds are 100, 200 and 350, setting the session score to 100, 199, 200 and 350 marks stars 1, 1, 2 and 3 as earned (`StarEarned` on `hud_star_n`) and the content description reads "1 of 3 stars", "1 of 3 stars", "2 of 3 stars" and "3 of 3 stars"; restart marks all three as not earned again; with the main clock advanced past the pop the earned star's scale is 1.
-- [ ] 6.3 Cog wheel opens the dialog with Resume, Restart, a separator and Exit in that order, and the session is paused.
-- [ ] 6.4 While paused, dragging the next section does nothing; a drag that is going on when the game pauses returns to its slot and the stack does not change.
-- [ ] 6.5 Resume closes the dialog and keeps the placed sections, stack, score and stars; the game clock runs again.
-- [ ] 6.6 Restart after placing a section clears the board, draws a new stack, shows a score of 0 with three not-earned stars and leaves the game running.
-- [ ] 6.7 Exit shows the welcome screen.
-- [ ] 6.8 Back on the game screen opens the dialog; Back in the dialog resumes; a tap outside the dialog keeps it open.
-- [ ] 6.9 Moving the activity to `STOPPED` and back (`ActivityScenario.moveToState`) leaves the game paused with the dialog shown and the clock unchanged.
-- [ ] 6.10 Run `./gradlew :app:testDebugUnitTest :app:connectedDebugAndroidTest` on the emulator and record the results.
+- [x] 6.1 HUD: level 1 shows "Level 1", the level's speed, three not-earned stars and a score of 0; the level is left of the speed, the stars are left of the score, the score is left of the cog wheel, and the cog wheel is at the right edge; content descriptions are as in the spec, including "0 of 3 stars"; with `visibleSize` 10 on a 360 dp tall screen all sections and the HUD are visible.
+- [x] 6.2 Stars: with a level whose thresholds are 100, 200 and 350, setting the session score to 100, 199, 200 and 350 marks stars 1, 1, 2 and 3 as earned (`StarEarned` on `hud_star_n`) and the content description reads "1 of 3 stars", "1 of 3 stars", "2 of 3 stars" and "3 of 3 stars"; restart marks all three as not earned again; with the main clock advanced past the pop the earned star's scale is 1.
+- [x] 6.3 Cog wheel opens the dialog with Resume, Restart, a separator and Exit in that order, and the session is paused.
+- [x] 6.4 While paused, dragging the next section does nothing; a drag that is going on when the game pauses returns to its slot and the stack does not change.
+- [x] 6.5 Resume closes the dialog and keeps the placed sections, stack, score and stars; the game clock runs again.
+- [x] 6.6 Restart after placing a section clears the board, draws a new stack, shows a score of 0 with three not-earned stars and leaves the game running.
+- [x] 6.7 Exit shows the welcome screen.
+- [x] 6.8 Back on the game screen opens the dialog; Back in the dialog resumes; a tap outside the dialog keeps it open.
+- [x] 6.9 Moving the activity to `STOPPED` and back (`ActivityScenario.moveToState`) leaves the game paused with the dialog shown and the clock unchanged.
+- [x] 6.10 Run `./gradlew :app:testDebugUnitTest :app:connectedDebugAndroidTest` on the emulator and record the results.
 
 ## 7. Wrap up
 
 - [x] 7.1 Update `docs/project-plan.md` section 1.11: the game screen has a HUD at the top (level, flow speed, stars, score, cog wheel) and the pause menu has Resume, Restart and Exit to the main menu. Update `docs/design-system.md` section 5.3 item 3: the score has three stars to its left (grey in `text.muted`, earned in `brass.300` with a static brass glow and a `motion.pop`) instead of one small brass star.
-- [ ] 7.2 Run `openspec validate app-game-play-hud` and fix any issues.
+- [x] 7.2 Run `openspec validate app-game-play-hud` and fix any issues.

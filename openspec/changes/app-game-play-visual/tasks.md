@@ -13,9 +13,9 @@
 
 ## 3. Stack and dragged copy
 
-- [ ] 3.1 `PipeSectionGlyph` draws `PipeTile(section)` inside its card background; delete `drawPipeSection` and the stand-in geometry
-- [ ] 3.2 Call `PipeArtLibrary.preloadAll()` when the game screen starts
-- [ ] 3.3 Instrumented tests: every stack slot contains the pipe tile of its section (`pipe-tile-<SECTION>`), and the dragged copy contains the pipe tile of the dragged section; existing stack and drag tests still pass
+- [x] 3.1 `PipeSectionGlyph` draws `PipeTile(section)` inside its card background; delete `drawPipeSection` and the stand-in geometry
+- [x] 3.2 Call `PipeArtLibrary.preloadAll()` when the game screen starts
+- [x] 3.3 Instrumented tests: every stack slot contains the pipe tile of its section (`pipe-tile-<SECTION>`), and the dragged copy contains the pipe tile of the dragged section; existing stack and drag tests still pass (written and compiled; emulator run skipped at the user's request)
 
 ## 4. Playing field
 

@@ -1,12 +1,14 @@
 package nl.hexmaster.leakout.ui.pipes
 
 import java.io.File
+import javax.xml.parsers.DocumentBuilderFactory
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Side
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.w3c.dom.Element
 
 /** Checks the real SVG assets in `src/main/assets/pipes` against the asset format. */
 class PipeAssetsTest {
@@ -14,6 +16,14 @@ class PipeAssetsTest {
     private val library = PipeArtLibrary { name -> File(assetDir, name.removePrefix("${PipeArtLibrary.ASSET_DIR}/")).inputStream() }
 
     private fun file(section: PipeSection) = File(assetDir, "${section.name.lowercase()}.svg")
+    private fun glassFile(section: PipeSection) = File(assetDir, "${section.name.lowercase()}-glass.svg")
+
+    private val tokens = setOf(
+        0xC9D6E2, 0x8FA3B8, 0x5C7189, 0x3A4B60, 0x22303F, // steel.100 – steel.900
+        0x0C1A2A, // surface.deep (the cross's bridge gap)
+        0xC7B5FF, 0xA78BFA, 0x7C5CE6, // reservoir.300 – reservoir.700
+        0xFFFFFF, // line.highlight
+    )
 
     @Test
     fun `every section has an asset that loads`() {
@@ -83,12 +93,6 @@ class PipeAssetsTest {
 
     @Test
     fun `every colour is a design system token`() {
-        val tokens = setOf(
-            0xC9D6E2, 0x8FA3B8, 0x5C7189, 0x3A4B60, 0x22303F, // steel.100 – steel.900
-            0x0C1A2A, // surface.deep (the cross's bridge gap)
-            0xC7B5FF, 0xA78BFA, 0x7C5CE6, // reservoir.300 – reservoir.700
-            0xFFFFFF, // line.highlight
-        )
         for (section in PipeSection.entries) {
             val art = library.art(section)
             val colours = (art.under + art.over).flatMap { listOfNotNull(it.style.fill, it.style.stroke) }.flatMap {
@@ -113,6 +117,40 @@ class PipeAssetsTest {
             val sides = flanges.map { sideOf(it.pathData) }.toSet()
             assertEquals(section.name, art.channels.flatMap { it.sides }.toSet(), sides)
         }
+    }
+
+    @Test
+    fun `every section has a glass overlay in the supported SVG subset`() {
+        val elements = setOf("svg", "g", "path", "rect", "circle")
+        val attributes = setOf(
+            "xmlns", "viewBox", "width", "height", "id", "d", "x", "y", "rx", "cx", "cy", "r",
+            "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin",
+            "opacity", "fill-opacity", "stroke-opacity",
+        )
+        for (section in PipeSection.entries) {
+            val file = glassFile(section)
+            assertTrue("Missing $file", file.isFile)
+            val root = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file).documentElement
+            assertEquals(file.name, "0 0 100 100", root.getAttribute("viewBox"))
+            val all = listOf(root) + root.descendants()
+            assertTrue("${file.name} draws nothing", all.any { it.tagName != "svg" && it.tagName != "g" })
+            for (element in all) {
+                assertTrue("${file.name} uses <${element.tagName}>", element.tagName in elements)
+                for (i in 0 until element.attributes.length) {
+                    val name = element.attributes.item(i).nodeName
+                    assertTrue("${file.name} uses $name on <${element.tagName}>", name in attributes)
+                }
+                for (paint in listOf("fill", "stroke").map(element::getAttribute).filter { it.isNotEmpty() && it != "none" }) {
+                    val colour = PipeArtParser.parseColour(paint)
+                    assertTrue("${file.name} uses #%06X, not a design token".format(colour), colour in tokens)
+                }
+            }
+        }
+    }
+
+    private fun Element.descendants(): List<Element> {
+        val children = (0 until childNodes.length).map(childNodes::item).filterIsInstance<Element>()
+        return children + children.flatMap { it.descendants() }
     }
 
     private fun numbers(pathData: String): List<Float> =

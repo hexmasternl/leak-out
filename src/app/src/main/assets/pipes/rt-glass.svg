@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Leak Out glass overlay for pipe section RT (right - top). Drawn on top of rt.svg and its liquid. Format: docs/pipe-assets.md -->
+  <g id="glass">
+    <path d="M100 50 A50 50 0 0 1 50 0" fill="none" stroke="#FFFFFF" stroke-width="36" stroke-opacity="0.06"/>
+    <path d="M90 30.92 A32.5 32.5 0 0 1 69.08 10" fill="none" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.28" stroke-linecap="butt"/>
+    <path d="M100 37.5 A37.5 37.5 0 0 1 62.5 0" fill="none" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.16" stroke-linecap="butt"/>
+    <path d="M90 66.76 A67.5 67.5 0 0 1 33.24 10" fill="none" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.28" stroke-linecap="butt"/>
+    <path d="M100 62.5 A62.5 62.5 0 0 1 37.5 0" fill="none" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.16" stroke-linecap="butt"/>
+    <path d="M100 44 A44 44 0 0 1 68.89 31.11" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-opacity="0.1" stroke-linecap="round"/>
+    <path d="M60.4 39.6 A56 56 0 0 1 44 0" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-opacity="0.1" stroke-linecap="round"/>
+    <path d="M100 42 A42 42 0 0 1 70.3 29.7" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-opacity="0.5" stroke-linecap="round"/>
+    <path d="M58.99 41.01 A58 58 0 0 1 42 0" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-opacity="0.5" stroke-linecap="round"/>
+    <path d="M100 59 A59 59 0 0 1 58.28 41.72" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.22" stroke-linecap="round"/>
+    <path d="M71.01 28.99 A41 41 0 0 1 59 0" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.22" stroke-linecap="round"/>
+  </g>
+</svg>

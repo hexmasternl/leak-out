@@ -24,10 +24,15 @@ class GameSession(level: Level, private val engine: GameEngine = GameEngine()) {
     var state: GameState by mutableStateOf(engine.start(level))
         @VisibleForTesting internal set
 
-    /** Sends [command] to the engine. Returns whether it was accepted, that is, whether the state changed. */
+    /**
+     * Sends [command] to the engine. Returns whether it was accepted, that is, whether the state changed.
+     * After a win it also takes the unused sections off the board that the tally has counted by now,
+     * so the field and the penalty row change in the same frame.
+     */
     fun send(command: GameCommand): Boolean {
-        val next = engine.handle(state, command)
+        var next = engine.handle(state, command)
         if (next === state) return false
+        winFrameOf(next)?.let { frame -> next = engine.handle(next, GameCommand.RemoveUnused(frame.sectionsRemoved)) }
         state = next
         return true
     }
@@ -58,6 +63,36 @@ class GameSession(level: Level, private val engine: GameEngine = GameEngine()) {
         if (state.outcome !is Outcome.Lost) return
         val remaining = LeakTiming.EFFECT_MS - lossAgeMs
         if (remaining > 0) send(GameCommand.Tick(remaining))
+    }
+
+    /** Game time since the win, which drives the finish flash and the tally; 0 unless won. */
+    val winAgeMs: Long get() = winAgeOf(state)
+
+    /** Whether the level complete dialog is shown: once the finish has flashed for [WinTiming.FINISH_EFFECT_MS]. */
+    val showWinDialog: Boolean get() = state.outcome is Outcome.Won && winAgeMs >= WinTiming.FINISH_EFFECT_MS
+
+    /** What the level complete dialog shows now; null unless won. */
+    val winFrame: WinFrame? get() = winFrameOf(state)
+
+    /**
+     * Ends the finish flash and the tally at once, so the finished level complete dialog shows as soon
+     * as the player comes back to the app. After a win a tick only moves the clock, so this ticks to
+     * the end of the tally, and [send] then removes every remaining unused section.
+     */
+    fun skipWinAnimation() {
+        val score = state.finalScore ?: return
+        if (state.outcome !is Outcome.Won) return
+        val end = WinTiming.FINISH_EFFECT_MS + WinTally.totalDurationMs(score, state.finalStars)
+        val remaining = end - winAgeMs
+        if (remaining > 0) send(GameCommand.Tick(remaining))
+    }
+
+    private fun winAgeOf(state: GameState): Long = (state.outcome as? Outcome.Won)?.let { state.clockMs - it.atMs } ?: 0L
+
+    private fun winFrameOf(state: GameState): WinFrame? {
+        val score = state.finalScore ?: return null
+        if (state.outcome !is Outcome.Won) return null
+        return winFrame(winAgeOf(state) - WinTiming.FINISH_EFFECT_MS, score, state.finalStars)
     }
 }
 

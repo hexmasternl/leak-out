@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: adds the Pipe Lab with its own launcher entry. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <activity
+            android:name=".lab.PipeLabActivity"
+            android:exported="true"
+            android:label="@string/pipe_lab_name"
+            android:screenOrientation="sensorLandscape"
+            android:taskAffinity="nl.hexmaster.leakout.lab"
+            android:theme="@style/Theme.LeakOut">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

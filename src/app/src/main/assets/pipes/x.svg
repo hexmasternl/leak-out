@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Leak Out pipe section X (cross: left - right over top - bottom). Format: docs/pipe-assets.md -->
+  <g id="under">
+    <path d="M51 1 L51 101" fill="none" stroke="#3A4B60" stroke-width="36"/>
+    <path d="M50 0 L50 100" fill="none" stroke="#5C7189" stroke-width="36"/>
+    <path d="M35 0 L35 100" fill="none" stroke="#C9D6E2" stroke-width="4" stroke-opacity="0.55" stroke-linecap="round"/>
+    <path d="M50 0 L50 100" fill="none" stroke="#22303F" stroke-width="25"/>
+    <path d="M0 50 L100 50" fill="none" stroke="#0C1A2A" stroke-width="46"/>
+    <path d="M1 51 L101 51" fill="none" stroke="#3A4B60" stroke-width="36"/>
+    <path d="M0 50 L100 50" fill="none" stroke="#5C7189" stroke-width="36"/>
+    <path d="M0 35 L100 35" fill="none" stroke="#C9D6E2" stroke-width="4" stroke-opacity="0.55" stroke-linecap="round"/>
+    <path d="M0 50 L100 50" fill="none" stroke="#22303F" stroke-width="25"/>
+  </g>
+  <path id="channel-v" data-from="top" data-to="bottom" d="M50 0 L50 100" fill="none" stroke="none"/>
+  <path id="channel-h" data-from="left" data-to="right" d="M0 50 L100 50" fill="none" stroke="none"/>
+  <rect id="bridge" data-hides="channel-v" x="0" y="27" width="100" height="46" fill="none" stroke="none"/>
+  <g id="over">
+    <path d="M0 30 H10 V37.5 H0 Z M0 62.5 H10 V70 H0 Z" fill="#8FA3B8" stroke="#3A4B60" stroke-width="1"/>
+    <path d="M90 30 H100 V37.5 H90 Z M90 62.5 H100 V70 H90 Z" fill="#8FA3B8" stroke="#3A4B60" stroke-width="1"/>
+    <path d="M30 0 H37.5 V10 H30 Z M62.5 0 H70 V10 H62.5 Z" fill="#8FA3B8" stroke="#3A4B60" stroke-width="1"/>
+    <path d="M30 90 H37.5 V100 H30 Z M62.5 90 H70 V100 H62.5 Z" fill="#8FA3B8" stroke="#3A4B60" stroke-width="1"/>
+  </g>
+</svg>

@@ -2,6 +2,7 @@ package nl.hexmaster.leakout.core.engine
 
 import nl.hexmaster.leakout.core.board.Board
 import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.core.score.FinalScore
 import nl.hexmaster.leakout.core.score.ScoreSheet
 import nl.hexmaster.leakout.core.stack.PipeStack
 
@@ -32,10 +33,17 @@ data class GameState(
     /** Whether the placed sections connect the start to the finish. Checked after every placement. */
     val routeComplete: Boolean,
     val outcome: Outcome,
+    /** The final score, set when the level is won and fixed from then on; null otherwise. */
+    val finalScore: FinalScore?,
+    /** How many of [FinalScore.unusedSections] have been taken off the board, in order, by [GameCommand.RemoveUnused]. */
+    val sectionsRemoved: Int,
 ) {
     val score: Int get() = sheet.total
 
     val stars: Int get() = level.stars.starsFor(score)
+
+    /** The stars of a won attempt: the thresholds applied to the final total. 0 without a final score. */
+    val finalStars: Int get() = finalScore?.let { level.stars.starsFor(it.total) } ?: 0
 
     /** How many times the liquid has left a placed section. A cross passed twice counts twice. */
     val sectionsLeft: Int get() = sheet.passes.values.sum()

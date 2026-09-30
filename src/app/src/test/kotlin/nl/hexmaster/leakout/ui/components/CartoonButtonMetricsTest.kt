@@ -1,6 +1,7 @@
 package nl.hexmaster.leakout.ui.components
 
 import androidx.compose.ui.unit.dp
+import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -43,6 +44,23 @@ class CartoonButtonMetricsTest {
             assertNotEquals(variant.name, variant.face, variant.shadow)
             assertNotEquals(variant.name, variant.face, variant.label)
         }
-        assertEquals(3, CartoonButtonVariant.entries.map { it.face }.toSet().size)
+        assertEquals(4, CartoonButtonVariant.entries.map { it.face }.toSet().size)
+    }
+
+    @Test
+    fun `the success variant is green on a darker green shadow`() {
+        assertEquals(LeakOutColors.SuccessGreen, CartoonButtonVariant.Success.face)
+        assertEquals(LeakOutColors.SuccessGreenDark, CartoonButtonVariant.Success.shadow)
+        assertEquals(LeakOutColors.SurfaceCard, CartoonButtonVariant.Success.label)
+    }
+
+    @Test
+    fun `the disabled look uses the disabled tokens and differs from every variant`() {
+        assertEquals(LeakOutColors.DisabledFill, CartoonButtonDisabled.Face)
+        assertEquals(LeakOutColors.DisabledShadow, CartoonButtonDisabled.Shadow)
+        CartoonButtonVariant.entries.forEach { variant ->
+            assertNotEquals(variant.name, variant.face, CartoonButtonDisabled.Face)
+            assertNotEquals(variant.name, variant.shadow, CartoonButtonDisabled.Shadow)
+        }
     }
 }

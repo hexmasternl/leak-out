@@ -88,6 +88,10 @@ var SemanticsPropertyReceiver.liquidHead by LiquidHead
 val FilledChannels = SemanticsPropertyKey<Set<Channel>>("FilledChannels")
 var SemanticsPropertyReceiver.filledChannels by FilledChannels
 
+/** Semantics flag on the finish cell while the level is won and its success ring is drawn. A test hook only. */
+val FinishFlash = SemanticsPropertyKey<Boolean>("FinishFlash")
+var SemanticsPropertyReceiver.finishFlash by FinishFlash
+
 /**
  * The screen state of the playing field: the viewport and where the field sits on the screen.
  * Created again for every attempt, so a restart goes back to the starting view.
@@ -139,6 +143,10 @@ fun rememberPlayingFieldState(grid: GridSize, start: Position): PlayingFieldStat
  *
  * [head] is the tile the liquid head is in and [filled] the channels the liquid has run through.
  * They are not drawn yet; the liquid drawing will use them.
+ *
+ * While the level is won, [winAgeMs] gives the game time since the win (read only while drawing)
+ * and the finish tile gets the success ring from [finishFlashFrame], above the pipes and below the
+ * popups. It is null while not won.
  */
 @Composable
 fun PlayingField(
@@ -154,6 +162,7 @@ fun PlayingField(
     lossAgeMs: () -> Long = { 0L },
     head: Position? = null,
     filled: Set<ChannelUse> = emptySet(),
+    winAgeMs: (() -> Long)? = null,
 ) {
     val density = LocalDensity.current
     val currentEnabled by rememberUpdatedState(enabled)
@@ -174,9 +183,13 @@ fun PlayingField(
             for (position in cells) drawCell(board[position], viewport.cellRect(position))
             highlighted?.let { drawHighlight(viewport.cellRect(it)) }
             if (leakAt != null && leakSide != null) drawLeak(viewport.cellRect(leakAt), leakSide, leakFrame(lossAgeMs()))
+            if (winAgeMs != null) {
+                val frame = finishFlashFrame(winAgeMs())
+                for (position in cells) if (board[position] is Cell.Finish) drawFinishRing(viewport.cellRect(position), frame)
+            }
             drawPopups(awards, nowMs(), viewport, textMeasurer)
         }
-        CellSemantics(board, viewport, highlighted, awards, leakAt?.let { at -> leakSide?.let { at to it } }, head, filled)
+        CellSemantics(board, viewport, highlighted, awards, leakAt?.let { at -> leakSide?.let { at to it } }, head, filled, winAgeMs != null)
     }
 }
 
@@ -193,6 +206,7 @@ private fun CellSemantics(
     leak: Pair<Position, Side>?,
     head: Position?,
     filled: Set<ChannelUse>,
+    won: Boolean,
 ) {
     val density = LocalDensity.current
     val cellDp = with(density) { viewport.cellPx.toDp() }
@@ -206,6 +220,7 @@ private fun CellSemantics(
         val leakSide = leak?.takeIf { it.first == position }?.second
         val isHead = position == head
         val channels = filledByCell[position].orEmpty().toSet()
+        val flashing = won && board[position] is Cell.Finish
         Box(
             Modifier
                 .offset { IntOffset(rect.left.roundToInt(), rect.top.roundToInt()) }
@@ -218,6 +233,7 @@ private fun CellSemantics(
                     if (leakSide != null) this.leakAt = leakSide
                     liquidHead = isHead
                     filledChannels = channels
+                    if (flashing) finishFlash = true
                 },
         )
     }
@@ -339,6 +355,26 @@ private fun DrawScope.drawLeak(rect: Rect, side: Side, frame: LeakFrame) {
 }
 
 private const val LEAK_ROWS = 3
+
+/**
+ * The success ring on the finish tile [rect]: a soft green fill and a solid green outline, both at
+ * the frame's alpha, scaled around the tile centre. In tile coordinates, so it follows pan and zoom.
+ */
+private fun DrawScope.drawFinishRing(rect: Rect, frame: FinishFlashFrame) {
+    val cell = rect.width
+    scale(frame.ringScale, pivot = rect.center) {
+        val inset = rect.deflate(cell * 0.06f)
+        val corner = CornerRadius(cell * 0.16f)
+        drawRoundRect(LeakOutColors.SuccessGreen.copy(alpha = 0.25f * frame.ringAlpha), inset.topLeft, inset.size, corner)
+        drawRoundRect(
+            LeakOutColors.SuccessGreen.copy(alpha = frame.ringAlpha),
+            inset.topLeft,
+            inset.size,
+            corner,
+            style = Stroke(cell * 0.08f),
+        )
+    }
+}
 
 /**
  * "+N" for every popup whose tile touches the field: Fredoka bold at 40 % of a tile, an ink outline

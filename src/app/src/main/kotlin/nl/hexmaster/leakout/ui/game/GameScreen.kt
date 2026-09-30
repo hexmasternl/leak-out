@@ -51,7 +51,9 @@ import nl.hexmaster.leakout.ui.theme.LeakOutColors
 /**
  * The game screen: the HUD across the top, the stack on the left and the board below the HUD, with
  * the fast forward button in the bottom right corner once the route is complete. A leak shows the
- * spurt for [LeakTiming.EFFECT_MS] and then the level lost dialog.
+ * spurt for [LeakTiming.EFFECT_MS] and then the level lost dialog. A win flashes the finish for
+ * [WinTiming.FINISH_EFFECT_MS] and then shows the level complete dialog; its Next level button calls
+ * [onNextLevel] and stays disabled when that is null (the last level).
  *
  * Every view shows only what it reads from the [GameSession]'s state, and every action is a
  * command to the engine. [session] owns the running level; tests pass their own to drive it.
@@ -60,6 +62,7 @@ import nl.hexmaster.leakout.ui.theme.LeakOutColors
 fun GameScreen(
     level: Level,
     onExit: () -> Unit,
+    onNextLevel: (() -> Unit)? = null,
     random: Random = Random.Default,
     session: GameSession = remember(level, random) { GameSession(level, random) },
 ) {
@@ -74,6 +77,7 @@ fun GameScreen(
     val fastForward = session.select { state.fastForward }
     val showPauseDialog = session.select { showPauseDialog }
     val showLostDialog = session.select { showLostDialog }
+    val showWinDialog = session.select { showWinDialog }
 
     GameClock(session, paused)
     LaunchedEffect(session, isStopped) {
@@ -82,12 +86,16 @@ fun GameScreen(
     // A new attempt (restart, another level) ends any drag, so the section goes back to its slot.
     LaunchedEffect(session, attempt) { dragState.cancel() }
     BackHandler(enabled = outcome is Outcome.Playing && !paused) { session.send(GameCommand.Pause) }
-    // During the leak effect Back does nothing; once shown, the dialog handles Back itself.
-    BackHandler(enabled = outcome is Outcome.Lost && !showLostDialog) {}
-    // There is no level complete dialog yet, so Back after a win leaves the level.
-    BackHandler(enabled = outcome is Outcome.Won, onBack = onExit)
+    // During the leak effect and the finish flash Back does nothing. Once shown, a dialog handles
+    // Back itself: the lost dialog as Exit, the level complete dialog as Exit once its tally is done.
+    BackHandler(enabled = outcome !is Outcome.Playing && !showLostDialog && !showWinDialog) {}
+    // In the background the end effects are skipped, so the finished dialog shows on return.
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
-        if (session.state.outcome is Outcome.Lost) session.skipLeakEffect() else session.send(GameCommand.Pause)
+        when (session.state.outcome) {
+            is Outcome.Won -> session.skipWinAnimation()
+            is Outcome.Lost -> session.skipLeakEffect()
+            Outcome.Playing -> session.send(GameCommand.Pause)
+        }
     }
 
     Box(
@@ -138,6 +146,7 @@ fun GameScreen(
                         lossAgeMs = { session.lossAgeMs },
                         head = session.select { (state.flow as? FlowState.Flowing)?.position },
                         filled = session.select { state.flow.used },
+                        winAgeMs = if (outcome is Outcome.Won) ({ session.winAgeMs }) else null,
                     )
                 }
             }
@@ -174,6 +183,20 @@ fun GameScreen(
             onRestart = { session.send(GameCommand.Restart) },
             onExit = onExit,
         )
+    }
+    if (showWinDialog) {
+        val score = session.select { state.finalScore }
+        val frame = session.select { winFrame }
+        if (score != null && frame != null) {
+            LevelCompleteDialog(
+                score = score,
+                frame = frame,
+                hasNextLevel = onNextLevel != null,
+                onNextLevel = { onNextLevel?.invoke() },
+                onRestart = { session.send(GameCommand.Restart) },
+                onExit = onExit,
+            )
+        }
     }
 }
 

@@ -42,11 +42,19 @@ import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 
-/** Button families from the design system: primary (Hydro Blue), secondary (Brass), danger (red). */
+/** Button families from the design system: primary (Hydro Blue), secondary (Brass), danger (red), success (green). */
 enum class CartoonButtonVariant(val face: Color, val shadow: Color, val label: Color) {
     Primary(LeakOutColors.PrimaryBase, LeakOutColors.PrimaryDark, LeakOutColors.SurfaceCard),
     Secondary(LeakOutColors.SecondaryBase, LeakOutColors.SecondaryDark, LeakOutColors.InkDark),
     Danger(LeakOutColors.ErrorRed, LeakOutColors.ErrorRedDark, LeakOutColors.SurfaceCard),
+    Success(LeakOutColors.SuccessGreen, LeakOutColors.SuccessGreenDark, LeakOutColors.SurfaceCard),
+}
+
+/** The disabled look (design-system-slim 4.2), the same for every variant. */
+object CartoonButtonDisabled {
+    val Face: Color = LeakOutColors.DisabledFill
+    val Shadow: Color = LeakOutColors.DisabledShadow
+    val Label: Color = LeakOutColors.SurfaceCard
 }
 
 /**
@@ -74,6 +82,7 @@ object CartoonButtonMetrics {
  * space the shadow occupied, as in the CSS reference (translateY(4px), shadow 6px -> 2px).
  *
  * @param faceHeight height of the face; the total height adds [CartoonButtonMetrics.RestingShadow].
+ * @param enabled when false the button uses [CartoonButtonDisabled], does not press and ignores taps.
  */
 @Composable
 fun CartoonButton(
@@ -84,9 +93,13 @@ fun CartoonButton(
     faceHeight: Dp = 56.dp,
     textStyle: TextStyle = LeakOutTextStyles.ButtonText,
     interactionSource: MutableInteractionSource? = null,
+    enabled: Boolean = true,
 ) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
-    val pressed by source.collectIsPressedAsState()
+    val pressed = source.collectIsPressedAsState().value && enabled
+    val faceColor = if (enabled) variant.face else CartoonButtonDisabled.Face
+    val shadowColor = if (enabled) variant.shadow else CartoonButtonDisabled.Shadow
+    val labelColor = if (enabled) variant.label else CartoonButtonDisabled.Label
     // design-system motion: press feedback is short and linear so it feels immediate.
     val faceOffset by animateDpAsState(
         targetValue = CartoonButtonMetrics.faceOffset(pressed),
@@ -102,6 +115,7 @@ fun CartoonButton(
             .clickable(
                 interactionSource = source,
                 indication = null,
+                enabled = enabled,
                 role = Role.Button,
                 onClick = onClick,
             )
@@ -123,13 +137,13 @@ fun CartoonButton(
                 val corner = CornerRadius(radius)
                 onDrawBehind {
                     drawRoundRect(
-                        color = variant.shadow,
+                        color = shadowColor,
                         topLeft = Offset(0f, shadowDepth),
                         size = faceSize,
                         cornerRadius = corner,
                     )
                     translate(top = faceOffset.toPx()) {
-                        drawPath(facePath, variant.face)
+                        drawPath(facePath, faceColor)
                         clipPath(facePath) {
                             drawRect(
                                 color = LeakOutColors.Shine,
@@ -154,7 +168,7 @@ fun CartoonButton(
             Text(
                 text = text.uppercase(),
                 style = textStyle,
-                color = variant.label,
+                color = labelColor,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

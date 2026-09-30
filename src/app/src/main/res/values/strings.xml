@@ -39,6 +39,22 @@
     <string name="lost_exit">Exit</string>
     <string name="lost_pane_title">Level lost</string>
 
+    <!-- Level complete dialog -->
+    <string name="win_eyebrow">Level complete</string>
+    <string name="win_title">Level complete!</string>
+    <string name="win_message">You kept the water flowing.</string>
+    <string name="win_earned">Pipe points</string>
+    <string name="win_penalty">Unused pipes</string>
+    <string name="win_total">Total</string>
+    <string name="win_penalty_value">-%1$s</string>
+    <string name="win_earned_description">Pipe points %1$s</string>
+    <string name="win_penalty_description">Unused pipes minus %1$s</string>
+    <string name="win_total_description">Total %1$s</string>
+    <string name="win_next">Next level</string>
+    <string name="win_restart">Restart</string>
+    <string name="win_exit">Exit</string>
+    <string name="win_pane_title">Level complete</string>
+
     <!-- Fast forward -->
     <string name="fast_forward">Fast forward</string>
     <string name="fast_forward_on">Fast forward on</string>

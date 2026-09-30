@@ -24,6 +24,12 @@ sealed interface GameCommand {
     /** Back to the level's normal speed after [FastForward], which unlocks placing again. */
     data object NormalSpeed : GameCommand
 
+    /**
+     * Takes the won attempt's unused sections off the board, in order, until [upTo] of them are gone
+     * (at most all of them). Sent in step with the level complete tally; refused unless won.
+     */
+    data class RemoveUnused(val upTo: Int) : GameCommand
+
     /** Advances the game clock by [dtMs] milliseconds of real time. */
     data class Tick(val dtMs: Long) : GameCommand
 }

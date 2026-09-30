@@ -101,7 +101,10 @@ A **countdown** for the initial delay is shown on screen. Optionally the player 
 
 ### 1.9 Win, lose, and score
 
-- **Win**: liquid enters the finish section through its open port. The finish plays a fill animation, then the level-complete screen appears.
+- **Win**: liquid enters the finish section through its open port, after the points for the last section are awarded. A win stops the game the same way a leak does (no flow, countdown, score, placing, dragging, pause or fast forward; pan and zoom still work). The finish flashes a success-green ring for 1 second (a fill animation comes with the liquid drawing), then the level complete dialog appears over the dimmed screen: "Level complete!", "You kept the water flowing.", three stars, the score rows and **Next level**, **Restart** and **Exit** to the main menu.
+  - **Final score** (`core.score.FinalScore`): the earned points shown in the HUD, minus **3 points for every placed section the liquid never entered** (a cross used through one channel counts as used), never below 0. The stars come from the level's thresholds applied to that total.
+  - **Tally**, on the game clock (`ui.game.WinTally`): the earned points show at once; after 0.5 s the penalty counts up in steps of 3 while the unused sections disappear from the field one by one, in row-major order (120 ms a step, at most 2 s in all); the total counts up from 0 in 0.8 s; then the earned stars light up in brass one by one, 300 ms apart, each popping to 1.35× and back.
+  - The buttons show from the start and are enabled when the tally is done; Next level stays disabled on the last level. Tapping outside does nothing, Back does nothing during the flash and the tally and works as Exit after it, and going to the background skips to the finished dialog instead of the pause dialog.
 - **Lose**: any leak (`core.flow.FlowStep`): the liquid leaves a tile into an empty, blocked or start tile, over the grid edge, into a section without a matching opening, into the finish from the wrong side, or into a cross channel it already used. The start is checked the same way when the flow starts. A leak stops the game at once: no flow, countdown, score, placing, dragging (a drag in progress goes back to its slot), pause or fast forward; pan and zoom still work. Liquid spurts from the leaking side for 1 second, then the level lost dialog appears over the dimmed screen with "Leaked!", "The pipe is leaking. Level lost.", the score, **Restart** and **Exit** to the main menu. Tapping outside does nothing, Back works as Exit (and does nothing during the spurt), and going to the background shows the level lost dialog on return instead of the pause dialog.
 - **Score**: points are awarded for a placed section at the moment the liquid **exits** it (`core.score.Points` and `ScoreSheet`):
   - Straight (`H`, `V`): +10.
@@ -130,7 +133,7 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 2. **Level select** – grid of level tiles.
 3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Once the route is complete, a round fast forward / slow button sits in the bottom right corner, 16 dp from the edges. Back and going to the background also pause the game.
 4. **Pause dialog** – opened from the cog wheel: Resume, Restart, a separator and Exit to the main menu (welcome screen). Tapping outside does nothing; Back works as Resume.
-5. **Level complete / failed overlay** – level complete: score, stars, next / retry / level select. Level failed (the level lost dialog, see 1.9): "Leaked!", the score, Restart and Exit to the main menu.
+5. **Level complete / failed overlay** – level complete (the level complete dialog, see 1.9): "Level complete!", the stars, pipe points, unused pipes and total, and Next level, Restart and Exit to the main menu. Level failed (the level lost dialog, see 1.9): "Leaked!", the score, Restart and Exit to the main menu.
 
 ---
 
@@ -286,9 +289,12 @@ data class GameState(
     val fastForward: Boolean,
     val routeComplete: Boolean,
     val outcome: Outcome,            // Playing, Won(atMs), Lost(at, side, atMs)
+    val finalScore: FinalScore?,     // set by the flow on the win: earned, unused sections, total
+    val sectionsRemoved: Int,        // unused sections taken off the board by the tally so far
 ) {
-    // Derived, so they cannot drift: score, stars, sectionsLeft, flowSpeed (the HUD speed,
-    // without the reservoir factor), flowTimeScale and isStopped (paused, won or lost).
+    // Derived, so they cannot drift: score, stars, finalStars (from the final total), sectionsLeft,
+    // flowSpeed (the HUD speed, without the reservoir factor), flowTimeScale and isStopped (paused,
+    // won or lost).
 }
 
 sealed interface GameCommand {
@@ -300,6 +306,7 @@ sealed interface GameCommand {
     data object FastForward : GameCommand
     data object NormalSpeed : GameCommand
     data class Tick(val dtMs: Long) : GameCommand
+    data class RemoveUnused(val upTo: Int) : GameCommand
 }
 
 class GameEngine(private val random: Random) {
@@ -316,6 +323,7 @@ class GameEngine(private val random: Random) {
 - **FastForward**: only on a complete route, while playing and not paused. **NormalSpeed** turns it off again (the slow button) and unlocks placing.
 - **Place**: the stack's next section goes on the tile when `canPlace` says so. `canPlace` and `Place` share one check: not stopped, not fast forward, and `Placement.check` (empty tile: place; unentered section with replacing allowed: replace; the replace lock must have passed). On success the stack moves down and draws a new section, a replacement starts the replace lock, and `RouteTracer` sets `routeComplete`.
 - **Tick(dt)**: refused when `dt <= 0` or paused. Moves the clock, drops awards older than `Award.VISIBLE_MS`, and while playing runs `FlowSimulation.advance(state, dt × flowTimeScale)`. After a win or a loss only the clock moves, for the end effects.
+- **RemoveUnused(upTo)**: only after a win, and only when `upTo` is ahead of `sectionsRemoved`. Empties the next unused sections of `finalScore` in row-major order, up to `upTo` (at most all of them). The tally timeline lives in the app: `GameSession.send` follows every accepted command after a win with `RemoveUnused(winFrame.sectionsRemoved)`, so the field empties in step with the penalty row.
 
 On the Android side, `GameSession` holds the current `GameState` in a Compose `mutableStateOf`, sends commands with `send(command): Boolean` and feeds `Tick` from the frame clock. It keeps no game data of its own. The views read the state through `derivedStateOf`, so a clock tick recomposes only what changed, and the stack and the field are keyed on `attempt`, so a new attempt starts them fresh. A drop sends `Place` and succeeds exactly when the engine accepts it.
 

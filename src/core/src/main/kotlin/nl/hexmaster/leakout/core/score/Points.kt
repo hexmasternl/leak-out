@@ -10,6 +10,9 @@ object Points {
     const val CROSS_FIRST = 10
     const val CROSS_SECOND = 50
 
+    /** Taken off the final score of a won attempt for every placed section the liquid never entered. */
+    const val UNUSED_SECTION_PENALTY = 3
+
     /**
      * The points for the liquid leaving [section] for the [pass]-th time on its tile, starting at 1.
      * Only the cross looks at [pass]: its second exit, through the other channel, is worth more.

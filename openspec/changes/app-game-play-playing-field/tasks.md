@@ -23,9 +23,9 @@
 
 ## 5. App: viewport
 
-- [ ] 5.1 Add `FieldLayout` with `MIN_CELL = 40.dp` and `MAX_CELL = 120.dp`.
-- [ ] 5.2 Add the pure `FieldViewport(fieldSize, grid, cellPx, offset)` with `minCellPx`, `maxCellPx`, `initial(fieldSize, grid, start, density)`, `zoomBy(factor, focus)`, `panBy(delta)`, `cellAt(fieldPoint)` and `cellRect(position)`, as in the design.
-- [ ] 5.3 Unit test `FieldViewport`: 8 × 6 in 600 × 300 dp gives 50 dp cells, centred; a tiny grid is capped at 120 dp and cannot zoom; 16 × 12 in a 312 dp high field starts at 40 dp with the start cell visible; zoom stops at `minCellPx` and `maxCellPx`; zoom keeps the focus point on the same grid point; pan is clamped at every edge; an axis that fits stays centred and does not pan; zooming out after a pan to a corner re-clamps; `cellAt` maps correctly after a pan and a zoom, and returns `null` outside the grid and outside the field.
+- [x] 5.1 Add `FieldLayout` with `MIN_CELL = 40.dp` and `MAX_CELL = 120.dp`.
+- [x] 5.2 Add the pure `FieldViewport(fieldSize, grid, cellPx, offset)` with `minCellPx`, `maxCellPx`, `initial(fieldSize, grid, start, density)`, `zoomBy(factor, focus)`, `panBy(delta)`, `cellAt(fieldPoint)` and `cellRect(position)`, as in the design.
+- [x] 5.3 Unit test `FieldViewport`: 8 × 6 in 600 × 300 dp gives 50 dp cells, centred; a tiny grid is capped at 120 dp and cannot zoom; 16 × 12 in a 312 dp high field starts at 40 dp with the start cell visible; zoom stops at `minCellPx` and `maxCellPx`; zoom keeps the focus point on the same grid point; pan is clamped at every edge; an axis that fits stays centred and does not pan; zooming out after a pan to a corner re-clamps; `cellAt` maps correctly after a pan and a zoom, and returns `null` outside the grid and outside the field.
 
 ## 6. App: playing field
 

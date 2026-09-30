@@ -7,6 +7,9 @@
     <string name="welcome_play">Play</string>
     <string name="welcome_settings">Settings</string>
     <string name="welcome_exit">Exit</string>
+    <string name="play_menu_title">Play</string>
+    <string name="play_menu_continue">Continue</string>
+    <string name="play_menu_select_level">Select level</string>
     <string name="game_section_h">Horizontal straight</string>
     <string name="game_section_v">Vertical straight</string>
     <string name="game_section_lt">Left-top corner</string>

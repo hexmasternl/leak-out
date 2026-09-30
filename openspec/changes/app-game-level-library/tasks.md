@@ -23,6 +23,6 @@
 
 ## 4. Navigation
 
-- [ ] 4.1 Route the welcome screen's Play event to the level library
-- [ ] 4.2 Expose a start-level navigation event (stubbed until the game screen exists)
+- [x] 4.1 Route the welcome screen's Play event to the level library
+- [x] 4.2 Expose a start-level navigation event (stubbed until the game screen exists)
 - [ ] 4.3 Verify on a landscape device or emulator that the 6x4 grid fits without scrolling

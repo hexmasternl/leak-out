@@ -14,12 +14,12 @@
 
 ## 3. UI
 
-- [ ] 3.1 Build the level tile composable (locked, unlocked, completed with star row) using the design system 3-layer style and Fredoka
-- [ ] 3.2 Build the 6x4 grid page composable, with empty cells on a partial last page
-- [ ] 3.3 Build `LevelLibraryScreen` with `HorizontalPager` over accessible pages, previous/next buttons and disabled states
-- [ ] 3.4 Show star progress hint ("earned/{x}") when the next page is locked
-- [ ] 3.5 Add locked-tile feedback and content descriptions for accessibility
-- [ ] 3.6 Compose previews and UI tests for tile states, paging restrictions and tap behavior
+- [x] 3.1 Build the level tile composable (locked, unlocked, completed with star row) using the design system 3-layer style and Fredoka
+- [x] 3.2 Build the 6x4 grid page composable, with empty cells on a partial last page
+- [x] 3.3 Build `LevelLibraryScreen` with `HorizontalPager` over accessible pages, previous/next buttons and disabled states
+- [x] 3.4 Show star progress hint ("earned/{x}") when the next page is locked
+- [x] 3.5 Add locked-tile feedback and content descriptions for accessibility
+- [x] 3.6 Compose previews and UI tests for tile states, paging restrictions and tap behavior
 
 ## 4. Navigation
 

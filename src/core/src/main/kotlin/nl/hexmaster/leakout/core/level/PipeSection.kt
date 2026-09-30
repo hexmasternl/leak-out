@@ -17,3 +17,14 @@ enum class PipeSection(
     X(mandatory = false, openSides = Side.entries.toSet()),
     RES(mandatory = false, openSides = setOf(Side.LEFT, Side.RIGHT)),
 }
+
+/**
+ * The side liquid leaves this section through when it enters through [entry], or `null` when
+ * [entry] has no opening. A cross is passed straight through, so each axis is its own channel; a
+ * reservoir only runs between left and right. The route check and the flow both use this rule.
+ */
+fun PipeSection.exitFor(entry: Side): Side? = when {
+    entry !in openSides -> null
+    this == PipeSection.X -> entry.opposite()
+    else -> (openSides - entry).single()
+}

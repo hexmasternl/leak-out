@@ -30,4 +30,8 @@
     <string name="pause_resume">Resume</string>
     <string name="pause_restart">Restart</string>
     <string name="pause_exit">Exit</string>
+
+    <!-- Fast forward -->
+    <string name="fast_forward">Fast forward</string>
+    <string name="fast_forward_on">On</string>
 </resources>

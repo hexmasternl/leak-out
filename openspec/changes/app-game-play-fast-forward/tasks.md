@@ -1,18 +1,18 @@
 ## 1. Setup
 
-- [ ] 1.1 Check that `app-game-play-stack`, `app-game-play-hud` and `app-game-play-playing-field` are merged into `development` (`GameSession.place`, `canPlace`, `Board`, `Cell`, `StackPanel(enabled)`, `SectionDragState.cancel()` and `PipeSection.openSides` exist). If not, stop and merge them first.
-- [ ] 1.2 Add the string resources `fast_forward` ("Fast forward") and `fast_forward_on` ("On"), and the `ic_fast_forward.xml` vector drawable.
+- [x] 1.1 Check that `app-game-play-stack`, `app-game-play-hud` and `app-game-play-playing-field` are merged into `development` (`GameSession.place`, `canPlace`, `Board`, `Cell`, `StackPanel(enabled)`, `SectionDragState.cancel()` and `PipeSection.openSides` exist). If not, stop and merge them first.
+- [x] 1.2 Add the string resources `fast_forward` ("Fast forward") and `fast_forward_on` ("On"), and the `ic_fast_forward.xml` vector drawable.
 
 ## 2. Core: channel rule
 
-- [ ] 2.1 Add `PipeSection.exitFor(entry: Side): Side?` in `core.level`: `null` when `entry` is not an open side, straight through for `X`, the other open side for every other section.
-- [ ] 2.2 Unit test `exitFor` for every section and every side, including `RES` from the top and bottom (`null`) and `X` from all four sides.
+- [x] 2.1 Add `PipeSection.exitFor(entry: Side): Side?` in `core.level`: `null` when `entry` is not an open side, straight through for `X`, the other open side for every other section.
+- [x] 2.2 Unit test `exitFor` for every section and every side, including `RES` from the top and bottom (`null`) and `X` from all four sides.
 
 ## 3. Core: route tracer
 
-- [ ] 3.1 Create the package `nl.hexmaster.leakout.core.route` with `Route` (`Complete(cells)`, `Open(endsAt, reason)`) and `RouteTracer.trace(board, level)`, following the walk and the check order in the design, with a visited set per position and axis.
-- [ ] 3.2 Unit test `RouteTracer` with scripted boards: straight and corner route complete; empty tile; blocked tile; section without a matching opening; finish from the wrong side; off the grid; reservoir from the top; cross passed straight through; a route that uses both channels of one cross and is complete; a route that reaches a used channel (`LOOP`); a complete route with `liquidEntered` on its first sections is still complete; the listed cells of a complete route are in order.
-- [ ] 3.3 Run `./gradlew :core:test` and check that everything passes.
+- [x] 3.1 Create the package `nl.hexmaster.leakout.core.route` with `Route` (`Complete(cells)`, `Open(endsAt, reason)`) and `RouteTracer.trace(board, level)`, following the walk and the check order in the design, with a visited set per position and axis.
+- [x] 3.2 Unit test `RouteTracer` with scripted boards: straight and corner route complete; empty tile; blocked tile; section without a matching opening; finish from the wrong side; off the grid; reservoir from the top; cross passed straight through; a route that uses both channels of one cross and is complete; a route that reaches a used channel (`LOOP`); a complete route with `liquidEntered` on its first sections is still complete; the listed cells of a complete route are in order.
+- [x] 3.3 Run `./gradlew :core:test` and check that everything passes.
 
 ## 4. App: game session
 

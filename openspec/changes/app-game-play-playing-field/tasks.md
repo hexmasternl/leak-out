@@ -50,9 +50,9 @@
 - [x] 8.5 Drop and replace: dropping on a highlighted empty tile places the section; dropping on a placed section without liquid replaces it and advances the stack; dropping on a section with liquid is rejected and leaves the stack; right after a replacement nothing is highlighted and a drop is rejected; after the lock time a drop works again.
 - [x] 8.6 Drag and view: dragging a section over the field does not pan it; after a pan and a zoom, a drop still lands on the tile under the drop point.
 - [x] 8.7 Pause and restart: pausing during a drag clears the highlight; resume keeps the zoom and pan; restart resets the view and clears the board.
-- [ ] 8.8 Run `./gradlew :app:testDebugUnitTest :app:connectedDebugAndroidTest` on the emulator and record the results.
+- [x] 8.8 Run `./gradlew :app:testDebugUnitTest :app:connectedDebugAndroidTest` on the emulator and record the results. Result: core 157/157, app unit 150/150, instrumented 67/68. `GamePlayHudTest.backOpensDialogAndBackInDialogResumes` failed once in the full run (Espresso `pressBack` found the window without focus) after passing in the game-package run; accepted as done on request.
 
 ## 9. Wrap up
 
-- [ ] 9.1 Update `docs/project-plan.md` sections 1.2, 1.7 and 2.8: the board fits the level when it can and otherwise pans and zooms within 40 to 120 dp cells, it never rotates, a drop highlights the target tile, and a drop on an unfilled section replaces it.
-- [ ] 9.2 Run `openspec validate app-game-play-playing-field` and fix any issues.
+- [x] 9.1 Update `docs/project-plan.md` sections 1.2, 1.7 and 2.8: the board fits the level when it can and otherwise pans and zooms within 40 to 120 dp cells, it never rotates, a drop highlights the target tile, and a drop on an unfilled section replaces it.
+- [x] 9.2 Run `openspec validate app-game-play-playing-field` and fix any issues.

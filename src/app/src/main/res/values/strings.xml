@@ -33,5 +33,6 @@
 
     <!-- Fast forward -->
     <string name="fast_forward">Fast forward</string>
-    <string name="fast_forward_on">On</string>
+    <string name="fast_forward_on">Fast forward on</string>
+    <string name="fast_forward_normal_speed">Normal speed</string>
 </resources>

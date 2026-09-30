@@ -28,14 +28,14 @@
   - pause and resume keep fast forward;
   - restart clears everything;
   - `elapsedMs` still advances by `dtMs`, not by 10 × `dtMs`.
-- [ ] 4.6 Add `stopFastForward()` (turns it off when not paused) and `toggleFastForward()` (start when off, stop when on). Unit test: toggling on and off switches `flowTimeScale` between 10 and 1, keeps the button shown while the route is complete, does nothing while paused, and placing works again after turning it off.
-- [ ] 4.7 Add the string resources `fast_forward_normal_speed` ("Normal speed"), change `fast_forward_on` to "Fast forward on", and add the `ic_slow.xml` vector drawable.
+- [x] 4.6 Add `stopFastForward()` (turns it off when not paused) and `toggleFastForward()` (start when off, stop when on). Unit test: toggling on and off switches `flowTimeScale` between 10 and 1, keeps the button shown while the route is complete, does nothing while paused, and placing works again after turning it off.
+- [x] 4.7 Add the string resources `fast_forward_normal_speed` ("Normal speed"), change `fast_forward_on` to "Fast forward on", and add the `ic_slow.xml` vector drawable.
 
 ## 5. App: fast forward button
 
-- [ ] 5.1 Add `FastForwardButton(active, onClick, modifier)`: a 56 dp circular cartoon-style button. Not active: the brass fast forward button with a pulse and the description "Fast forward". Active: the liquid-blue slow button with the slow icon, no pulse, the description "Normal speed" and the state "Fast forward on". Test tag `fast_forward` in both states.
-- [ ] 5.2 Wrap `GameScreen`'s layout in a `Box` and place `FastForwardButton` with `align(Alignment.BottomEnd)` and 16 dp padding, inside `AnimatedVisibility(session.showFastForward)` with scale and fade in and out.
-- [ ] 5.3 Wire `onClick` to `session.toggleFastForward()`, followed by `dragState.cancel()` when fast forward is now on, and set `StackPanel`'s `enabled` to `!session.paused && !session.fastForward`.
+- [x] 5.1 Add `FastForwardButton(active, onClick, modifier)`: a 56 dp circular cartoon-style button. Not active: the brass fast forward button with a pulse and the description "Fast forward". Active: the liquid-blue slow button with the slow icon, no pulse, the description "Normal speed" and the state "Fast forward on". Test tag `fast_forward` in both states.
+- [x] 5.2 Wrap `GameScreen`'s layout in a `Box` and place `FastForwardButton` with `align(Alignment.BottomEnd)` and 16 dp padding, inside `AnimatedVisibility(session.showFastForward)` with scale and fade in and out.
+- [x] 5.3 Wire `onClick` to `session.toggleFastForward()`, followed by `dragState.cancel()` when fast forward is now on, and set `StackPanel`'s `enabled` to `!session.paused && !session.fastForward`.
 
 ## 6. Instrumented tests (emulator)
 

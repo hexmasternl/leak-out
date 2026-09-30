@@ -81,6 +81,8 @@ object LeakOutColors {
     val Brass100 = Color(0xFFFFE9B0)
     val Brass300 = Color(0xFFFFCF5C)
     val Brass500 = Color(0xFFF5A623)
+    val Brass700 = Color(0xFFC97A12)
+    val Brass900 = Color(0xFF7A4708)
 
     // 2.7 Text: text.muted (Deep theme)
     val TextMuted = Color(0xFF6E8296)

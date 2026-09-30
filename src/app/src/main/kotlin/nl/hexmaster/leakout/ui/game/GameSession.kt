@@ -82,7 +82,7 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
     var routeComplete: Boolean by mutableStateOf(false)
         private set
 
-    /** Once on, it stays on until a restart, and placing is locked. */
+    /** While on, the flow runs [FAST_FORWARD_FACTOR] times as fast and placing is locked. */
     var fastForward: Boolean by mutableStateOf(false)
         private set
 
@@ -95,6 +95,16 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
     /** Turns fast forward on when the route is complete and the game runs. Otherwise does nothing. */
     fun startFastForward() {
         if (routeComplete && !paused && !fastForward) fastForward = true
+    }
+
+    /** Back to the level's normal speed, which unlocks placing. Does nothing while paused. */
+    fun stopFastForward() {
+        if (!paused) fastForward = false
+    }
+
+    /** What the button does: fast forward when off, normal speed when on. */
+    fun toggleFastForward() {
+        if (fastForward) stopFastForward() else startFastForward()
     }
 
     /** Pauses the game and opens the pause menu. Pausing twice is the same as once. */

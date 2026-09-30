@@ -1,9 +1,14 @@
 package nl.hexmaster.leakout.ui.game
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +29,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
@@ -40,7 +46,8 @@ import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 
 /**
- * The game screen: the HUD across the top, the stack on the left and the board below the HUD.
+ * The game screen: the HUD across the top, the stack on the left and the board below the HUD, with
+ * the fast forward button in the bottom right corner once the route is complete.
  * [session] owns the running level; tests pass their own to read and set its values.
  */
 @Composable
@@ -78,7 +85,7 @@ fun GameScreen(
                 StackPanel(
                     stack = session.stack,
                     dragState = dragState,
-                    enabled = !session.paused,
+                    enabled = !session.paused && !session.fastForward,
                     modifier = Modifier.width(
                         StackLayout.metrics(360.dp - HudLayout.HEIGHT, level.stack.visibleSize).columnWidth + 16.dp,
                     ),
@@ -102,6 +109,22 @@ fun GameScreen(
                     )
                 }
             }
+        }
+        // Over the field's bottom right corner, which is also the screen's: the field reaches both edges.
+        AnimatedVisibility(
+            visible = session.showFastForward,
+            enter = scaleIn(tween(200)) + fadeIn(tween(200)),
+            exit = scaleOut(tween(200)) + fadeOut(tween(200)),
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+        ) {
+            FastForwardButton(
+                active = session.fastForward,
+                onClick = {
+                    session.toggleFastForward()
+                    // A second finger can tap the button during a drag; the section goes back to its slot.
+                    if (session.fastForward) dragState.cancel()
+                },
+            )
         }
         DragOverlay(dragState)
     }

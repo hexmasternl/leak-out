@@ -467,6 +467,64 @@ class GameSessionTest {
     }
 
     @Test
+    fun `toggling switches between fast and normal speed and keeps the button`() {
+        val session = session()
+        session.buildRoute()
+
+        session.toggleFastForward()
+        assertTrue(session.fastForward)
+        assertEquals(10, session.flowTimeScale)
+
+        session.toggleFastForward()
+        assertFalse(session.fastForward)
+        assertEquals(1, session.flowTimeScale)
+        assertTrue(session.showFastForward)
+
+        session.toggleFastForward()
+        assertEquals(10, session.flowTimeScale)
+    }
+
+    @Test
+    fun `toggling does nothing while paused`() {
+        val session = session()
+        session.buildRoute()
+        session.pause()
+        session.toggleFastForward()
+        assertFalse(session.fastForward)
+
+        session.resume()
+        session.toggleFastForward()
+        session.pause()
+        session.toggleFastForward()
+        session.stopFastForward()
+        assertTrue(session.fastForward)
+    }
+
+    @Test
+    fun `toggling without a complete route does nothing`() {
+        val session = session()
+        session.toggleFastForward()
+        assertFalse(session.fastForward)
+    }
+
+    @Test
+    fun `placing works again after going back to normal speed`() {
+        val session = session()
+        session.buildRoute()
+        session.toggleFastForward()
+        assertFalse(session.canPlace(Position(0, 3)))
+
+        session.toggleFastForward()
+
+        assertTrue(session.canPlace(Position(0, 3)))
+        assertTrue(session.place(PipeSection.H, Position(0, 3)))
+        assertTrue(session.routeComplete)
+        // Breaking the route now hides the button, as before fast forward.
+        assertTrue(session.place(PipeSection.H, Position(2, 1)))
+        assertFalse(session.showFastForward)
+    }
+
+    @Test
     fun `the game clock keeps real time with fast forward on`() {
         val session = session()
         session.buildRoute()

@@ -26,16 +26,16 @@
 
 ## 5. App: drawing on the playing field
 
-- [ ] 5.1 Pass `session.popups` and a `() -> Long` for `elapsedMs` to `PlayingField`, and read both only inside the draw lambda.
-- [ ] 5.2 Draw each visible popup last in the canvas, after the highlight: "+N" in `Fredoka` bold at 40 % of `cellPx`, an ink outline then a white fill, centred on the tile and moved up by `rise × cellPx`, with the frame's alpha and scale. Skip popups whose tile is outside the field.
-- [ ] 5.3 Add the `PointsPopupText` semantics property to the cell overlay with the texts of the visible popups on that tile. Do not add it to the content description.
-- [ ] 5.4 Check that the canvas and the popups add no pointer input, so pan, zoom and the hover highlight work the same on a tile with a popup.
+- [x] 5.1 Pass `session.popups` and a `() -> Long` for `elapsedMs` to `PlayingField`, and read both only inside the draw lambda.
+- [x] 5.2 Draw each visible popup last in the canvas, after the highlight: "+N" in `Fredoka` bold at 40 % of `cellPx`, an ink outline then a white fill, centred on the tile and moved up by `rise × cellPx`, with the frame's alpha and scale. Skip popups whose tile is outside the field.
+- [x] 5.3 Add the `PointsPopupText` semantics property to the cell overlay with the texts of the visible popups on that tile. Do not add it to the content description.
+- [x] 5.4 Check that the canvas and the popups add no pointer input, so pan, zoom and the hover highlight work the same on a tile with a popup.
 
 ## 6. Tests and docs
 
-- [ ] 6.1 Instrumented test: place a corner, call `session.liquidExited` on its tile, and check that the HUD shows 15 and the tile shows "+15"; after 1,000 ms of game time the popup is gone and the HUD still shows 15.
-- [ ] 6.2 Instrumented test: two exits 300 ms apart on two tiles show both popups at the same time, and the first one is gone 300 ms before the second.
-- [ ] 6.3 Instrumented test: pause while a popup is shown, wait, resume, and check that it is still visible and disappears after the rest of its 1,000 ms of play; restart removes all popups and the HUD shows 0.
-- [ ] 6.4 Instrumented test: pan the field while a popup is shown and check that it stays on its tile; start a pan on a tile with a popup and check that the field pans.
+- [x] 6.1 Instrumented test: place a corner, call `session.liquidExited` on its tile, and check that the HUD shows 15 and the tile shows "+15"; after 1,000 ms of game time the popup is gone and the HUD still shows 15.
+- [x] 6.2 Instrumented test: two exits 300 ms apart on two tiles show both popups at the same time, and the first one is gone 300 ms before the second.
+- [x] 6.3 Instrumented test: pause while a popup is shown, wait, resume, and check that it is still visible and disappears after the rest of its 1,000 ms of play; restart removes all popups and the HUD shows 0.
+- [x] 6.4 Instrumented test: pan the field while a popup is shown and check that it stays on its tile; start a pan on a tile with a popup and check that the field pans.
 - [ ] 6.5 Update `docs/project-plan.md` section 1.9 with the new points (10, 15, 25, cross 10 then 50, awarded on exit, none for start and finish, the last section before a leak still scores) and mention the popup in section 2.8.
 - [ ] 6.6 Run `./gradlew test` and the instrumented tests on the emulator, and check that everything passes.

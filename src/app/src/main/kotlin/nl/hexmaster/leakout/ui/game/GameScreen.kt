@@ -97,6 +97,8 @@ fun GameScreen(
                         highlighted = highlighted,
                         enabled = !session.paused && !dragState.isBusy,
                         modifier = Modifier.padding(start = 12.dp).weight(1f).fillMaxHeight(),
+                        popups = { session.popups },
+                        elapsedMs = { session.elapsedMs },
                     )
                 }
             }

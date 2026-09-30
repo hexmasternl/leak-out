@@ -28,8 +28,10 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -41,6 +43,11 @@ import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -52,11 +59,19 @@ import nl.hexmaster.leakout.core.board.Cell
 import nl.hexmaster.leakout.core.level.GridSize
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
+import nl.hexmaster.leakout.ui.theme.Fredoka
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 
 /** Semantics flag on a field cell: true while the dragged section can be dropped on it. */
 val FieldCellHighlighted = SemanticsPropertyKey<Boolean>("FieldCellHighlighted")
 var SemanticsPropertyReceiver.fieldCellHighlighted by FieldCellHighlighted
+
+/**
+ * Semantics on a field cell: the texts of the points popups shown on it, such as "+15", oldest
+ * first. A test hook only: it is not part of the content description, so screen readers skip it.
+ */
+val PointsPopupText = SemanticsPropertyKey<List<String>>("PointsPopupText")
+var SemanticsPropertyReceiver.pointsPopupText by PointsPopupText
 
 /**
  * The screen state of the playing field: the viewport and where the field sits on the screen.
@@ -99,6 +114,10 @@ fun rememberPlayingFieldState(grid: GridSize, start: Position): PlayingFieldStat
  * The level grid: draws the visible cells of [board] and the [highlighted] cell, pans with one
  * finger and zooms with two within the viewport's limits. It never rotates. All input is ignored
  * while [enabled] is false, for example during a section drag or while paused.
+ *
+ * The [popups] are drawn on their tiles above everything else, timed by the game clock
+ * [elapsedMs]. Both are lambdas read only while drawing, so a new award or a clock tick redraws
+ * the canvas without recomposing the grid.
  */
 @Composable
 fun PlayingField(
@@ -107,9 +126,12 @@ fun PlayingField(
     highlighted: Position?,
     enabled: Boolean,
     modifier: Modifier = Modifier,
+    popups: () -> List<PointsPopup> = { emptyList() },
+    elapsedMs: () -> Long = { 0L },
 ) {
     val density = LocalDensity.current
     val currentEnabled by rememberUpdatedState(enabled)
+    val textMeasurer = rememberTextMeasurer()
     Box(
         modifier = modifier
             .testTag(GameScreenTags.FIELD)
@@ -125,20 +147,26 @@ fun PlayingField(
             val cells = viewport.visibleCells()
             for (position in cells) drawCell(board[position], viewport.cellRect(position))
             highlighted?.let { drawHighlight(viewport.cellRect(it)) }
+            drawPopups(popups(), elapsedMs(), viewport, textMeasurer)
         }
-        CellSemantics(board, viewport, highlighted)
+        CellSemantics(board, viewport, highlighted, popups)
     }
 }
 
-/** One invisible node per visible cell, so tests and accessibility can find and read a cell. */
+/**
+ * One invisible node per visible cell, so tests and accessibility can find and read a cell. The
+ * nodes carry semantics only and take no pointer input, so they never block pan or zoom.
+ */
 @Composable
-private fun CellSemantics(board: Board, viewport: FieldViewport, highlighted: Position?) {
+private fun CellSemantics(board: Board, viewport: FieldViewport, highlighted: Position?, popups: () -> List<PointsPopup>) {
     val density = LocalDensity.current
     val cellDp = with(density) { viewport.cellPx.toDp() }
+    val popupTexts = popups().groupBy({ it.position }, { PointsFormat.text(it.points) })
     for (position in viewport.visibleCells()) {
         val rect = viewport.cellRect(position)
         val description = board[position].describe()
         val isHighlighted = position == highlighted
+        val texts = popupTexts[position].orEmpty()
         Box(
             Modifier
                 .offset { IntOffset(rect.left.roundToInt(), rect.top.roundToInt()) }
@@ -147,6 +175,7 @@ private fun CellSemantics(board: Board, viewport: FieldViewport, highlighted: Po
                 .semantics {
                     contentDescription = description
                     fieldCellHighlighted = isHighlighted
+                    pointsPopupText = texts
                 },
         )
     }
@@ -236,5 +265,32 @@ private fun DrawScope.drawHighlight(rect: Rect) {
     drawRoundRect(LeakOutColors.Brass500.copy(alpha = 0.22f), inset.topLeft, inset.size, corner)
     drawRoundRect(LeakOutColors.Brass300, inset.topLeft, inset.size, corner, style = Stroke(3.dp.toPx()))
 }
+
+/**
+ * "+N" for every popup whose tile touches the field: Fredoka bold at 40 % of a tile, an ink outline
+ * under a white fill, centred on the tile and lifted by its rise. Off-field popups are skipped but
+ * keep their timing, since the age comes from [nowMs].
+ */
+private fun DrawScope.drawPopups(popups: List<PointsPopup>, nowMs: Long, viewport: FieldViewport, textMeasurer: TextMeasurer) {
+    if (popups.isEmpty()) return
+    val field = Rect(Offset.Zero, size)
+    val style = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Bold, fontSize = (viewport.cellPx * POPUP_TEXT_FRACTION).toSp())
+    val outline = Stroke(POPUP_OUTLINE.toPx(), join = StrokeJoin.Round)
+    for (popup in popups) {
+        val frame = popupFrame(popup.ageAt(nowMs)) ?: continue
+        val rect = viewport.cellRect(popup.position)
+        if (!rect.overlaps(field)) continue
+        val layout = textMeasurer.measure(PointsFormat.text(popup.points), style)
+        val center = rect.center - Offset(0f, frame.rise * viewport.cellPx)
+        val topLeft = center - Offset(layout.size.width / 2f, layout.size.height / 2f)
+        scale(frame.scale, pivot = center) {
+            drawText(layout, LeakOutColors.InkDark, topLeft, alpha = frame.alpha, drawStyle = outline)
+            drawText(layout, Color.White, topLeft, alpha = frame.alpha)
+        }
+    }
+}
+
+private const val POPUP_TEXT_FRACTION = 0.4f
+private val POPUP_OUTLINE = 3.dp
 
 private val FieldShape = RoundedCornerShape(24.dp)

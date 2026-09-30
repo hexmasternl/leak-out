@@ -39,11 +39,13 @@
 - [x] 6.3 Dropping outside the board, dropping on a blocked cell, and dropping on the start cell each leave the stack unchanged and place nothing.
 - [x] 6.4 Dragging a preview section does not start a drag and changes nothing.
 - [x] 6.5 A cancelled gesture leaves the stack unchanged, and one drop changes the stack at most once.
-- [ ] 6.6 Run `./gradlew :app:testDebugUnitTest :app:connectedDebugAndroidTest` on the emulator and record the results.
+- [x] 6.6 Run `./gradlew :app:testDebugUnitTest :app:connectedDebugAndroidTest` on the emulator and record the results.
 
 ## 7. Wrap up
 
-- [ ] 7.1 Update `docs/project-plan.md` sections 1.1, 1.6, 1.7, 2.6 and 2.8: new sections enter at the top, the next section is at the bottom, and drag and drop is the only way to place a section (no tap-to-place).
-- [ ] 7.2 Run `openspec validate app-game-play-stack` and fix any issues.
+- [x] 7.1 Update `docs/project-plan.md` sections 1.1, 1.6, 1.7, 2.6 and 2.8: new sections enter at the top, the next section is at the bottom, and drag and drop is the only way to place a section (no tap-to-place).
+- [x] 7.2 Run `openspec validate app-game-play-stack` and fix any issues.
+
+
 
 

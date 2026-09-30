@@ -7,9 +7,10 @@ The liquid flows slowly on purpose: 0.4 to 2 cells per second, after a countdown
 - Each time a section is placed or replaced, the game checks whether the placed sections form a **complete route** from the start to the finish. The route is followed exactly as the liquid would flow: out of the start's open side, through each section's channel, into the finish through the finish's open side. A cross is passed straight through, a reservoir only from left to right or right to left.
 - When the route is complete, a **fast forward button** appears at the bottom right of the screen, over the corner of the playing field.
 - When the route is no longer complete (a replacement broke it) before the player taps the button, the button disappears again.
-- Tapping the button turns fast forward on: the liquid flows at **10 times** its current speed until the level ends. If the countdown is still running, the countdown also runs 10 times faster.
-- Once fast forward is on, the route is locked: the player can no longer drag sections from the stack or replace sections on the field. This keeps the win certain and stops a player from breaking the route at 10x speed. Pan and zoom still work.
-- Fast forward stays on until the level ends. It is kept over pause and resume, and turned off by restart.
+- Tapping the button turns fast forward on: the liquid flows at **10 times** its current speed. If the countdown is still running, the countdown also runs 10 times faster. The button then turns into a **slow button**.
+- Tapping the slow button turns fast forward off again: the liquid goes back to the level's normal speed, and the button turns back into the fast forward button. The player can switch between the two as often as they like.
+- While fast forward is on, the route is locked: the player can no longer drag sections from the stack or replace sections on the field. This keeps the win certain and stops a player from breaking the route at 10x speed. Pan and zoom still work. Turning fast forward off unlocks placing again.
+- Fast forward is kept over pause and resume, and turned off by restart.
 - Fast forward changes only how fast the liquid moves. Points, the order of the popups and the result of the level are the same as without it.
 
 ## Capabilities

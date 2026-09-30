@@ -15,14 +15,21 @@ import nl.hexmaster.leakout.core.board.PlacementCheck
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.core.route.Route
+import nl.hexmaster.leakout.core.route.RouteTracer
 import nl.hexmaster.leakout.core.score.ScoreSheet
 import nl.hexmaster.leakout.core.stack.PipeStack
 import nl.hexmaster.leakout.core.stack.WeightedPool
 
 /**
- * The single owner of a running level: stack, board, replace lock, score, flow speed, game clock
- * and the paused state. The future `GameEngine` takes over its insides; the HUD, the field and the
- * pause dialog only depend on the values and actions here.
+ * The single owner of a running level: stack, board, replace lock, score, flow speed, game clock,
+ * the paused state and fast forward. The future `GameEngine` takes over its insides; the HUD, the
+ * field and the pause dialog only depend on the values and actions here.
+ *
+ * Contract for the flow: the countdown and the liquid head run on `dtMs * flowTimeScale`
+ * (`Waiting.remainingMs -= flowDtMs`, `progress += flowDtMs / 1000 * …`), and the flow step loops
+ * while a whole cell is crossed, because at 10x one frame can cross more than one. Everything else
+ * runs on `dtMs`: [elapsedMs], the replace lock and the points popups.
  */
 class GameSession(val level: Level, private val random: Random = Random.Default) {
     private val pool = WeightedPool(level.stack.weights)
@@ -71,6 +78,35 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
     /** Stars earned so far, derived from [score] so it can never disagree with a win. */
     val stars: Int get() = level.stars.starsFor(score)
 
+    /** Whether the placed sections connect the start to the finish. Recomputed after every placement. */
+    var routeComplete: Boolean by mutableStateOf(false)
+        private set
+
+    /** While on, the flow runs [FAST_FORWARD_FACTOR] times as fast and placing is locked. */
+    var fastForward: Boolean by mutableStateOf(false)
+        private set
+
+    /** How much faster than real time the flow runs: [FAST_FORWARD_FACTOR] with fast forward, else 1. */
+    val flowTimeScale: Int get() = if (fastForward) FAST_FORWARD_FACTOR else 1
+
+    /** Whether the fast forward button is shown: when it can be turned on, and while it is on. */
+    val showFastForward: Boolean get() = routeComplete || fastForward
+
+    /** Turns fast forward on when the route is complete and the game runs. Otherwise does nothing. */
+    fun startFastForward() {
+        if (routeComplete && !paused && !fastForward) fastForward = true
+    }
+
+    /** Back to the level's normal speed, which unlocks placing. Does nothing while paused. */
+    fun stopFastForward() {
+        if (!paused) fastForward = false
+    }
+
+    /** What the button does: fast forward when off, normal speed when on. */
+    fun toggleFastForward() {
+        if (fastForward) stopFastForward() else startFastForward()
+    }
+
     /** Pauses the game and opens the pause menu. Pausing twice is the same as once. */
     fun pause() {
         paused = true
@@ -82,11 +118,16 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
         pauseMenuOpen = false
     }
 
-    /** Starts the level again: new stack, empty board, no lock, score 0 and no popups, clock and speed reset, running. */
+    /**
+     * Starts the level again: new stack, empty board, no lock, no route and no fast forward, score 0
+     * and no popups, clock and speed reset, running.
+     */
     fun restart() {
         stack = PipeStack.create(level.stack, random)
         board = Board.from(level)
         replaceLockUntilMs = 0L
+        routeComplete = false
+        fastForward = false
         attempt += 1
         sheet = ScoreSheet()
         popups = emptyList()
@@ -126,8 +167,9 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
     fun canPlace(at: Position): Boolean = check(at).accepted
 
     /**
-     * Puts [section] on [at] and draws the next stack section. Refused while paused or when the
-     * placement rule rejects the tile. A replacement starts the level's replace lock.
+     * Puts [section] on [at] and draws the next stack section. Refused while paused, while fast
+     * forward is on, or when the placement rule rejects the tile. A replacement starts the level's
+     * replace lock. Afterwards the route is checked again.
      */
     fun place(section: PipeSection, at: Position): Boolean {
         val result = check(at)
@@ -135,6 +177,7 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
         board = board.with(at, Cell.Pipe(section))
         stack = stack.afterPlacement(pool, random)
         if (result == PlacementCheck.Replace) replaceLockUntilMs = elapsedMs + level.rules.replacePenaltyMs
+        routeComplete = RouteTracer.trace(board, level) is Route.Complete
         return true
     }
 
@@ -143,10 +186,16 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
         board = board.markLiquidEntered(at)
     }
 
+    // Pause and fast forward are session state, not board rules, so they are checked here.
     private fun check(at: Position): PlacementCheck =
-        if (paused) {
+        if (paused || fastForward) {
             PlacementCheck.Rejected(PlacementCheck.Reason.LOCKED)
         } else {
             Placement.check(board, level.rules, at, elapsedMs, replaceLockUntilMs)
         }
+
+    companion object {
+        /** How many times as fast the flow runs with fast forward on. */
+        const val FAST_FORWARD_FACTOR = 10
+    }
 }

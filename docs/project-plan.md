@@ -97,6 +97,8 @@ All timing lives in the level definition:
 
 A **countdown** for the initial delay is shown on screen. Optionally the player can tap a "start flow" button to skip the wait for a time bonus.
 
+**Fast forward**: after every placement the game checks whether the placed sections form a complete route from the start to the finish, following the liquid's rules (`core.route.RouteTracer`, using `PipeSection.exitFor`). Once they do, a fast forward button appears. Tapping it runs the countdown and the flow at 10x (`GameSession.flowTimeScale`) and locks placing, so the route cannot be broken. The button then becomes a slow button: tapping it restores the level's normal speed and unlocks placing again. Pause and resume keep the current speed; restart turns fast forward off. Points and the result are the same at either speed.
+
 ### 1.9 Win, lose, and score
 
 - **Win**: liquid enters the finish section through its open port. The finish plays a fill animation, then the level-complete screen appears.
@@ -126,7 +128,7 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 
 1. **Title** – play, level select, settings (sound on/off).
 2. **Level select** – grid of level tiles.
-3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Back and going to the background also pause the game.
+3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Once the route is complete, a round fast forward / slow button sits in the bottom right corner, 16 dp from the edges. Back and going to the background also pause the game.
 4. **Pause dialog** – opened from the cog wheel: Resume, Restart, a separator and Exit to the main menu (welcome screen). Tapping outside does nothing; Back works as Resume.
 5. **Level complete / failed overlay** – score, stars, next / retry / level select.
 
@@ -262,6 +264,8 @@ sealed interface FlowState {
    - `Finish` → **Won** if `finish.entry == exit.opposite()`, else **Leaked**.
    - `Pipe` → `channel = section.channelFor(exit.opposite())`. If `null` (no port on that side) or the channel is already filled → **Leaked**. Otherwise continue `Flowing` in `next` with `entry = exit.opposite()` and `progress` carrying the overshoot (`progress - 1.0`) so speed stays smooth across cell borders.
 4. **Won** / **Leaked** are terminal; the engine stops ticking and the UI shows the overlay.
+
+The step runs on `flowDt = dt × flowTimeScale` (1, or 10 with fast forward) for both the countdown and the head; the game clock, the replace lock and the points popups keep `dt`. At 10x one frame can cross more than one cell, so step 3 loops while `progress >= 1.0` and no cell is skipped.
 
 Because the head is the only mutable thing and every branch is an explicit state transition, the whole simulation is covered by a few dozen unit tests (see 2.9).
 

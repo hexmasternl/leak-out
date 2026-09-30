@@ -38,7 +38,7 @@ None. The leak, level-lost, points, HUD, pause, fast-forward, placement and stac
 ## Impact
 
 - New pure Kotlin code in `core` (`nl.hexmaster.leakout.core.score`): `Points.UNUSED_SECTION_PENALTY` and a `FinalScore` that finds the unused sections on a `Board` and computes penalty, total and stars, with JVM unit tests.
-- `GameSession` (from `app-game-play-hud`, changed by `app-game-play-level-lost`) gets a `Won` outcome, a `liquidReachedFinish()` entry point, the final score of the attempt, and a `tick` that removes unused sections in step with the animation. `isStopped` and `pause()` treat a win like a loss.
+- The game engine (`core.engine`, from `app-game-play-game-engine`) already reports `Outcome.Won` and stops the game on it. `GameState` gets the final score of the attempt and a `RemoveUnused` command that removes unused sections; `GameSession` sends it in step with the animation and can skip the animation (design decision 11).
 - New Compose code in `app` (`ui/game/`): a pure `WinTally` timeline (which row shows what at a given age), `LevelCompleteDialog`, a `WinStars` row built on the HUD star drawing, a finish flash on `PlayingField`, a success-green `CartoonButton` style, string resources, and unit and instrumented tests.
 - `GameScreen` gets an `onNextLevel` callback next to `onExit`; `MainActivity` wires it to the bundled level with the next id.
 - There is no flow simulation yet. The flow change calls `FlowStep.after` each time the liquid leaves a tile and calls `liquidReachedFinish` on `Finish`. Until then the tests call it directly.

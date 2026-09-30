@@ -28,8 +28,10 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -41,6 +43,11 @@ import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -49,14 +56,41 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import nl.hexmaster.leakout.core.board.Board
 import nl.hexmaster.leakout.core.board.Cell
+import nl.hexmaster.leakout.core.engine.Award
+import nl.hexmaster.leakout.core.flow.Channel
+import nl.hexmaster.leakout.core.flow.ChannelUse
 import nl.hexmaster.leakout.core.level.GridSize
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
+import nl.hexmaster.leakout.ui.theme.Fredoka
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 
 /** Semantics flag on a field cell: true while the dragged section can be dropped on it. */
 val FieldCellHighlighted = SemanticsPropertyKey<Boolean>("FieldCellHighlighted")
 var SemanticsPropertyReceiver.fieldCellHighlighted by FieldCellHighlighted
+
+/**
+ * Semantics on a field cell: the texts of the points popups shown on it, such as "+15", oldest
+ * first. A test hook only: it is not part of the content description, so screen readers skip it.
+ */
+val PointsPopupText = SemanticsPropertyKey<List<String>>("PointsPopupText")
+var SemanticsPropertyReceiver.pointsPopupText by PointsPopupText
+
+/** Semantics on the field cell the pipe leaks from: the side it leaks through. A test hook only. */
+val LeakAt = SemanticsPropertyKey<Side>("LeakAt")
+var SemanticsPropertyReceiver.leakAt by LeakAt
+
+/** Semantics flag on the field cell the liquid head is in. A test hook only, until the liquid is drawn. */
+val LiquidHead = SemanticsPropertyKey<Boolean>("LiquidHead")
+var SemanticsPropertyReceiver.liquidHead by LiquidHead
+
+/** Semantics on a field cell: the channels the liquid has run through there. A test hook only, until the liquid is drawn. */
+val FilledChannels = SemanticsPropertyKey<Set<Channel>>("FilledChannels")
+var SemanticsPropertyReceiver.filledChannels by FilledChannels
+
+/** Semantics flag on the finish cell while the level is won and its success ring is drawn. A test hook only. */
+val FinishFlash = SemanticsPropertyKey<Boolean>("FinishFlash")
+var SemanticsPropertyReceiver.finishFlash by FinishFlash
 
 /**
  * The screen state of the playing field: the viewport and where the field sits on the screen.
@@ -99,6 +133,20 @@ fun rememberPlayingFieldState(grid: GridSize, start: Position): PlayingFieldStat
  * The level grid: draws the visible cells of [board] and the [highlighted] cell, pans with one
  * finger and zooms with two within the viewport's limits. It never rotates. All input is ignored
  * while [enabled] is false, for example during a section drag or while paused.
+ *
+ * The [awards] are drawn as points popups on their tiles above everything else, timed by the game
+ * clock [nowMs]. The clock is a lambda read only while drawing, so a clock tick redraws the canvas
+ * without recomposing the grid.
+ *
+ * When the pipe has leaked at [leakAt] through [leakSide], liquid spurts out of that side, timed by
+ * [lossAgeMs] (read only while drawing), above the pipes and below the popups.
+ *
+ * [head] is the tile the liquid head is in and [filled] the channels the liquid has run through.
+ * They are not drawn yet; the liquid drawing will use them.
+ *
+ * While the level is won, [winAgeMs] gives the game time since the win (read only while drawing)
+ * and the finish tile gets the success ring from [finishFlashFrame], above the pipes and below the
+ * popups. It is null while not won.
  */
 @Composable
 fun PlayingField(
@@ -107,9 +155,18 @@ fun PlayingField(
     highlighted: Position?,
     enabled: Boolean,
     modifier: Modifier = Modifier,
+    awards: List<Award> = emptyList(),
+    nowMs: () -> Long = { 0L },
+    leakAt: Position? = null,
+    leakSide: Side? = null,
+    lossAgeMs: () -> Long = { 0L },
+    head: Position? = null,
+    filled: Set<ChannelUse> = emptySet(),
+    winAgeMs: (() -> Long)? = null,
 ) {
     val density = LocalDensity.current
     val currentEnabled by rememberUpdatedState(enabled)
+    val textMeasurer = rememberTextMeasurer()
     Box(
         modifier = modifier
             .testTag(GameScreenTags.FIELD)
@@ -125,20 +182,45 @@ fun PlayingField(
             val cells = viewport.visibleCells()
             for (position in cells) drawCell(board[position], viewport.cellRect(position))
             highlighted?.let { drawHighlight(viewport.cellRect(it)) }
+            if (leakAt != null && leakSide != null) drawLeak(viewport.cellRect(leakAt), leakSide, leakFrame(lossAgeMs()))
+            if (winAgeMs != null) {
+                val frame = finishFlashFrame(winAgeMs())
+                for (position in cells) if (board[position] is Cell.Finish) drawFinishRing(viewport.cellRect(position), frame)
+            }
+            drawPopups(awards, nowMs(), viewport, textMeasurer)
         }
-        CellSemantics(board, viewport, highlighted)
+        CellSemantics(board, viewport, highlighted, awards, leakAt?.let { at -> leakSide?.let { at to it } }, head, filled, winAgeMs != null)
     }
 }
 
-/** One invisible node per visible cell, so tests and accessibility can find and read a cell. */
+/**
+ * One invisible node per visible cell, so tests and accessibility can find and read a cell. The
+ * nodes carry semantics only and take no pointer input, so they never block pan or zoom.
+ */
 @Composable
-private fun CellSemantics(board: Board, viewport: FieldViewport, highlighted: Position?) {
+private fun CellSemantics(
+    board: Board,
+    viewport: FieldViewport,
+    highlighted: Position?,
+    awards: List<Award>,
+    leak: Pair<Position, Side>?,
+    head: Position?,
+    filled: Set<ChannelUse>,
+    won: Boolean,
+) {
     val density = LocalDensity.current
     val cellDp = with(density) { viewport.cellPx.toDp() }
+    val popupTexts = awards.groupBy({ it.position }, { PointsFormat.text(it.points) })
+    val filledByCell = filled.groupBy({ it.position }, { it.channel })
     for (position in viewport.visibleCells()) {
         val rect = viewport.cellRect(position)
         val description = board[position].describe()
         val isHighlighted = position == highlighted
+        val texts = popupTexts[position].orEmpty()
+        val leakSide = leak?.takeIf { it.first == position }?.second
+        val isHead = position == head
+        val channels = filledByCell[position].orEmpty().toSet()
+        val flashing = won && board[position] is Cell.Finish
         Box(
             Modifier
                 .offset { IntOffset(rect.left.roundToInt(), rect.top.roundToInt()) }
@@ -147,6 +229,11 @@ private fun CellSemantics(board: Board, viewport: FieldViewport, highlighted: Po
                 .semantics {
                     contentDescription = description
                     fieldCellHighlighted = isHighlighted
+                    pointsPopupText = texts
+                    if (leakSide != null) this.leakAt = leakSide
+                    liquidHead = isHead
+                    filledChannels = channels
+                    if (flashing) finishFlash = true
                 },
         )
     }
@@ -236,5 +323,84 @@ private fun DrawScope.drawHighlight(rect: Rect) {
     drawRoundRect(LeakOutColors.Brass500.copy(alpha = 0.22f), inset.topLeft, inset.size, corner)
     drawRoundRect(LeakOutColors.Brass300, inset.topLeft, inset.size, corner, style = Stroke(3.dp.toPx()))
 }
+
+/**
+ * A fan of droplets out of the middle of [side] of the tile [rect], in the liquid colour: a short
+ * jet on the side and three rows of drops that spread wider the further they fly. Drawn in tile
+ * coordinates, so it follows pan and zoom; drops past the field edge are clipped by the field.
+ */
+private fun DrawScope.drawLeak(rect: Rect, side: Side, frame: LeakFrame) {
+    val cell = rect.width
+    val out = Offset(side.dx.toFloat(), side.dy.toFloat())
+    val across = Offset(-out.y, out.x)
+    val origin = rect.center + out * (cell / 2f)
+    val reach = frame.length * cell
+    drawLine(
+        LeakOutColors.Liquid500.copy(alpha = frame.alpha),
+        origin - out * (cell * 0.08f),
+        origin + out * (reach * 0.35f),
+        cell * 0.12f,
+        StrokeCap.Round,
+    )
+    for (row in 1..LEAK_ROWS) {
+        val along = row.toFloat() / LEAK_ROWS
+        val center = origin + out * (reach * along)
+        val radius = cell * (0.075f - 0.015f * row)
+        for (i in -1..1) {
+            val drop = center + across * (i * frame.spread * cell * 0.5f * along)
+            drawCircle(LeakOutColors.Liquid300.copy(alpha = frame.alpha), radius, drop)
+            drawCircle(LeakOutColors.LiquidGlow.copy(alpha = frame.alpha), radius * 0.4f, drop - Offset(radius * 0.3f, radius * 0.3f))
+        }
+    }
+}
+
+private const val LEAK_ROWS = 3
+
+/**
+ * The success ring on the finish tile [rect]: a soft green fill and a solid green outline, both at
+ * the frame's alpha, scaled around the tile centre. In tile coordinates, so it follows pan and zoom.
+ */
+private fun DrawScope.drawFinishRing(rect: Rect, frame: FinishFlashFrame) {
+    val cell = rect.width
+    scale(frame.ringScale, pivot = rect.center) {
+        val inset = rect.deflate(cell * 0.06f)
+        val corner = CornerRadius(cell * 0.16f)
+        drawRoundRect(LeakOutColors.SuccessGreen.copy(alpha = 0.25f * frame.ringAlpha), inset.topLeft, inset.size, corner)
+        drawRoundRect(
+            LeakOutColors.SuccessGreen.copy(alpha = frame.ringAlpha),
+            inset.topLeft,
+            inset.size,
+            corner,
+            style = Stroke(cell * 0.08f),
+        )
+    }
+}
+
+/**
+ * "+N" for every popup whose tile touches the field: Fredoka bold at 40 % of a tile, an ink outline
+ * under a white fill, centred on the tile and lifted by its rise. Off-field popups are skipped but
+ * keep their timing, since the age comes from [nowMs].
+ */
+private fun DrawScope.drawPopups(popups: List<Award>, nowMs: Long, viewport: FieldViewport, textMeasurer: TextMeasurer) {
+    if (popups.isEmpty()) return
+    val field = Rect(Offset.Zero, size)
+    val style = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Bold, fontSize = (viewport.cellPx * POPUP_TEXT_FRACTION).toSp())
+    val outline = Stroke(POPUP_OUTLINE.toPx(), join = StrokeJoin.Round)
+    for (popup in popups) {
+        val frame = popupFrame(popup.ageAt(nowMs)) ?: continue
+        val rect = viewport.cellRect(popup.position)
+        if (!rect.overlaps(field)) continue
+        val layout = textMeasurer.measure(PointsFormat.text(popup.points), style)
+        val center = rect.center - Offset(0f, frame.rise * viewport.cellPx)
+        val topLeft = center - Offset(layout.size.width / 2f, layout.size.height / 2f)
+        scale(frame.scale, pivot = center) {
+            drawText(layout, LeakOutColors.InkDark, topLeft, alpha = frame.alpha, drawStyle = outline)
+            drawText(layout, Color.White, topLeft, alpha = frame.alpha)
+        }
+    }
+}
+
+private const val POPUP_TEXT_FRACTION = 0.4f
+private val POPUP_OUTLINE = 3.dp
 
 private val FieldShape = RoundedCornerShape(24.dp)

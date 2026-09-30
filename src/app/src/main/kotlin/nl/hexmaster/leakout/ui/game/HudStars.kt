@@ -23,6 +23,8 @@ import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import nl.hexmaster.leakout.R
 import nl.hexmaster.leakout.ui.splash.rememberReducedMotion
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
@@ -69,24 +71,45 @@ private fun HudStar(earned: Boolean, index: Int) {
             scale.snapTo(1f)
         }
     }
+    StarIcon(
+        earned = earned,
+        scale = { scale.value },
+        size = HudLayout.STAR_SIZE,
+        glowRadius = HudLayout.STAR_GLOW_RADIUS,
+        modifier = Modifier.testTag("hud_star_${index + 1}"),
+    )
+}
+
+/**
+ * One star, shared by the HUD and the level complete dialog. Not earned: [LeakOutColors.TextMuted]
+ * without glow. Earned: [LeakOutColors.Brass300] with a static brass glow of [glowRadius]. It is drawn
+ * at [scale], read while drawing, and carries the [StarEarned] and [StarScale] test semantics.
+ */
+@Composable
+fun StarIcon(
+    earned: Boolean,
+    scale: () -> Float,
+    size: Dp,
+    modifier: Modifier = Modifier,
+    glowRadius: Dp = size * 0.9f,
+) {
     val glow = LeakOutColors.Brass500.copy(alpha = 0.45f)
     Icon(
         painter = painterResource(R.drawable.ic_star),
         contentDescription = null,
         tint = if (earned) LeakOutColors.Brass300 else LeakOutColors.TextMuted,
-        modifier = Modifier
-            .testTag("hud_star_${index + 1}")
+        modifier = modifier
             .semantics {
                 starEarned = earned
-                starScale = scale.value
+                starScale = scale()
             }
             .graphicsLayer {
-                scaleX = scale.value
-                scaleY = scale.value
+                scaleX = scale()
+                scaleY = scale()
             }
             .drawBehind {
                 if (earned) {
-                    val radius = HudLayout.STAR_GLOW_RADIUS.toPx()
+                    val radius = glowRadius.toPx()
                     drawCircle(
                         brush = Brush.radialGradient(
                             colors = listOf(glow, Color.Transparent),
@@ -97,6 +120,32 @@ private fun HudStar(earned: Boolean, index: Int) {
                     )
                 }
             }
-            .size(HudLayout.STAR_SIZE),
+            .size(size),
     )
 }
+
+/**
+ * The three stars of the level complete dialog, 40 dp and 12 dp apart. The first [lit] are earned;
+ * each is drawn at its scale from [scales], which the win tally pops. Read as "N of 3 stars".
+ */
+@Composable
+fun WinStars(lit: Int, scales: List<Float>, modifier: Modifier = Modifier) {
+    val description = stringResource(R.string.hud_stars_description, lit.coerceIn(0, STAR_COUNT))
+    Row(
+        modifier = modifier.semantics(mergeDescendants = true) { contentDescription = description },
+        horizontalArrangement = Arrangement.spacedBy(WIN_STAR_SPACING),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        repeat(STAR_COUNT) { index ->
+            StarIcon(
+                earned = index < lit,
+                scale = { scales.getOrElse(index) { 1f } },
+                size = WIN_STAR_SIZE,
+                modifier = Modifier.testTag("win_star_${index + 1}"),
+            )
+        }
+    }
+}
+
+private val WIN_STAR_SIZE = 40.dp
+private val WIN_STAR_SPACING = 12.dp

@@ -39,6 +39,9 @@ object LeakOutColors {
     // shadow, the same way the primary and secondary families have a `-dark` token.
     val ErrorRedDark = Color(0xFFB71C1C)
 
+    // Not in the token table either: the bottom shadow of the success button, a darker SuccessGreen.
+    val SuccessGreenDark = Color(0xFF1B5E20)
+
     // 4.1 inner high shine: rgba(255, 255, 255, 0.4)
     val Shine = Color(0x66FFFFFF)
 
@@ -81,6 +84,8 @@ object LeakOutColors {
     val Brass100 = Color(0xFFFFE9B0)
     val Brass300 = Color(0xFFFFCF5C)
     val Brass500 = Color(0xFFF5A623)
+    val Brass700 = Color(0xFFC97A12)
+    val Brass900 = Color(0xFF7A4708)
 
     // 2.7 Text: text.muted (Deep theme)
     val TextMuted = Color(0xFF6E8296)

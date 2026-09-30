@@ -15,8 +15,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import nl.hexmaster.leakout.core.level.Level
-import nl.hexmaster.leakout.core.level.LevelParser
-import nl.hexmaster.leakout.core.level.ParseResult
 import nl.hexmaster.leakout.ui.game.GameScreen
 import nl.hexmaster.leakout.ui.splash.SplashGate
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
@@ -29,7 +27,8 @@ private sealed interface Screen {
 }
 
 class MainActivity : ComponentActivity() {
-    private val firstLevel: Level by lazy { loadLevelOne() }
+    private val levels by lazy { BundledLevels(assets) }
+    private val firstLevel: Level by lazy { levels.load(1) ?: error("Level 1 is not bundled") }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Before super.onCreate: swaps the splash theme for Theme.LeakOut. The system splash is
@@ -47,7 +46,14 @@ class MainActivity : ComponentActivity() {
                 SplashGate {
                     var screen by remember { mutableStateOf<Screen>(Screen.Welcome) }
                     when (val current = screen) {
-                        is Screen.Game -> GameScreen(level = current.level, onExit = { screen = Screen.Welcome })
+                        is Screen.Game -> {
+                            val next = remember(current.level) { levels.next(current.level) }
+                            GameScreen(
+                                level = current.level,
+                                onExit = { screen = Screen.Welcome },
+                                onNextLevel = next?.let { { screen = Screen.Game(it) } },
+                            )
+                        }
                         Screen.Welcome -> WelcomeScreen(
                             onPlay = { screen = Screen.Game(firstLevel) },
                             onSettings = { /* TODO: navigate to settings once that screen exists. */ },
@@ -69,14 +75,6 @@ class MainActivity : ComponentActivity() {
         WindowCompat.getInsetsController(window, window.decorView).apply {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             hide(WindowInsetsCompat.Type.systemBars())
-        }
-    }
-
-    private fun loadLevelOne(): Level {
-        val text = assets.open("levels/level_001.json").bufferedReader().use { it.readText() }
-        return when (val result = LevelParser.parse(text)) {
-            is ParseResult.Success -> result.level
-            is ParseResult.Failure -> error("Cannot load level 1: ${result.error.message}")
         }
     }
 }

@@ -73,7 +73,7 @@ Tapping the fast forward button SHALL turn fast forward on. While it is on, the 
 - **THEN** the score is the same as when the same route is won without fast forward
 
 ### Requirement: Fast forward locks the route
-While fast forward is on, the player SHALL NOT be able to drag a section from the stack, and no tile SHALL accept a drop or be highlighted. A drag that is going on when fast forward is turned on SHALL be cancelled and the section SHALL go back to its slot. Panning and zooming the playing field SHALL still work.
+While fast forward is on, the player SHALL NOT be able to drag a section from the stack, and no tile SHALL accept a drop or be highlighted. A drag that is going on when fast forward is turned on SHALL be cancelled and the section SHALL go back to its slot. Panning and zooming the playing field SHALL still work. When fast forward is turned off again, placing SHALL work as before.
 
 #### Scenario: No placing after fast forward
 - **WHEN** fast forward is on and the player presses and drags the next section
@@ -83,8 +83,20 @@ While fast forward is on, the player SHALL NOT be able to drag a section from th
 - **WHEN** fast forward is on and the player pans or pinches the playing field
 - **THEN** the field pans or zooms as usual
 
-### Requirement: Fast forward stays on until the level ends
-Once turned on, fast forward SHALL stay on until the level ends or is restarted. The button SHALL stay visible in an active state while fast forward is on, and tapping it again SHALL do nothing. Pausing and resuming SHALL keep fast forward on. While the game is paused, the button SHALL NOT react. Restarting the level SHALL turn fast forward off and hide the button.
+#### Scenario: Placing after slowing down
+- **WHEN** fast forward was turned on and then off again, and the player drags the next section onto an empty tile
+- **THEN** the section is placed
+
+### Requirement: Fast forward button toggles between fast and normal speed
+While fast forward is on, the button SHALL stay visible and SHALL be shown as a slow button. Tapping the slow button SHALL turn fast forward off: the liquid and the countdown SHALL go back to the level's normal speed, and the button SHALL be shown as the fast forward button again. The player SHALL be able to switch between fast and normal speed as often as they like. Pausing and resuming SHALL keep the current speed. While the game is paused, the button SHALL NOT react. Restarting the level SHALL turn fast forward off and hide the button.
+
+#### Scenario: Slow button after fast forward
+- **WHEN** the player taps the fast forward button
+- **THEN** fast forward is on and the button is shown as a slow button
+
+#### Scenario: Back to normal speed
+- **WHEN** fast forward is on and the player taps the slow button
+- **THEN** the liquid flows at the level's normal speed and the button is shown as the fast forward button
 
 #### Scenario: Pause and resume
 - **WHEN** fast forward is on and the player pauses and resumes
@@ -94,13 +106,17 @@ Once turned on, fast forward SHALL stay on until the level ends or is restarted.
 - **WHEN** fast forward is on and the player restarts the level
 - **THEN** fast forward is off and no fast forward button is shown
 
-#### Scenario: Tapping again
-- **WHEN** fast forward is on and the player taps the button
-- **THEN** fast forward stays on
+#### Scenario: Tapping while paused
+- **WHEN** the game is paused and the player taps the button
+- **THEN** the speed does not change
 
 ### Requirement: Fast forward button is accessible
-The fast forward button SHALL have the content description "Fast forward" while it is off, and SHALL report that fast forward is on while it is on.
+The fast forward button SHALL have the content description "Fast forward" while fast forward is off. While fast forward is on, the slow button SHALL have the content description "Normal speed" and SHALL report that fast forward is on.
 
 #### Scenario: Screen reader reads the button
 - **WHEN** a screen reader reaches the fast forward button before it is tapped
 - **THEN** it reads "Fast forward"
+
+#### Scenario: Screen reader reads the slow button
+- **WHEN** a screen reader reaches the button while fast forward is on
+- **THEN** it reads "Normal speed" and that fast forward is on

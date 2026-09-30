@@ -1,116 +1,102 @@
 package nl.hexmaster.leakout.ui.game
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlin.random.Random
-import nl.hexmaster.leakout.core.board.Board
-import nl.hexmaster.leakout.core.board.Cell
-import nl.hexmaster.leakout.core.board.Placement
-import nl.hexmaster.leakout.core.board.PlacementCheck
+import nl.hexmaster.leakout.core.engine.GameCommand
+import nl.hexmaster.leakout.core.engine.GameEngine
+import nl.hexmaster.leakout.core.engine.GameState
+import nl.hexmaster.leakout.core.engine.Outcome
 import nl.hexmaster.leakout.core.level.Level
-import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
-import nl.hexmaster.leakout.core.stack.PipeStack
-import nl.hexmaster.leakout.core.stack.WeightedPool
 
 /**
- * The single owner of a running level: stack, board, replace lock, score, flow speed, game clock
- * and the paused state. The future `GameEngine` takes over its insides; the HUD, the field and the
- * pause dialog only depend on the values and actions here.
+ * Holds the [GameState] of the running level for Compose. It keeps no game data of its own: every
+ * change is a command to the [GameEngine], and the views read [state] and the few screen values
+ * derived from it here.
  */
-class GameSession(val level: Level, private val random: Random = Random.Default) {
-    private val pool = WeightedPool(level.stack.weights)
+class GameSession(level: Level, private val engine: GameEngine = GameEngine()) {
+    constructor(level: Level, random: Random) : this(level, GameEngine(random))
 
-    var stack: PipeStack by mutableStateOf(PipeStack.create(level.stack, random))
-        private set
-
-    /** The start, finish, blocked cells and every placed section of this attempt. */
-    var board: Board by mutableStateOf(Board.from(level))
-        private set
-
-    /** Game time until which no drop is accepted, set by a replacement. */
-    var replaceLockUntilMs: Long by mutableLongStateOf(0L)
-        private set
-
-    /** Counts attempts, starting at 1. Screen state that must reset on restart is keyed on it. */
-    var attempt: Int by mutableIntStateOf(1)
-        private set
-
-    /** Points for this attempt. Scoring rules do not exist yet; the engine will set this. */
-    var score: Int by mutableIntStateOf(0)
-
-    /** Current flow speed in cells per second. The engine's speed ramp will set this. */
-    var flowSpeed: Double by mutableDoubleStateOf(level.flow.cellsPerSecond)
-
-    /** Game time in milliseconds. Does not move while [paused]. */
-    var elapsedMs: Long by mutableLongStateOf(0L)
-        private set
-
-    var paused: Boolean by mutableStateOf(false)
-        private set
-
-    var pauseMenuOpen: Boolean by mutableStateOf(false)
-        private set
-
-    /** Stars earned so far, derived from [score] so it can never disagree with a win. */
-    val stars: Int get() = level.stars.starsFor(score)
-
-    /** Pauses the game and opens the pause menu. Pausing twice is the same as once. */
-    fun pause() {
-        paused = true
-        pauseMenuOpen = true
-    }
-
-    fun resume() {
-        paused = false
-        pauseMenuOpen = false
-    }
-
-    /** Starts the level again: new stack, empty board, no lock, score 0, clock and speed reset, running. */
-    fun restart() {
-        stack = PipeStack.create(level.stack, random)
-        board = Board.from(level)
-        replaceLockUntilMs = 0L
-        attempt += 1
-        score = 0
-        flowSpeed = level.flow.cellsPerSecond
-        elapsedMs = 0L
-        resume()
-    }
-
-    fun tick(dtMs: Long) {
-        if (!paused && dtMs > 0) elapsedMs += dtMs
-    }
-
-    /** Whether the next section can be dropped on [at] now: the same check [place] runs. */
-    fun canPlace(at: Position): Boolean = check(at).accepted
+    /** The current attempt. Tests may set a scripted state; the game only changes it through [send]. */
+    var state: GameState by mutableStateOf(engine.start(level))
+        @VisibleForTesting internal set
 
     /**
-     * Puts [section] on [at] and draws the next stack section. Refused while paused or when the
-     * placement rule rejects the tile. A replacement starts the level's replace lock.
+     * Sends [command] to the engine. Returns whether it was accepted, that is, whether the state changed.
+     * After a win it also takes the unused sections off the board that the tally has counted by now,
+     * so the field and the penalty row change in the same frame.
      */
-    fun place(section: PipeSection, at: Position): Boolean {
-        val result = check(at)
-        if (!result.accepted) return false
-        board = board.with(at, Cell.Pipe(section))
-        stack = stack.afterPlacement(pool, random)
-        if (result == PlacementCheck.Replace) replaceLockUntilMs = elapsedMs + level.rules.replacePenaltyMs
+    fun send(command: GameCommand): Boolean {
+        var next = engine.handle(state, command)
+        if (next === state) return false
+        winFrameOf(next)?.let { frame -> next = engine.handle(next, GameCommand.RemoveUnused(frame.sectionsRemoved)) }
+        state = next
         return true
     }
 
-    /** Marks the section on [at] as entered by liquid. The flow will do this; tests use it now. */
-    fun markLiquidEntered(at: Position) {
-        board = board.markLiquidEntered(at)
+    /** Whether the next section can be dropped on [at] now: the same check a place command runs. */
+    fun canPlace(at: Position): Boolean = engine.canPlace(state, at)
+
+    /** The pause dialog is open exactly while the game is paused during play. */
+    val showPauseDialog: Boolean get() = state.paused && state.outcome is Outcome.Playing
+
+    /** Game time since the leak, which drives the leak effect; 0 unless lost. */
+    val lossAgeMs: Long get() = (state.outcome as? Outcome.Lost)?.let { state.clockMs - it.atMs } ?: 0L
+
+    /** Whether the level lost dialog is shown: once the leak effect has run for [LeakTiming.EFFECT_MS]. */
+    val showLostDialog: Boolean get() = state.outcome is Outcome.Lost && lossAgeMs >= LeakTiming.EFFECT_MS
+
+    /** The fast forward button is shown during play once the route is complete, and while fast forward is on. */
+    val showFastForward: Boolean get() = state.outcome is Outcome.Playing && (state.routeComplete || state.fastForward)
+
+    /** What the fast forward button does: fast forward when off, normal speed when on. */
+    fun toggleFastForward(): Boolean = send(if (state.fastForward) GameCommand.NormalSpeed else GameCommand.FastForward)
+
+    /**
+     * Ends the leak effect at once, so the level lost dialog shows as soon as the player comes back
+     * to the app. After a loss a tick only moves the clock, so this ticks through the rest of the effect.
+     */
+    fun skipLeakEffect() {
+        if (state.outcome !is Outcome.Lost) return
+        val remaining = LeakTiming.EFFECT_MS - lossAgeMs
+        if (remaining > 0) send(GameCommand.Tick(remaining))
     }
 
-    private fun check(at: Position): PlacementCheck =
-        if (paused) {
-            PlacementCheck.Rejected(PlacementCheck.Reason.LOCKED)
-        } else {
-            Placement.check(board, level.rules, at, elapsedMs, replaceLockUntilMs)
-        }
+    /** Game time since the win, which drives the finish flash and the tally; 0 unless won. */
+    val winAgeMs: Long get() = winAgeOf(state)
+
+    /** Whether the level complete dialog is shown: once the finish has flashed for [WinTiming.FINISH_EFFECT_MS]. */
+    val showWinDialog: Boolean get() = state.outcome is Outcome.Won && winAgeMs >= WinTiming.FINISH_EFFECT_MS
+
+    /** What the level complete dialog shows now; null unless won. */
+    val winFrame: WinFrame? get() = winFrameOf(state)
+
+    /**
+     * Ends the finish flash and the tally at once, so the finished level complete dialog shows as soon
+     * as the player comes back to the app. After a win a tick only moves the clock, so this ticks to
+     * the end of the tally, and [send] then removes every remaining unused section.
+     */
+    fun skipWinAnimation() {
+        val score = state.finalScore ?: return
+        if (state.outcome !is Outcome.Won) return
+        val end = WinTiming.FINISH_EFFECT_MS + WinTally.totalDurationMs(score, state.finalStars)
+        val remaining = end - winAgeMs
+        if (remaining > 0) send(GameCommand.Tick(remaining))
+    }
+
+    private fun winAgeOf(state: GameState): Long = (state.outcome as? Outcome.Won)?.let { state.clockMs - it.atMs } ?: 0L
+
+    private fun winFrameOf(state: GameState): WinFrame? {
+        val score = state.finalScore ?: return null
+        if (state.outcome !is Outcome.Won) return null
+        return winFrame(winAgeOf(state) - WinTiming.FINISH_EFFECT_MS, score, state.finalStars)
+    }
+}
+
+object LeakTiming {
+    /** How long the leak is shown on the field before the level lost dialog appears. */
+    const val EFFECT_MS = 1_000L
 }

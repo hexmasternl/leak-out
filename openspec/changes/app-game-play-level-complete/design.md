@@ -108,7 +108,16 @@ The card gets `Modifier.semantics { paneTitle = "Level complete" }` so a screen 
 `GameScreen(level, onExit, onNextLevel: (() -> Unit)?, random)`. `MainActivity` looks up the bundled level with id `level.id + 1` with the loader the stack change added for level 1, and passes `null` when there is none. Next level sets `screen = Game(nextLevel)`; because `GameSession` and the viewport are remembered on the level, the new level starts fresh. `hasNextLevel = onNextLevel != null`. The level library change replaces this lookup with its own catalogue and unlock rule and keeps the callback. *Other option:* have `GameScreen` load the next level itself. It was not chosen because the screen does not read assets and should not decide which level is next.
 
 **10. Success-green `CartoonButton` style.**
-`CartoonButton` has the primary and the error-red styles. A success style is added with `SuccessGreen` on top and a new `SuccessGreenDark` token for the bottom shadow, the same way `ErrorRedDark` was added for the danger button. No hex value lives in the composable.
+`CartoonButton` has the primary and the error-red styles. A success style is added with `SuccessGreen` on top and a new `SuccessGreenDark` token for the bottom shadow, the same way `ErrorRedDark` was added for the danger button. No hex value lives in the composable. `CartoonButton` has no disabled state yet, so it gets `enabled: Boolean = true`: disabled, it draws `DisabledFill` and `DisabledShadow`, does not press and is not clickable.
+
+**11. Adapted to the game engine (supersedes the `GameSession` parts of decisions 2, 4 and 6).**
+`app-game-play-game-engine` merged after this design was written. It moved every piece of game data into an immutable `GameState` in `core.engine`, changed only by `GameEngine.handle(state, command)`, and it runs the flow itself: on `FlowStep.Finish` it already sets `Outcome.Won(atMs)` after awarding the last section's points, and `isStopped`, `Pause`, `Place` and fast forward already treat a win like a loss. `GameSession` is a thin Compose holder with no data of its own. So:
+- There is no `liquidReachedFinish()`. The engine reports the win, and the flow contract of decision 2 is the engine's own.
+- `GameState` gets `finalScore: FinalScore?`, set by `FlowSimulation` on `Finish` from `sheet.total` and the board, and `sectionsRemoved: Int`, both reset by `GameEngine.start` (so by Restart and Next level). `finalStars` is derived: `level.stars.starsFor(finalScore.total)`.
+- The unused sections are removed with a new `GameCommand.RemoveUnused(upTo)`. The engine refuses it unless the level is won and `upTo` is above `sectionsRemoved`, and removes the next unused sections in row-major order up to `min(upTo, unusedCount)`. The timeline stays in `app`: after every accepted command while won, `GameSession.send` also sends `RemoveUnused(winFrame.sectionsRemoved)`, so each tick removes the sections in step with the penalty row, as decision 4 intends. The board in the state stays the single truth of what the field shows.
+- `skipWinAnimation()` ticks through the rest of the finish effect and the tally (after a win a tick only moves the clock), which removes every remaining section, the same way `skipLeakEffect()` works.
+
+*Other options:* move `WinTiming` into `core` so a `Tick` removes the sections itself. It was not chosen because animation timing belongs to the screen. Or hide the sections on the field only, which decision 4 already rejected.
 
 ## Risks / Trade-offs
 

@@ -27,6 +27,7 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
+import nl.hexmaster.leakout.core.engine.GameCommand
 import nl.hexmaster.leakout.core.level.GridSize
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.PipeSection
@@ -193,9 +194,9 @@ class PlayingFieldTest {
     fun highlightFollowsTheDropPointOnlyOverTilesThatAccept() {
         show(FieldTest.level(blocked = listOf(Position(2, 2))))
         compose.runOnIdle {
-            session.place(PipeSection.V, Position(2, 1))
+            session.placeSection(PipeSection.V, Position(2, 1))
             session.markLiquidEntered(Position(2, 1))
-            session.place(PipeSection.V, Position(1, 3))
+            session.placeSection(PipeSection.V, Position(1, 3))
         }
 
         compose.beginDragTo(compose.cellRect(Position(1, 1)).center)
@@ -224,10 +225,11 @@ class PlayingFieldTest {
     // 8.5
     @Test
     fun dropsPlaceReplaceAndRespectLiquidAndTheReplaceLock() {
-        show(FieldTest.level(rules = PlacementRules(allowReplace = true, replacePenaltyMs = 60_000)))
+        // The countdown outlasts the replace lock: the ticks below must not start the liquid.
+        show(FieldTest.level(rules = PlacementRules(allowReplace = true, replacePenaltyMs = 60_000), initialDelayMs = 120_000))
         compose.runOnIdle {
-            session.place(PipeSection.V, Position(1, 1))
-            session.place(PipeSection.V, Position(2, 1))
+            session.placeSection(PipeSection.V, Position(1, 1))
+            session.placeSection(PipeSection.V, Position(2, 1))
             session.markLiquidEntered(Position(2, 1))
         }
 
@@ -244,9 +246,9 @@ class PlayingFieldTest {
         compose.assertNothingHighlighted()
         compose.releaseDrag()
         compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Empty")
-        compose.runOnIdle { assertEquals(3, session.board.pipes.size) }
+        compose.runOnIdle { assertEquals(3, session.state.board.pipes.size) }
 
-        compose.runOnIdle { session.tick(60_000) }
+        compose.runOnIdle { session.sendTick(60_000) }
         compose.beginDragTo(compose.cellRect(Position(2, 2)).center)
         compose.assertHighlighted(Position(2, 2))
         compose.releaseDrag()
@@ -289,7 +291,7 @@ class PlayingFieldTest {
         compose.beginDragTo(compose.cellRect(Position(1, 1)).center)
         compose.assertHighlighted(Position(1, 1))
 
-        compose.runOnIdle { session.pause() }
+        compose.runOnIdle { session.send(GameCommand.Pause) }
         compose.waitForIdle()
 
         compose.assertNothingHighlighted()

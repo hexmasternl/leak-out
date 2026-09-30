@@ -12,6 +12,8 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -19,6 +21,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -34,12 +37,14 @@ class CartoonButtonTest {
     val compose = createComposeRule()
 
     private val sources = CartoonButtonVariant.entries.associateWith { MutableInteractionSource() }
+    private val disabledSource = MutableInteractionSource()
+    private var disabledClicks = 0
 
     @Before
     fun showAllVariants() {
         compose.setContent {
             LeakOutTheme {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     CartoonButtonVariant.entries.forEach { variant ->
                         CartoonButton(
                             text = variant.name,
@@ -49,6 +54,14 @@ class CartoonButtonTest {
                             modifier = Modifier.width(200.dp).testTag(variant.name),
                         )
                     }
+                    CartoonButton(
+                        text = "Disabled",
+                        onClick = { disabledClicks++ },
+                        variant = CartoonButtonVariant.Success,
+                        interactionSource = disabledSource,
+                        enabled = false,
+                        modifier = Modifier.width(200.dp).testTag(DISABLED),
+                    )
                 }
             }
         }
@@ -82,6 +95,24 @@ class CartoonButtonTest {
     }
 
     @Test
+    fun disabledButtonShowsTheDisabledLookAndIgnoresTaps() {
+        val image = compose.onNodeWithTag(DISABLED).captureToImage()
+        assertColourNear(DISABLED, CartoonButtonDisabled.Shadow, image, fromBottomDp = 5f)
+        assertColourNear(DISABLED, CartoonButtonDisabled.Face, image, fromBottomDp = 16f)
+        compose.onNodeWithTag(DISABLED).assertIsNotEnabled().performClick()
+        assertEquals(0, disabledClicks)
+    }
+
+    @Test
+    fun disabledButtonDoesNotPress() {
+        compose.mainClock.autoAdvance = false
+        disabledSource.tryEmit(PressInteraction.Press(Offset(10f, 10f)))
+        compose.mainClock.advanceTimeBy(500)
+        val image = compose.onNodeWithTag(DISABLED).captureToImage()
+        assertColourNear(DISABLED, CartoonButtonDisabled.Shadow, image, fromBottomDp = 5f)
+    }
+
+    @Test
     fun touchTargetIsAtLeast48dp() {
         CartoonButtonVariant.entries.forEach { variant ->
             compose.onNodeWithTag(variant.name)
@@ -104,4 +135,8 @@ class CartoonButtonTest {
 
     private fun near(a: Color, b: Color): Boolean =
         abs(a.red - b.red) < 0.06f && abs(a.green - b.green) < 0.06f && abs(a.blue - b.blue) < 0.06f
+
+    private companion object {
+        const val DISABLED = "Disabled"
+    }
 }

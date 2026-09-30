@@ -97,15 +97,24 @@ All timing lives in the level definition:
 
 A **countdown** for the initial delay is shown on screen. Optionally the player can tap a "start flow" button to skip the wait for a time bonus.
 
+**Fast forward**: after every placement the game checks whether the placed sections form a complete route from the start to the finish, following the liquid's rules (`core.route.RouteTracer`, using `PipeSection.exitFor`). Once they do, a fast forward button appears. Tapping it runs the countdown and the flow at 10x (`GameSession.flowTimeScale`) and locks placing, so the route cannot be broken. The button then becomes a slow button: tapping it restores the level's normal speed and unlocks placing again. Pause and resume keep the current speed; restart turns fast forward off. Points and the result are the same at either speed.
+
 ### 1.9 Win, lose, and score
 
-- **Win**: liquid enters the finish section through its open port. The finish plays a fill animation, then the level-complete screen appears.
-- **Lose**: any leak. The leak point spurts liquid, then the level-failed screen appears with a retry button.
-- **Score** (first version, keep simple):
-  - +10 per filled section.
-  - +50 extra when both channels of a cross are filled.
-  - +20 per filled reservoir.
-  - Time bonus: remaining initial-delay seconds × 5 if the player starts the flow early.
+- **Win**: liquid enters the finish section through its open port, after the points for the last section are awarded. A win stops the game the same way a leak does (no flow, countdown, score, placing, dragging, pause or fast forward; pan and zoom still work). The finish flashes a success-green ring for 1 second (a fill animation comes with the liquid drawing), then the level complete dialog appears over the dimmed screen: "Level complete!", "You kept the water flowing.", three stars, the score rows and **Next level**, **Restart** and **Exit** to the main menu.
+  - **Final score** (`core.score.FinalScore`): the earned points shown in the HUD, minus **3 points for every placed section the liquid never entered** (a cross used through one channel counts as used), never below 0. The stars come from the level's thresholds applied to that total.
+  - **Tally**, on the game clock (`ui.game.WinTally`): the earned points show at once; after 0.5 s the penalty counts up in steps of 3 while the unused sections disappear from the field one by one, in row-major order (120 ms a step, at most 2 s in all); the total counts up from 0 in 0.8 s; then the earned stars light up in brass one by one, 300 ms apart, each popping to 1.35× and back.
+  - The buttons show from the start and are enabled when the tally is done; Next level stays disabled on the last level. Tapping outside does nothing, Back does nothing during the flash and the tally and works as Exit after it, and going to the background skips to the finished dialog instead of the pause dialog.
+- **Lose**: any leak (`core.flow.FlowStep`): the liquid leaves a tile into an empty, blocked or start tile, over the grid edge, into a section without a matching opening, into the finish from the wrong side, or into a cross channel it already used. The start is checked the same way when the flow starts. A leak stops the game at once: no flow, countdown, score, placing, dragging (a drag in progress goes back to its slot), pause or fast forward; pan and zoom still work. Liquid spurts from the leaking side for 1 second, then the level lost dialog appears over the dimmed screen with "Leaked!", "The pipe is leaking. Level lost.", the score, **Restart** and **Exit** to the main menu. Tapping outside does nothing, Back works as Exit (and does nothing during the spurt), and going to the background shows the level lost dialog on return instead of the pause dialog.
+- **Score**: points are awarded for a placed section at the moment the liquid **exits** it (`core.score.Points` and `ScoreSheet`):
+  - Straight (`H`, `V`): +10.
+  - Corner (`LT`, `LB`, `RT`, `RB`): +15.
+  - Reservoir (`RES`): +25.
+  - Cross (`X`): +10 for the first pass and +50 for the second pass on the same tile, whichever channel comes first.
+  - The start and finish tiles give nothing, and neither does a section the liquid never reaches.
+  - The last section before a leak still scores: the liquid did run through it.
+  - Restart sets the score back to 0 and forgets the cross passes.
+  - Time bonus (not built yet): remaining initial-delay seconds × 5 if the player starts the flow early.
 - Stars per level (1–3) based on score thresholds in the level definition. Stars are optional for the first release.
 
 ### 1.10 Level progression
@@ -122,9 +131,9 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 
 1. **Title** – play, level select, settings (sound on/off).
 2. **Level select** – grid of level tiles.
-3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Back and going to the background also pause the game.
+3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Once the route is complete, a round fast forward / slow button sits in the bottom right corner, 16 dp from the edges. Back and going to the background also pause the game.
 4. **Pause dialog** – opened from the cog wheel: Resume, Restart, a separator and Exit to the main menu (welcome screen). Tapping outside does nothing; Back works as Resume.
-5. **Level complete / failed overlay** – score, stars, next / retry / level select.
+5. **Level complete / failed overlay** – level complete (the level complete dialog, see 1.9): "Level complete!", the stars, pipe points, unused pipes and total, and Next level, Restart and Exit to the main menu. Level failed (the level lost dialog, see 1.9): "Leaked!", the score, Restart and Exit to the main menu.
 
 ---
 
@@ -164,8 +173,8 @@ leak-out/
     │   └── src/main/kotlin/nl/hexmaster/leakout/core/
     │       ├── model/              Direction, PipeSection, Cell, Board, Level
     │       ├── stack/              PipeStack, WeightedPool
-    │       ├── flow/               FlowSimulation, FlowState, FlowEvent
-    │       ├── game/               GameEngine (ties board + stack + flow), GameState, GameCommand
+    │       ├── flow/               FlowStep, Channel, ChannelUse
+    │       ├── engine/             GameEngine (ties board + stack + flow), GameState, GameCommand, FlowSimulation, FlowState
     │       └── level/              LevelDefinition (serializable), LevelParser, LevelValidator
     └── app/                        Android application module
         └── src/main/kotlin/nl/hexmaster/leakout/
@@ -231,72 +240,92 @@ The board is immutable; every command returns a new `GameState`. That keeps the 
 
 ### 2.5 Flow simulation
 
-The liquid is a single **head** that moves through the network one cell at a time.
+The liquid is a single **head** that moves through the network one cell at a time (`core.engine.FlowState`, `FlowSimulation`). Sides are `core.level.Side`; a channel is `core.flow.Channel` (`HORIZONTAL` or `VERTICAL` for a cross, `SINGLE` for every other section), and `used` holds the channels the liquid has run through, as `ChannelUse(position, channel)`.
 
 ```kotlin
 sealed interface FlowState {
+    val used: Set<ChannelUse>
     data class Waiting(val remainingMs: Long) : FlowState
     data class Flowing(
         val position: Position,
-        val entry: Direction,        // side the liquid entered this cell from
+        val entry: Side,             // side the liquid entered this cell from
         val channel: Channel,
-        val progress: Double         // 0.0 at entry port, 1.0 at exit port
+        val progress: Double,        // 0.0 at the entry side, 1.0 at the exit side
+        override val used: Set<ChannelUse>,
     ) : FlowState
-    data class Won(val at: Position) : FlowState
-    data class Leaked(val at: Position, val exit: Direction) : FlowState
+    data class Ended(override val used: Set<ChannelUse>) : FlowState   // won or lost, see GameState.outcome
 }
 ```
 
-`FlowSimulation.step(state, dtMs): Pair<FlowState, List<FlowEvent>>`
+`FlowSimulation.advance(state, flowDtMs): GameState` walks from cell border to cell border:
 
-1. **Waiting**: subtract `dt`. When it reaches zero, move to `Flowing` at the start cell, with `entry = start.exit.opposite()` and a synthetic channel so the start pipe visibly fills too.
-2. **Flowing**: `progress += dt / 1000 * cellsPerSecond * section.speedFactor * rampFactor`. While `progress < 1.0` nothing else happens.
-3. When `progress >= 1.0` the head leaves the cell:
-   - Mark the channel as filled in the board (`Pipe.filled += channel`); emit `SectionFilled`.
-   - `exit = channel.exitFor(entry)`, `next = board.neighbour(position, exit)`.
-   - `next == null` or `Empty` or `Blocked` → **Leaked**.
-   - `Finish` → **Won** if `finish.entry == exit.opposite()`, else **Leaked**.
-   - `Pipe` → `channel = section.channelFor(exit.opposite())`. If `null` (no port on that side) or the channel is already filled → **Leaked**. Otherwise continue `Flowing` in `next` with `entry = exit.opposite()` and `progress` carrying the overshoot (`progress - 1.0`) so speed stays smooth across cell borders.
-4. **Won** / **Leaked** are terminal; the engine stops ticking and the UI shows the overlay.
+1. **Waiting**: subtract the flow time. When the countdown reaches zero, switch to `Flowing` at the start cell with `entry = start.openSide.opposite()` and a `SINGLE` channel, so the start visibly fills too, and use the leftover time.
+2. **Flowing**: `speed = cellsPerSecond × (1 + speedRampPerCell × sectionsLeft)`, times `reservoirSpeedFactor` inside a reservoir. `sectionsLeft` is the number of exits from placed sections so far. If the remaining time does not reach the border, add `time × speed` to `progress` and stop. A progress within 1e-9 of the border counts as reaching it.
+3. Otherwise use up the time to the border and leave the cell, in this order:
+   - Add the channel to `used`.
+   - Award the section's points (`ScoreSheet.award`, none for the start) and add an `Award(position, points, clockMs)` for the popup.
+   - `FlowStep.after(board, position, exit, used)` decides: `Enter` → continue `Flowing` in the next cell at progress 0 and mark it `liquidEntered` on the board at once (so it can no longer be replaced), then loop with the remaining time; `Finish` → `Outcome.Won`; `Leak` → `Outcome.Lost(at, side)`. After a win or a loss the flow is `Ended` and the remaining time is dropped.
 
-Because the head is the only mutable thing and every branch is an explicit state transition, the whole simulation is covered by a few dozen unit tests (see 2.9).
+The flow runs on `flowDt = dt × flowTimeScale` (1, or 10 with fast forward) for both the countdown and the head; the game clock, the replace lock and the points popups keep `dt`. Because the loop walks every border inside one tick, a long tick (or 10x speed) never skips a cell, and 1 ms ticks give the same outcome and score as one long tick.
+
+The flow and the complete-route check (`RouteTracer`) share `PipeSection.exitFor` and `FlowStep`, so every board the route check calls complete is won by the flow.
 
 ### 2.6 Game engine and commands
 
+All game rules live in one engine in `core.engine`. It holds one immutable `GameState` per attempt and changes it only through commands.
+
 ```kotlin
 data class GameState(
+    val attempt: Int,                // 1, 2, …: screen state that must reset is keyed on it
     val level: Level,
     val board: Board,
     val stack: PipeStack,
     val flow: FlowState,
-    val score: Int,
+    val sheet: ScoreSheet,
+    val awards: List<Award>,         // Award(position, points, atMs), dropped after Award.VISIBLE_MS
     val replaceLockUntilMs: Long,
-    val elapsedMs: Long,
-    val paused: Boolean
-)
+    val clockMs: Long,
+    val paused: Boolean,
+    val fastForward: Boolean,
+    val routeComplete: Boolean,
+    val outcome: Outcome,            // Playing, Won(atMs), Lost(at, side, atMs)
+    val finalScore: FinalScore?,     // set by the flow on the win: earned, unused sections, total
+    val sectionsRemoved: Int,        // unused sections taken off the board by the tally so far
+) {
+    // Derived, so they cannot drift: score, stars, finalStars (from the final total), sectionsLeft,
+    // flowSpeed (the HUD speed, without the reservoir factor), flowTimeScale and isStopped (paused,
+    // won or lost).
+}
 
 sealed interface GameCommand {
+    data class Start(val level: Level) : GameCommand
     data class Place(val at: Position) : GameCommand
-    data object StartFlowNow : GameCommand
     data object Pause : GameCommand
     data object Resume : GameCommand
     data object Restart : GameCommand
+    data object FastForward : GameCommand
+    data object NormalSpeed : GameCommand
     data class Tick(val dtMs: Long) : GameCommand
+    data class RemoveUnused(val upTo: Int) : GameCommand
 }
 
 class GameEngine(private val random: Random) {
-    fun newGame(level: Level): GameState
+    fun start(level: Level, previous: GameState? = null): GameState
     fun handle(state: GameState, command: GameCommand): GameState
+    fun canPlace(state: GameState, at: Position): Boolean
 }
 ```
 
-`handle` is a pure function. The Android layer holds the current `GameState` in a `StateFlow` inside a `GameViewModel`, feeds `Tick` from the frame clock, and maps accepted drag-and-drop placements to `Place`.
+`handle` is a reducer: a refused command returns the same instance, so "accepted" is `new !== old`. The only impure input is the `Random` that draws the stack. The rules per command:
 
-Placement validation lives in the engine, not the UI:
+- **Start / Restart**: `start(level, previous)` builds a fresh state (the level's board, a new stack, the countdown at the start delay, score 0, clock 0, playing) with `attempt` one higher. It is the only constructor path, so a restart cannot forget a field. Accepted at any time.
+- **Pause**: only while playing and not paused. **Resume**: only while paused. While paused a tick changes nothing.
+- **FastForward**: only on a complete route, while playing and not paused. **NormalSpeed** turns it off again (the slow button) and unlocks placing.
+- **Place**: the stack's next section goes on the tile when `canPlace` says so. `canPlace` and `Place` share one check: not stopped, not fast forward, and `Placement.check` (empty tile: place; unentered section with replacing allowed: replace; the replace lock must have passed). On success the stack moves down and draws a new section, a replacement starts the replace lock, and `RouteTracer` sets `routeComplete`.
+- **Tick(dt)**: refused when `dt <= 0` or paused. Moves the clock, drops awards older than `Award.VISIBLE_MS`, and while playing runs `FlowSimulation.advance(state, dt × flowTimeScale)`. After a win or a loss only the clock moves, for the end effects.
+- **RemoveUnused(upTo)**: only after a win, and only when `upTo` is ahead of `sectionsRemoved`. Empties the next unused sections of `finalScore` in row-major order, up to `upTo` (at most all of them). The tally timeline lives in the app: `GameSession.send` follows every accepted command after a win with `RemoveUnused(winFrame.sectionsRemoved)`, so the field empties in step with the penalty row.
 
-- Cell must be `Empty`, or `Pipe` with no filled channel and not the flow head's current cell, and `allowReplace` must be true.
-- `replaceLockUntilMs` must have passed.
-- On success: put the stack's next (bottom) section in the cell, advance the stack by removing the bottom section and drawing a new section at the top, set the replace lock if it was a replacement.
+On the Android side, `GameSession` holds the current `GameState` in a Compose `mutableStateOf`, sends commands with `send(command): Boolean` and feeds `Tick` from the frame clock. It keeps no game data of its own. The views read the state through `derivedStateOf`, so a clock tick recomposes only what changed, and the stack and the field are keyed on `attempt`, so a new attempt starts them fresh. A drop sends `Place` and succeeds exactly when the engine accepts it.
 
 ### 2.7 Level definition
 
@@ -346,6 +375,7 @@ A `docs/levels.md` sheet will track the intended difficulty curve (grid size, de
 - Filled channels are drawn fully in liquid colour.
 - Debug builds have a **Pipe Lab** launcher entry that previews every section and plays the liquid with direction, flow speed and reservoir speed controls.
 - The **stack** is a vertical column of mini-boards using the same `PipeTile` at a smaller cell size; the top item is highlighted and slightly larger.
+- A **points popup** ("+10", "+15", "+25", "+50") appears on a section's tile each time it scores: Fredoka bold at 40 % of a tile, an ink outline under a white fill, drawn last in the field canvas. It fades in over 150 ms (growing from 80 % to full size), holds for 500 ms and fades out over 350 ms, rising a quarter tile. Its age is taken from the game clock, so it freezes while paused and follows the tile during pan and zoom.
 - A **leak** shows a short particle burst at the exit port; a **win** flashes the finish cell.
 - Draw calls read only from an immutable `GameState`; no allocations in the draw loop beyond what Compose needs. The pipe art is prepared once per section in view-box units and scaled per tile; only the liquid segment is rebuilt each frame, into a reused `Path`.
 

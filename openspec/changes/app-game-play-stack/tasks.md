@@ -1,15 +1,15 @@
 ## 1. Core: pipe sections and weighted pool
 
-- [ ] 1.1 Add `openSides: Set<Side>` to `PipeSection` in `core` (`H` LEFT+RIGHT, `V` TOP+BOTTOM, `LT` LEFT+TOP, `LB` LEFT+BOTTOM, `RT` RIGHT+TOP, `RB` RIGHT+BOTTOM, `X` all four, `RES` LEFT+RIGHT). Add a unit test for every section.
-- [ ] 1.2 Create the package `nl.hexmaster.leakout.core.stack` and add `WeightedPool(weights)`. It uses cumulative weights, skips sections with weight 0, and rejects a total weight of 0. `draw(random: Random): PipeSection`.
-- [ ] 1.3 Test `WeightedPool`: a section with weight 0 is never drawn in 10,000 draws; the shares are within 1 percentage point of weight/total in 100,000 draws with a fixed seed; the same seed gives the same sequence; a total of 0 is rejected.
+- [x] 1.1 Add `openSides: Set<Side>` to `PipeSection` in `core` (`H` LEFT+RIGHT, `V` TOP+BOTTOM, `LT` LEFT+TOP, `LB` LEFT+BOTTOM, `RT` RIGHT+TOP, `RB` RIGHT+BOTTOM, `X` all four, `RES` LEFT+RIGHT). Add a unit test for every section.
+- [x] 1.2 Create the package `nl.hexmaster.leakout.core.stack` and add `WeightedPool(weights)`. It uses cumulative weights, skips sections with weight 0, and rejects a total weight of 0. `draw(random: Random): PipeSection`.
+- [x] 1.3 Test `WeightedPool`: a section with weight 0 is never drawn in 10,000 draws; the shares are within 1 percentage point of weight/total in 100,000 draws with a fixed seed; the same seed gives the same sequence; a total of 0 is rejected.
 
 ## 2. Core: pipe stack
 
-- [ ] 2.1 Add the immutable `PipeStack(sections)`, ordered from top to bottom, with `next` = bottom section and `size`. Add `PipeStack.create(settings: StackSettings, random)`, which fills `visibleSize` sections.
-- [ ] 2.2 Add `afterPlacement(pool, random)`. It removes the bottom section and adds a newly drawn section at the top, so the size stays the same.
-- [ ] 2.3 Test the stack: a new stack holds `visibleSize` sections (1, 5 and 10); the size stays the same after a placement; the spec example (`H V LT LB RT` → place → `X H V LT LB`, with `LB` next) passes with a stubbed random; two stacks with the same seed stay equal over 50 placements.
-- [ ] 2.4 Run `./gradlew :core:test` and check that everything passes.
+- [x] 2.1 Add the immutable `PipeStack(sections)`, ordered from top to bottom, with `next` = bottom section and `size`. Add `PipeStack.create(settings: StackSettings, random)`, which fills `visibleSize` sections.
+- [x] 2.2 Add `afterPlacement(pool, random)`. It removes the bottom section and adds a newly drawn section at the top, so the size stays the same.
+- [x] 2.3 Test the stack: a new stack holds `visibleSize` sections (1, 5 and 10); the size stays the same after a placement; the spec example (`H V LT LB RT` → place → `X H V LT LB`, with `LB` next) passes with a stubbed random; two stacks with the same seed stay equal over 50 placements.
+- [x] 2.4 Run `./gradlew :core:test` and check that everything passes.
 
 ## 3. App: stack drawing and layout
 
@@ -45,3 +45,4 @@
 
 - [ ] 7.1 Update `docs/project-plan.md` sections 1.1, 1.6, 1.7, 2.6 and 2.8: new sections enter at the top, the next section is at the bottom, and drag and drop is the only way to place a section (no tap-to-place).
 - [ ] 7.2 Run `openspec validate app-game-play-stack` and fix any issues.
+

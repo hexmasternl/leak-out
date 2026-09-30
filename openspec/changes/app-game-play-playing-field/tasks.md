@@ -16,10 +16,10 @@
 
 ## 4. App: game session
 
-- [ ] 4.1 Replace `GameSession.placed` with `board: Board` (from `Board.from(level)`) and add `replaceLockUntilMs`.
-- [ ] 4.2 Change `GameSession.place(section, at)` to use `Placement.check`: refuse while paused or when rejected; on `Place` or `Replace` write `Cell.Pipe(section)` and advance the stack; on `Replace` set `replaceLockUntilMs = elapsedMs + rules.replacePenaltyMs`. Add `canPlace(at)` that runs the same check.
-- [ ] 4.3 Make `restart()` rebuild the board and clear the lock, and add a restart counter the view state can key on.
-- [ ] 4.4 Unit test `GameSession`: a replacement swaps the section and starts the lock; the lock does not run out while paused (`tick` does nothing); the lock ends after `replacePenaltyMs` of ticks; a drop on an empty tile does not start the lock; a section with liquid cannot be replaced; restart clears the board, including sections with liquid.
+- [x] 4.1 Replace `GameSession.placed` with `board: Board` (from `Board.from(level)`) and add `replaceLockUntilMs`.
+- [x] 4.2 Change `GameSession.place(section, at)` to use `Placement.check`: refuse while paused or when rejected; on `Place` or `Replace` write `Cell.Pipe(section)` and advance the stack; on `Replace` set `replaceLockUntilMs = elapsedMs + rules.replacePenaltyMs`. Add `canPlace(at)` that runs the same check.
+- [x] 4.3 Make `restart()` rebuild the board and clear the lock, and add a restart counter the view state can key on.
+- [x] 4.4 Unit test `GameSession`: a replacement swaps the section and starts the lock; the lock does not run out while paused (`tick` does nothing); the lock ends after `replacePenaltyMs` of ticks; a drop on an empty tile does not start the lock; a section with liquid cannot be replaced; restart clears the board, including sections with liquid.
 
 ## 5. App: viewport
 
@@ -29,17 +29,17 @@
 
 ## 6. App: playing field
 
-- [ ] 6.1 Extract the drawing from `PipeSectionGlyph` into `DrawScope.drawPipeSection(section, rect)` and use it in both the stack glyph and the field.
-- [ ] 6.2 Add `PlayingField(board, viewport, onViewportChange, highlighted, enabled, modifier)`: a clipped `Box` with a `Canvas` that draws the visible cells (grid, blocked cells, start and finish with their open side, placed sections) and the highlight on top, plus per-cell test tags and semantics (for example `cell_3_4`, with a highlighted state).
-- [ ] 6.3 Add the gesture handler with `awaitEachGesture`, `calculateZoom`, `calculatePan` and `calculateCentroid`: one finger pans after the touch slop, two fingers zoom around the centroid, rotation is never read, and all input is ignored while `enabled` is false.
-- [ ] 6.4 Extend `SectionDropTarget` with `canPlace(section, position)`. `PlayingField` converts game-screen positions to field coordinates with its `LayoutCoordinates`, then to a cell with `cellAt`, and calls `session.canPlace` or `session.place`. Positions outside the visible field give no cell.
-- [ ] 6.5 Derive the highlighted cell from `dragState.dropPoint` with `derivedStateOf`, only when `canPlace` is true, and `null` when there is no drag.
+- [x] 6.1 Extract the drawing from `PipeSectionGlyph` into `DrawScope.drawPipeSection(section, rect)` and use it in both the stack glyph and the field.
+- [x] 6.2 Add `PlayingField(board, viewport, onViewportChange, highlighted, enabled, modifier)`: a clipped `Box` with a `Canvas` that draws the visible cells (grid, blocked cells, start and finish with their open side, placed sections) and the highlight on top, plus per-cell test tags and semantics (for example `cell_3_4`, with a highlighted state).
+- [x] 6.3 Add the gesture handler with `awaitEachGesture`, `calculateZoom`, `calculatePan` and `calculateCentroid`: one finger pans after the touch slop, two fingers zoom around the centroid, rotation is never read, and all input is ignored while `enabled` is false.
+- [x] 6.4 Extend `SectionDropTarget` with `canPlace(section, position)`. `PlayingField` converts game-screen positions to field coordinates with its `LayoutCoordinates`, then to a cell with `cellAt`, and calls `session.canPlace` or `session.place`. Positions outside the visible field give no cell.
+- [x] 6.5 Derive the highlighted cell from `dragState.dropPoint` with `derivedStateOf`, only when `canPlace` is true, and `null` when there is no drag.
 
 ## 7. App: game screen wiring
 
-- [ ] 7.1 Replace `PlaceholderBoard` with `PlayingField` in `GameScreen` (`Modifier.weight(1f).fillMaxHeight()` next to `StackPanel`, below the HUD), and delete `PlaceholderBoard`.
-- [ ] 7.2 Hold the viewport in Compose state in `GameScreen`, created with `FieldViewport.initial` once the field is measured, and keyed on the session's restart counter, so pause keeps it and restart resets it.
-- [ ] 7.3 Disable field gestures while a section drag is active or the game is paused.
+- [x] 7.1 Replace `PlaceholderBoard` with `PlayingField` in `GameScreen` (`Modifier.weight(1f).fillMaxHeight()` next to `StackPanel`, below the HUD), and delete `PlaceholderBoard`.
+- [x] 7.2 Hold the viewport in Compose state in `GameScreen`, created with `FieldViewport.initial` once the field is measured, and keyed on the session's restart counter, so pause keeps it and restart resets it.
+- [x] 7.3 Disable field gestures while a section drag is active or the game is paused.
 
 ## 8. Instrumented tests (emulator)
 

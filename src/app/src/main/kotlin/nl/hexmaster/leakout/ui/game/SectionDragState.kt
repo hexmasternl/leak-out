@@ -22,11 +22,18 @@ class SectionDragState {
 
     val isBusy: Boolean get() = isDragActive || isAnimatingBack
 
-    fun beginDrag(section: PipeSection, position: Offset, slotCenter: Offset): Boolean {
+    private var dropOffset: Offset = Offset.Zero
+
+    /** Where the section would land: the centre of the dragged copy. Null when no drag is active. */
+    val dropPoint: Offset? get() = if (isDragActive) fingerPosition + dropOffset else null
+
+    /** Starts a drag. [dropOffset] is where the dragged copy's centre sits relative to the finger. */
+    fun beginDrag(section: PipeSection, position: Offset, slotCenter: Offset, dropOffset: Offset = Offset.Zero): Boolean {
         if (isBusy) return false
         draggedSection = section
         fingerPosition = position
         this.slotCenter = slotCenter
+        this.dropOffset = dropOffset
         isDragActive = true
         return true
     }

@@ -40,9 +40,13 @@ import nl.hexmaster.leakout.ui.theme.LeakOutColors
 object GameScreenTags {
     const val SCREEN = "game_screen"
     const val STACK_PANEL = "stack_panel"
-    const val BOARD = "placeholder_board"
+    const val FIELD = "playing_field"
     const val DRAGGED = "dragged_section"
-    const val PLACED_PREFIX = "placed_"
+
+    /** Every visible field cell has the tag `cell_<x>_<y>`. */
+    const val CELL_PREFIX = "cell_"
+
+    fun cell(x: Int, y: Int): String = "$CELL_PREFIX${x}_$y"
 }
 
 @Composable
@@ -124,15 +128,15 @@ private fun StackSlot(
                             coordinates?.let { coords ->
                                 val position = coords.positionInRoot(offset)
                                 val center = coords.positionInRoot(Offset(coords.size.width / 2f, coords.size.height / 2f))
-                                dragState.beginDrag(section, position, center)
+                                val dropOffset = Offset(0f, with(density) { -DraggedCopyYOffset.toPx() })
+                                dragState.beginDrag(section, position, center, dropOffset)
                             }
                         },
                         onDrag = { change, _ ->
                             coordinates?.let { coords -> dragState.moveTo(coords.positionInRoot(change.position)) }
                         },
                         onDragEnd = {
-                            val drop = dragState.fingerPosition + Offset(0f, with(density) { -DraggedCopyYOffset.toPx() })
-                            dragState.endDrag(drop)
+                            dragState.dropPoint?.let(dragState::endDrag)
                         },
                         onDragCancel = { dragState.cancelDrag() },
                     )

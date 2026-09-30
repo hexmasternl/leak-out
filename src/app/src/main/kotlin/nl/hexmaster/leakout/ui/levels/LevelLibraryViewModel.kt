@@ -60,7 +60,7 @@ sealed interface LevelLibraryEvent {
 /**
  * Combines the history, the level count and [config] into [uiState] through [LevelLibraryRules].
  * The page the player picked is kept until [reopen], which the host calls whenever it navigates to
- * the library so it opens on a useful page again.
+ * the library so it opens on a useful page again, or on the page it asks for.
  */
 class LevelLibraryViewModel(
     history: HistoryReader,
@@ -76,7 +76,7 @@ class LevelLibraryViewModel(
     val uiState: StateFlow<LevelLibraryUiState> =
         combine(history.stars(), selectedPage) { stars, selected ->
             val library = LevelLibraryRules.compute(catalog.levelCount(), stars, config)
-            val page = selected?.takeIf { library.page(it)?.isAccessible == true } ?: library.initialPage()
+            val page = selected?.let(library::nearestAccessiblePage) ?: library.initialPage()
             LevelLibraryUiState(library, page, loaded = true)
         }.stateIn(viewModelScope, SharingStarted.Eagerly, LevelLibraryUiState.Loading)
 
@@ -92,8 +92,18 @@ class LevelLibraryViewModel(
         )
     }
 
-    /** Forgets the picked page, so the library opens on its initial page again. */
-    fun reopen() {
-        selectedPage.value = null
+    /**
+     * Forgets the picked page, so the library opens on [initialPage], or on
+     * [LevelLibrary.initialPage] when that is null. A page that cannot be entered is clamped to
+     * the nearest accessible page below it.
+     */
+    fun reopen(initialPage: Int? = null) {
+        selectedPage.value = initialPage
     }
+}
+
+/** [page] when it is accessible, else the highest accessible page below it, else the first accessible one. */
+private fun LevelLibrary.nearestAccessiblePage(page: Int): Int? {
+    val accessible = accessiblePages
+    return accessible.lastOrNull { it.number <= page }?.number ?: accessible.firstOrNull()?.number
 }

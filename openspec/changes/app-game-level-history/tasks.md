@@ -8,16 +8,16 @@
 
 ## 2. Domain model and repository
 
-- [ ] 2.1 Add the `LevelHistory` domain model and `RecordResult` sealed type (`FirstCompletion`, `NewHighscore`, `NoImprovement`)
-- [ ] 2.2 Define the `LevelHistoryRepository` interface: `recordCompletion`, `get`, `observe`, `observeAll`
-- [ ] 2.3 Implement the Room-backed repository with input validation (score >= 0, stars 1-3)
-- [ ] 2.4 Implement `recordCompletion` inside a single database transaction with the keep-the-best rule (strictly higher score replaces score and stars together)
-- [ ] 2.5 Add a fake in-memory repository for use in UI and engine tests
+- [x] 2.1 Add the `LevelHistory` domain model and `RecordResult` sealed type (`FirstCompletion`, `NewHighscore`, `NoImprovement`)
+- [x] 2.2 Define the `LevelHistoryRepository` interface: `recordCompletion`, `get`, `observe`, `observeAll`
+- [x] 2.3 Implement the Room-backed repository with input validation (score >= 0, stars 1-3)
+- [x] 2.4 Implement `recordCompletion` inside a single database transaction with the keep-the-best rule (strictly higher score replaces score and stars together)
+- [x] 2.5 Add a fake in-memory repository for use in UI and engine tests
 
 ## 3. Tests
 
-- [ ] 3.1 Unit test the recording rule: first completion, better score, lower score, equal score
-- [ ] 3.2 Unit test validation: negative score, stars 0 and 4 leave history unchanged
+- [x] 3.1 Unit test the recording rule: first completion, better score, lower score, equal score
+- [x] 3.2 Unit test validation: negative score, stars 0 and 4 leave history unchanged
 - [ ] 3.3 Instrumented DAO test on an in-memory Room database: one row per level, read one, read all, observers notified
 - [ ] 3.4 Test that a leak result never reaches the repository (recording is only called on a win)
 - [ ] 3.5 Test persistence across database re-open using a file-based test database

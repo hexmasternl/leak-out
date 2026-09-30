@@ -19,12 +19,12 @@
 - [x] 3.1 Unit test the recording rule: first completion, better score, lower score, equal score
 - [x] 3.2 Unit test validation: negative score, stars -1 and 4 leave history unchanged
 - [x] 3.3 Instrumented DAO test on an in-memory Room database: one row per level, read one, read all, observers notified
-- [ ] 3.4 Test that a leak result never reaches the repository (recording is only called on a win)
+- [x] 3.4 Test that a leak result never reaches the repository (recording is only called on a win)
 - [x] 3.5 Test persistence across database re-open using a file-based test database
 
 ## 4. Integration
 
-- [ ] 4.1 Call `recordCompletion` from the win path with the game score and stars derived from the level's star thresholds
-- [ ] 4.2 Expose the `RecordResult` to the level-complete overlay so it can show "new best"
-- [ ] 4.3 Make history available to level select for completed status, highscore and stars
+- [x] 4.1 Call `recordCompletion` from the win path with the game score and stars derived from the level's star thresholds
+- [x] 4.2 Expose the `RecordResult` to the level-complete overlay so it can show "new best"
+- [x] 4.3 Make history available to level select for completed status, highscore and stars
 - [ ] 4.4 Update `docs/project-plan.md` section 2.10 to say per-level progress uses Room and DataStore holds settings only

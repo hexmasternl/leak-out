@@ -45,13 +45,15 @@ object LevelCompleteTags {
     const val NEXT = "win_next"
     const val RESTART = "win_restart"
     const val EXIT = "win_exit"
+    const val NEW_BEST = "win_new_best"
 }
 
 /**
  * Modal level complete dialog: the celebration, the stars and the three score rows as the [frame]
  * of the tally shows them, then Next level, Restart and Exit. The buttons are there from the start
  * and enabled once the tally is done; Next level only when [hasNextLevel]. A tap outside does
- * nothing; Back does nothing during the tally and works as Exit after it.
+ * nothing; Back does nothing during the tally and works as Exit after it. When the win beat the
+ * stored highscore ([newBest]), "New best!" takes the place of the message once the tally is done.
  */
 @Composable
 fun LevelCompleteDialog(
@@ -61,12 +63,13 @@ fun LevelCompleteDialog(
     onNextLevel: () -> Unit,
     onRestart: () -> Unit,
     onExit: () -> Unit,
+    newBest: Boolean = false,
 ) {
     Dialog(
         onDismissRequest = onExit,
         properties = DialogProperties(dismissOnBackPress = frame.buttonsEnabled, dismissOnClickOutside = false),
     ) {
-        LevelCompleteCard(score, frame, hasNextLevel, onNextLevel, onRestart, onExit)
+        LevelCompleteCard(score, frame, hasNextLevel, onNextLevel, onRestart, onExit, newBest)
     }
 }
 
@@ -78,6 +81,7 @@ private fun LevelCompleteCard(
     onNextLevel: () -> Unit,
     onRestart: () -> Unit,
     onExit: () -> Unit,
+    newBest: Boolean = false,
 ) {
     val paneName = stringResource(R.string.win_pane_title)
     val locale = LocalConfiguration.current.locales[0]
@@ -110,11 +114,21 @@ private fun LevelCompleteCard(
                     style = LeakOutTextStyles.Header1,
                     color = LeakOutColors.InkDark,
                 )
-                Text(
-                    text = stringResource(R.string.win_message),
-                    style = LeakOutTextStyles.Header2,
-                    color = LeakOutColors.InkLight,
-                )
+                // In the message's place, so the card does not grow.
+                if (newBest && frame.buttonsEnabled) {
+                    Text(
+                        text = stringResource(R.string.win_new_best),
+                        style = LeakOutTextStyles.Header2,
+                        color = LeakOutColors.SuccessGreen,
+                        modifier = Modifier.testTag(LevelCompleteTags.NEW_BEST),
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.win_message),
+                        style = LeakOutTextStyles.Header2,
+                        color = LeakOutColors.InkLight,
+                    )
+                }
                 WinStars(
                     lit = frame.starsLit,
                     scales = frame.starScales,

@@ -18,10 +18,13 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.history.LevelHistoryRepository
+import nl.hexmaster.leakout.history.data.LeakOutDatabase
+import nl.hexmaster.leakout.history.data.RoomLevelHistoryRepository
 import nl.hexmaster.leakout.ui.game.GameScreen
-import nl.hexmaster.leakout.ui.levels.InMemoryHistory
 import nl.hexmaster.leakout.ui.levels.LevelLibraryScreen
 import nl.hexmaster.leakout.ui.levels.LevelLibraryViewModel
+import nl.hexmaster.leakout.ui.levels.asHistoryReader
 import nl.hexmaster.leakout.ui.splash.SplashGate
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import nl.hexmaster.leakout.ui.title.WelcomeScreen
@@ -36,10 +39,10 @@ private sealed interface Screen {
 class MainActivity : ComponentActivity() {
     private val levels by lazy { BundledLevels(assets) }
 
-    // Stands in for the persistent level history until game-level-history provides it.
-    private val history = InMemoryHistory()
+    // The player's finished levels, kept on the device across restarts.
+    private val history: LevelHistoryRepository by lazy { RoomLevelHistoryRepository(LeakOutDatabase.get(this)) }
     private val library: LevelLibraryViewModel by viewModels {
-        viewModelFactory { initializer { LevelLibraryViewModel(history, levels) } }
+        viewModelFactory { initializer { LevelLibraryViewModel(history.asHistoryReader(), levels) } }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,6 +72,7 @@ class MainActivity : ComponentActivity() {
                                 level = current.level,
                                 onExit = { screen = Screen.Welcome },
                                 onNextLevel = next?.let { { screen = Screen.Game(it) } },
+                                history = history,
                             )
                         }
                         Screen.Library -> LevelLibraryScreen(

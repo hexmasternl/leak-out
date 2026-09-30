@@ -5,12 +5,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlin.random.Random
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import nl.hexmaster.leakout.core.engine.GameCommand
 import nl.hexmaster.leakout.core.engine.GameEngine
 import nl.hexmaster.leakout.core.engine.GameState
 import nl.hexmaster.leakout.core.engine.Outcome
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.history.LevelHistoryRepository
+import nl.hexmaster.leakout.history.RecordResult
 
 /**
  * Holds the [GameState] of the running level for Compose. It keeps no game data of its own: every
@@ -85,6 +89,25 @@ class GameSession(level: Level, private val engine: GameEngine = GameEngine()) {
         val end = WinTiming.FINISH_EFFECT_MS + WinTally.totalDurationMs(score, state.finalStars)
         val remaining = end - winAgeMs
         if (remaining > 0) send(GameCommand.Tick(remaining))
+    }
+
+    /** The attempt that was recorded and what recording it did; the win path records each attempt once. */
+    private var recorded: Pair<Int, RecordResult>? by mutableStateOf(null)
+
+    /** What recording this attempt's win did to the history; null until then, and on any other attempt. */
+    val recordResult: RecordResult? get() = recorded?.takeIf { it.first == state.attempt }?.second
+
+    /**
+     * Records this attempt in [history] if it was won: the final total with the stars the level's
+     * thresholds give it. A leak or a game still running records nothing, and an attempt is
+     * recorded once. A recording that has started finishes even if the caller is cancelled.
+     */
+    suspend fun recordWin(history: LevelHistoryRepository) {
+        val won = state
+        val score = won.finalScore ?: return
+        if (won.outcome !is Outcome.Won || recorded?.first == won.attempt) return
+        val result = withContext(NonCancellable) { history.recordCompletion(won.level.id, score.total, won.finalStars) }
+        recorded = won.attempt to result
     }
 
     private fun winAgeOf(state: GameState): Long = (state.outcome as? Outcome.Won)?.let { state.clockMs - it.atMs } ?: 0L

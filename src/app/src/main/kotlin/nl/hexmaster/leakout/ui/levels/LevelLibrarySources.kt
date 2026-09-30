@@ -1,9 +1,8 @@
 package nl.hexmaster.leakout.ui.levels
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.map
+import nl.hexmaster.leakout.history.LevelHistoryRepository
 
 /** How many levels there are, ids `1..levelCount`. The bundled levels implement it. */
 fun interface LevelCatalog {
@@ -16,16 +15,10 @@ fun interface HistoryReader {
 }
 
 /**
- * History kept in memory, keeping the best stars per level. Stands in for the persistent
- * `game-level-history` repository until that exists; it starts empty, so only level 1 is open.
+ * The level history as the library reads it: the stars stored with each finished level's
+ * highscore. A level finished with 0 stars is in the map, so it counts as completed and unlocks
+ * the next one. Every recorded win emits again, so the library is up to date after a game.
  */
-class InMemoryHistory(initial: Map<Int, Int> = emptyMap()) : HistoryReader {
-    private val state = MutableStateFlow(initial)
-
-    override fun stars(): Flow<Map<Int, Int>> = state.asStateFlow()
-
-    /** Records a win on [levelId] with [stars]; a lower result than the stored one is ignored. */
-    fun record(levelId: Int, stars: Int) {
-        state.update { it + (levelId to maxOf(stars, it[levelId] ?: 0)) }
-    }
+fun LevelHistoryRepository.asHistoryReader(): HistoryReader = HistoryReader {
+    observeAll().map { records -> records.associate { it.levelId to it.stars } }
 }

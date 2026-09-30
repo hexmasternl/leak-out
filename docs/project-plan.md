@@ -102,7 +102,7 @@ A **countdown** for the initial delay is shown on screen. Optionally the player 
 ### 1.9 Win, lose, and score
 
 - **Win**: liquid enters the finish section through its open port. The finish plays a fill animation, then the level-complete screen appears.
-- **Lose**: any leak. The leak point spurts liquid, then the level-failed screen appears with a retry button.
+- **Lose**: any leak (`core.flow.FlowStep`): the liquid leaves a tile into an empty, blocked or start tile, over the grid edge, into a section without a matching opening, into the finish from the wrong side, or into a cross channel it already used. The start is checked the same way when the flow starts. A leak stops the game at once: no flow, countdown, score, placing, dragging (a drag in progress goes back to its slot), pause or fast forward; pan and zoom still work. Liquid spurts from the leaking side for 1 second, then the level lost dialog appears over the dimmed screen with "Leaked!", "The pipe is leaking. Level lost.", the score, **Restart** and **Exit** to the main menu. Tapping outside does nothing, Back works as Exit (and does nothing during the spurt), and going to the background shows the level lost dialog on return instead of the pause dialog.
 - **Score**: points are awarded for a placed section at the moment the liquid **exits** it (`core.score.Points` and `ScoreSheet`):
   - Straight (`H`, `V`): +10.
   - Corner (`LT`, `LB`, `RT`, `RB`): +15.
@@ -130,7 +130,7 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 2. **Level select** – grid of level tiles.
 3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Once the route is complete, a round fast forward / slow button sits in the bottom right corner, 16 dp from the edges. Back and going to the background also pause the game.
 4. **Pause dialog** – opened from the cog wheel: Resume, Restart, a separator and Exit to the main menu (welcome screen). Tapping outside does nothing; Back works as Resume.
-5. **Level complete / failed overlay** – score, stars, next / retry / level select.
+5. **Level complete / failed overlay** – level complete: score, stars, next / retry / level select. Level failed (the level lost dialog, see 1.9): "Leaked!", the score, Restart and Exit to the main menu.
 
 ---
 

@@ -39,7 +39,8 @@ object HudTags {
 
 /**
  * The HUD bar across the top of the game screen: level and flow speed on the left, then an empty
- * gap, then the stars, the right-aligned score and the cog wheel at the right edge.
+ * gap, then the stars, the right-aligned score and the cog wheel at the right edge. The cog wheel
+ * stays visible but does nothing while [pauseEnabled] is false, for example once the level is lost.
  */
 @Composable
 fun GameHud(
@@ -49,6 +50,7 @@ fun GameHud(
     score: Int,
     onPause: () -> Unit,
     modifier: Modifier = Modifier,
+    pauseEnabled: Boolean = true,
 ) {
     val locale = LocalConfiguration.current.locales[0]
     val levelText = stringResource(R.string.hud_level, HudFormat.level(levelId))
@@ -111,6 +113,7 @@ fun GameHud(
         )
         IconButton(
             onClick = onPause,
+            enabled = pauseEnabled,
             modifier = Modifier
                 .size(48.dp)
                 .testTag(HudTags.PAUSE),
@@ -118,7 +121,7 @@ fun GameHud(
             Icon(
                 painter = painterResource(R.drawable.ic_cog),
                 contentDescription = stringResource(R.string.hud_pause_menu),
-                tint = LeakOutColors.SurfaceCard,
+                tint = if (pauseEnabled) LeakOutColors.SurfaceCard else LeakOutColors.TextMuted,
                 modifier = Modifier.size(24.dp),
             )
         }

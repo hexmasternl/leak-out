@@ -47,7 +47,8 @@ import nl.hexmaster.leakout.ui.theme.LeakOutColors
 
 /**
  * The game screen: the HUD across the top, the stack on the left and the board below the HUD, with
- * the fast forward button in the bottom right corner once the route is complete.
+ * the fast forward button in the bottom right corner once the route is complete. A leak shows the
+ * spurt for [LeakTiming.EFFECT_MS] and then the level lost dialog.
  * [session] owns the running level; tests pass their own to read and set its values.
  */
 @Composable
@@ -59,12 +60,20 @@ fun GameScreen(
 ) {
     val dragState = remember(session) { SectionDragState() }
 
+    // Derived, so the clock ticks of the leak effect do not recompose the screen every frame.
+    val showLostDialog by remember(session) { derivedStateOf { session.showLostDialog } }
+    val lost = session.outcome as? Outcome.Lost
+
     GameClock(session)
-    LaunchedEffect(session, session.paused) {
-        if (session.paused) dragState.cancel()
+    LaunchedEffect(session, session.isStopped) {
+        if (session.isStopped) dragState.cancel()
     }
-    BackHandler(enabled = !session.pauseMenuOpen) { session.pause() }
-    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { session.pause() }
+    BackHandler(enabled = !session.pauseMenuOpen && lost == null) { session.pause() }
+    // During the leak effect Back does nothing; once shown, the dialog handles Back itself.
+    BackHandler(enabled = lost != null && !showLostDialog) {}
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+        if (session.outcome is Outcome.Lost) session.skipLeakEffect() else session.pause()
+    }
 
     Box(
         modifier = Modifier
@@ -79,13 +88,14 @@ fun GameScreen(
                 stars = session.stars,
                 score = session.score,
                 onPause = session::pause,
+                pauseEnabled = lost == null,
                 modifier = Modifier.fillMaxWidth(),
             )
             Row(Modifier.weight(1f).fillMaxWidth().padding(12.dp)) {
                 StackPanel(
                     stack = session.stack,
                     dragState = dragState,
-                    enabled = !session.paused && !session.fastForward,
+                    enabled = !session.isStopped && !session.fastForward,
                     modifier = Modifier.width(
                         StackLayout.metrics(360.dp - HudLayout.HEIGHT, level.stack.visibleSize).columnWidth + 16.dp,
                     ),
@@ -98,6 +108,7 @@ fun GameScreen(
                     val highlighted by remember(dragState, target) {
                         derivedStateOf { dragState.dropPoint?.let(target::hoverCell) }
                     }
+                    // Pan and zoom stay on after a loss, so the player can look at the leak.
                     PlayingField(
                         board = session.board,
                         state = fieldState,
@@ -106,13 +117,16 @@ fun GameScreen(
                         modifier = Modifier.padding(start = 12.dp).weight(1f).fillMaxHeight(),
                         popups = { session.popups },
                         elapsedMs = { session.elapsedMs },
+                        leakAt = lost?.at,
+                        leakSide = lost?.side,
+                        lossAgeMs = { session.lossAgeMs },
                     )
                 }
             }
         }
         // Over the field's bottom right corner, which is also the screen's: the field reaches both edges.
         AnimatedVisibility(
-            visible = session.showFastForward,
+            visible = session.showFastForward && lost == null,
             enter = scaleIn(tween(200)) + fadeIn(tween(200)),
             exit = scaleOut(tween(200)) + fadeOut(tween(200)),
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
@@ -132,6 +146,13 @@ fun GameScreen(
     if (session.pauseMenuOpen) {
         PauseDialog(
             onResume = session::resume,
+            onRestart = session::restart,
+            onExit = onExit,
+        )
+    }
+    if (showLostDialog) {
+        LevelLostDialog(
+            score = session.score,
             onRestart = session::restart,
             onExit = onExit,
         )

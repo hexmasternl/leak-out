@@ -335,16 +335,17 @@ A `docs/levels.md` sheet will track the intended difficulty curve (grid size, de
 ### 2.8 Rendering (app)
 
 - The board composable measures its available size, computes `cellSize = min(width / columns, height / rows)`, and centres the grid.
-- **Pipes** are drawn procedurally with `Path` and a thick stroke (pipe body) plus a thinner stroke (highlight) rather than bitmaps. Each section is one path; the cross is two paths; the reservoir is a straight path plus a rounded rectangle tank. Procedural drawing scales to any density and makes the liquid fill trivial.
-- **Liquid** is drawn as the same path, in the liquid colour, clipped by `progress`:
-  - Straight: a rectangle from the entry side grown to `progress`.
-  - Corner: two halves; first the leg from the entry port to the centre (`progress` 0–0.5), then the leg from the centre to the exit (0.5–1).
-  - Cross: only the active channel's path is filled.
-  - Reservoir: the tank fills bottom-up between `progress` 0.1–0.9, the outlet leg after that.
+- **Pipes** come from SVG assets, one per section, in `app/src/main/assets/pipes/` (format in [pipe-assets.md](pipe-assets.md)). `PipeArtParser` reads the small SVG subset they use, `PipeArtLibrary` turns them into Compose `Path`s once per process, and `PipeTile` scales them to any cell size. The art can be edited in an SVG editor without touching code.
+- **Liquid** is drawn in code on top of the art, along the channel centre lines marked in each SVG, from a `ChannelFill(progress, entry)` per channel. It starts at the entry side, so every channel flows both ways:
+  - Straight and corner: the first `progress` part of the channel, measured from the entry side.
+  - Cross: each channel has its own fill; the vertical liquid is hidden under the horizontal pipe (the SVG's `bridge`).
+  - Reservoir: the inlet stub fills during `progress` 0–0.1, the tank bottom-up during 0.1–0.9, the outlet stub after that.
+  - `LiquidTiming` turns time into progress: `cellsPerSecond × factor` sections per second, where the factor is `reservoirSpeedFactor` for `RES` and 1 otherwise.
 - Filled channels are drawn fully in liquid colour.
-- The **stack** is a vertical column of mini-boards using the same `PipeDrawer` at a smaller cell size; the top item is highlighted and slightly larger.
+- Debug builds have a **Pipe Lab** launcher entry that previews every section and plays the liquid with direction, flow speed and reservoir speed controls.
+- The **stack** is a vertical column of mini-boards using the same `PipeTile` at a smaller cell size; the top item is highlighted and slightly larger.
 - A **leak** shows a short particle burst at the exit port; a **win** flashes the finish cell.
-- Draw calls read only from an immutable `GameState`; no allocations in the draw loop beyond what Compose needs. Precompute one `Path` per section per cell size and cache it.
+- Draw calls read only from an immutable `GameState`; no allocations in the draw loop beyond what Compose needs. The pipe art is prepared once per section in view-box units and scaled per tile; only the liquid segment is rebuilt each frame, into a reused `Path`.
 
 ### 2.9 Testing strategy
 

@@ -48,6 +48,13 @@ The reservoir asset SHALL contain a `circle` element with the id `tank` that des
 - **WHEN** any other asset is read
 - **THEN** it has no tank
 
+### Requirement: Cross marks its bridge
+The cross asset SHALL contain a `rect` element with the id `bridge` and the attribute `data-hides="channel-v"`, covering the horizontal pipe and its gap. The liquid of the vertical channel SHALL NOT be drawn inside that rectangle, so it passes under the horizontal pipe. The cross SHALL list `channel-v` before `channel-h`, because channels are drawn in file order. No other asset SHALL contain a bridge.
+
+#### Scenario: Vertical liquid passes under the bridge
+- **WHEN** a cross is drawn with its vertical channel full
+- **THEN** the vertical liquid shows above and below the horizontal pipe but not over it
+
 ### Requirement: Layers above and below the liquid
 Each asset SHALL group its artwork into a group with the id `under` (drawn below the liquid: shadow, body, specular, bore, tank) and a group with the id `over` (drawn above the liquid: flanges and, for the reservoir, the tank rim and the badge). The renderer SHALL draw `under`, then the liquid, then `over`.
 

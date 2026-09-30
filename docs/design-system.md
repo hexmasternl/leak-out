@@ -296,7 +296,7 @@ Cell size is computed from the available width; the minimum is 44 dp so tap targ
 
 ### 6.3 Pipe rendering recipe
 
-Every pipe section is drawn procedurally from the same five layers, in this order. Sizes are relative to cell size *c*.
+Every pipe section is drawn from the same layers, in this order. Sizes are relative to cell size *c*. The steel layers and the reservoir tank are SVG assets in `app/src/main/assets/pipes/`, one per section (format in [pipe-assets.md](pipe-assets.md)). The liquid (layer 4) is drawn in code along the channels marked in those files, between the asset's `under` and `over` groups. Its gradient across the bore is drawn as three concentric strokes (`liquid.700` edge, `liquid.500` body, `liquid.300` core), so it looks the same on straights and elbows.
 
 1. **Body** – stroke `steel.500`, width 0.36 c, round joins.
 2. **Shadow side** – same path offset 1 dp down-right, stroke `steel.700`, width 0.36 c, drawn before the body (visible as a thin dark edge).

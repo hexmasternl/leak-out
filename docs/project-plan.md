@@ -101,11 +101,15 @@ A **countdown** for the initial delay is shown on screen. Optionally the player 
 
 - **Win**: liquid enters the finish section through its open port. The finish plays a fill animation, then the level-complete screen appears.
 - **Lose**: any leak. The leak point spurts liquid, then the level-failed screen appears with a retry button.
-- **Score** (first version, keep simple):
-  - +10 per filled section.
-  - +50 extra when both channels of a cross are filled.
-  - +20 per filled reservoir.
-  - Time bonus: remaining initial-delay seconds × 5 if the player starts the flow early.
+- **Score**: points are awarded for a placed section at the moment the liquid **exits** it (`core.score.Points` and `ScoreSheet`):
+  - Straight (`H`, `V`): +10.
+  - Corner (`LT`, `LB`, `RT`, `RB`): +15.
+  - Reservoir (`RES`): +25.
+  - Cross (`X`): +10 for the first pass and +50 for the second pass on the same tile, whichever channel comes first.
+  - The start and finish tiles give nothing, and neither does a section the liquid never reaches.
+  - The last section before a leak still scores: the liquid did run through it.
+  - Restart sets the score back to 0 and forgets the cross passes.
+  - Time bonus (not built yet): remaining initial-delay seconds × 5 if the player starts the flow early.
 - Stars per level (1–3) based on score thresholds in the level definition. Stars are optional for the first release.
 
 ### 1.10 Level progression
@@ -346,6 +350,7 @@ A `docs/levels.md` sheet will track the intended difficulty curve (grid size, de
 - Filled channels are drawn fully in liquid colour.
 - Debug builds have a **Pipe Lab** launcher entry that previews every section and plays the liquid with direction, flow speed and reservoir speed controls.
 - The **stack** is a vertical column of mini-boards using the same `PipeTile` at a smaller cell size; the top item is highlighted and slightly larger.
+- A **points popup** ("+10", "+15", "+25", "+50") appears on a section's tile each time it scores: Fredoka bold at 40 % of a tile, an ink outline under a white fill, drawn last in the field canvas. It fades in over 150 ms (growing from 80 % to full size), holds for 500 ms and fades out over 350 ms, rising a quarter tile. Its age is taken from the game clock, so it freezes while paused and follows the tile during pan and zoom.
 - A **leak** shows a short particle burst at the exit port; a **win** flashes the finish cell.
 - Draw calls read only from an immutable `GameState`; no allocations in the draw loop beyond what Compose needs. The pipe art is prepared once per section in view-box units and scaled per tile; only the liquid segment is rebuilt each frame, into a reused `Path`.
 

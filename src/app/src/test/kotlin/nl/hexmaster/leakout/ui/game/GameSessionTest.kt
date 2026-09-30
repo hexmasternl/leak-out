@@ -13,6 +13,7 @@ import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.level.StackSettings
 import nl.hexmaster.leakout.core.level.StarBenchmarks
+import nl.hexmaster.leakout.core.score.ScoreSheet
 import nl.hexmaster.leakout.core.stack.PipeStack
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -61,7 +62,7 @@ class GameSessionTest {
         val session = session()
         session.tick(250)
         assertTrue(session.place(session.stack.next, Position(1, 1)))
-        session.score = 40
+        session.sheet = ScoreSheet(total = 40)
         val stack = session.stack
         val board = session.board
 
@@ -83,7 +84,7 @@ class GameSessionTest {
         val session = session()
         session.tick(900)
         session.place(session.stack.next, Position(1, 1))
-        session.score = 220
+        session.sheet = ScoreSheet(total = 220)
         session.flowSpeed = 1.4
         session.pause()
 
@@ -222,7 +223,7 @@ class GameSessionTest {
         val session = session()
         val expected = mapOf(0 to 0, 99 to 0, 100 to 1, 199 to 1, 200 to 2, 349 to 2, 350 to 3, 1_000 to 3)
         expected.forEach { (score, stars) ->
-            session.score = score
+            session.sheet = ScoreSheet(total = score)
             assertEquals("score $score", stars, session.stars)
         }
     }
@@ -230,9 +231,114 @@ class GameSessionTest {
     @Test
     fun `restart sets the stars back to 0`() {
         val session = session()
-        session.score = 250
+        session.sheet = ScoreSheet(total = 250)
         assertEquals(2, session.stars)
         session.restart()
         assertEquals(0, session.stars)
+    }
+
+    @Test
+    fun `exiting a straight adds 10 and one popup on that tile`() {
+        val session = session()
+        session.tick(400)
+        assertTrue(session.place(PipeSection.H, Position(1, 0)))
+
+        session.liquidExited(Position(1, 0))
+
+        assertEquals(10, session.score)
+        assertEquals(1, session.popups.size)
+        val popup = session.popups.single()
+        assertEquals(Position(1, 0), popup.position)
+        assertEquals(10, popup.points)
+        assertEquals(400L, popup.startedAtMs)
+    }
+
+    @Test
+    fun `exiting the start, the finish or an empty tile changes nothing`() {
+        val session = session()
+        session.liquidExited(level.start.position)
+        session.liquidExited(level.finish.position)
+        session.liquidExited(Position(2, 2))
+        assertEquals(0, session.score)
+        assertTrue(session.popups.isEmpty())
+    }
+
+    @Test
+    fun `the second exit from a cross adds 50`() {
+        val session = session()
+        session.place(PipeSection.X, Position(1, 1))
+        session.liquidExited(Position(1, 1))
+        session.liquidExited(Position(1, 1))
+        assertEquals(60, session.score)
+        assertEquals(listOf(10, 50), session.popups.map { it.points })
+    }
+
+    @Test
+    fun `nothing is awarded while paused`() {
+        val session = session()
+        session.place(PipeSection.LT, Position(1, 1))
+        session.pause()
+        session.liquidExited(Position(1, 1))
+        assertEquals(0, session.score)
+        assertTrue(session.popups.isEmpty())
+    }
+
+    @Test
+    fun `ticks while paused do not age or drop popups`() {
+        val session = session()
+        session.place(PipeSection.V, Position(1, 1))
+        session.liquidExited(Position(1, 1))
+        session.tick(400)
+        session.pause()
+        session.tick(5_000)
+        session.resume()
+        assertEquals(1, session.popups.size)
+        assertEquals(400L, session.popups.single().ageAt(session.elapsedMs))
+        session.tick(599)
+        assertEquals(1, session.popups.size)
+        session.tick(1)
+        assertTrue(session.popups.isEmpty())
+    }
+
+    @Test
+    fun `a popup is dropped after 1000 ms of ticks and the score stays`() {
+        val session = session()
+        session.place(PipeSection.RES, Position(1, 1))
+        session.liquidExited(Position(1, 1))
+        repeat(9) { session.tick(100) }
+        assertEquals(1, session.popups.size)
+        session.tick(100)
+        assertTrue(session.popups.isEmpty())
+        assertEquals(25, session.score)
+    }
+
+    @Test
+    fun `popups of close awards each keep their own timing`() {
+        val session = session()
+        session.place(PipeSection.H, Position(1, 0))
+        session.place(PipeSection.LB, Position(2, 0))
+        session.liquidExited(Position(1, 0))
+        session.tick(300)
+        session.liquidExited(Position(2, 0))
+        session.tick(700)
+        assertEquals(listOf(Position(2, 0)), session.popups.map { it.position })
+        session.tick(300)
+        assertTrue(session.popups.isEmpty())
+    }
+
+    @Test
+    fun `restart clears the score and popups and resets the cross passes`() {
+        val session = session()
+        session.place(PipeSection.X, Position(1, 1))
+        session.liquidExited(Position(1, 1))
+        assertEquals(10, session.score)
+
+        session.restart()
+
+        assertEquals(0, session.score)
+        assertTrue(session.popups.isEmpty())
+        session.place(PipeSection.X, Position(1, 1))
+        session.liquidExited(Position(1, 1))
+        assertEquals(10, session.score)
     }
 }

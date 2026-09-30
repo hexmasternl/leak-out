@@ -1,5 +1,6 @@
 package nl.hexmaster.leakout.ui.game
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -14,6 +15,7 @@ import nl.hexmaster.leakout.core.board.PlacementCheck
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.core.score.ScoreSheet
 import nl.hexmaster.leakout.core.stack.PipeStack
 import nl.hexmaster.leakout.core.stack.WeightedPool
 
@@ -40,8 +42,18 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
     var attempt: Int by mutableIntStateOf(1)
         private set
 
-    /** Points for this attempt. Scoring rules do not exist yet; the engine will set this. */
-    var score: Int by mutableIntStateOf(0)
+    /** The points of this attempt and how often the liquid has left each tile. */
+    var sheet: ScoreSheet by mutableStateOf(ScoreSheet())
+        @VisibleForTesting internal set
+
+    /** Points for this attempt, always [ScoreSheet.total] of [sheet]. */
+    val score: Int get() = sheet.total
+
+    /** The points popups that are still shown, oldest first. */
+    var popups: List<PointsPopup> by mutableStateOf(emptyList())
+        private set
+
+    private var nextPopupId = 0L
 
     /** Current flow speed in cells per second. The engine's speed ramp will set this. */
     var flowSpeed: Double by mutableDoubleStateOf(level.flow.cellsPerSecond)
@@ -70,20 +82,44 @@ class GameSession(val level: Level, private val random: Random = Random.Default)
         pauseMenuOpen = false
     }
 
-    /** Starts the level again: new stack, empty board, no lock, score 0, clock and speed reset, running. */
+    /** Starts the level again: new stack, empty board, no lock, score 0 and no popups, clock and speed reset, running. */
     fun restart() {
         stack = PipeStack.create(level.stack, random)
         board = Board.from(level)
         replaceLockUntilMs = 0L
         attempt += 1
-        score = 0
+        sheet = ScoreSheet()
+        popups = emptyList()
         flowSpeed = level.flow.cellsPerSecond
         elapsedMs = 0L
         resume()
     }
 
+    /** Moves the game clock by [dtMs] and drops the popups whose time is over. Does nothing while paused. */
     fun tick(dtMs: Long) {
-        if (!paused && dtMs > 0) elapsedMs += dtMs
+        if (paused || dtMs <= 0) return
+        elapsedMs += dtMs
+        if (popups.any { it.ageAt(elapsedMs) >= PopupTiming.TOTAL_MS }) {
+            popups = popups.filter { it.ageAt(elapsedMs) < PopupTiming.TOTAL_MS }
+        }
+    }
+
+    /**
+     * The liquid has left the tile [at]: awards the points for the section there and shows them on
+     * the tile. Refused while paused. Every cell that is not a placed section (start, finish, empty,
+     * blocked) is ignored, so the flow can call this for every cell it leaves.
+     *
+     * Contract for the flow: call it exactly once each time the liquid head leaves a cell, after the
+     * cell's channel is marked as filled and before the next cell is checked for a leak or a win.
+     * That way the last section before a leak or before the finish still scores, and the second
+     * exit from a cross counts as its second pass.
+     */
+    fun liquidExited(at: Position) {
+        if (paused) return
+        val pipe = board[at] as? Cell.Pipe ?: return
+        val award = sheet.award(at, pipe.section)
+        sheet = award.sheet
+        popups = popups + PointsPopup(nextPopupId++, at, award.points, startedAtMs = elapsedMs)
     }
 
     /** Whether the next section can be dropped on [at] now: the same check [place] runs. */

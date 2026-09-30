@@ -120,8 +120,8 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 
 1. **Title** – play, level select, settings (sound on/off).
 2. **Level select** – grid of level tiles.
-3. **Game** – board, stack on the side or bottom, countdown/speed indicator, pause button.
-4. **Pause overlay** – resume, restart, quit to level select.
+3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Back and going to the background also pause the game.
+4. **Pause dialog** – opened from the cog wheel: Resume, Restart, a separator and Exit to the main menu (welcome screen). Tapping outside does nothing; Back works as Resume.
 5. **Level complete / failed overlay** – score, stars, next / retry / level select.
 
 ---

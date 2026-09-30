@@ -236,7 +236,7 @@ Left to right:
 
 1. **Level chip** – "LEVEL" `label.md` over the number in `numeric.md`.
 2. **Countdown ring** – 44 dp ring, 5 dp stroke. Track `line.subtle`; progress `liquid.500` with glow; the number inside in `numeric.md`. Turns `brass.500` under 5 s and `leak.500` under 2 s. Once the liquid flows, the ring becomes a **flow-speed dial**: a small liquid wave icon and the speed in "×1.0" format.
-3. **Score** – right-aligned, `numeric.md`, `text.primary`, with a small brass star when a star threshold is crossed.
+3. **Score** – right-aligned, `numeric.md`, `text.primary`. Three stars sit directly to its left: grey in `text.muted` until earned, then filled `brass.300` with a static brass glow, each popping in with `motion.pop` as the score crosses the level's star thresholds.
 4. **Pause** – 40 dp glass icon button.
 
 ### 5.4 Stack rail

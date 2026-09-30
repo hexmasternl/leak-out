@@ -47,5 +47,5 @@
 
 ## 7. Wrap up
 
-- [ ] 7.1 Update `docs/project-plan.md` section 1.11: the game screen has a HUD at the top (level, flow speed, stars, score, cog wheel) and the pause menu has Resume, Restart and Exit to the main menu. Update `docs/design-system.md` section 5.3 item 3: the score has three stars to its left (grey in `text.muted`, earned in `brass.300` with a static brass glow and a `motion.pop`) instead of one small brass star.
+- [x] 7.1 Update `docs/project-plan.md` section 1.11: the game screen has a HUD at the top (level, flow speed, stars, score, cog wheel) and the pause menu has Resume, Restart and Exit to the main menu. Update `docs/design-system.md` section 5.3 item 3: the score has three stars to its left (grey in `text.muted`, earned in `brass.300` with a static brass glow and a `motion.pop`) instead of one small brass star.
 - [ ] 7.2 Run `openspec validate app-game-play-hud` and fix any issues.

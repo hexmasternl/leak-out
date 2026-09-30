@@ -7,4 +7,18 @@
     <string name="welcome_play">Play</string>
     <string name="welcome_settings">Settings</string>
     <string name="welcome_exit">Exit</string>
+
+    <!-- Game HUD -->
+    <string name="hud_level">Level %1$s</string>
+    <string name="hud_speed_unit">%1$s/s</string>
+    <string name="hud_speed_description">Flow speed %1$s cells per second</string>
+    <string name="hud_stars_description">%1$d of 3 stars</string>
+    <string name="hud_score_description">Score %1$s</string>
+    <string name="hud_pause_menu">Pause menu</string>
+
+    <!-- Pause dialog -->
+    <string name="pause_title">Paused</string>
+    <string name="pause_resume">Resume</string>
+    <string name="pause_restart">Restart</string>
+    <string name="pause_exit">Exit</string>
 </resources>

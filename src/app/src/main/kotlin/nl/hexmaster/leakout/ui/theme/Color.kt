@@ -59,4 +59,12 @@ object LeakOutColors {
     val Liquid300 = Color(0xFF5EE7FF)
     val Liquid500 = Color(0xFF19C6F2)
     val Liquid700 = Color(0xFF0A8DC2)
+
+    // 2.4 Brass (action accent)
+    val Brass100 = Color(0xFFFFE9B0)
+    val Brass300 = Color(0xFFFFCF5C)
+    val Brass500 = Color(0xFFF5A623)
+
+    // 2.7 Text: text.muted (Deep theme)
+    val TextMuted = Color(0xFF6E8296)
 }

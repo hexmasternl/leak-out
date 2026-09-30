@@ -1,9 +1,9 @@
 ## 1. Setup
 
 - [ ] 1.1 Check that `app-game-play-stack` is merged into `development` (`GameScreen`, `StackPanel`, `SectionDragState`, `PlaceholderBoard` exist). If not, stop and merge it first.
-- [ ] 1.2 Add string resources: `hud_level` ("Level %1$d"), `hud_speed_description` ("Flow speed %1$s cells per second"), `hud_stars_description` ("%1$d of 3 stars"), `hud_score_description` ("Score %1$s"), `hud_pause_menu` ("Pause menu"), `pause_title` ("Paused"), `pause_resume`, `pause_restart`, `pause_exit`.
-- [ ] 1.3 Add the `ic_cog.xml` cog wheel vector drawable, the `ic_star.xml` filled star vector (24 dp grid, design system section 8) and a small speed icon vector to `res/drawable`.
-- [ ] 1.4 Add `Brass100`, `Brass300`, `Brass500` and `TextMuted` to `LeakOutColors` from `docs/design-system.md` sections 2.4 and 2.7, next to the existing Deep Flow tokens.
+- [x] 1.2 Add string resources: `hud_level` ("Level %1$d"), `hud_speed_description` ("Flow speed %1$s cells per second"), `hud_stars_description` ("%1$d of 3 stars"), `hud_score_description` ("Score %1$s"), `hud_pause_menu` ("Pause menu"), `pause_title` ("Paused"), `pause_resume`, `pause_restart`, `pause_exit`.
+- [x] 1.3 Add the `ic_cog.xml` cog wheel vector drawable, the `ic_star.xml` filled star vector (24 dp grid, design system section 8) and a small speed icon vector to `res/drawable`.
+- [x] 1.4 Add `Brass100`, `Brass300`, `Brass500` and `TextMuted` to `LeakOutColors` from `docs/design-system.md` sections 2.4 and 2.7, next to the existing Deep Flow tokens.
 
 ## 2. Game session state
 
@@ -14,14 +14,14 @@
 
 ## 3. HUD
 
-- [ ] 3.1 Add `HudFormat` with `level(id)`, `speed(cellsPerSecond, locale)` (one decimal) and `score(value, locale)` (digit grouping). Unit test with the English and Dutch locales (0.8 / 0,8, 1,250 / 1.250).
+- [x] 3.1 Add `HudFormat` with `level(id)`, `speed(cellsPerSecond, locale)` (one decimal) and `score(value, locale)` (digit grouping). Unit test with the English and Dutch locales (0.8 / 0,8, 1,250 / 1.250).
 - [ ] 3.2 Add `HudLayout.HEIGHT` (48 dp) and a `StackLayoutTest` case: `visibleSize` 1 to 10 fits in 360 dp minus the HUD height.
-- [ ] 3.3 Add `HudStars(earned, modifier)`: a `Row` of three 20 dp `ic_star` icons 4 dp apart; not-earned stars in `TextMuted` without glow, earned stars in `Brass300` with a static radial `Brass500` glow at 45 % drawn behind them; a pop (scale 1.3 to 1 with the `motion.pop` spring) when a star becomes earned, `snap()` when `ANIMATOR_DURATION_SCALE == 0`; one merged content description "%1$d of 3 stars"; test tags `hud_star_1` to `hud_star_3` and a `StarEarned` semantics property per star.
-- [ ] 3.4 Add `GameHud(levelId, flowSpeed, stars, score, onPause, modifier)`: a full-width `Row` of fixed height with the level, the speed, a weighted spacer, `HudStars`, the end-aligned score and a 48 dp cog wheel `IconButton`, with content descriptions and test tags.
+- [x] 3.3 Add `HudStars(earned, modifier)`: a `Row` of three 20 dp `ic_star` icons 4 dp apart; not-earned stars in `TextMuted` without glow, earned stars in `Brass300` with a static radial `Brass500` glow at 45 % drawn behind them; a pop (scale 1.3 to 1 with the `motion.pop` spring) when a star becomes earned, `snap()` when `ANIMATOR_DURATION_SCALE == 0`; one merged content description "%1$d of 3 stars"; test tags `hud_star_1` to `hud_star_3` and a `StarEarned` semantics property per star.
+- [x] 3.4 Add `GameHud(levelId, flowSpeed, stars, score, onPause, modifier)`: a full-width `Row` of fixed height with the level, the speed, a weighted spacer, `HudStars`, the end-aligned score and a 48 dp cog wheel `IconButton`, with content descriptions and test tags.
 
 ## 4. Pause dialog
 
-- [ ] 4.1 Add `PauseDialog(onResume, onRestart, onExit)`: a `Dialog` with `dismissOnClickOutside = false` and `onDismissRequest = onResume`, the design-system card with the "Paused" title and a `paneTitle` of "Pause menu", Resume and Restart `CartoonButton`s, a `HorizontalDivider`, and an Exit `CartoonButton` in the error-red style. Every button is at least 48 dp high.
+- [x] 4.1 Add `PauseDialog(onResume, onRestart, onExit)`: a `Dialog` with `dismissOnClickOutside = false` and `onDismissRequest = onResume`, the design-system card with the "Paused" title and a `paneTitle` of "Pause menu", Resume and Restart `CartoonButton`s, a `HorizontalDivider`, and an Exit `CartoonButton` in the error-red style. Every button is at least 48 dp high.
 
 ## 5. Game screen wiring
 

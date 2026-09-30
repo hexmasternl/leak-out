@@ -19,9 +19,9 @@
 
 ## 4. Playing field
 
-- [ ] 4.1 `PlayingField` reads the library with `rememberPipeArtLibrary()` and keeps one `LiquidScratch`; `drawCell` draws a `Cell.Pipe` with `drawPipe(library.prepared(section), rect)` inside `clipRect(rect)`, over the existing cell background and tint
-- [ ] 4.2 Add a test-only `pipeSection` semantics property on placed field cells
-- [ ] 4.3 Instrumented tests in `PlayingFieldTest`: a placed section's cell reports its `pipeSection`; a placed `H` shows the steel body band across the cell centre; after zooming in, the art still fills the (larger) cell
+- [x] 4.1 `PlayingField` reads the library with `rememberPipeArtLibrary()` and keeps one `LiquidScratch`; `drawCell` draws a `Cell.Pipe` with `drawPipe(library.prepared(section), rect)` inside `clipRect(rect)`, over the existing cell background and tint
+- [x] 4.2 Add a test-only `pipeSection` semantics property on placed field cells
+- [x] 4.3 Instrumented tests in `PlayingFieldTest`: a placed section's cell reports its `pipeSection`; a placed `H` shows the steel body band across the cell centre; after zooming in, the art still fills the (larger) cell (written and compiled; emulator run skipped at the user's request)
 - [ ] 4.4 Existing game screen tests (`GameScreenTest`, `GameEngineScreenTest`, `LevelLostTest`, `LevelCompleteTest`) still pass
 
 ## 5. Docs and verification

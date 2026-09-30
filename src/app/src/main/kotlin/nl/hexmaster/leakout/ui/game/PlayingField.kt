@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.input.pointer.pointerInput
@@ -60,8 +61,13 @@ import nl.hexmaster.leakout.core.engine.Award
 import nl.hexmaster.leakout.core.flow.Channel
 import nl.hexmaster.leakout.core.flow.ChannelUse
 import nl.hexmaster.leakout.core.level.GridSize
+import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
+import nl.hexmaster.leakout.ui.pipes.LiquidScratch
+import nl.hexmaster.leakout.ui.pipes.PipeArtLibrary
+import nl.hexmaster.leakout.ui.pipes.drawPipe
+import nl.hexmaster.leakout.ui.pipes.rememberPipeArtLibrary
 import nl.hexmaster.leakout.ui.theme.Fredoka
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 
@@ -87,6 +93,10 @@ var SemanticsPropertyReceiver.liquidHead by LiquidHead
 /** Semantics on a field cell: the channels the liquid has run through there. A test hook only, until the liquid is drawn. */
 val FilledChannels = SemanticsPropertyKey<Set<Channel>>("FilledChannels")
 var SemanticsPropertyReceiver.filledChannels by FilledChannels
+
+/** Semantics on a field cell with a placed section: the section whose pipe art is drawn there. A test hook only. */
+val FieldPipeSection = SemanticsPropertyKey<PipeSection>("FieldPipeSection")
+var SemanticsPropertyReceiver.pipeSection by FieldPipeSection
 
 /** Semantics flag on the finish cell while the level is won and its success ring is drawn. A test hook only. */
 val FinishFlash = SemanticsPropertyKey<Boolean>("FinishFlash")
@@ -141,6 +151,8 @@ fun rememberPlayingFieldState(grid: GridSize, start: Position): PlayingFieldStat
  * When the pipe has leaked at [leakAt] through [leakSide], liquid spurts out of that side, timed by
  * [lossAgeMs] (read only while drawing), above the pipes and below the popups.
  *
+ * Placed sections are drawn with their pipe art and glass overlay (`drawPipe`), like the stack.
+ *
  * [head] is the tile the liquid head is in and [filled] the channels the liquid has run through.
  * They are not drawn yet; the liquid drawing will use them.
  *
@@ -167,6 +179,8 @@ fun PlayingField(
     val density = LocalDensity.current
     val currentEnabled by rememberUpdatedState(enabled)
     val textMeasurer = rememberTextMeasurer()
+    val pipes = rememberPipeArtLibrary()
+    val scratch = remember { LiquidScratch() }
     Box(
         modifier = modifier
             .testTag(GameScreenTags.FIELD)
@@ -180,7 +194,7 @@ fun PlayingField(
         val viewport = state.viewport ?: return@Box
         Canvas(Modifier.fillMaxSize()) {
             val cells = viewport.visibleCells()
-            for (position in cells) drawCell(board[position], viewport.cellRect(position))
+            for (position in cells) drawCell(board[position], viewport.cellRect(position), pipes, scratch)
             highlighted?.let { drawHighlight(viewport.cellRect(it)) }
             if (leakAt != null && leakSide != null) drawLeak(viewport.cellRect(leakAt), leakSide, leakFrame(lossAgeMs()))
             if (winAgeMs != null) {
@@ -221,6 +235,7 @@ private fun CellSemantics(
         val isHead = position == head
         val channels = filledByCell[position].orEmpty().toSet()
         val flashing = won && board[position] is Cell.Finish
+        val section = (board[position] as? Cell.Pipe)?.section
         Box(
             Modifier
                 .offset { IntOffset(rect.left.roundToInt(), rect.top.roundToInt()) }
@@ -234,6 +249,7 @@ private fun CellSemantics(
                     liquidHead = isHead
                     filledChannels = channels
                     if (flashing) finishFlash = true
+                    if (section != null) pipeSection = section
                 },
         )
     }
@@ -280,7 +296,7 @@ private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectPa
     }
 }
 
-private fun DrawScope.drawCell(cell: Cell, rect: Rect) {
+private fun DrawScope.drawCell(cell: Cell, rect: Rect, pipes: PipeArtLibrary, scratch: LiquidScratch) {
     val inset = rect.deflate(rect.width * 0.04f)
     val corner = CornerRadius(rect.width * 0.14f)
     when (cell) {
@@ -297,7 +313,10 @@ private fun DrawScope.drawCell(cell: Cell, rect: Rect) {
         is Cell.Pipe -> {
             val fill = if (cell.liquidEntered) LeakOutColors.Liquid700.copy(alpha = 0.35f) else LeakOutColors.SurfaceCard.copy(alpha = 0.06f)
             drawRoundRect(fill, inset.topLeft, inset.size, corner)
-            drawPipeSection(cell.section, rect)
+            // Clipped to the cell so no stroke cap or shadow reaches the neighbour; channels end on the edge.
+            clipRect(rect.left, rect.top, rect.right, rect.bottom) {
+                drawPipe(pipes.prepared(cell.section), rect, scratch = scratch)
+            }
         }
     }
 }

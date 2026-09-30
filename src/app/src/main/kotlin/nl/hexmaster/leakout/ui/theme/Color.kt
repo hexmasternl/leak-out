@@ -54,6 +54,9 @@ object LeakOutColors {
     // 2.1 surface.deep
     val SurfaceDeep = Color(0xFF0C1A2A)
 
+    // 2.1 surface.raised
+    val SurfaceRaised = Color(0xFF19324A)
+
     // 2.3 Liquid (hero colour)
     val LiquidGlow = Color(0xFF9DF3FF)
     val Liquid300 = Color(0xFF5EE7FF)

@@ -4,6 +4,8 @@ description: Implement tasks from an OpenSpec change (Experimental)
 
 Implement tasks from an OpenSpec change.
 
+**Worktree and branch first**: In this repository every change is implemented in its own git worktree on a `feature/<change-name>` branch cut from `development`. Before step 1, follow the `openspec-work-on-change` skill to create or resume that worktree, then run all steps below inside it. That skill also owns committing (frequent, logical chunks) and the final push.
+
 **Input**: Optionally specify a change name (e.g., `/opsx:apply add-auth`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
 **Steps**

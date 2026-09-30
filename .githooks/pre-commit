@@ -1,0 +1,9 @@
+#!/bin/sh
+# Refuses a commit while Claude Code and Copilot configuration are out of sync.
+# Enable once per clone:  git config core.hooksPath .githooks
+if ! node scripts/sync-agent-config.mjs --check; then
+  echo ""
+  echo "Claude Code / Copilot configuration is out of sync."
+  echo "Run: node scripts/sync-agent-config.mjs   (then stage the synced files)"
+  exit 1
+fi

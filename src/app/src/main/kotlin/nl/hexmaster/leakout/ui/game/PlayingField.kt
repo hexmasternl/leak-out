@@ -73,6 +73,10 @@ var SemanticsPropertyReceiver.fieldCellHighlighted by FieldCellHighlighted
 val PointsPopupText = SemanticsPropertyKey<List<String>>("PointsPopupText")
 var SemanticsPropertyReceiver.pointsPopupText by PointsPopupText
 
+/** Semantics on the field cell the pipe leaks from: the side it leaks through. A test hook only. */
+val LeakAt = SemanticsPropertyKey<Side>("LeakAt")
+var SemanticsPropertyReceiver.leakAt by LeakAt
+
 /**
  * The screen state of the playing field: the viewport and where the field sits on the screen.
  * Created again for every attempt, so a restart goes back to the starting view.
@@ -118,6 +122,9 @@ fun rememberPlayingFieldState(grid: GridSize, start: Position): PlayingFieldStat
  * The [popups] are drawn on their tiles above everything else, timed by the game clock
  * [elapsedMs]. Both are lambdas read only while drawing, so a new award or a clock tick redraws
  * the canvas without recomposing the grid.
+ *
+ * When the pipe has leaked at [leakAt] through [leakSide], liquid spurts out of that side, timed by
+ * [lossAgeMs] (read only while drawing), above the pipes and below the popups.
  */
 @Composable
 fun PlayingField(
@@ -128,6 +135,9 @@ fun PlayingField(
     modifier: Modifier = Modifier,
     popups: () -> List<PointsPopup> = { emptyList() },
     elapsedMs: () -> Long = { 0L },
+    leakAt: Position? = null,
+    leakSide: Side? = null,
+    lossAgeMs: () -> Long = { 0L },
 ) {
     val density = LocalDensity.current
     val currentEnabled by rememberUpdatedState(enabled)
@@ -147,9 +157,10 @@ fun PlayingField(
             val cells = viewport.visibleCells()
             for (position in cells) drawCell(board[position], viewport.cellRect(position))
             highlighted?.let { drawHighlight(viewport.cellRect(it)) }
+            if (leakAt != null && leakSide != null) drawLeak(viewport.cellRect(leakAt), leakSide, leakFrame(lossAgeMs()))
             drawPopups(popups(), elapsedMs(), viewport, textMeasurer)
         }
-        CellSemantics(board, viewport, highlighted, popups)
+        CellSemantics(board, viewport, highlighted, popups, leakAt?.let { at -> leakSide?.let { at to it } })
     }
 }
 
@@ -158,7 +169,13 @@ fun PlayingField(
  * nodes carry semantics only and take no pointer input, so they never block pan or zoom.
  */
 @Composable
-private fun CellSemantics(board: Board, viewport: FieldViewport, highlighted: Position?, popups: () -> List<PointsPopup>) {
+private fun CellSemantics(
+    board: Board,
+    viewport: FieldViewport,
+    highlighted: Position?,
+    popups: () -> List<PointsPopup>,
+    leak: Pair<Position, Side>?,
+) {
     val density = LocalDensity.current
     val cellDp = with(density) { viewport.cellPx.toDp() }
     val popupTexts = popups().groupBy({ it.position }, { PointsFormat.text(it.points) })
@@ -167,6 +184,7 @@ private fun CellSemantics(board: Board, viewport: FieldViewport, highlighted: Po
         val description = board[position].describe()
         val isHighlighted = position == highlighted
         val texts = popupTexts[position].orEmpty()
+        val leakSide = leak?.takeIf { it.first == position }?.second
         Box(
             Modifier
                 .offset { IntOffset(rect.left.roundToInt(), rect.top.roundToInt()) }
@@ -176,6 +194,7 @@ private fun CellSemantics(board: Board, viewport: FieldViewport, highlighted: Po
                     contentDescription = description
                     fieldCellHighlighted = isHighlighted
                     pointsPopupText = texts
+                    if (leakSide != null) this.leakAt = leakSide
                 },
         )
     }
@@ -265,6 +284,38 @@ private fun DrawScope.drawHighlight(rect: Rect) {
     drawRoundRect(LeakOutColors.Brass500.copy(alpha = 0.22f), inset.topLeft, inset.size, corner)
     drawRoundRect(LeakOutColors.Brass300, inset.topLeft, inset.size, corner, style = Stroke(3.dp.toPx()))
 }
+
+/**
+ * A fan of droplets out of the middle of [side] of the tile [rect], in the liquid colour: a short
+ * jet on the side and three rows of drops that spread wider the further they fly. Drawn in tile
+ * coordinates, so it follows pan and zoom; drops past the field edge are clipped by the field.
+ */
+private fun DrawScope.drawLeak(rect: Rect, side: Side, frame: LeakFrame) {
+    val cell = rect.width
+    val out = Offset(side.dx.toFloat(), side.dy.toFloat())
+    val across = Offset(-out.y, out.x)
+    val origin = rect.center + out * (cell / 2f)
+    val reach = frame.length * cell
+    drawLine(
+        LeakOutColors.Liquid500.copy(alpha = frame.alpha),
+        origin - out * (cell * 0.08f),
+        origin + out * (reach * 0.35f),
+        cell * 0.12f,
+        StrokeCap.Round,
+    )
+    for (row in 1..LEAK_ROWS) {
+        val along = row.toFloat() / LEAK_ROWS
+        val center = origin + out * (reach * along)
+        val radius = cell * (0.075f - 0.015f * row)
+        for (i in -1..1) {
+            val drop = center + across * (i * frame.spread * cell * 0.5f * along)
+            drawCircle(LeakOutColors.Liquid300.copy(alpha = frame.alpha), radius, drop)
+            drawCircle(LeakOutColors.LiquidGlow.copy(alpha = frame.alpha), radius * 0.4f, drop - Offset(radius * 0.3f, radius * 0.3f))
+        }
+    }
+}
+
+private const val LEAK_ROWS = 3
 
 /**
  * "+N" for every popup whose tile touches the field: Fredoka bold at 40 % of a tile, an ink outline

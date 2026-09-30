@@ -1,14 +1,14 @@
 ## 1. Setup
 
-- [ ] 1.1 Check that `app-game-play-stack`, `app-game-play-hud` and `app-game-play-playing-field` are merged into `development` (`GameScreen`, `GameSession` with `score` and `elapsedMs`, `Board` and `Cell` in `core.board`, `PlayingField` with `FieldViewport` and the cell overlay exist). If not, stop and merge them first.
+- [x] 1.1 Check that `app-game-play-stack`, `app-game-play-hud` and `app-game-play-playing-field` are merged into `development` (`GameScreen`, `GameSession` with `score` and `elapsedMs`, `Board` and `Cell` in `core.board`, `PlayingField` with `FieldViewport` and the cell overlay exist). If not, stop and merge them first.
 
 ## 2. Core: points rules
 
-- [ ] 2.1 Create the package `nl.hexmaster.leakout.core.score` with `Points` (`STRAIGHT = 10`, `CORNER = 15`, `RESERVOIR = 25`, `CROSS_FIRST = 10`, `CROSS_SECOND = 50`) and `forExit(section, pass)` as an exhaustive `when` without `else`.
-- [ ] 2.2 Add the immutable `ScoreSheet(total, passes)` and `Award(sheet, points)` with `ScoreSheet.award(at, section)`, which counts the pass for the tile and adds the points.
-- [ ] 2.3 Unit test `Points`: `H` and `V` give 10; `LT`, `LB`, `RT` and `RB` give 15; `RES` gives 25; `X` gives 10 for pass 1 and 50 for pass 2.
-- [ ] 2.4 Unit test `ScoreSheet`: a new sheet is 0; a route of two straights, three corners and a reservoir totals 90; two exits from the same cross give 10 then 50; exits from two different crosses give 10 each; `award` does not change the original sheet.
-- [ ] 2.5 Run `./gradlew :core:test` and check that everything passes.
+- [x] 2.1 Create the package `nl.hexmaster.leakout.core.score` with `Points` (`STRAIGHT = 10`, `CORNER = 15`, `RESERVOIR = 25`, `CROSS_FIRST = 10`, `CROSS_SECOND = 50`) and `forExit(section, pass)` as an exhaustive `when` without `else`.
+- [x] 2.2 Add the immutable `ScoreSheet(total, passes)` and `Award(sheet, points)` with `ScoreSheet.award(at, section)`, which counts the pass for the tile and adds the points.
+- [x] 2.3 Unit test `Points`: `H` and `V` give 10; `LT`, `LB`, `RT` and `RB` give 15; `RES` gives 25; `X` gives 10 for pass 1 and 50 for pass 2.
+- [x] 2.4 Unit test `ScoreSheet`: a new sheet is 0; a route of two straights, three corners and a reservoir totals 90; two exits from the same cross give 10 then 50; exits from two different crosses give 10 each; `award` does not change the original sheet.
+- [x] 2.5 Run `./gradlew :core:test` and check that everything passes.
 
 ## 3. App: game session
 

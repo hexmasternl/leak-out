@@ -28,4 +28,13 @@ class StackLayoutTest {
         assertEquals(40.dp, metrics.previewSlotSize)
         assertEquals(50.dp, metrics.nextSlotSize)
     }
+
+    @Test
+    fun `every visible size fits 360dp minus the HUD`() {
+        val available = 360.dp - HudLayout.HEIGHT
+        for (visibleSize in 1..10) {
+            val metrics = StackLayout.metrics(available, visibleSize)
+            assertTrue("$visibleSize does not fit", metrics.totalHeight(visibleSize) <= available)
+        }
+    }
 }

@@ -1,21 +1,21 @@
 ## 1. Setup
 
-- [ ] 1.1 Check that `app-game-play-stack` is merged into `development` (`GameScreen`, `StackPanel`, `SectionDragState`, `PlaceholderBoard` exist). If not, stop and merge it first.
+- [x] 1.1 Check that `app-game-play-stack` is merged into `development` (`GameScreen`, `StackPanel`, `SectionDragState`, `PlaceholderBoard` exist). If not, stop and merge it first.
 - [x] 1.2 Add string resources: `hud_level` ("Level %1$d"), `hud_speed_description` ("Flow speed %1$s cells per second"), `hud_stars_description` ("%1$d of 3 stars"), `hud_score_description` ("Score %1$s"), `hud_pause_menu` ("Pause menu"), `pause_title` ("Paused"), `pause_resume`, `pause_restart`, `pause_exit`.
 - [x] 1.3 Add the `ic_cog.xml` cog wheel vector drawable, the `ic_star.xml` filled star vector (24 dp grid, design system section 8) and a small speed icon vector to `res/drawable`.
 - [x] 1.4 Add `Brass100`, `Brass300`, `Brass500` and `TextMuted` to `LeakOutColors` from `docs/design-system.md` sections 2.4 and 2.7, next to the existing Deep Flow tokens.
 
 ## 2. Game session state
 
-- [ ] 2.1 Add `GameSession(level, random)` in `app/.../ui/game/`, holding `stack`, `placed`, `score`, `flowSpeed`, `elapsedMs`, `paused` and `pauseMenuOpen` in Compose state, and a derived `stars` = `level.stars.starsFor(score)`. Start with score 0 and `flowSpeed = level.flow.cellsPerSecond`.
-- [ ] 2.2 Add `pause()` (idempotent), `resume()`, `restart()` (new stack, empty `placed`, score 0, speed and clock reset, not paused), `tick(dtMs)` (no change while paused) and `place(...)` (refused while paused).
-- [ ] 2.3 Unit test `GameSession`: `tick` does not move `elapsedMs` while paused; resume keeps stack, placed sections, score and clock; restart resets all of them and unpauses; `place` is refused while paused; pausing twice is the same as once.
-- [ ] 2.4 Unit test `GameSession.stars` with thresholds 100, 200 and 350: 0 stars at 0 and 99 points, 1 at 100 and 199, 2 at 200, 3 at 350 and above; 0 again after restart.
+- [x] 2.1 Add `GameSession(level, random)` in `app/.../ui/game/`, holding `stack`, `placed`, `score`, `flowSpeed`, `elapsedMs`, `paused` and `pauseMenuOpen` in Compose state, and a derived `stars` = `level.stars.starsFor(score)`. Start with score 0 and `flowSpeed = level.flow.cellsPerSecond`.
+- [x] 2.2 Add `pause()` (idempotent), `resume()`, `restart()` (new stack, empty `placed`, score 0, speed and clock reset, not paused), `tick(dtMs)` (no change while paused) and `place(...)` (refused while paused).
+- [x] 2.3 Unit test `GameSession`: `tick` does not move `elapsedMs` while paused; resume keeps stack, placed sections, score and clock; restart resets all of them and unpauses; `place` is refused while paused; pausing twice is the same as once.
+- [x] 2.4 Unit test `GameSession.stars` with thresholds 100, 200 and 350: 0 stars at 0 and 99 points, 1 at 100 and 199, 2 at 200, 3 at 350 and above; 0 again after restart.
 
 ## 3. HUD
 
 - [x] 3.1 Add `HudFormat` with `level(id)`, `speed(cellsPerSecond, locale)` (one decimal) and `score(value, locale)` (digit grouping). Unit test with the English and Dutch locales (0.8 / 0,8, 1,250 / 1.250).
-- [ ] 3.2 Add `HudLayout.HEIGHT` (48 dp) and a `StackLayoutTest` case: `visibleSize` 1 to 10 fits in 360 dp minus the HUD height.
+- [x] 3.2 Add `HudLayout.HEIGHT` (48 dp) and a `StackLayoutTest` case: `visibleSize` 1 to 10 fits in 360 dp minus the HUD height.
 - [x] 3.3 Add `HudStars(earned, modifier)`: a `Row` of three 20 dp `ic_star` icons 4 dp apart; not-earned stars in `TextMuted` without glow, earned stars in `Brass300` with a static radial `Brass500` glow at 45 % drawn behind them; a pop (scale 1.3 to 1 with the `motion.pop` spring) when a star becomes earned, `snap()` when `ANIMATOR_DURATION_SCALE == 0`; one merged content description "%1$d of 3 stars"; test tags `hud_star_1` to `hud_star_3` and a `StarEarned` semantics property per star.
 - [x] 3.4 Add `GameHud(levelId, flowSpeed, stars, score, onPause, modifier)`: a full-width `Row` of fixed height with the level, the speed, a weighted spacer, `HudStars`, the end-aligned score and a 48 dp cog wheel `IconButton`, with content descriptions and test tags.
 

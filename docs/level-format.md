@@ -1,6 +1,6 @@
 # Level file format
 
-Every level is one JSON file in `src/app/src/main/assets/levels/`, named `level_NNN.json` (`level_001.json`, `level_002.json`, ...). The files are parsed by `LevelParser` and checked by `LevelValidator` in the `core` module (`nl.hexmaster.leakout.core.level`). A unit test parses and validates every bundled file, so a broken level fails the build's tests.
+Every level is one JSON file in `src/app/src/main/assets/levels/`, named `level_NNN.json` (`level_001.json`, `level_002.json`, ...). The files are parsed by `LevelParser` and checked by `LevelValidator` in the `core` module (`nl.hexmaster.leakout.core.level`). A unit test parses and validates every bundled file, so a broken level fails the build's tests. A second, separate check confirms that every bundled level is actually [solvable](#solvability).
 
 ## Full example
 
@@ -102,6 +102,12 @@ A level is rejected unless, for both the start and the finish:
 ```
 
 The start and the finish may share a facing cell: one pipe section then connects them.
+
+## Solvability
+
+`LevelValidator` only checks a level's shape and values; it does not check that the level can be won. That is a separate concern, handled by `LevelSolver`: it searches the grid for a route of adjacent cells from the start's facing cell to the finish's facing cell, using only cells that lie inside the grid, are not blocked, and are not the start or finish cell itself. Cross (`X`) and reservoir (`RES`) sections are never required for such a route, so their weights do not affect the outcome.
+
+`LevelSolvabilityTest` runs the solver over every `level_NNN.json` file in the levels directory (the `leakout.levelsDir` system property, wired to the bundled assets folder) and fails per level, naming the file and why no route was found. So an unwinnable level fails `./gradlew :core:test` just like a parse or validation error, and pointing the property at another directory checks a different set of levels with the same suite.
 
 ## Stars
 

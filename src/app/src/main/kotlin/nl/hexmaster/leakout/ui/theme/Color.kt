@@ -54,9 +54,26 @@ object LeakOutColors {
     // 2.1 surface.deep
     val SurfaceDeep = Color(0xFF0C1A2A)
 
+    // 2.1 surface.raised
+    val SurfaceRaised = Color(0xFF19324A)
+
     // 2.3 Liquid (hero colour)
     val LiquidGlow = Color(0xFF9DF3FF)
     val Liquid300 = Color(0xFF5EE7FF)
     val Liquid500 = Color(0xFF19C6F2)
     val Liquid700 = Color(0xFF0A8DC2)
+    val Liquid900 = Color(0xFF065A82)
+
+    // 2.5 reservoir: the tank is violet, the liquid inside it stays aqua
+    val Reservoir300 = Color(0xFFC7B5FF)
+    val Reservoir500 = Color(0xFFA78BFA)
+    val Reservoir700 = Color(0xFF7C5CE6)
+
+    // 2.6 Steel (pipes). The pipe art itself lives in assets/pipes/*.svg, which use the same hex
+    // values; these tokens are for anything drawn around the pipes in code.
+    val Steel100 = Color(0xFFC9D6E2)
+    val Steel300 = Color(0xFF8FA3B8)
+    val Steel500 = Color(0xFF5C7189)
+    val Steel700 = Color(0xFF3A4B60)
+    val Steel900 = Color(0xFF22303F)
 }

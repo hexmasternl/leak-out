@@ -236,7 +236,7 @@ Left to right:
 
 1. **Level chip** – "LEVEL" `label.md` over the number in `numeric.md`.
 2. **Countdown ring** – 44 dp ring, 5 dp stroke. Track `line.subtle`; progress `liquid.500` with glow; the number inside in `numeric.md`. Turns `brass.500` under 5 s and `leak.500` under 2 s. Once the liquid flows, the ring becomes a **flow-speed dial**: a small liquid wave icon and the speed in "×1.0" format.
-3. **Score** – right-aligned, `numeric.md`, `text.primary`, with a small brass star when a star threshold is crossed.
+3. **Score** – right-aligned, `numeric.md`, `text.primary`. Three stars sit directly to its left: grey in `text.muted` until earned, then filled `brass.300` with a static brass glow, each popping in with `motion.pop` as the score crosses the level's star thresholds.
 4. **Pause** – 40 dp glass icon button.
 
 ### 5.4 Stack rail
@@ -296,7 +296,7 @@ Cell size is computed from the available width; the minimum is 44 dp so tap targ
 
 ### 6.3 Pipe rendering recipe
 
-Every pipe section is drawn procedurally from the same five layers, in this order. Sizes are relative to cell size *c*.
+Every pipe section is drawn from the same layers, in this order. Sizes are relative to cell size *c*. The steel layers and the reservoir tank are SVG assets in `app/src/main/assets/pipes/`, one per section (format in [pipe-assets.md](pipe-assets.md)). The liquid (layer 4) is drawn in code along the channels marked in those files, between the asset's `under` and `over` groups. Its gradient across the bore is drawn as three concentric strokes (`liquid.700` edge, `liquid.500` body, `liquid.300` core), so it looks the same on straights and elbows.
 
 1. **Body** – stroke `steel.500`, width 0.36 c, round joins.
 2. **Shadow side** – same path offset 1 dp down-right, stroke `steel.700`, width 0.36 c, drawn before the body (visible as a thin dark edge).

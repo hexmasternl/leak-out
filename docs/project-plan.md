@@ -15,8 +15,8 @@ This document is the working plan for building the game from an empty repository
 ### 1.1 Core loop
 
 1. A level starts. The board shows a grid, a **start** section with one open end and a **finish** section with one open end.
-2. The player sees a **stack** of upcoming pipe sections. Only the top section can be placed.
-3. The player taps a grid cell to place the top section there. The stack shifts and a new random section is appended at the bottom.
+2. The player sees a **stack** of upcoming pipe sections. Only the bottom section (the next section) can be placed.
+3. The player drags the next section from the bottom of the stack onto a grid cell. The stack shifts down and a new random section enters at the top.
 4. After a configured **initial delay**, liquid starts flowing out of the start section at the configured **flow speed**.
 5. The liquid follows the pipes. If it reaches the finish section the level is **won**. If it reaches the end of a pipe with nothing valid to flow into, it **leaks** and the level is **lost**.
 6. On a win the next level unlocks. On a loss the player can retry the same level.
@@ -70,15 +70,15 @@ Rules that follow from this:
 
 ### 1.6 The stack
 
-- A visible queue of `visibleSize` sections (default 5). The **top** section is the one that will be placed on the next tap.
-- After every placement the queue shifts up by one and a new section is drawn at random from the level's **pool** and appended at the bottom.
+- A visible queue of `visibleSize` sections (default 5), ordered from top to bottom. The **bottom** section is the next section and is the only one that can be placed.
+- After every accepted placement the queue shifts down by one and a new section is drawn at random from the level's **pool** and inserted at the top.
 - The pool is a weighted set. Straight and corner sections (`H`, `V`, `LT`, `LB`, `RT`, `RB`) always have a non-zero weight. `X` and `RES` are optional and may have weight zero.
-- Random draws use a seeded random generator so a level can be replayed deterministically in tests and, if wanted, as a "daily challenge".
+- Random draws use an injectable random source so tests can be deterministic. Levels do not store a seed, so normal attempts get a fresh stack order.
 
 ### 1.7 Placing sections
 
-- Tapping an **Empty** cell places the top section.
-- Tapping a cell that holds an **unfilled** pipe **replaces** it, if the level allows replacing (`allowReplace`, default `true`). Replacing costs a small time penalty (`replacePenaltyMs`, default 500 ms) during which no new placement is accepted, to stop the player from spamming replacements. This is the classic Pipe Mania rule and keeps the stack from becoming a dead end.
+- Dragging the next section onto an **Empty** cell places it there. Tap-to-place is not supported.
+- Dropping on a cell that holds an **unfilled** pipe **replaces** it, if the level allows replacing (`allowReplace`, default `true`). Replacing costs a small time penalty (`replacePenaltyMs`, default 500 ms) during which no new placement is accepted, to stop the player from spamming replacements. This is the classic Pipe Mania rule and keeps the stack from becoming a dead end.
 - Cells that are Start, Finish, Blocked, or contain a pipe that is filled or currently being filled cannot be changed.
 - There is no discard action; the only way to get rid of an unwanted section is to place it somewhere.
 
@@ -120,8 +120,8 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 
 1. **Title** – play, level select, settings (sound on/off).
 2. **Level select** – grid of level tiles.
-3. **Game** – board, stack on the side or bottom, countdown/speed indicator, pause button.
-4. **Pause overlay** – resume, restart, quit to level select.
+3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Back and going to the background also pause the game.
+4. **Pause dialog** – opened from the cog wheel: Resume, Restart, a separator and Exit to the main menu (welcome screen). Tapping outside does nothing; Back works as Resume.
 5. **Level complete / failed overlay** – score, stars, next / retry / level select.
 
 ---
@@ -288,13 +288,13 @@ class GameEngine(private val random: Random) {
 }
 ```
 
-`handle` is a pure function. The Android layer holds the current `GameState` in a `StateFlow` inside a `GameViewModel`, feeds `Tick` from the frame clock, and maps taps to `Place`.
+`handle` is a pure function. The Android layer holds the current `GameState` in a `StateFlow` inside a `GameViewModel`, feeds `Tick` from the frame clock, and maps accepted drag-and-drop placements to `Place`.
 
 Placement validation lives in the engine, not the UI:
 
 - Cell must be `Empty`, or `Pipe` with no filled channel and not the flow head's current cell, and `allowReplace` must be true.
 - `replaceLockUntilMs` must have passed.
-- On success: put the stack's top section in the cell, pop the stack, draw a new section from the pool, set the replace lock if it was a replacement.
+- On success: put the stack's next (bottom) section in the cell, advance the stack by removing the bottom section and drawing a new section at the top, set the replace lock if it was a replacement.
 
 ### 2.7 Level definition
 
@@ -335,16 +335,17 @@ A `docs/levels.md` sheet will track the intended difficulty curve (grid size, de
 ### 2.8 Rendering (app)
 
 - The board composable measures its available size, computes `cellSize = min(width / columns, height / rows)`, and centres the grid.
-- **Pipes** are drawn procedurally with `Path` and a thick stroke (pipe body) plus a thinner stroke (highlight) rather than bitmaps. Each section is one path; the cross is two paths; the reservoir is a straight path plus a rounded rectangle tank. Procedural drawing scales to any density and makes the liquid fill trivial.
-- **Liquid** is drawn as the same path, in the liquid colour, clipped by `progress`:
-  - Straight: a rectangle from the entry side grown to `progress`.
-  - Corner: two halves; first the leg from the entry port to the centre (`progress` 0–0.5), then the leg from the centre to the exit (0.5–1).
-  - Cross: only the active channel's path is filled.
-  - Reservoir: the tank fills bottom-up between `progress` 0.1–0.9, the outlet leg after that.
+- **Pipes** come from SVG assets, one per section, in `app/src/main/assets/pipes/` (format in [pipe-assets.md](pipe-assets.md)). `PipeArtParser` reads the small SVG subset they use, `PipeArtLibrary` turns them into Compose `Path`s once per process, and `PipeTile` scales them to any cell size. The art can be edited in an SVG editor without touching code.
+- **Liquid** is drawn in code on top of the art, along the channel centre lines marked in each SVG, from a `ChannelFill(progress, entry)` per channel. It starts at the entry side, so every channel flows both ways:
+  - Straight and corner: the first `progress` part of the channel, measured from the entry side.
+  - Cross: each channel has its own fill; the vertical liquid is hidden under the horizontal pipe (the SVG's `bridge`).
+  - Reservoir: the inlet stub fills during `progress` 0–0.1, the tank bottom-up during 0.1–0.9, the outlet stub after that.
+  - `LiquidTiming` turns time into progress: `cellsPerSecond × factor` sections per second, where the factor is `reservoirSpeedFactor` for `RES` and 1 otherwise.
 - Filled channels are drawn fully in liquid colour.
-- The **stack** is a vertical column of mini-boards using the same `PipeDrawer` at a smaller cell size; the top item is highlighted and slightly larger.
+- Debug builds have a **Pipe Lab** launcher entry that previews every section and plays the liquid with direction, flow speed and reservoir speed controls.
+- The **stack** is a vertical column of mini-boards using the same `PipeTile` at a smaller cell size; the top item is highlighted and slightly larger.
 - A **leak** shows a short particle burst at the exit port; a **win** flashes the finish cell.
-- Draw calls read only from an immutable `GameState`; no allocations in the draw loop beyond what Compose needs. Precompute one `Path` per section per cell size and cache it.
+- Draw calls read only from an immutable `GameState`; no allocations in the draw loop beyond what Compose needs. The pipe art is prepared once per section in view-box units and scaled per tile; only the liquid segment is rebuilt each frame, into a reused `Path`.
 
 ### 2.9 Testing strategy
 
@@ -477,3 +478,4 @@ Decisions assumed in this plan that you may want to change. All are data or smal
 | 5 | Can start/finish sit in the middle of the grid? | Yes, level designer's choice |
 | 6 | Package name | `nl.hexmaster.leakout` |
 | 7 | Is the liquid always a single stream? | Yes; the cross never splits the flow, it only lets the path cross itself |
+

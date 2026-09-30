@@ -11,7 +11,7 @@ metadata:
 
 Implement tasks from an OpenSpec change.
 
-**Worktree and branch first**: In this repository every change is implemented in its own git worktree on a `feature/<change-name>` branch cut from `development`. Before step 1, follow the `openspec-work-on-change` skill to create or resume that worktree, then run all steps below inside it. That skill also owns committing (frequent, logical chunks) and the final push.
+**Worktree and branch first**: In this repository every change is implemented in its own git worktree on a `feature/<change-name>` branch cut from `development`. Before step 1, follow the `openspec-work-on-change` skill to create or resume that worktree, then run all steps below inside it. That skill also owns committing (frequent, logical chunks), the final push, and opening the pull request into `development`.
 
 **Input**: Optionally specify a change name. If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
@@ -86,7 +86,7 @@ Implement tasks from an OpenSpec change.
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
-   - If all done: suggest archive
+   - If all done: return to the `openspec-work-on-change` skill for the final commit, push and pull request into `development`, then suggest archive
    - If paused: explain why and wait for guidance
 
 **Output During Implementation**
@@ -117,7 +117,7 @@ Working on task 4/7: <task description>
 - [x] Task 2
 ...
 
-All tasks complete! Ready to archive this change.
+All tasks complete! Commits pushed and pull request opened into development (see openspec-work-on-change). Ready to archive this change after merge.
 ```
 
 **Output On Pause (Issue Encountered)**

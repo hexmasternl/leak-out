@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Debug-only preview of the pipe sections and the liquid animation. -->
+    <string name="pipe_lab_name" translatable="false">Pipe Lab</string>
+</resources>

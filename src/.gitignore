@@ -11,6 +11,8 @@ local.properties
 .idea/
 *.iml
 captures/
+# Build output that Eclipse-based IDEs and the VS Code Java/Kotlin extensions write next to the sources
+bin/
 
 # Signing material: never commit
 *.jks

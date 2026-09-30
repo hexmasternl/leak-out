@@ -1,14 +1,14 @@
 ---
 name: openspec-work-on-change
-description: Work on an OpenSpec change in its own git worktree and feature branch. Use when the user wants to start, resume, or finish implementing an OpenSpec change, and whenever an OpenSpec change is applied. Sets up the worktree under ../leak-out-worktrees/<change-name>, branches feature/<change-name> from development (creating development from main if needed), commits frequently, and pushes when done.
+description: Work on an OpenSpec change in its own git worktree and feature branch. Use when the user wants to start, resume, or finish implementing an OpenSpec change, and whenever an OpenSpec change is applied. Sets up the worktree under ../leak-out-worktrees/<change-name>, branches feature/<change-name> from development (creating development from main if needed), commits frequently, pushes when done, and opens a pull request into development.
 license: MIT
-compatibility: Requires git and the openspec CLI. Works from PowerShell or Git Bash on Windows.
+compatibility: Requires git, the GitHub CLI (`gh`) and the openspec CLI. Works from PowerShell or Git Bash on Windows.
 metadata:
   author: hexmasternl
   version: "1.0"
 ---
 
-Work on an OpenSpec change inside a dedicated git worktree, on a feature branch that follows the repository's branch flow. This skill wraps the implementation work of `openspec-apply-change`: it decides **where** and **on which branch** the work happens, then hands the actual task implementation to that skill, and finally commits and pushes the result.
+Work on an OpenSpec change inside a dedicated git worktree, on a feature branch that follows the repository's branch flow. This skill wraps the implementation work of `openspec-apply-change`: it decides **where** and **on which branch** the work happens, then hands the actual task implementation to that skill, and finally commits, pushes and opens a pull request into `development`.
 
 **Input**: Optionally specify a change name. If omitted, infer it from conversation context. If it is vague or ambiguous you MUST prompt for the available changes.
 
@@ -160,7 +160,29 @@ branch="feature/$change"
      ```
    - Confirm the push landed: `git -C "<worktree-path>" status -sb` should show the branch in sync with `origin/feature/<change-name>`.
 
-   Then report and stop. Merging into `development`, opening a pull request, and archiving the change with `openspec-archive-change` are separate actions the user triggers. Do not merge, do not delete the branch, and do not remove the worktree on your own.
+9. **Open the pull request into `development`**
+
+   Once the final push has landed, open a pull request from `feature/<change-name>` into `development` with the GitHub CLI:
+
+   ```bash
+   gh pr create --base development --head "feature/<change-name>" \
+     --title "<change-name>: <short summary of the change>" \
+     --body "<body>"
+   ```
+
+   Run it from inside the worktree (or add `--repo hexmasternl/leak-out`). Build the body from the OpenSpec change artifacts:
+   - A one-paragraph summary taken from `openspec/changes/<change-name>/proposal.md`
+   - A checklist of the completed tasks from `tasks.md`
+   - Which tests were run and their result (or why they were not run)
+   - A closing line: `Archive with openspec-archive-change after merge.`
+
+   Rules:
+   - The base branch is always `development`, never `main`.
+   - If a pull request for the branch already exists, do not create a second one: report the existing URL (`gh pr view --json url,state`) and, if the description is stale, update it with `gh pr edit`.
+   - Leave the pull request open. Do not merge it, do not delete the branch, and do not remove the worktree on your own.
+   - If `gh` is unavailable or unauthenticated, report that and give the user the compare URL `https://github.com/hexmasternl/leak-out/compare/development...feature/<change-name>?expand=1` instead of failing silently.
+
+   Report the pull request URL, then stop. Merging and archiving the change with `openspec-archive-change` remain the user's call.
 
 ## Output on start
 
@@ -183,9 +205,10 @@ Proceeding with implementation (see openspec-apply-change).
 **Commits:**  <n> commits this session
 **Progress:** <m>/<m> tasks complete ✓
 **Tests:**    <passed | failed: details | not run: reason>
+**Pull request:** <url>  (feature/<change-name> → development)
 
 Next steps (your call):
-- Open a pull request feature/<change-name> → development
+- Review and merge the pull request into development
 - Archive the change with openspec-archive-change after merge
 - Remove the worktree: git worktree remove "<worktree-path>"
 ```
@@ -200,4 +223,4 @@ Next steps (your call):
 - If `git worktree add` fails because the branch is checked out elsewhere, stop and report where. Do not force it.
 - Small, frequent commits beat one large commit. When in doubt, commit.
 - Never `git push --force` to any branch of this repository.
-- Do not merge into `development`, open PRs, or archive the change unless the user asks.
+- Do not merge into `development` or archive the change unless the user asks. Opening the pull request is expected; merging it is not.

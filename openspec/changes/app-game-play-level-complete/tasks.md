@@ -4,11 +4,11 @@
 
 ## 2. Core: final score
 
-- [ ] 2.1 Add `Points.UNUSED_SECTION_PENALTY = 3` to `core.score.Points`.
-- [ ] 2.2 Add `FinalScore(earned, unusedSections, total)` in `core.score` with `unusedCount`, `penalty` and `FinalScore.of(earned, board)`: collect every `Cell.Pipe` with `liquidEntered == false` in row-major order and set `total = (earned - penalty).coerceAtLeast(0)`.
-- [ ] 2.3 Unit test `FinalScore`: a board with four unused sections gives a penalty of 12 and a total of earned minus 12; no unused sections gives penalty 0 and total equal to earned; earned 10 with five unused sections gives total 0; a cross with `liquidEntered` is not unused; start, finish and blocked tiles are never unused; the unused positions come in row-major order.
-- [ ] 2.4 Unit test the stars from the total with `StarBenchmarks(70, 110, 160)`: totals 108, 160 and 0 give 1, 3 and 0 stars.
-- [ ] 2.5 Run `./gradlew :core:test` and check that everything passes.
+- [x] 2.1 Add `Points.UNUSED_SECTION_PENALTY = 3` to `core.score.Points`.
+- [x] 2.2 Add `FinalScore(earned, unusedSections, total)` in `core.score` with `unusedCount`, `penalty` and `FinalScore.of(earned, board)`: collect every `Cell.Pipe` with `liquidEntered == false` in row-major order and set `total = (earned - penalty).coerceAtLeast(0)`.
+- [x] 2.3 Unit test `FinalScore`: a board with four unused sections gives a penalty of 12 and a total of earned minus 12; no unused sections gives penalty 0 and total equal to earned; earned 10 with five unused sections gives total 0; a cross with `liquidEntered` is not unused; start, finish and blocked tiles are never unused; the unused positions come in row-major order.
+- [x] 2.4 Unit test the stars from the total with `StarBenchmarks(70, 110, 160)`: totals 108, 160 and 0 give 1, 3 and 0 stars.
+- [x] 2.5 Run `./gradlew :core:test` and check that everything passes.
 
 ## 3. App: win timeline
 

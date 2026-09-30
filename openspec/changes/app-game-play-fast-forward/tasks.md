@@ -39,17 +39,17 @@
 
 ## 6. Instrumented tests (emulator)
 
-- [ ] 6.1 With a scripted level and a seeded stack, placing the section that completes the route shows the button; its bounds end 16 dp from the right and bottom edges of the screen and are at least 56 dp square.
-- [ ] 6.2 Without a complete route, no button is shown. Replacing a route section so that the route breaks hides the button again.
-- [ ] 6.3 Tapping the button sets `flowTimeScale` to 10 and shows the slow button ("Normal speed", state "Fast forward on"). Tapping the slow button sets `flowTimeScale` back to 1 and shows the fast forward button again, and placing works again.
-- [ ] 6.4 After fast forward is on: dragging the next section does nothing and no tile is highlighted; pan and pinch still move the field.
-- [ ] 6.5 Pause and resume keep fast forward on. Restart hides the button and sets `flowTimeScale` back to 1.
-- [ ] 6.6 Run `./gradlew :app:testDebugUnitTest :app:connectedDebugAndroidTest` on the emulator and record the results.
+- [x] 6.1 With a scripted level and a seeded stack, placing the section that completes the route shows the button; its bounds end 16 dp from the right and bottom edges of the screen and are at least 56 dp square.
+- [x] 6.2 Without a complete route, no button is shown. Replacing a route section so that the route breaks hides the button again.
+- [x] 6.3 Tapping the button sets `flowTimeScale` to 10 and shows the slow button ("Normal speed", state "Fast forward on"). Tapping the slow button sets `flowTimeScale` back to 1 and shows the fast forward button again, and placing works again.
+- [x] 6.4 After fast forward is on: dragging the next section does nothing and no tile is highlighted; pan and pinch still move the field.
+- [x] 6.5 Pause and resume keep fast forward on. Restart hides the button and sets `flowTimeScale` back to 1.
+- [x] 6.6 Run `./gradlew :app:testDebugUnitTest :app:connectedDebugAndroidTest` on the emulator and record the results. Result: `:core:test` and `:app:testDebugUnitTest` pass; `FastForwardTest` (6.1–6.5, 5 tests) passes on the Pixel_10 AVD (Android 17). The full `connectedDebugAndroidTest` run of the other suites was skipped at the user's request.
 
 ## 7. Wrap up
 
-- [ ] 7.1 Update `docs/project-plan.md`:
+- [x] 7.1 Update `docs/project-plan.md`:
   - section 1.8: once the route is complete, a fast forward button runs the countdown and the flow at 10x and locks placing; it then becomes a slow button that restores the normal speed and unlocks placing;
   - section 1.11: the game screen has a fast forward button at the bottom right;
   - section 2.5: the flow step uses `dt × flowTimeScale` and loops over whole cells.
-- [ ] 7.2 Run `openspec validate app-game-play-fast-forward` and fix any issues.
+- [x] 7.2 Run `openspec validate app-game-play-fast-forward` and fix any issues.

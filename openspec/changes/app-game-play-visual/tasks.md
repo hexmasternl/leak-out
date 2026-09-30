@@ -7,9 +7,9 @@
 
 ## 2. One pipe drawing
 
-- [ ] 2.1 Move the drawing out of `PipeTile` into `internal fun DrawScope.drawPipe(art, rect, fills, scratch)`: translate to the rect, scale by `rect.minDimension / 100` (centred), draw `under`, liquid, `over`, then `glass`; make `LiquidScratch` internal
-- [ ] 2.2 `PipeTile` calls `drawPipe` with the whole canvas; keep its tag and `pipeFills` semantics
-- [ ] 2.3 Instrumented tests in `PipeTileTest`: every section still loads and draws; the glass is drawn (the specular streak region of `H` is brighter than the same art drawn without glass); liquid tests still pass with the glass on top
+- [x] 2.1 Move the drawing out of `PipeTile` into `internal fun DrawScope.drawPipe(art, rect, fills, scratch)`: translate to the rect, scale by `rect.minDimension / 100` (centred), draw `under`, liquid, `over`, then `glass`; make `LiquidScratch` internal
+- [x] 2.2 `PipeTile` calls `drawPipe` with the whole canvas; keep its tag and `pipeFills` semantics
+- [x] 2.3 Instrumented tests in `PipeTileTest`: every section still loads and draws; the glass is drawn (the specular streak region of `H` is brighter than the same art drawn without glass); liquid tests still pass with the glass on top
 
 ## 3. Stack and dragged copy
 

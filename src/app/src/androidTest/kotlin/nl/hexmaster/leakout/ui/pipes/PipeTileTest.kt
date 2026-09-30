@@ -1,14 +1,21 @@
 package nl.hexmaster.leakout.ui.pipes
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PixelMap
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.captureToImage
@@ -18,6 +25,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.system.measureTimeMillis
 import nl.hexmaster.leakout.core.level.PipeSection
@@ -163,5 +171,88 @@ class PipeTileTest {
         val library = PipeArtLibrary { assets.open(it) }
         val ms = measureTimeMillis { library.preloadAll() }
         assertTrue("Loading took $ms ms", ms < 100)
+    }
+
+    private val assets get() = InstrumentationRegistry.getInstrumentation().targetContext.assets
+
+    /** The app's assets, but every glass overlay is an empty `glass` group. */
+    private val withoutGlass = PipeArtLibrary { name ->
+        if (name.endsWith("-glass.svg")) {
+            """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g id="glass"/></svg>""".byteInputStream()
+        } else {
+            assets.open(name)
+        }
+    }
+
+    /** Mean brightness (sum of the channels) of the box given in fractions of the image. */
+    private fun PixelMap.brightnessIn(x0: Float, x1: Float, y0: Float, y1: Float): Float {
+        var sum = 0f
+        var count = 0
+        for (x in (x0 * width).roundToInt() until (x1 * width).roundToInt()) {
+            for (y in (y0 * height).roundToInt() until (y1 * height).roundToInt()) {
+                val c = this[x, y]
+                sum += c.red + c.green + c.blue
+                count++
+            }
+        }
+        return sum / count
+    }
+
+    /** The [index]th H tile on screen: 0 with the real glass, 1 without. */
+    private fun tile(index: Int): PixelMap =
+        compose.onAllNodesWithTag(pipeTileTag(PipeSection.H))[index].captureToImage().toPixelMap()
+
+    @Test
+    fun glassIsDrawnOnTop() {
+        compose.setContent {
+            Row {
+                PipeTile(PipeSection.H, Modifier.size(120.dp), fills)
+                CompositionLocalProvider(LocalPipeArtLibrary provides withoutGlass) {
+                    PipeTile(PipeSection.H, Modifier.size(120.dp), fills)
+                }
+            }
+        }
+        val glass = tile(0)
+        val plain = tile(1)
+        // The specular streak of h-glass.svg runs along y = 42, over the bore, between the flanges.
+        val streakWithGlass = glass.brightnessIn(0.2f, 0.8f, 0.41f, 0.43f)
+        val streakWithout = plain.brightnessIn(0.2f, 0.8f, 0.41f, 0.43f)
+        assertTrue("streak $streakWithGlass vs $streakWithout", streakWithGlass > streakWithout + 0.3f)
+        // Above the liquid too: a full channel still shows the streak.
+        fills = mapOf("channel-main" to ChannelFill.full(Side.LEFT))
+        compose.waitForIdle()
+        val wet = tile(0)
+        val wetPlain = tile(1)
+        assertTrue(
+            "glass over the liquid",
+            wet.brightnessIn(0.2f, 0.8f, 0.41f, 0.43f) > wetPlain.brightnessIn(0.2f, 0.8f, 0.41f, 0.43f) + 0.3f,
+        )
+    }
+
+    @Test
+    fun drawPipeInsideAnotherCanvasMatchesTheTile() {
+        val canvasTag = "canvas"
+        compose.setContent {
+            val library = rememberPipeArtLibrary()
+            val scratch = remember { LiquidScratch() }
+            Row {
+                PipeTile(PipeSection.RB, Modifier.size(120.dp))
+                // A wider canvas with the cell drawn into its right-hand square, as the field does.
+                Canvas(Modifier.size(200.dp, 120.dp).testTag(canvasTag)) {
+                    val cell = size.height
+                    drawPipe(library.prepared(PipeSection.RB), Rect(Offset(size.width - cell, 0f), Size(cell, cell)), scratch = scratch)
+                }
+            }
+        }
+        val tile = pixels(PipeSection.RB)
+        val canvas = compose.onNodeWithTag(canvasTag).captureToImage().toPixelMap()
+        val offset = canvas.width - tile.width
+        var different = 0
+        for (x in 0 until tile.width) for (y in 0 until tile.height) {
+            val a = tile[x, y]
+            val b = canvas[x + offset, y]
+            if (abs(a.red - b.red) + abs(a.green - b.green) + abs(a.blue - b.blue) > 0.05f) different++
+        }
+        assertTrue("$different pixels differ", different < tile.width * tile.height / 100)
     }
 }

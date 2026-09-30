@@ -26,7 +26,7 @@
 
 ## 5. Docs and verification
 
-- [ ] 5.1 Update `docs/pipe-assets.md`: the `<id>-glass.svg` overlay files, their `glass` group, and the layer order under → liquid → over → glass; mention that the game and the Pipe Lab draw the same art
+- [x] 5.1 Update `docs/pipe-assets.md`: the `<id>-glass.svg` overlay files, their `glass` group, and the layer order under → liquid → over → glass; mention that the game and the Pipe Lab draw the same art
 - [ ] 5.2 Run `./gradlew :app:testDebugUnitTest` and `./gradlew :core:test` from `src/` and make sure they pass
 - [ ] 5.3 Run the affected instrumented tests (`PipeTileTest`, `PipeLabScreenTest`, `PlayingFieldTest`, `GameScreenTest` and the other game screen tests touched above) on the emulator and make sure they pass
 - [ ] 5.4 Check the game and the Pipe Lab on the emulator: stack, dragged copy and placed pipes show the new art with the glass

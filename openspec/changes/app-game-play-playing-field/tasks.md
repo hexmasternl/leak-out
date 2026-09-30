@@ -1,18 +1,18 @@
 ## 1. Setup
 
-- [ ] 1.1 Check that `app-game-play-stack` and `app-game-play-hud` are merged into `development` (`GameScreen`, `GameSession`, `SectionDragState`, `SectionDropTarget`, `PlaceholderBoard`, `PipeSectionGlyph` exist). If not, stop and merge them first.
+- [x] 1.1 Check that `app-game-play-stack` and `app-game-play-hud` are merged into `development` (`GameScreen`, `GameSession`, `SectionDragState`, `SectionDropTarget`, `PlaceholderBoard`, `PipeSectionGlyph` exist). If not, stop and merge them first.
 
 ## 2. Core: board model
 
-- [ ] 2.1 Create the package `nl.hexmaster.leakout.core.board` with the sealed `Cell` (`Empty`, `Blocked`, `Start(openSide)`, `Finish(openSide)`, `Pipe(section, liquidEntered = false)`).
-- [ ] 2.2 Add the immutable `Board(grid, cells)` with `get` (empty for unknown positions), `with(position, cell)`, `markLiquidEntered(position)` and `Board.from(level)` (start, finish and blocked cells from the level).
-- [ ] 2.3 Unit test `Board`: `from(level)` puts start, finish and blocked cells in place and leaves the rest empty; `with` does not change the original; `markLiquidEntered` sets the flag on a pipe only.
+- [x] 2.1 Create the package `nl.hexmaster.leakout.core.board` with the sealed `Cell` (`Empty`, `Blocked`, `Start(openSide)`, `Finish(openSide)`, `Pipe(section, liquidEntered = false)`).
+- [x] 2.2 Add the immutable `Board(grid, cells)` with `get` (empty for unknown positions), `with(position, cell)`, `markLiquidEntered(position)` and `Board.from(level)` (start, finish and blocked cells from the level).
+- [x] 2.3 Unit test `Board`: `from(level)` puts start, finish and blocked cells in place and leaves the rest empty; `with` does not change the original; `markLiquidEntered` sets the flag on a pipe only.
 
 ## 3. Core: placement rule
 
-- [ ] 3.1 Add `PlacementCheck` (`Place`, `Replace`, `Rejected(reason)`) and `Placement.check(board, rules, at, nowMs, lockUntilMs)` in the order from the design: outside, locked, empty, fixed cells, liquid entered, replace not allowed, replace.
-- [ ] 3.2 Unit test `Placement.check`: empty → `Place`; blocked, start and finish → rejected; pipe without liquid → `Replace`; pipe with liquid → rejected; `allowReplace = false` → rejected; outside the grid → rejected; `nowMs` before `lockUntilMs` → rejected for every cell, and accepted again at `lockUntilMs`.
-- [ ] 3.3 Run `./gradlew :core:test` and check that everything passes.
+- [x] 3.1 Add `PlacementCheck` (`Place`, `Replace`, `Rejected(reason)`) and `Placement.check(board, rules, at, nowMs, lockUntilMs)` in the order from the design: outside, locked, empty, fixed cells, liquid entered, replace not allowed, replace.
+- [x] 3.2 Unit test `Placement.check`: empty → `Place`; blocked, start and finish → rejected; pipe without liquid → `Replace`; pipe with liquid → rejected; `allowReplace = false` → rejected; outside the grid → rejected; `nowMs` before `lockUntilMs` → rejected for every cell, and accepted again at `lockUntilMs`.
+- [x] 3.3 Run `./gradlew :core:test` and check that everything passes.
 
 ## 4. App: game session
 

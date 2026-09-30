@@ -170,8 +170,8 @@ leak-out/
     │   └── src/main/kotlin/nl/hexmaster/leakout/core/
     │       ├── model/              Direction, PipeSection, Cell, Board, Level
     │       ├── stack/              PipeStack, WeightedPool
-    │       ├── flow/               FlowSimulation, FlowState, FlowEvent
-    │       ├── game/               GameEngine (ties board + stack + flow), GameState, GameCommand
+    │       ├── flow/               FlowStep, Channel, ChannelUse
+    │       ├── engine/             GameEngine (ties board + stack + flow), GameState, GameCommand, FlowSimulation, FlowState
     │       └── level/              LevelDefinition (serializable), LevelParser, LevelValidator
     └── app/                        Android application module
         └── src/main/kotlin/nl/hexmaster/leakout/
@@ -237,74 +237,87 @@ The board is immutable; every command returns a new `GameState`. That keeps the 
 
 ### 2.5 Flow simulation
 
-The liquid is a single **head** that moves through the network one cell at a time.
+The liquid is a single **head** that moves through the network one cell at a time (`core.engine.FlowState`, `FlowSimulation`). Sides are `core.level.Side`; a channel is `core.flow.Channel` (`HORIZONTAL` or `VERTICAL` for a cross, `SINGLE` for every other section), and `used` holds the channels the liquid has run through, as `ChannelUse(position, channel)`.
 
 ```kotlin
 sealed interface FlowState {
+    val used: Set<ChannelUse>
     data class Waiting(val remainingMs: Long) : FlowState
     data class Flowing(
         val position: Position,
-        val entry: Direction,        // side the liquid entered this cell from
+        val entry: Side,             // side the liquid entered this cell from
         val channel: Channel,
-        val progress: Double         // 0.0 at entry port, 1.0 at exit port
+        val progress: Double,        // 0.0 at the entry side, 1.0 at the exit side
+        override val used: Set<ChannelUse>,
     ) : FlowState
-    data class Won(val at: Position) : FlowState
-    data class Leaked(val at: Position, val exit: Direction) : FlowState
+    data class Ended(override val used: Set<ChannelUse>) : FlowState   // won or lost, see GameState.outcome
 }
 ```
 
-`FlowSimulation.step(state, dtMs): Pair<FlowState, List<FlowEvent>>`
+`FlowSimulation.advance(state, flowDtMs): GameState` walks from cell border to cell border:
 
-1. **Waiting**: subtract `dt`. When it reaches zero, move to `Flowing` at the start cell, with `entry = start.exit.opposite()` and a synthetic channel so the start pipe visibly fills too.
-2. **Flowing**: `progress += dt / 1000 * cellsPerSecond * section.speedFactor * rampFactor`. While `progress < 1.0` nothing else happens.
-3. When `progress >= 1.0` the head leaves the cell:
-   - Mark the channel as filled in the board (`Pipe.filled += channel`); emit `SectionFilled`.
-   - `exit = channel.exitFor(entry)`, `next = board.neighbour(position, exit)`.
-   - `next == null` or `Empty` or `Blocked` → **Leaked**.
-   - `Finish` → **Won** if `finish.entry == exit.opposite()`, else **Leaked**.
-   - `Pipe` → `channel = section.channelFor(exit.opposite())`. If `null` (no port on that side) or the channel is already filled → **Leaked**. Otherwise continue `Flowing` in `next` with `entry = exit.opposite()` and `progress` carrying the overshoot (`progress - 1.0`) so speed stays smooth across cell borders.
-4. **Won** / **Leaked** are terminal; the engine stops ticking and the UI shows the overlay.
+1. **Waiting**: subtract the flow time. When the countdown reaches zero, switch to `Flowing` at the start cell with `entry = start.openSide.opposite()` and a `SINGLE` channel, so the start visibly fills too, and use the leftover time.
+2. **Flowing**: `speed = cellsPerSecond × (1 + speedRampPerCell × sectionsLeft)`, times `reservoirSpeedFactor` inside a reservoir. `sectionsLeft` is the number of exits from placed sections so far. If the remaining time does not reach the border, add `time × speed` to `progress` and stop. A progress within 1e-9 of the border counts as reaching it.
+3. Otherwise use up the time to the border and leave the cell, in this order:
+   - Add the channel to `used`.
+   - Award the section's points (`ScoreSheet.award`, none for the start) and add an `Award(position, points, clockMs)` for the popup.
+   - `FlowStep.after(board, position, exit, used)` decides: `Enter` → continue `Flowing` in the next cell at progress 0 and mark it `liquidEntered` on the board at once (so it can no longer be replaced), then loop with the remaining time; `Finish` → `Outcome.Won`; `Leak` → `Outcome.Lost(at, side)`. After a win or a loss the flow is `Ended` and the remaining time is dropped.
 
-The step runs on `flowDt = dt × flowTimeScale` (1, or 10 with fast forward) for both the countdown and the head; the game clock, the replace lock and the points popups keep `dt`. At 10x one frame can cross more than one cell, so step 3 loops while `progress >= 1.0` and no cell is skipped.
+The flow runs on `flowDt = dt × flowTimeScale` (1, or 10 with fast forward) for both the countdown and the head; the game clock, the replace lock and the points popups keep `dt`. Because the loop walks every border inside one tick, a long tick (or 10x speed) never skips a cell, and 1 ms ticks give the same outcome and score as one long tick.
 
-Because the head is the only mutable thing and every branch is an explicit state transition, the whole simulation is covered by a few dozen unit tests (see 2.9).
+The flow and the complete-route check (`RouteTracer`) share `PipeSection.exitFor` and `FlowStep`, so every board the route check calls complete is won by the flow.
 
 ### 2.6 Game engine and commands
 
+All game rules live in one engine in `core.engine`. It holds one immutable `GameState` per attempt and changes it only through commands.
+
 ```kotlin
 data class GameState(
+    val attempt: Int,                // 1, 2, …: screen state that must reset is keyed on it
     val level: Level,
     val board: Board,
     val stack: PipeStack,
     val flow: FlowState,
-    val score: Int,
+    val sheet: ScoreSheet,
+    val awards: List<Award>,         // Award(position, points, atMs), dropped after Award.VISIBLE_MS
     val replaceLockUntilMs: Long,
-    val elapsedMs: Long,
-    val paused: Boolean
-)
+    val clockMs: Long,
+    val paused: Boolean,
+    val fastForward: Boolean,
+    val routeComplete: Boolean,
+    val outcome: Outcome,            // Playing, Won(atMs), Lost(at, side, atMs)
+) {
+    // Derived, so they cannot drift: score, stars, sectionsLeft, flowSpeed (the HUD speed,
+    // without the reservoir factor), flowTimeScale and isStopped (paused, won or lost).
+}
 
 sealed interface GameCommand {
+    data class Start(val level: Level) : GameCommand
     data class Place(val at: Position) : GameCommand
-    data object StartFlowNow : GameCommand
     data object Pause : GameCommand
     data object Resume : GameCommand
     data object Restart : GameCommand
+    data object FastForward : GameCommand
+    data object NormalSpeed : GameCommand
     data class Tick(val dtMs: Long) : GameCommand
 }
 
 class GameEngine(private val random: Random) {
-    fun newGame(level: Level): GameState
+    fun start(level: Level, previous: GameState? = null): GameState
     fun handle(state: GameState, command: GameCommand): GameState
+    fun canPlace(state: GameState, at: Position): Boolean
 }
 ```
 
-`handle` is a pure function. The Android layer holds the current `GameState` in a `StateFlow` inside a `GameViewModel`, feeds `Tick` from the frame clock, and maps accepted drag-and-drop placements to `Place`.
+`handle` is a reducer: a refused command returns the same instance, so "accepted" is `new !== old`. The only impure input is the `Random` that draws the stack. The rules per command:
 
-Placement validation lives in the engine, not the UI:
+- **Start / Restart**: `start(level, previous)` builds a fresh state (the level's board, a new stack, the countdown at the start delay, score 0, clock 0, playing) with `attempt` one higher. It is the only constructor path, so a restart cannot forget a field. Accepted at any time.
+- **Pause**: only while playing and not paused. **Resume**: only while paused. While paused a tick changes nothing.
+- **FastForward**: only on a complete route, while playing and not paused. **NormalSpeed** turns it off again (the slow button) and unlocks placing.
+- **Place**: the stack's next section goes on the tile when `canPlace` says so. `canPlace` and `Place` share one check: not stopped, not fast forward, and `Placement.check` (empty tile: place; unentered section with replacing allowed: replace; the replace lock must have passed). On success the stack moves down and draws a new section, a replacement starts the replace lock, and `RouteTracer` sets `routeComplete`.
+- **Tick(dt)**: refused when `dt <= 0` or paused. Moves the clock, drops awards older than `Award.VISIBLE_MS`, and while playing runs `FlowSimulation.advance(state, dt × flowTimeScale)`. After a win or a loss only the clock moves, for the end effects.
 
-- Cell must be `Empty`, or `Pipe` with no filled channel and not the flow head's current cell, and `allowReplace` must be true.
-- `replaceLockUntilMs` must have passed.
-- On success: put the stack's next (bottom) section in the cell, advance the stack by removing the bottom section and drawing a new section at the top, set the replace lock if it was a replacement.
+On the Android side, `GameSession` holds the current `GameState` in a Compose `mutableStateOf`, sends commands with `send(command): Boolean` and feeds `Tick` from the frame clock. It keeps no game data of its own. The views read the state through `derivedStateOf`, so a clock tick recomposes only what changed, and the stack and the field are keyed on `attempt`, so a new attempt starts them fresh. A drop sends `Place` and succeeds exactly when the engine accepts it.
 
 ### 2.7 Level definition
 

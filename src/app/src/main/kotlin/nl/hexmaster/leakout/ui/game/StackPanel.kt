@@ -46,7 +46,12 @@ object GameScreenTags {
 }
 
 @Composable
-fun StackPanel(stack: PipeStack, dragState: SectionDragState, modifier: Modifier = Modifier) {
+fun StackPanel(
+    stack: PipeStack,
+    dragState: SectionDragState,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
     BoxWithConstraints(
         modifier = modifier
             .fillMaxHeight()
@@ -67,6 +72,7 @@ fun StackPanel(stack: PipeStack, dragState: SectionDragState, modifier: Modifier
                 StackSlot(
                     section = section,
                     isNext = isNext,
+                    draggable = isNext && enabled,
                     isEmpty = isNext && dragState.draggedSection == section && dragState.isDragActive,
                     size = if (isNext) metrics.nextSlotSize else metrics.previewSlotSize,
                     dragState = dragState,
@@ -82,6 +88,7 @@ fun StackPanel(stack: PipeStack, dragState: SectionDragState, modifier: Modifier
 private fun StackSlot(
     section: PipeSection,
     isNext: Boolean,
+    draggable: Boolean,
     isEmpty: Boolean,
     size: androidx.compose.ui.unit.Dp,
     dragState: SectionDragState,
@@ -110,7 +117,7 @@ private fun StackSlot(
         )
         .padding(4.dp)
         .then(
-            if (isNext) {
+            if (draggable) {
                 Modifier.pointerInput(section, dragState) {
                     detectDragGestures(
                         onDragStart = { offset ->

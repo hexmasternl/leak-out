@@ -54,6 +54,11 @@ class SectionDragState {
         isAnimatingBack = true
     }
 
+    /** Ends any drag without trying to place it, for example when the game pauses. */
+    fun cancel() {
+        if (isDragActive) cancelDrag()
+    }
+
     fun finishReturn() = clear()
 
     private fun clear() {

@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -35,11 +36,13 @@ import nl.hexmaster.leakout.ui.theme.LeakOutColors
 @Composable
 fun PlaceholderBoard(
     level: Level,
-    placed: MutableMap<Position, PipeSection>,
+    placed: Map<Position, PipeSection>,
+    onPlace: (Position, PipeSection) -> Boolean,
     modifier: Modifier = Modifier,
 ): SectionDropTarget {
     var containerBounds by remember { mutableStateOf(Rect.Zero) }
     val blocked = remember(level) { level.blocked.toSet() }
+    val currentOnPlace by rememberUpdatedState(onPlace)
     fun boardGeometry(): BoardGeometry = boardGeometry(containerBounds, level)
     val target = remember(level, placed) {
         SectionDropTarget { section, position ->
@@ -52,8 +55,7 @@ fun PlaceholderBoard(
             if (cell in blocked || cell == level.start.position || cell == level.finish.position || placed.containsKey(cell)) {
                 return@SectionDropTarget false
             }
-            placed[cell] = section
-            true
+            currentOnPlace(cell, section)
         }
     }
 

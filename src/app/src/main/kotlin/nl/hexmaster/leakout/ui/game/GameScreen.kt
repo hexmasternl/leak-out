@@ -1,68 +1,124 @@
 package nl.hexmaster.leakout.ui.game
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import kotlin.math.roundToInt
 import kotlin.random.Random
 import nl.hexmaster.leakout.core.level.Level
-import nl.hexmaster.leakout.core.level.PipeSection
-import nl.hexmaster.leakout.core.level.Position
-import nl.hexmaster.leakout.core.stack.PipeStack
-import nl.hexmaster.leakout.core.stack.WeightedPool
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 
+/**
+ * The game screen: the HUD across the top, the stack on the left and the board below the HUD.
+ * [session] owns the running level; tests pass their own to read and set its values.
+ */
 @Composable
-fun GameScreen(level: Level, random: Random = Random.Default) {
-    val pool = remember(level) { WeightedPool(level.stack.weights) }
-    var stack by remember(level, random) { mutableStateOf(PipeStack.create(level.stack, random)) }
-    val dragState = remember { SectionDragState() }
-    val placed = remember { mutableStateMapOf<Position, PipeSection>() }
+fun GameScreen(
+    level: Level,
+    onExit: () -> Unit,
+    random: Random = Random.Default,
+    session: GameSession = remember(level, random) { GameSession(level, random) },
+) {
+    val dragState = remember(session) { SectionDragState() }
+
+    GameClock(session)
+    LaunchedEffect(session, session.paused) {
+        if (session.paused) dragState.cancel()
+    }
+    BackHandler(enabled = !session.pauseMenuOpen) { session.pause() }
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { session.pause() }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(LeakOutColors.SurfaceDeep)
-            .padding(WindowInsets.safeDrawing.asPaddingValues())
-            .padding(12.dp)
             .testTag(GameScreenTags.SCREEN),
     ) {
-        Row(Modifier.fillMaxSize()) {
-            StackPanel(stack, dragState, Modifier.width(StackLayout.metrics(360.dp, level.stack.visibleSize).columnWidth + 16.dp))
-            val target = PlaceholderBoard(level, placed, Modifier.padding(start = 12.dp).weight(1f))
-            dragState.dropTarget = SectionDropTarget { section, position ->
-                val accepted = target.tryPlace(section, position)
-                if (accepted) stack = stack.afterPlacement(pool, random)
-                accepted
+        Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+            GameHud(
+                levelId = level.id,
+                flowSpeed = session.flowSpeed,
+                stars = session.stars,
+                score = session.score,
+                onPause = session::pause,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Row(Modifier.weight(1f).fillMaxWidth().padding(12.dp)) {
+                StackPanel(
+                    stack = session.stack,
+                    dragState = dragState,
+                    enabled = !session.paused,
+                    modifier = Modifier.width(
+                        StackLayout.metrics(360.dp - HudLayout.HEIGHT, level.stack.visibleSize).columnWidth + 16.dp,
+                    ),
+                )
+                val target = PlaceholderBoard(
+                    level = level,
+                    placed = session.placed,
+                    onPlace = session::place,
+                    modifier = Modifier.padding(start = 12.dp).weight(1f),
+                )
+                dragState.dropTarget = target
             }
         }
         DragOverlay(dragState)
     }
+
+    if (session.pauseMenuOpen) {
+        PauseDialog(
+            onResume = session::resume,
+            onRestart = session::restart,
+            onExit = onExit,
+        )
+    }
 }
 
+/**
+ * Runs the game clock while the session is not paused. The loop ends on pause and starts again on
+ * resume with a first delta of 0, so no time from the pause leaks in. It is an infinite animation,
+ * so Compose tests only run it when they drive the clock themselves (`autoAdvance = false`).
+ */
+@Composable
+private fun GameClock(session: GameSession) {
+    LaunchedEffect(session, session.paused) {
+        if (session.paused) return@LaunchedEffect
+        var last = -1L
+        while (true) {
+            withInfiniteAnimationFrameNanos { now ->
+                if (last < 0) last = now
+                val dtMs = (now - last) / 1_000_000
+                last += dtMs * 1_000_000
+                session.tick(dtMs)
+            }
+        }
+    }
+}
 @Composable
 private fun DragOverlay(dragState: SectionDragState) {
     val section = dragState.draggedSection ?: return

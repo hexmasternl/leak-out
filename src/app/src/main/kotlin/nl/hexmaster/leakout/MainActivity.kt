@@ -22,6 +22,12 @@ import nl.hexmaster.leakout.ui.splash.SplashGate
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import nl.hexmaster.leakout.ui.title.WelcomeScreen
 
+/** The two screens until the play menu and level library bring their own navigation. */
+private sealed interface Screen {
+    data object Welcome : Screen
+    data class Game(val level: Level) : Screen
+}
+
 class MainActivity : ComponentActivity() {
     private val firstLevel: Level by lazy { loadLevelOne() }
 
@@ -39,12 +45,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             LeakOutTheme {
                 SplashGate {
-                    var showGame by remember { mutableStateOf(false) }
-                    if (showGame) {
-                        GameScreen(level = firstLevel)
-                    } else {
-                        WelcomeScreen(
-                            onPlay = { showGame = true },
+                    var screen by remember { mutableStateOf<Screen>(Screen.Welcome) }
+                    when (val current = screen) {
+                        is Screen.Game -> GameScreen(level = current.level, onExit = { screen = Screen.Welcome })
+                        Screen.Welcome -> WelcomeScreen(
+                            onPlay = { screen = Screen.Game(firstLevel) },
                             onSettings = { /* TODO: navigate to settings once that screen exists. */ },
                             onExit = { finishAffinity() },
                         )

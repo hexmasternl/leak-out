@@ -2,20 +2,17 @@ package nl.hexmaster.leakout.ui.game
 
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
-import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.core.engine.Award
 
-/** The points of one award, shown on its tile from [startedAtMs] (game time) for [PopupTiming.TOTAL_MS]. */
-data class PointsPopup(val id: Long, val position: Position, val points: Int, val startedAtMs: Long) {
-    /** How long the popup has been shown at game time [nowMs]. */
-    fun ageAt(nowMs: Long): Long = nowMs - startedAtMs
-}
-
-/** How long a points popup fades in, holds and fades out, in game milliseconds. */
+/**
+ * How long a points popup (one [Award]) fades in, holds and fades out, in game milliseconds. The
+ * popup lasts exactly as long as the engine keeps the award: [TOTAL_MS] is [Award.VISIBLE_MS].
+ */
 object PopupTiming {
     const val FADE_IN_MS = 150L
     const val HOLD_MS = 500L
     const val FADE_OUT_MS = 350L
-    const val TOTAL_MS = FADE_IN_MS + HOLD_MS + FADE_OUT_MS
+    const val TOTAL_MS = Award.VISIBLE_MS
 
     /** The largest rise, in tiles, reached at the end of the popup. */
     const val MAX_RISE = 0.25f

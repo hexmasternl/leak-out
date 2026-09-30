@@ -30,18 +30,18 @@
 
 ## 4. App: game session
 
-- [ ] 4.1 Rewrite `GameSession(level, engine)` to hold `state` in `mutableStateOf`, with `send(command): Boolean`, `canPlace(at)`, `showPauseDialog` and `showLostDialog`.
-- [ ] 4.2 Remove `liquidExited`, `liquidLeaked`, `pauseMenuOpen` and the stored score, board, outcome, route and fast forward fields; make `skipLeakEffect()` send a `Tick` for the rest of the leak effect.
-- [ ] 4.3 Point `PopupTiming.TOTAL_MS` at `Award.VISIBLE_MS` and read popups from `state.awards` and `state.clockMs`.
-- [ ] 4.4 Move the `GameSession` unit tests that called `liquidExited` or `liquidLeaked` to engine-driven tests; add tests that `send` returns false for refused commands and that the dialogs are derived correctly.
+- [x] 4.1 Rewrite `GameSession(level, engine)` to hold `state` in `mutableStateOf`, with `send(command): Boolean`, `canPlace(at)`, `showPauseDialog` and `showLostDialog`.
+- [x] 4.2 Remove `liquidExited`, `liquidLeaked`, `pauseMenuOpen` and the stored score, board, outcome, route and fast forward fields; make `skipLeakEffect()` send a `Tick` for the rest of the leak effect.
+- [x] 4.3 Point `PopupTiming.TOTAL_MS` at `Award.VISIBLE_MS` and read popups from `state.awards` and `state.clockMs`.
+- [x] 4.4 Move the `GameSession` unit tests that called `liquidExited` or `liquidLeaked` to engine-driven tests; add tests that `send` returns false for refused commands and that the dialogs are derived correctly.
 
 ## 5. App: views render from the state
 
-- [ ] 5.1 In `GameScreen`, pass `state.stack`, `state.board`, `state.flow`, `state.awards`, `state.outcome` and the clock to the views, and wire the drop target, cog wheel, fast forward button, dialogs, `BackHandler` and `ON_STOP` to `send(...)`.
-- [ ] 5.2 Update `GameHud`, `StackPanel`, `PlayingField`, `FastForwardButton`, `PauseDialog` and `LevelLostDialog` call sites so none of them reads game data from anywhere but `GameState`.
-- [ ] 5.3 Change the frame loop to `LaunchedEffect(state.paused)` calling `send(Tick(dt))`, with a first delta of 0.
-- [ ] 5.4 Wrap the stack column and the playing field in `key(state.attempt)` and add `LaunchedEffect(state.attempt) { dragState.cancel() }`.
-- [ ] 5.5 Pass the head position and filled channels to `PlayingField` for a later liquid drawing; draw nothing new yet.
+- [x] 5.1 In `GameScreen`, pass `state.stack`, `state.board`, `state.flow`, `state.awards`, `state.outcome` and the clock to the views, and wire the drop target, cog wheel, fast forward button, dialogs, `BackHandler` and `ON_STOP` to `send(...)`.
+- [x] 5.2 Update `GameHud`, `StackPanel`, `PlayingField`, `FastForwardButton`, `PauseDialog` and `LevelLostDialog` call sites so none of them reads game data from anywhere but `GameState`.
+- [x] 5.3 Change the frame loop to `LaunchedEffect(state.paused)` calling `send(Tick(dt))`, with a first delta of 0.
+- [x] 5.4 Wrap the stack column and the playing field in `key(state.attempt)` and add `LaunchedEffect(state.attempt) { dragState.cancel() }`.
+- [x] 5.5 Pass the head position and filled channels to `PlayingField` for a later liquid drawing; draw nothing new yet.
 
 ## 6. Tests and docs
 

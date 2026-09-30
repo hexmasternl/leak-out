@@ -56,6 +56,9 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import nl.hexmaster.leakout.core.board.Board
 import nl.hexmaster.leakout.core.board.Cell
+import nl.hexmaster.leakout.core.engine.Award
+import nl.hexmaster.leakout.core.flow.Channel
+import nl.hexmaster.leakout.core.flow.ChannelUse
 import nl.hexmaster.leakout.core.level.GridSize
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
@@ -76,6 +79,14 @@ var SemanticsPropertyReceiver.pointsPopupText by PointsPopupText
 /** Semantics on the field cell the pipe leaks from: the side it leaks through. A test hook only. */
 val LeakAt = SemanticsPropertyKey<Side>("LeakAt")
 var SemanticsPropertyReceiver.leakAt by LeakAt
+
+/** Semantics flag on the field cell the liquid head is in. A test hook only, until the liquid is drawn. */
+val LiquidHead = SemanticsPropertyKey<Boolean>("LiquidHead")
+var SemanticsPropertyReceiver.liquidHead by LiquidHead
+
+/** Semantics on a field cell: the channels the liquid has run through there. A test hook only, until the liquid is drawn. */
+val FilledChannels = SemanticsPropertyKey<Set<Channel>>("FilledChannels")
+var SemanticsPropertyReceiver.filledChannels by FilledChannels
 
 /**
  * The screen state of the playing field: the viewport and where the field sits on the screen.
@@ -119,12 +130,15 @@ fun rememberPlayingFieldState(grid: GridSize, start: Position): PlayingFieldStat
  * finger and zooms with two within the viewport's limits. It never rotates. All input is ignored
  * while [enabled] is false, for example during a section drag or while paused.
  *
- * The [popups] are drawn on their tiles above everything else, timed by the game clock
- * [elapsedMs]. Both are lambdas read only while drawing, so a new award or a clock tick redraws
- * the canvas without recomposing the grid.
+ * The [awards] are drawn as points popups on their tiles above everything else, timed by the game
+ * clock [nowMs]. The clock is a lambda read only while drawing, so a clock tick redraws the canvas
+ * without recomposing the grid.
  *
  * When the pipe has leaked at [leakAt] through [leakSide], liquid spurts out of that side, timed by
  * [lossAgeMs] (read only while drawing), above the pipes and below the popups.
+ *
+ * [head] is the tile the liquid head is in and [filled] the channels the liquid has run through.
+ * They are not drawn yet; the liquid drawing will use them.
  */
 @Composable
 fun PlayingField(
@@ -133,11 +147,13 @@ fun PlayingField(
     highlighted: Position?,
     enabled: Boolean,
     modifier: Modifier = Modifier,
-    popups: () -> List<PointsPopup> = { emptyList() },
-    elapsedMs: () -> Long = { 0L },
+    awards: List<Award> = emptyList(),
+    nowMs: () -> Long = { 0L },
     leakAt: Position? = null,
     leakSide: Side? = null,
     lossAgeMs: () -> Long = { 0L },
+    head: Position? = null,
+    filled: Set<ChannelUse> = emptySet(),
 ) {
     val density = LocalDensity.current
     val currentEnabled by rememberUpdatedState(enabled)
@@ -158,9 +174,9 @@ fun PlayingField(
             for (position in cells) drawCell(board[position], viewport.cellRect(position))
             highlighted?.let { drawHighlight(viewport.cellRect(it)) }
             if (leakAt != null && leakSide != null) drawLeak(viewport.cellRect(leakAt), leakSide, leakFrame(lossAgeMs()))
-            drawPopups(popups(), elapsedMs(), viewport, textMeasurer)
+            drawPopups(awards, nowMs(), viewport, textMeasurer)
         }
-        CellSemantics(board, viewport, highlighted, popups, leakAt?.let { at -> leakSide?.let { at to it } })
+        CellSemantics(board, viewport, highlighted, awards, leakAt?.let { at -> leakSide?.let { at to it } }, head, filled)
     }
 }
 
@@ -173,18 +189,23 @@ private fun CellSemantics(
     board: Board,
     viewport: FieldViewport,
     highlighted: Position?,
-    popups: () -> List<PointsPopup>,
+    awards: List<Award>,
     leak: Pair<Position, Side>?,
+    head: Position?,
+    filled: Set<ChannelUse>,
 ) {
     val density = LocalDensity.current
     val cellDp = with(density) { viewport.cellPx.toDp() }
-    val popupTexts = popups().groupBy({ it.position }, { PointsFormat.text(it.points) })
+    val popupTexts = awards.groupBy({ it.position }, { PointsFormat.text(it.points) })
+    val filledByCell = filled.groupBy({ it.position }, { it.channel })
     for (position in viewport.visibleCells()) {
         val rect = viewport.cellRect(position)
         val description = board[position].describe()
         val isHighlighted = position == highlighted
         val texts = popupTexts[position].orEmpty()
         val leakSide = leak?.takeIf { it.first == position }?.second
+        val isHead = position == head
+        val channels = filledByCell[position].orEmpty().toSet()
         Box(
             Modifier
                 .offset { IntOffset(rect.left.roundToInt(), rect.top.roundToInt()) }
@@ -195,6 +216,8 @@ private fun CellSemantics(
                     fieldCellHighlighted = isHighlighted
                     pointsPopupText = texts
                     if (leakSide != null) this.leakAt = leakSide
+                    liquidHead = isHead
+                    filledChannels = channels
                 },
         )
     }
@@ -322,7 +345,7 @@ private const val LEAK_ROWS = 3
  * under a white fill, centred on the tile and lifted by its rise. Off-field popups are skipped but
  * keep their timing, since the age comes from [nowMs].
  */
-private fun DrawScope.drawPopups(popups: List<PointsPopup>, nowMs: Long, viewport: FieldViewport, textMeasurer: TextMeasurer) {
+private fun DrawScope.drawPopups(popups: List<Award>, nowMs: Long, viewport: FieldViewport, textMeasurer: TextMeasurer) {
     if (popups.isEmpty()) return
     val field = Rect(Offset.Zero, size)
     val style = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Bold, fontSize = (viewport.cellPx * POPUP_TEXT_FRACTION).toSp())

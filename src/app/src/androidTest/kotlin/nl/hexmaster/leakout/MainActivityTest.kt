@@ -8,6 +8,9 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import nl.hexmaster.leakout.ui.game.GameScreenTags
+import nl.hexmaster.leakout.ui.game.HudTags
+import nl.hexmaster.leakout.ui.game.PauseTags
 import nl.hexmaster.leakout.ui.splash.SplashScreenTags
 import nl.hexmaster.leakout.ui.splash.SplashTiming
 import nl.hexmaster.leakout.ui.title.WelcomeScreenTags
@@ -80,6 +83,21 @@ class MainActivityTest {
         val config = compose.activity.resources.configuration
         assertEquals(Configuration.ORIENTATION_LANDSCAPE, config.orientation)
         assertTrue(config.screenWidthDp > config.screenHeightDp)
+    }
+
+    @Test
+    fun exitFromThePauseMenuShowsTheWelcomeScreen() {
+        skipSplash()
+        compose.onNodeWithTag(WelcomeScreenTags.PLAY).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(GameScreenTags.SCREEN).assertIsDisplayed()
+
+        compose.onNodeWithTag(HudTags.PAUSE).performClick()
+        compose.onNodeWithTag(PauseTags.EXIT).performClick()
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(GameScreenTags.SCREEN).assertDoesNotExist()
+        compose.onNodeWithTag(WelcomeScreenTags.SCREEN).assertIsDisplayed()
     }
 
     @Test

@@ -15,8 +15,8 @@ This document is the working plan for building the game from an empty repository
 ### 1.1 Core loop
 
 1. A level starts. The board shows a grid, a **start** section with one open end and a **finish** section with one open end.
-2. The player sees a **stack** of upcoming pipe sections. Only the top section can be placed.
-3. The player taps a grid cell to place the top section there. The stack shifts and a new random section is appended at the bottom.
+2. The player sees a **stack** of upcoming pipe sections. Only the bottom section (the next section) can be placed.
+3. The player drags the next section from the bottom of the stack onto a grid cell. The stack shifts down and a new random section enters at the top.
 4. After a configured **initial delay**, liquid starts flowing out of the start section at the configured **flow speed**.
 5. The liquid follows the pipes. If it reaches the finish section the level is **won**. If it reaches the end of a pipe with nothing valid to flow into, it **leaks** and the level is **lost**.
 6. On a win the next level unlocks. On a loss the player can retry the same level.
@@ -70,15 +70,15 @@ Rules that follow from this:
 
 ### 1.6 The stack
 
-- A visible queue of `visibleSize` sections (default 5). The **top** section is the one that will be placed on the next tap.
-- After every placement the queue shifts up by one and a new section is drawn at random from the level's **pool** and appended at the bottom.
+- A visible queue of `visibleSize` sections (default 5), ordered from top to bottom. The **bottom** section is the next section and is the only one that can be placed.
+- After every accepted placement the queue shifts down by one and a new section is drawn at random from the level's **pool** and inserted at the top.
 - The pool is a weighted set. Straight and corner sections (`H`, `V`, `LT`, `LB`, `RT`, `RB`) always have a non-zero weight. `X` and `RES` are optional and may have weight zero.
-- Random draws use a seeded random generator so a level can be replayed deterministically in tests and, if wanted, as a "daily challenge".
+- Random draws use an injectable random source so tests can be deterministic. Levels do not store a seed, so normal attempts get a fresh stack order.
 
 ### 1.7 Placing sections
 
-- Tapping an **Empty** cell places the top section.
-- Tapping a cell that holds an **unfilled** pipe **replaces** it, if the level allows replacing (`allowReplace`, default `true`). Replacing costs a small time penalty (`replacePenaltyMs`, default 500 ms) during which no new placement is accepted, to stop the player from spamming replacements. This is the classic Pipe Mania rule and keeps the stack from becoming a dead end.
+- Dragging the next section onto an **Empty** cell places it there. Tap-to-place is not supported.
+- Dropping on a cell that holds an **unfilled** pipe **replaces** it, if the level allows replacing (`allowReplace`, default `true`). Replacing costs a small time penalty (`replacePenaltyMs`, default 500 ms) during which no new placement is accepted, to stop the player from spamming replacements. This is the classic Pipe Mania rule and keeps the stack from becoming a dead end.
 - Cells that are Start, Finish, Blocked, or contain a pipe that is filled or currently being filled cannot be changed.
 - There is no discard action; the only way to get rid of an unwanted section is to place it somewhere.
 
@@ -120,8 +120,8 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 
 1. **Title** – play, level select, settings (sound on/off).
 2. **Level select** – grid of level tiles.
-3. **Game** – board, stack on the side or bottom, countdown/speed indicator, pause button.
-4. **Pause overlay** – resume, restart, quit to level select.
+3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Back and going to the background also pause the game.
+4. **Pause dialog** – opened from the cog wheel: Resume, Restart, a separator and Exit to the main menu (welcome screen). Tapping outside does nothing; Back works as Resume.
 5. **Level complete / failed overlay** – score, stars, next / retry / level select.
 
 ---
@@ -288,13 +288,13 @@ class GameEngine(private val random: Random) {
 }
 ```
 
-`handle` is a pure function. The Android layer holds the current `GameState` in a `StateFlow` inside a `GameViewModel`, feeds `Tick` from the frame clock, and maps taps to `Place`.
+`handle` is a pure function. The Android layer holds the current `GameState` in a `StateFlow` inside a `GameViewModel`, feeds `Tick` from the frame clock, and maps accepted drag-and-drop placements to `Place`.
 
 Placement validation lives in the engine, not the UI:
 
 - Cell must be `Empty`, or `Pipe` with no filled channel and not the flow head's current cell, and `allowReplace` must be true.
 - `replaceLockUntilMs` must have passed.
-- On success: put the stack's top section in the cell, pop the stack, draw a new section from the pool, set the replace lock if it was a replacement.
+- On success: put the stack's next (bottom) section in the cell, advance the stack by removing the bottom section and drawing a new section at the top, set the replace lock if it was a replacement.
 
 ### 2.7 Level definition
 
@@ -478,3 +478,4 @@ Decisions assumed in this plan that you may want to change. All are data or smal
 | 5 | Can start/finish sit in the middle of the grid? | Yes, level designer's choice |
 | 6 | Package name | `nl.hexmaster.leakout` |
 | 7 | Is the liquid always a single stream? | Yes; the cross never splits the flow, it only lets the path cross itself |
+

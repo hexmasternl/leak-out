@@ -24,13 +24,16 @@ sealed interface RecordResult {
  * anything else leaves the record as it is.
  */
 object LevelHistoryRules {
-    const val MIN_STARS = 1
+    const val MIN_STARS = 0
     const val MAX_STARS = 3
 
     /** What recording [score] and [stars] on [levelId] over [current] does. */
     data class Recording(val result: RecordResult, val record: LevelHistory?)
 
-    /** Rejects a negative [score] and [stars] outside 1-3: a finished level earns at least one star. */
+    /**
+     * Rejects a negative [score] and [stars] outside 0-3. A win below the one-star threshold earns
+     * 0 stars and still counts as finished.
+     */
     fun validate(score: Int, stars: Int) {
         require(score >= 0) { "A score cannot be negative, was $score" }
         require(stars in MIN_STARS..MAX_STARS) { "Stars must be $MIN_STARS-$MAX_STARS, were $stars" }

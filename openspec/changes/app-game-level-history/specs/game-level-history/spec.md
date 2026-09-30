@@ -23,6 +23,11 @@ The system SHALL create a history record when a level is finished successfully a
 - **THEN** a record for level 3 is stored with highscore 240 and 2 stars
 - **AND** the recording result is reported as a first completion
 
+#### Scenario: Win below the one-star threshold is recorded
+- **WHEN** level 3 is finished with a score below its one-star threshold, earning 0 stars, and level 3 has no record
+- **THEN** a record for level 3 is stored with that score and 0 stars
+- **AND** level 3 counts as finished
+
 ### Requirement: Highscore is only replaced by a better score
 The system SHALL replace the stored highscore and stars of a level only when a later successful game scores strictly higher than the stored highscore. The highscore and stars SHALL be updated together.
 
@@ -52,14 +57,14 @@ The system SHALL NOT create or change any history record when a game ends in a l
 - **THEN** the existing record is unchanged
 
 ### Requirement: Recorded values are validated
-The system SHALL reject a recording whose score is negative or whose star count is not between 1 and 3, and SHALL leave the stored history unchanged.
+The system SHALL reject a recording whose score is negative or whose star count is not between 0 and 3, and SHALL leave the stored history unchanged.
 
 #### Scenario: Negative score
 - **WHEN** a result with a score of -5 is recorded
 - **THEN** the recording is rejected and no record is created or changed
 
 #### Scenario: Star count out of range
-- **WHEN** a result with 0 stars or 4 stars is recorded
+- **WHEN** a result with -1 stars or 4 stars is recorded
 - **THEN** the recording is rejected and no record is created or changed
 
 ### Requirement: History can be read back

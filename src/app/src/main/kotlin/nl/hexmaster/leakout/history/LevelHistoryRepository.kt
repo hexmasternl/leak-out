@@ -11,7 +11,7 @@ interface LevelHistoryRepository {
     /**
      * Records a win on [levelId] with [score] and [stars] by the [LevelHistoryRules], atomically.
      *
-     * @throws IllegalArgumentException for a negative score or stars outside 1-3; nothing changes.
+     * @throws IllegalArgumentException for a negative score or stars outside 0-3; nothing changes.
      */
     suspend fun recordCompletion(levelId: Int, score: Int, stars: Int): RecordResult
 

@@ -25,7 +25,7 @@ Leak Out is an Android app (Kotlin, Jetpack Compose) planned in `docs/project-pl
 |--------|------|-------|
 | `level_id` | INTEGER, primary key | Matches the level model id; no foreign key, levels live in JSON |
 | `highscore` | INTEGER NOT NULL | Best score, >= 0 |
-| `stars` | INTEGER NOT NULL | 1-3, the stars earned with `highscore` |
+| `stars` | INTEGER NOT NULL | 0-3, the stars earned with `highscore` |
 
 A row exists only for finished levels, so "finished" means "row exists". The primary key guarantees one row per level.
 
@@ -35,7 +35,7 @@ A row exists only for finished levels, so "finished" means "row exists". The pri
 
 **Reads.** `observe(levelId): Flow<LevelHistory?>`, `observeAll(): Flow<List<LevelHistory>>` and a suspend `get(levelId)`. Compose collects the Flows, so level select refreshes after a win.
 
-**Input validation.** The repository rejects a negative score and stars outside 1-3 with `IllegalArgumentException`; a finished level always earns at least one star. Callers derive stars from the level's thresholds before recording.
+**Input validation.** The repository rejects a negative score and stars outside 0-3 with `IllegalArgumentException`. A win below the one-star threshold earns 0 stars and is still recorded as finished, so it unlocks the next level. Callers derive stars from the level's thresholds before recording.
 
 **Layering.** `LevelHistory` (domain model) and `LevelHistoryRepository` (interface) in the app's domain layer; `LevelHistoryEntity`, `LevelHistoryDao`, `LeakOutDatabase` in the data layer. Tests use a fake repository for the UI and an in-memory Room database for the DAO.
 

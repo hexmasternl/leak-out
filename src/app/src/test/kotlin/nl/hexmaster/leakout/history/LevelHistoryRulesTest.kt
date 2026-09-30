@@ -62,8 +62,10 @@ class LevelHistoryRulesTest {
     }
 
     @Test
-    fun `a score of 0 with one star is valid`() = runTest {
-        assertEquals(RecordResult.FirstCompletion, history.recordCompletion(1, 0, 1))
+    fun `a win with 0 points and 0 stars still counts as finished`() = runTest {
+        assertEquals(RecordResult.FirstCompletion, history.recordCompletion(1, 0, 0))
+        assertTrue(history.isFinished(1))
+        assertEquals(RecordResult.NewHighscore(previous = 0), history.recordCompletion(1, 20, 1))
     }
 
     @Test
@@ -82,9 +84,9 @@ class LevelHistoryRulesTest {
     }
 
     @Test
-    fun `0 and 4 stars are rejected and leave the history unchanged`() = runTest {
+    fun `-1 and 4 stars are rejected and leave the history unchanged`() = runTest {
         history.recordCompletion(3, 240, 2)
-        for (stars in listOf(0, 4)) {
+        for (stars in listOf(-1, 4)) {
             assertRejected { history.recordCompletion(3, 999, stars) }
             assertRejected { history.recordCompletion(5, 999, stars) }
         }

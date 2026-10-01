@@ -205,26 +205,137 @@ class GameEngineTest {
     }
 
     @Test
-    fun `replacing an unentered section starts the replace lock`() {
-        val level = engineLevel(rules = PlacementRules(allowReplace = true, replacePenaltyMs = 500))
+    fun `replacing an unentered section empties the tile and starts a replacement`() {
+        val level = engineLevel(section = null, rules = PlacementRules(allowReplace = true, replacePenaltyMs = 500))
         val placed = engine.send(engine.start(level), Tick(200), Place(p(1, 1)))
         assertEquals(0L, placed.replaceLockUntilMs)
+        val old = (placed.board[p(1, 1)] as Cell.Pipe).section
+        val incoming = placed.stack.next
         val replaced = engine.handle(placed, Place(p(1, 1)))
         assertNotSame(placed, replaced)
+        assertEquals(Cell.Empty, replaced.board[p(1, 1)])
+        assertEquals(Replacement(p(1, 1), old, incoming, 200L, 700L), replaced.replacement)
+        assertEquals(placed.stack.sections.dropLast(1), replaced.stack.sections.drop(1))
         assertEquals(700L, replaced.replaceLockUntilMs)
         assertSame(replaced, engine.handle(replaced, Place(p(3, 3))))
         assertFalse(engine.canPlace(replaced, p(3, 3)))
     }
 
     @Test
-    fun `the replace lock runs out with the game clock`() {
-        val level = engineLevel(rules = PlacementRules(allowReplace = true, replacePenaltyMs = 500))
-        val replaced = engine.send(engine.start(level), Place(p(1, 1)), Place(p(1, 1)))
-        val almost = engine.handle(replaced, Tick(499))
+    fun `the replacement lands exactly when the penalty has passed on the game clock`() {
+        val level = engineLevel(section = null, rules = PlacementRules(allowReplace = true, replacePenaltyMs = 3_000))
+        val placed = engine.handle(engine.start(level), Place(p(1, 1)))
+        val incoming = placed.stack.next
+        val replaced = engine.handle(placed, Place(p(1, 1)))
+        val almost = engine.handle(replaced, Tick(2_999))
+        assertEquals(Cell.Empty, almost.board[p(1, 1)])
         assertFalse(engine.canPlace(almost, p(3, 3)))
-        val after = engine.handle(almost, Tick(1))
-        assertTrue(engine.canPlace(after, p(3, 3)))
-        assertNotSame(after, engine.handle(after, Place(p(3, 3))))
+        val landed = engine.handle(almost, Tick(1))
+        assertEquals(Cell.Pipe(incoming), landed.board[p(1, 1)])
+        assertEquals(null, landed.replacement)
+        assertTrue(engine.canPlace(landed, p(3, 3)))
+        assertNotSame(landed, engine.handle(landed, Place(p(3, 3))))
+    }
+
+    @Test
+    fun `a replacement within a long tick lands at its landing time`() {
+        val level = engineLevel(rules = PlacementRules(allowReplace = true, replacePenaltyMs = 3_000))
+        val replaced = engine.send(engine.start(level), Place(p(1, 1)), Place(p(1, 1)))
+        val after = engine.handle(replaced, Tick(5_000))
+        assertEquals(Cell.Pipe(PipeSection.H), after.board[p(1, 1)])
+        assertEquals(null, after.replacement)
+        assertEquals(5_000L, after.clockMs)
+    }
+
+    @Test
+    fun `replacing with a zero penalty swaps the sections at once`() {
+        val level = engineLevel(section = null, rules = PlacementRules(allowReplace = true, replacePenaltyMs = 0))
+        val placed = engine.handle(engine.start(level), Place(p(1, 1)))
+        val incoming = placed.stack.next
+        val replaced = engine.handle(placed, Place(p(1, 1)))
+        assertEquals(Cell.Pipe(incoming), replaced.board[p(1, 1)])
+        assertEquals(null, replaced.replacement)
+        assertTrue(engine.canPlace(replaced, p(3, 3)))
+    }
+
+    @Test
+    fun `pausing freezes a replacement`() {
+        val level = engineLevel(rules = PlacementRules(allowReplace = true, replacePenaltyMs = 3_000))
+        val replaced = engine.send(engine.start(level), Place(p(1, 1)), Place(p(1, 1)), Tick(1_000), Pause, Tick(10_000), Resume)
+        assertEquals(1_000L, replaced.clockMs)
+        assertEquals(Cell.Empty, replaced.board[p(1, 1)])
+        assertEquals(Cell.Empty, engine.handle(replaced, Tick(1_999)).board[p(1, 1)])
+        assertEquals(Cell.Pipe(PipeSection.H), engine.handle(replaced, Tick(2_000)).board[p(1, 1)])
+    }
+
+    @Test
+    fun `restart drops a replacement`() {
+        val level = engineLevel(rules = PlacementRules(allowReplace = true, replacePenaltyMs = 3_000))
+        val restarted = engine.send(engine.start(level), Place(p(1, 1)), Place(p(1, 1)), Restart)
+        assertEquals(null, restarted.replacement)
+        assertEquals(Board.from(level), restarted.board)
+        assertEquals(Board.from(level), engine.handle(restarted, Tick(5_000)).board)
+    }
+
+    @Test
+    fun `liquid reaching the tile of a replacement leaks there and nothing lands`() {
+        // The head is halfway through the H at (1, 1) at 1 cell per second; the next tile (2, 1) is being replaced.
+        val level = engineLevel(rules = PlacementRules(allowReplace = true, replacePenaltyMs = 3_000))
+        val flowing = engine.start(level).withPipes(ROUTE).headAt(p(1, 1), Side.LEFT, 0.5)
+        val replaced = engine.handle(flowing, Place(p(2, 1)))
+        assertEquals(Cell.Empty, replaced.board[p(2, 1)])
+        val lost = engine.handle(replaced, Tick(5_000))
+        val outcome = assertIs<Outcome.Lost>(lost.outcome)
+        assertEquals(p(1, 1), outcome.at)
+        assertEquals(Side.RIGHT, outcome.side)
+        assertEquals(null, lost.replacement)
+        assertEquals(Cell.Empty, lost.board[p(2, 1)])
+    }
+
+    @Test
+    fun `a replacement that lands before the liquid arrives carries it on`() {
+        // The liquid starts after 10 s; the LB at (2, 1) is replaced by another LB that lands at 3 s.
+        val level = engineLevel(section = PipeSection.LB, rules = PlacementRules(allowReplace = true, replacePenaltyMs = 3_000))
+        val replaced = engine.handle(engine.start(level).withPipes(ROUTE), Place(p(2, 1)))
+        assertFalse(replaced.routeComplete)
+        val landed = engine.handle(replaced, Tick(3_000))
+        assertTrue(landed.routeComplete)
+        assertIs<Outcome.Won>(engine.runToEnd(landed).outcome)
+    }
+
+    @Test
+    fun `a loss elsewhere ends a replacement`() {
+        // No route: the liquid leaks out of the start at 11 s while (3, 3) is being replaced until 12 s.
+        val level = engineLevel(rules = PlacementRules(allowReplace = true, replacePenaltyMs = 3_000))
+        val replaced = engine.send(engine.start(level), Tick(9_000), Place(p(3, 3)), Place(p(3, 3)))
+        val lost = engine.handle(replaced, Tick(2_500))
+        assertIs<Outcome.Lost>(lost.outcome)
+        assertEquals(null, lost.replacement)
+        assertEquals(Cell.Empty, engine.handle(lost, Tick(5_000)).board[p(3, 3)])
+    }
+
+    @Test
+    fun `fast forward is refused while a replacement runs`() {
+        val level = engineLevel(rules = PlacementRules(allowReplace = true, replacePenaltyMs = 3_000))
+        val replaced = engine.send(engine.start(level).withPipes(ROUTE), Place(p(3, 3)), Place(p(3, 3)))
+        assertTrue(replaced.routeComplete)
+        assertSame(replaced, engine.handle(replaced, FastForward))
+        assertTrue(engine.send(replaced, Tick(3_000), FastForward).fastForward)
+    }
+
+    @Test
+    fun `a replacement plays out the same with short and long ticks`() {
+        // The LB at (2, 1) is replaced at 8 s and lands at 11 s, a second before the liquid gets there.
+        val level = engineLevel(section = PipeSection.LB, rules = PlacementRules(allowReplace = true, replacePenaltyMs = 3_000))
+        val replaced = engine.send(engine.start(level).withPipes(ROUTE), Tick(8_000), Place(p(2, 1)))
+        var short = replaced
+        repeat(20_000) { short = engine.handle(short, Tick(1)) }
+        val long = engine.handle(replaced, Tick(20_000))
+        assertEquals(long.board, short.board)
+        assertEquals(long.flow, short.flow)
+        assertEquals(long.score, short.score)
+        assertIs<Outcome.Won>(long.outcome)
+        assertIs<Outcome.Won>(short.outcome)
     }
 
     @Test

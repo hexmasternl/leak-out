@@ -86,11 +86,13 @@ fun GameScreen(
     val outcome = session.select { state.outcome }
     val isStopped = session.select { state.isStopped }
     val fastForward = session.select { state.fastForward }
+    val replacing = session.select { isReplacing }
     val showPauseDialog = session.select { showPauseDialog }
     val showLostDialog = session.select { showLostDialog }
     val showWinDialog = session.select { showWinDialog }
 
     GameClock(session, paused)
+    ReplacementLandingSound(session, soundEffects)
     OncePerAttemptSound(session, showWinDialog, attempt, GameSound.LevelComplete, soundEffects)
     OncePerAttemptSound(session, showLostDialog, attempt, GameSound.LevelFailed, soundEffects)
     // Keyed on the attempt: every won attempt is offered to the history, which keeps the best.
@@ -98,8 +100,9 @@ fun GameScreen(
     LaunchedEffect(session, history, attempt, won) {
         if (won && history != null) session.recordWin(history)
     }
-    LaunchedEffect(session, isStopped) {
-        if (isStopped) dragState.cancel()
+    // A replacement takes no input: a drag a second finger still holds goes back to its slot.
+    LaunchedEffect(session, isStopped, replacing) {
+        if (isStopped || replacing) dragState.cancel()
     }
     // A new attempt (restart, another level) ends any drag, so the section goes back to its slot.
     LaunchedEffect(session, attempt) { dragState.cancel() }
@@ -138,7 +141,7 @@ fun GameScreen(
                     StackPanel(
                         stack = session.select { state.stack },
                         dragState = dragState,
-                        enabled = !isStopped && !fastForward,
+                        enabled = !isStopped && !fastForward && !replacing,
                         modifier = Modifier.width(
                             StackLayout.metrics(360.dp - HudLayout.HEIGHT, currentLevel.stack.visibleSize).columnWidth + 16.dp,
                         ),
@@ -166,6 +169,8 @@ fun GameScreen(
                         filled = session.select { state.flow.used },
                         flow = { session.state.flow },
                         winAgeMs = if (outcome is Outcome.Won) ({ session.winAgeMs }) else null,
+                        replacement = session.select { state.replacement },
+                        landing = session.select { lastLanding?.takeIf { it.attempt == state.attempt } },
                         // A tap places the next section like a drop; the engine refuses cells that do not accept it.
                         onTap = { cell -> session.placeWithSound(cell, soundEffects) },
                     )
@@ -181,6 +186,7 @@ fun GameScreen(
         ) {
             FastForwardButton(
                 active = fastForward,
+                enabled = session.select { fastForwardEnabled },
                 onClick = {
                     session.toggleFastForward()
                     // A second finger can tap the button during a drag; the section goes back to its slot.

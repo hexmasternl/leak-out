@@ -12,6 +12,8 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -178,6 +180,27 @@ class FastForwardTest {
             assertEquals(1, session.state.flowTimeScale)
         }
         button().assertDoesNotExist()
+    }
+
+    @Test
+    fun aReplacementDisablesTheButtonButNotPause() {
+        show()
+        compose.runOnIdle { assertTrue(session.placeSection(PipeSection.V, Position(3, 3))) }
+        completeRoute()
+
+        // Replacing a section off the route keeps the route complete, but the button is off until it lands.
+        compose.runOnIdle { assertEquals(PlaceResult.Replaced, session.place(Position(3, 3))) }
+        button().assertIsDisplayed().assertIsNotEnabled()
+        button().performClick()
+        compose.runOnIdle { assertFalse(session.state.fastForward) }
+
+        compose.onNodeWithTag(HudTags.PAUSE).performClick()
+        compose.runOnIdle { assertTrue(session.state.paused) }
+        compose.onNodeWithTag(PauseTags.RESUME).performClick()
+
+        compose.runOnIdle { session.sendTick(session.state.level.rules.replacePenaltyMs) }
+        button().assertIsEnabled().performClick()
+        compose.runOnIdle { assertTrue(session.state.fastForward) }
     }
 
     private fun show() {

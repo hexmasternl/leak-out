@@ -36,7 +36,7 @@ class LevelParserTest {
         assertEquals(5, level.stack.visibleSize)
         assertEquals(LevelDefaults.STACK_WEIGHTS, level.stack.weights)
         assertEquals(true, level.rules.allowReplace)
-        assertEquals(500, level.rules.replacePenaltyMs)
+        assertEquals(3_000, level.rules.replacePenaltyMs)
         assertEquals(emptyList(), level.blocked)
     }
 
@@ -69,6 +69,13 @@ class LevelParserTest {
         val level = parsed(TestLevels.minimalJson(extra = """, "rules": { "allowReplace": false }"""))
         assertEquals(false, level.rules.allowReplace)
         assertEquals(LevelDefaults.REPLACE_PENALTY_MS, level.rules.replacePenaltyMs)
+    }
+
+    @Test
+    fun `replace penalty can be overridden`() {
+        val level = parsed(TestLevels.minimalJson(extra = """, "rules": { "replacePenaltyMs": 1500 }"""))
+        assertEquals(1_500, level.rules.replacePenaltyMs)
+        assertEquals(LevelDefaults.ALLOW_REPLACE, level.rules.allowReplace)
     }
 
     @Test

@@ -57,4 +57,4 @@
 
 ## 8. Docs
 
-- [ ] 8.1 Update `docs/project-plan.md`: §2.10 adds the `music_last_started_track` key, §1.11 notes background music on all screens and the music credits on the About panel, and Milestone 5 ticks off background music
+- [x] 8.1 Update `docs/project-plan.md`: §2.10 adds the `music_last_started_track` key, §1.11 notes background music on all screens and the music credits on the About panel, and Milestone 5 ticks off background music

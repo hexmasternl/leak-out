@@ -134,7 +134,9 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Once the route is complete, a round fast forward / slow button sits in the bottom right corner, 16 dp from the edges. Back and going to the background also pause the game.
 4. **Pause dialog** – opened from the cog wheel: Resume, Restart, a separator and Exit to the main menu (welcome screen). Tapping outside does nothing; Back works as Resume.
 5. **Level complete / failed overlay** – level complete (the level complete dialog, see 1.9): "Level complete!", the stars, pipe points, unused pipes and total, and Next level, Restart and Exit to the main menu. Level failed (the level lost dialog, see 1.9): "Leaked!", the score, Restart and Exit to the main menu.
-6. **Settings** – opened from the welcome screen's Settings button; Back returns to the welcome screen. Two columns: Audio (sound effects and music switches with volume sliders; the sound effects controls work and releasing their slider plays a preview, the music controls stay disabled with "Coming soon" on the Music row until music lands) and Feel (vibration) on the left, Progress (finished levels and stars, and Reset progress with a confirm dialog) and About (name, version, maker, privacy line) on the right.
+6. **Settings** – opened from the welcome screen's Settings button; Back returns to the welcome screen. Two columns: Audio (sound effects and music switches with volume sliders; the sound effects controls work and releasing their slider plays a preview; the music controls work too, and the music follows the slider while it is dragged) and Feel (vibration) on the left, Progress (finished levels and stars, and Reset progress with a confirm dialog) and About (name, version, maker, privacy line, and a Music section crediting every background track as title and artist, read from `assets/music/audio_credits.json`) on the right.
+
+Background music plays on every screen as one continuous stream: the ten tracks in `app/src/main/assets/music/` (copied from the root `assets/audio/`) in the order of `audio_credits.json`, wrapping after the last. Each cold start begins with the track after the one that last started. The music pauses in the background, resumes in place, respects audio focus (ducking to 20 %) and follows the music settings at once. The debug Pipe Lab stays silent.
 
 ---
 
@@ -419,7 +421,9 @@ Room was chosen over DataStore because progress is per-level rows that are liste
 | `music_volume` | Float | 0.6 |
 | `vibration_enabled` | Boolean | on |
 
-Reset progress clears `level_history` only; the settings are kept.
+The same file also holds app state that is not a setting: `music_last_started_track` (String, absent until a track has started), the id of the last background track that started, read by `MusicRotationStore` so the next launch begins one track further. It shares the one `settings` DataStore instance; Android allows only one per file.
+
+Reset progress clears `level_history` only; the settings and the music rotation are kept.
 
 No accounts, no network in the first release.
 
@@ -482,7 +486,8 @@ Each milestone ends in something runnable. Estimates are in focused working days
 ### Milestone 5 – Polish (4 days)
 
 - [x] Sound effects: place (a random `section_placement_NNN` variant), replace (`section_destroy_NNN`), refused drop or tap (`section_placement_failed`), and the level complete and level lost dialogs (`level_complete`, `level_failed`), at the stored sound volume. A new variant is only a new numbered file in `assets/sfx/`.
-- [ ] Sound effects still open: flow tick, reservoir gurgle. Background music optional.
+- [x] Background music: ten tracks in playlist order with wrap-around, rotating the starting track across launches, paused in the background, with audio focus and the music settings; credits on the About panel.
+- [ ] Sound effects still open: flow tick, reservoir gurgle.
 - [ ] Animations: section drop-in on place, liquid particles on leak, finish flash on win, stack slide.
 - [ ] Haptic tick on placement.
 - [ ] Pause overlay; handle `onStop` by pausing the tick loop.

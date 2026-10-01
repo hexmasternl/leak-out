@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.stateDescription
@@ -45,13 +46,14 @@ val FastForwardButtonSize = 56.dp
 /**
  * The round fast forward button. Off, it is the brass ("touch me") fast forward button and pulses
  * gently so the player notices it. Once [active], it is the slow button: filled with liquid blue,
- * still, and a tap goes back to normal speed.
+ * still, and a tap goes back to normal speed. While not [enabled] (during a replacement) it is
+ * faded, does not pulse and ignores taps.
  */
 @Composable
-fun FastForwardButton(active: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun FastForwardButton(active: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val description = stringResource(if (active) R.string.fast_forward_normal_speed else R.string.fast_forward)
     val onState = stringResource(R.string.fast_forward_on)
-    val scale = if (active) 1f else pulseScale()
+    val scale = if (active || !enabled) 1f else pulseScale()
     val face = if (active) LeakOutColors.Liquid500 else LeakOutColors.Brass500
     val lip = if (active) LeakOutColors.Liquid700 else LeakOutColors.Brass700
     val iconTint = if (active) LeakOutColors.SurfaceCard else LeakOutColors.Brass900
@@ -64,12 +66,14 @@ fun FastForwardButton(active: Boolean, onClick: () -> Unit, modifier: Modifier =
                 contentDescription = description
                 role = Role.Button
                 if (active) stateDescription = onState
-                onClick { onClick(); true }
+                if (!enabled) disabled()
+                onClick { if (enabled) onClick(); enabled }
             }
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
+                alpha = if (enabled) 1f else DISABLED_ALPHA
             }
             .drawBehind {
                 val border = CartoonButtonMetrics.Border.toPx()
@@ -90,6 +94,8 @@ fun FastForwardButton(active: Boolean, onClick: () -> Unit, modifier: Modifier =
         )
     }
 }
+
+private const val DISABLED_ALPHA = 0.45f
 
 @Composable
 private fun pulseScale(): Float {

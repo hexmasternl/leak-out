@@ -26,7 +26,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
-import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso
@@ -36,9 +35,12 @@ import androidx.test.espresso.action.Tap
 import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import nl.hexmaster.leakout.audio.BundledMusic
+import nl.hexmaster.leakout.audio.Playlist
 import nl.hexmaster.leakout.history.InMemoryLevelHistoryRepository
 import nl.hexmaster.leakout.history.LevelHistory
 import nl.hexmaster.leakout.settings.InMemorySettingsRepository
@@ -59,6 +61,9 @@ class SettingsScreenTest {
     val compose = createComposeRule()
 
     private var backs = 0
+    private val previews = mutableListOf<Float>()
+    private val musicPreviews = mutableListOf<Float>()
+    private val bundledCredits: Playlist? = BundledMusic.load(ApplicationProvider.getApplicationContext<android.content.Context>().assets)
     private lateinit var settings: InMemorySettingsRepository
     private lateinit var history: InMemoryLevelHistoryRepository
 
@@ -71,16 +76,23 @@ class SettingsScreenTest {
         widthDp: Int = 800,
         heightDp: Int = 360,
         fontScale: Float? = null,
+        credits: Playlist? = bundledCredits,
     ) {
         settings = InMemorySettingsRepository(stored)
         history = InMemoryLevelHistoryRepository(records)
-        val viewModel = SettingsViewModel(settings, history)
+        val viewModel = SettingsViewModel(settings, history, credits)
         compose.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale ?: density.fontScale)) {
                 LeakOutTheme {
                     Box(Modifier.size(widthDp.dp, heightDp.dp)) {
-                        SettingsScreen(viewModel = viewModel, appInfo = AppInfo("0.1.0", 1), onBack = { backs++ })
+                        SettingsScreen(
+                            viewModel = viewModel,
+                            appInfo = AppInfo("0.1.0", 1),
+                            onBack = { backs++ },
+                            onSoundPreview = { previews += it },
+                            onMusicVolumePreview = { musicPreviews += it },
+                        )
                     }
                 }
             }
@@ -122,35 +134,113 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun audioControlsAreDisabledAndCannotBeChanged() {
+    fun soundEffectsControlsAreEnabled() {
         showScreen()
-        listOf(
-            compose.onNodeWithTag(SettingsTags.SOUND_SWITCH),
-            compose.onNodeWithTag(SettingsTags.MUSIC_SWITCH),
-            soundSlider(),
-            musicSlider(),
-        ).forEach { it.assertIsNotEnabled() }
+        compose.onNodeWithTag(SettingsTags.SOUND_SWITCH).assertIsEnabled()
+        soundSlider().assertIsEnabled()
+    }
 
-        compose.onNodeWithTag(SettingsTags.SOUND_SWITCH).performClick()
-        compose.onNodeWithTag(SettingsTags.MUSIC_SWITCH).performClick()
-        soundSlider().performTouchInput { swipeLeft() }
-        musicSlider().performTouchInput { swipeRight() }
-        compose.waitForIdle()
-
-        compose.onNodeWithTag(SettingsTags.SOUND_SWITCH).assertIsOn()
-        compose.onNodeWithTag(SettingsTags.MUSIC_SWITCH).assertIsOn()
-        soundSlider().assertSliderValue(0.8f)
-        musicSlider().assertSliderValue(0.6f)
+    @Test
+    fun soundEffectsSwitchChangesTheStoredValue() {
+        showScreen()
+        val sound = compose.onNodeWithTag(SettingsTags.SOUND_SWITCH)
+        sound.performClick()
+        sound.assertIsOff()
         compose.runOnIdle {
-            assertEquals(emptyList<String>(), settings.writes)
-            assertEquals(Settings.Default, stored())
+            assertFalse(stored().soundEnabled)
+            assertEquals(listOf("soundEnabled"), settings.writes)
         }
     }
 
     @Test
-    fun comingSoonIsShownInTheAudioPanel() {
+    fun soundEffectsSliderStoresOnReleaseAndPreviews() {
         showScreen()
-        compose.onNodeWithTag(SettingsTags.COMING_SOON).assertIsDisplayed().assertTextEquals("Coming soon")
+        soundSlider().performTouchInput { swipeLeft() }
+        compose.waitForIdle()
+        soundSlider().assertSliderValue(0f)
+        compose.runOnIdle {
+            assertEquals(0f, stored().soundVolume)
+            assertEquals(listOf("soundVolume"), settings.writes)
+            assertEquals(listOf(0f), previews)
+        }
+    }
+
+    @Test
+    fun noPreviewWhileSoundEffectsAreOff() {
+        showScreen(Settings(soundEnabled = false))
+        soundSlider().performTouchInput { swipeLeft() }
+        compose.runOnIdle {
+            assertEquals(0f, stored().soundVolume)
+            assertEquals(emptyList<Float>(), previews)
+        }
+    }
+
+    @Test
+    fun musicControlsAreEnabled() {
+        showScreen()
+        compose.onNodeWithTag(SettingsTags.MUSIC_SWITCH).assertIsEnabled()
+        musicSlider().assertIsEnabled()
+    }
+
+    @Test
+    fun musicSwitchChangesTheStoredValue() {
+        showScreen()
+        val music = compose.onNodeWithTag(SettingsTags.MUSIC_SWITCH)
+        music.assertIsOn()
+        music.performClick()
+        music.assertIsOff()
+        compose.runOnIdle {
+            assertFalse(stored().musicEnabled)
+            assertEquals(listOf("musicEnabled"), settings.writes)
+        }
+    }
+
+    @Test
+    fun musicSliderFollowsTheDragLiveAndStoresOnRelease() {
+        showScreen()
+        musicSlider().performTouchInput { swipeLeft() }
+        compose.waitForIdle()
+        musicSlider().assertSliderValue(0f)
+        compose.runOnIdle {
+            assertEquals(0f, stored().musicVolume)
+            assertEquals(listOf("musicVolume"), settings.writes)
+            assertTrue("the music hears the drag", musicPreviews.size > 1)
+            assertEquals(0f, musicPreviews.last())
+            // Only the sound effects slider plays a sound preview.
+            assertEquals(emptyList<Float>(), previews)
+        }
+    }
+
+    @Test
+    fun noComingSoonNoteIsShown() {
+        showScreen()
+        compose.onNodeWithTag(SettingsTags.MUSIC_COMING_SOON, useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag(SettingsTags.SOUND_COMING_SOON, useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithText("Coming soon").assertDoesNotExist()
+    }
+
+    @Test
+    fun aboutListsTheTenMusicCreditsInOrder() {
+        showScreen()
+        compose.onNodeWithTag(SettingsTags.MUSIC_CREDITS).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("MUSIC").performScrollTo().assertIsDisplayed()
+        val tracks = bundledCredits!!.tracks
+        assertEquals(10, tracks.size)
+        tracks.forEachIndexed { index, track ->
+            compose.onNodeWithTag(musicCreditTag(index)).performScrollTo().assertIsDisplayed().assertTextEquals("${track.title} · ${track.artist}")
+        }
+        compose.onNodeWithTag(musicCreditTag(0)).assertTextEquals("Ebb and Flow · Fabian Measures")
+        compose.onNodeWithTag(musicCreditTag(9)).assertTextEquals("Endless Garden · Unheard Music Concepts")
+        compose.onNodeWithTag(musicCreditTag(10)).assertDoesNotExist()
+    }
+
+    @Test
+    fun theMusicSectionIsLeftOutWithoutCredits() {
+        showScreen(credits = null)
+        compose.onNodeWithTag(SettingsTags.MUSIC_CREDITS).assertDoesNotExist()
+        compose.onNodeWithTag(musicCreditTag(0)).assertDoesNotExist()
+        compose.onNodeWithTag(SettingsTags.ABOUT_VERSION).performScrollTo().assertIsDisplayed().assertTextEquals("Version 0.1.0 (1)")
+        compose.onNodeWithText("No account. Your data stays on this device.").performScrollTo().assertIsDisplayed()
     }
 
     @Test

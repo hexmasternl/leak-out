@@ -25,6 +25,8 @@ data class GameState(
     val awards: List<Award>,
     /** Game time until which no placement is accepted, set by a replacement. */
     val replaceLockUntilMs: Long,
+    /** The replacement in progress, if any. Its tile is empty until the new section lands. */
+    val replacement: Replacement?,
     /** Game time in milliseconds. It does not move while [paused]. */
     val clockMs: Long,
     val paused: Boolean,

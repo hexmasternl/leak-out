@@ -4,11 +4,19 @@
 TBD - created by archiving change app-game-play-pipe-assets. Update Purpose after archive.
 ## Requirements
 ### Requirement: Tile renders a section at any size
-The app SHALL provide a pipe tile that draws a pipe section from its asset scaled to the tile size, so the same asset can be used for the playing field, the stack and previews. A tile without liquid SHALL show only the artwork.
+The app SHALL provide a pipe tile that draws a pipe section from its asset and its glass overlay, scaled to the tile size, so the same asset can be used for the playing field, the stack and previews. A tile without liquid SHALL show only the artwork and the glass overlay. The same drawing SHALL also be available for a rectangle inside another canvas, so a screen that draws many cells on one canvas (the playing field) draws a section exactly like the tile does.
 
 #### Scenario: Scaled to the cell
 - **WHEN** a section is drawn in a tile of 48 dp and in a tile of 96 dp
 - **THEN** both show the whole section filling the tile, scaled from the same asset
+
+#### Scenario: Tile shows the glass
+- **WHEN** a section is drawn in a tile
+- **THEN** the tile shows the section's glass overlay on top of its artwork
+
+#### Scenario: Same drawing inside another canvas
+- **WHEN** a section is drawn into a rectangle of another canvas
+- **THEN** it looks the same as a tile of that size showing the same section and fills
 
 ### Requirement: Liquid per channel with progress and entry side
 The tile SHALL take, for each channel of the section, an optional liquid fill made of a progress between 0 and 1 and the side the liquid entered through. The entry side SHALL be one of the two sides of that channel. The liquid SHALL start at the entry side and cover the first `progress` part of the channel's length, measured from the entry side. Progress 0 SHALL show no liquid and progress 1 SHALL show the whole channel filled. A progress outside 0 to 1 SHALL be clamped.
@@ -75,4 +83,3 @@ The app SHALL compute a channel's progress from the time the liquid has been in 
 #### Scenario: Invalid speed
 - **WHEN** the progress is asked for a flow speed of 0
 - **THEN** the request is refused
-

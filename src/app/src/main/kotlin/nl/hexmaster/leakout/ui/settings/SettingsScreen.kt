@@ -43,7 +43,8 @@ object SettingsTags {
     const val LEFT_COLUMN = "settings_left_column"
     const val RIGHT_COLUMN = "settings_right_column"
     const val AUDIO_PANEL = "settings_audio_panel"
-    const val COMING_SOON = "settings_coming_soon"
+    const val SOUND_COMING_SOON = "settings_sound_coming_soon"
+    const val MUSIC_COMING_SOON = "settings_music_coming_soon"
     const val SOUND_SWITCH = "settings_sound_switch"
     const val SOUND_VOLUME = "settings_sound_volume"
     const val MUSIC_SWITCH = "settings_music_switch"
@@ -58,15 +59,25 @@ object SettingsTags {
     const val RESET_CONFIRM = "settings_reset_confirm"
     const val ABOUT_PANEL = "settings_about_panel"
     const val ABOUT_VERSION = "settings_about_version"
+    const val MUSIC_CREDITS = "settings_music_credits"
 }
 
-/** The settings screen bound to [viewModel]. The back button and system Back leave through [onBack]. */
+/** The tag of the music credit at [index] in playlist order, starting at 0. */
+fun musicCreditTag(index: Int) = "settings_music_credit_$index"
+
+/**
+ * The settings screen bound to [viewModel]. The back button and system Back leave through [onBack].
+ * Releasing the sound volume slider while sound is on plays a preview through [onSoundPreview];
+ * dragging the music volume slider sends each value to [onMusicVolumePreview].
+ */
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     appInfo: AppInfo,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onSoundPreview: (Float) -> Unit = {},
+    onMusicVolumePreview: (Float) -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     SettingsContent(
@@ -76,6 +87,12 @@ fun SettingsScreen(
         onVibrationChange = viewModel::onVibrationChange,
         onResetConfirmed = viewModel::onResetConfirmed,
         modifier = modifier,
+        onSoundEnabledChange = viewModel::onSoundEnabledChange,
+        onSoundVolumeChange = viewModel::onSoundVolumeChange,
+        onSoundPreview = onSoundPreview,
+        onMusicEnabledChange = viewModel::onMusicEnabledChange,
+        onMusicVolumeChange = viewModel::onMusicVolumeChange,
+        onMusicVolumePreview = onMusicVolumePreview,
     )
 }
 
@@ -94,6 +111,12 @@ fun SettingsContent(
     onResetConfirmed: () -> Unit,
     modifier: Modifier = Modifier,
     initialDialogOpen: Boolean = false,
+    onSoundEnabledChange: (Boolean) -> Unit = {},
+    onSoundVolumeChange: (Float) -> Unit = {},
+    onSoundPreview: (Float) -> Unit = {},
+    onMusicEnabledChange: (Boolean) -> Unit = {},
+    onMusicVolumeChange: (Float) -> Unit = {},
+    onMusicVolumePreview: (Float) -> Unit = {},
 ) {
     var dialogOpen by rememberSaveable { mutableStateOf(initialDialogOpen) }
     // The dialog is its own window and takes Back first, so this only leaves when it is closed.
@@ -121,7 +144,15 @@ fun SettingsContent(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(SettingsMetrics.Gutter),
             ) {
-                AudioPanel(settings = state.settings)
+                AudioPanel(
+                    settings = state.settings,
+                    onSoundEnabledChange = onSoundEnabledChange,
+                    onSoundVolumeChange = onSoundVolumeChange,
+                    onSoundPreview = onSoundPreview,
+                    onMusicEnabledChange = onMusicEnabledChange,
+                    onMusicVolumeChange = onMusicVolumeChange,
+                    onMusicVolumePreview = onMusicVolumePreview,
+                )
                 FeelPanel(vibrationEnabled = state.settings.vibrationEnabled, onVibrationChange = onVibrationChange)
             }
             Column(
@@ -133,7 +164,7 @@ fun SettingsContent(
                 verticalArrangement = Arrangement.spacedBy(SettingsMetrics.Gutter),
             ) {
                 ProgressPanel(progress = state.progress, onResetProgress = { dialogOpen = true })
-                AboutPanel(appInfo = appInfo)
+                AboutPanel(appInfo = appInfo) { MusicCredits(state.musicCredits) }
             }
         }
     }

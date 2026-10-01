@@ -228,8 +228,8 @@ class PlayingFieldTest {
 
     // 8.5
     @Test
-    fun dropsPlaceReplaceAndRespectLiquidAndTheReplaceLock() {
-        // The countdown outlasts the replace lock: the ticks below must not start the liquid.
+    fun dropsPlaceReplaceAndRespectLiquidAndTheReplacement() {
+        // The countdown outlasts the replacement: the ticks below must not start the liquid.
         show(FieldTest.level(rules = PlacementRules(allowReplace = true, replacePenaltyMs = 60_000), initialDelayMs = 120_000))
         compose.runOnIdle {
             session.placeSection(PipeSection.V, Position(1, 1))
@@ -243,16 +243,22 @@ class PlayingFieldTest {
         compose.dropOnCell(Position(2, 1))
         compose.cellNode(Position(2, 1)).assertContentDescriptionEquals("Placed V, filled")
 
+        // The V breaks: the tile is empty and busy until the H lands.
         compose.dropOnCell(Position(1, 1))
-        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Empty")
+            .assert(SemanticsMatcher.expectValue(ReplacingCell, true))
+        compose.runOnIdle { assertEquals(2, session.state.board.pipes.size) }
 
+        // The stack cannot be picked up, so nothing is dragged and nothing is placed.
         compose.beginDragTo(compose.cellRect(Position(2, 2)).center)
         compose.assertNothingHighlighted()
+        compose.onNodeWithTag(GameScreenTags.DRAGGED).assertDoesNotExist()
         compose.releaseDrag()
         compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Empty")
-        compose.runOnIdle { assertEquals(3, session.state.board.pipes.size) }
 
         compose.runOnIdle { session.sendTick(60_000) }
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
+            .assert(SemanticsMatcher.keyNotDefined(ReplacingCell))
         compose.beginDragTo(compose.cellRect(Position(2, 2)).center)
         compose.assertHighlighted(Position(2, 2))
         compose.releaseDrag()
@@ -260,7 +266,7 @@ class PlayingFieldTest {
     }
 
     @Test
-    fun tapsPlaceReplaceAndRespectLiquidTheReplaceLockAndBlockedCells() {
+    fun tapsPlaceReplaceAndRespectLiquidTheReplacementAndBlockedCells() {
         show(
             FieldTest.level(
                 blocked = listOf(Position(0, 3)),
@@ -281,13 +287,14 @@ class PlayingFieldTest {
         compose.cellNode(Position(2, 1)).assertContentDescriptionEquals("Placed V, filled")
 
         tapCell(Position(1, 1))
-        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Empty")
 
-        // The replace locks placing for a while.
+        // The replacement locks placing until the new section lands.
         tapCell(Position(2, 2))
         compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Empty")
 
         compose.runOnIdle { session.sendTick(60_000) }
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
         tapCell(Position(0, 3))
         compose.cellNode(Position(0, 3)).assertContentDescriptionEquals("Blocked")
         tapCell(Position(0, 0))

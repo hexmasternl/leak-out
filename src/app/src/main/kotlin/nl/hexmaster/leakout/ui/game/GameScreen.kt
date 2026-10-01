@@ -40,6 +40,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import kotlin.math.roundToInt
 import kotlin.random.Random
+import nl.hexmaster.leakout.audio.GameSound
+import nl.hexmaster.leakout.audio.SoundEffects
 import nl.hexmaster.leakout.core.engine.FlowState
 import nl.hexmaster.leakout.core.engine.GameCommand
 import nl.hexmaster.leakout.core.engine.Outcome
@@ -61,6 +63,7 @@ import nl.hexmaster.leakout.ui.theme.LeakOutColors
  *
  * Every view shows only what it reads from the [GameSession]'s state, and every action is a
  * command to the engine. [session] owns the running level; tests pass their own to drive it.
+ * Placements and the two dialogs play their sound through [soundEffects]; without it the game is silent.
  */
 @Composable
 fun GameScreen(
@@ -70,6 +73,7 @@ fun GameScreen(
     history: LevelHistoryRepository? = null,
     random: Random = Random.Default,
     session: GameSession = remember(level, random) { GameSession(level, random) },
+    soundEffects: SoundEffects? = null,
 ) {
     val dragState = remember(session) { SectionDragState() }
     // Parse every pipe asset once up front, so no frame mid-game pays for a section's first draw.
@@ -82,18 +86,23 @@ fun GameScreen(
     val outcome = session.select { state.outcome }
     val isStopped = session.select { state.isStopped }
     val fastForward = session.select { state.fastForward }
+    val replacing = session.select { isReplacing }
     val showPauseDialog = session.select { showPauseDialog }
     val showLostDialog = session.select { showLostDialog }
     val showWinDialog = session.select { showWinDialog }
 
     GameClock(session, paused)
+    ReplacementLandingSound(session, soundEffects)
+    OncePerAttemptSound(session, showWinDialog, attempt, GameSound.LevelComplete, soundEffects)
+    OncePerAttemptSound(session, showLostDialog, attempt, GameSound.LevelFailed, soundEffects)
     // Keyed on the attempt: every won attempt is offered to the history, which keeps the best.
     val won = outcome is Outcome.Won
     LaunchedEffect(session, history, attempt, won) {
         if (won && history != null) session.recordWin(history)
     }
-    LaunchedEffect(session, isStopped) {
-        if (isStopped) dragState.cancel()
+    // A replacement takes no input: a drag a second finger still holds goes back to its slot.
+    LaunchedEffect(session, isStopped, replacing) {
+        if (isStopped || replacing) dragState.cancel()
     }
     // A new attempt (restart, another level) ends any drag, so the section goes back to its slot.
     LaunchedEffect(session, attempt) { dragState.cancel() }
@@ -132,13 +141,13 @@ fun GameScreen(
                     StackPanel(
                         stack = session.select { state.stack },
                         dragState = dragState,
-                        enabled = !isStopped && !fastForward,
+                        enabled = !isStopped && !fastForward && !replacing,
                         modifier = Modifier.width(
                             StackLayout.metrics(360.dp - HudLayout.HEIGHT, currentLevel.stack.visibleSize).columnWidth + 16.dp,
                         ),
                     )
                     val fieldState = rememberPlayingFieldState(currentLevel.grid, currentLevel.start.position)
-                    val target = remember(session, fieldState) { FieldDropTarget(session, fieldState) }
+                    val target = remember(session, fieldState, soundEffects) { FieldDropTarget(session, fieldState, soundEffects) }
                     dragState.dropTarget = target
                     val highlighted by remember(dragState, target) {
                         derivedStateOf { dragState.dropPoint?.let(target::hoverCell) }
@@ -160,8 +169,10 @@ fun GameScreen(
                         filled = session.select { state.flow.used },
                         flow = { session.state.flow },
                         winAgeMs = if (outcome is Outcome.Won) ({ session.winAgeMs }) else null,
+                        replacement = session.select { state.replacement },
+                        landing = session.select { lastLanding?.takeIf { it.attempt == state.attempt } },
                         // A tap places the next section like a drop; the engine refuses cells that do not accept it.
-                        onTap = { cell -> session.send(GameCommand.Place(cell)) },
+                        onTap = { cell -> session.placeWithSound(cell, soundEffects) },
                     )
                 }
             }
@@ -175,6 +186,7 @@ fun GameScreen(
         ) {
             FastForwardButton(
                 active = fastForward,
+                enabled = session.select { fastForwardEnabled },
                 onClick = {
                     session.toggleFastForward()
                     // A second finger can tap the button during a drag; the section goes back to its slot.
@@ -251,16 +263,21 @@ private fun GameClock(session: GameSession, paused: Boolean) {
 /**
  * Drops on the playing field. The hover highlight and the drop both map the screen point to a
  * cell and ask the engine, so they cannot disagree. The engine places the stack's next section,
- * which is always the one being dragged.
+ * which is always the one being dragged. A drop on a tile plays its sound; letting go off the
+ * level's tiles is a cancel and stays silent.
  */
-private class FieldDropTarget(private val session: GameSession, private val field: PlayingFieldState) : SectionDropTarget {
+private class FieldDropTarget(
+    private val session: GameSession,
+    private val field: PlayingFieldState,
+    private val soundEffects: SoundEffects?,
+) : SectionDropTarget {
     fun hoverCell(position: Offset): Position? = field.cellAt(position)?.takeIf(session::canPlace)
 
     override fun canPlace(section: PipeSection, position: Offset): Boolean = hoverCell(position) != null
 
     override fun tryPlace(section: PipeSection, position: Offset): Boolean {
         val cell = field.cellAt(position) ?: return false
-        return session.send(GameCommand.Place(cell))
+        return session.placeWithSound(cell, soundEffects)
     }
 }
 

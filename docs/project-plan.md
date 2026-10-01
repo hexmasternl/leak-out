@@ -80,7 +80,7 @@ Rules that follow from this:
 
 - Dragging the next section onto an **Empty** cell places it there. Tap-to-place is not supported.
 - While dragging, the cell under the dragged section is highlighted when the drop would be accepted there. Cells that refuse the section are not highlighted. The highlight and the drop use the same rule (`Placement.check` in `core.board`), so they always agree.
-- Dropping on a cell that holds an **unfilled** pipe **replaces** it, if the level allows replacing (`allowReplace`, default `true`). Replacing costs a small time penalty (`replacePenaltyMs`, default 500 ms) during which no new placement is accepted, to stop the player from spamming replacements. This is the classic Pipe Mania rule and keeps the stack from becoming a dead end.
+- Dropping on a cell that holds an **unfilled** pipe **replaces** it, if the level allows replacing (`allowReplace`, default `true`). Replacing takes time: the old section breaks apart at once (the `section_destroy` sound) and the tile stays empty until the new section lands after `replacePenaltyMs` (default 3000 ms) of game time, with the `section_placement` sound. Meanwhile the player cannot place, drag or fast forward, and liquid that reaches the empty tile leaks there. This makes replacing a deliberate choice rather than a reflex. Replacing itself is the classic Pipe Mania rule and keeps the stack from becoming a dead end.
 - Cells that are Start, Finish, Blocked, or contain a pipe that is filled or currently being filled cannot be changed.
 - There is no discard action; the only way to get rid of an unwanted section is to place it somewhere.
 
@@ -134,7 +134,9 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Once the route is complete, a round fast forward / slow button sits in the bottom right corner, 16 dp from the edges. Back and going to the background also pause the game.
 4. **Pause dialog** – opened from the cog wheel: Resume, Restart, a separator and Exit to the main menu (welcome screen). Tapping outside does nothing; Back works as Resume.
 5. **Level complete / failed overlay** – level complete (the level complete dialog, see 1.9): "Level complete!", the stars, pipe points, unused pipes and total, and Next level, Restart and Exit to the main menu. Level failed (the level lost dialog, see 1.9): "Leaked!", the score, Restart and Exit to the main menu.
-6. **Settings** – opened from the welcome screen's Settings button; Back returns to the welcome screen. Two columns: Audio (sound effects and music switches with volume sliders, disabled with "Coming soon" until audio lands) and Feel (vibration) on the left, Progress (finished levels and stars, and Reset progress with a confirm dialog) and About (name, version, maker, privacy line) on the right.
+6. **Settings** – opened from the welcome screen's Settings button; Back returns to the welcome screen. Two columns: Audio (sound effects and music switches with volume sliders; the sound effects controls work and releasing their slider plays a preview; the music controls work too, and the music follows the slider while it is dragged) and Feel (vibration) on the left, Progress (finished levels and stars, and Reset progress with a confirm dialog) and About (name, version, maker, privacy line, and a Music section crediting every background track as title and artist, read from `assets/music/audio_credits.json`) on the right.
+
+Background music plays on every screen as one continuous stream: the ten tracks in `app/src/main/assets/music/` (copied from the root `assets/audio/`) in the order of `audio_credits.json`, wrapping after the last. Each cold start begins with the track after the one that last started. The music pauses in the background, resumes in place, respects audio focus (ducking to 20 %) and follows the music settings at once. The debug Pipe Lab stays silent.
 
 ---
 
@@ -150,7 +152,7 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 | Game loop | `withFrameNanos` inside a `LaunchedEffect` | Frame-synced delta time, pauses with the composable |
 | Serialization | `kotlinx.serialization` (JSON) | Level files |
 | Persistence | Room (SQLite) for level progress; Jetpack DataStore (Preferences) for settings | Progress is per-level rows updated conditionally; settings are a few flags |
-| Audio | `SoundPool` for effects, `MediaPlayer` for music | Low-latency, built in |
+| Audio | `SoundPool` for effects (`app/src/main/assets/sfx/`, copied from the root `assets/sfx/`), `MediaPlayer` for music | Low-latency, built in |
 | DI | None initially; manual construction in a small `AppContainer` | Project is small; add Hilt only if it grows |
 | Tests | JUnit 5 + kotlin.test for `core`; Compose UI tests for screens | Core logic must be testable without a device |
 | Build | Gradle Kotlin DSL, version catalog (`libs.versions.toml`), AGP 8.x | Standard |
@@ -268,7 +270,7 @@ sealed interface FlowState {
    - Award the section's points (`ScoreSheet.award`, none for the start) and add an `Award(position, points, clockMs)` for the popup.
    - `FlowStep.after(board, position, exit, used)` decides: `Enter` → continue `Flowing` in the next cell at progress 0 and mark it `liquidEntered` on the board at once (so it can no longer be replaced), then loop with the remaining time; `Finish` → `Outcome.Won`; `Leak` → `Outcome.Lost(at, side)`. After a win or a loss the flow is `Ended` and the remaining time is dropped.
 
-The flow runs on `flowDt = dt × flowTimeScale` (1, or 10 with fast forward) for both the countdown and the head; the game clock, the replace lock and the points popups keep `dt`. Because the loop walks every border inside one tick, a long tick (or 10x speed) never skips a cell, and 1 ms ticks give the same outcome and score as one long tick.
+The flow runs on `flowDt = dt × flowTimeScale` (1, or 10 with fast forward) for both the countdown and the head; the game clock, the replacement and the points popups keep `dt`. A tick in which a replacement lands is split at the landing time, so the liquid meets the tile as it is at that moment. Because the loop walks every border inside one tick, a long tick (or 10x speed) never skips a cell, and 1 ms ticks give the same outcome and score as one long tick.
 
 The flow and the complete-route check (`RouteTracer`) share `PipeSection.exitFor` and `FlowStep`, so every board the route check calls complete is won by the flow.
 
@@ -286,6 +288,7 @@ data class GameState(
     val sheet: ScoreSheet,
     val awards: List<Award>,         // Award(position, points, atMs), dropped after Award.VISIBLE_MS
     val replaceLockUntilMs: Long,
+    val replacement: Replacement?,   // the replacement in progress: its tile is empty until it lands
     val clockMs: Long,
     val paused: Boolean,
     val fastForward: Boolean,
@@ -323,7 +326,7 @@ class GameEngine(private val random: Random) {
 - **Start / Restart**: `start(level, previous)` builds a fresh state (the level's board, a new stack, the countdown at the start delay, score 0, clock 0, playing) with `attempt` one higher. It is the only constructor path, so a restart cannot forget a field. Accepted at any time.
 - **Pause**: only while playing and not paused. **Resume**: only while paused. While paused a tick changes nothing.
 - **FastForward**: only on a complete route, while playing and not paused. **NormalSpeed** turns it off again (the slow button) and unlocks placing.
-- **Place**: the stack's next section goes on the tile when `canPlace` says so. `canPlace` and `Place` share one check: not stopped, not fast forward, and `Placement.check` (empty tile: place; unentered section with replacing allowed: replace; the replace lock must have passed). On success the stack moves down and draws a new section, a replacement starts the replace lock, and `RouteTracer` sets `routeComplete`.
+- **Place**: the stack's next section goes on the tile when `canPlace` says so. `canPlace` and `Place` share one check: not stopped, not fast forward, and `Placement.check` (empty tile: place; unentered section with replacing allowed: replace; no replacement may be running). On success the stack moves down and draws a new section, and `RouteTracer` sets `routeComplete`. A replacement with a penalty empties the tile and starts a `Replacement` (tile, removed and incoming section, start and landing time); a tick lands it, and a win, loss or restart drops it.
 - **Tick(dt)**: refused when `dt <= 0` or paused. Moves the clock, drops awards older than `Award.VISIBLE_MS`, and while playing runs `FlowSimulation.advance(state, dt × flowTimeScale)`. After a win or a loss only the clock moves, for the end effects.
 - **RemoveUnused(upTo)**: only after a win, and only when `upTo` is ahead of `sectionsRemoved`. Empties the next unused sections of `finalScore` in row-major order, up to `upTo` (at most all of them). The tally timeline lives in the app: `GameSession.send` follows every accepted command after a win with `RemoveUnused(winFrame.sectionsRemoved)`, so the field empties in step with the penalty row.
 
@@ -351,7 +354,7 @@ JSON, one file per level, parsed with `kotlinx.serialization`:
     "visibleSize": 5,
     "weights": { "H": 3, "V": 3, "LT": 2, "LB": 2, "RT": 2, "RB": 2, "X": 1, "RES": 1 }
   },
-  "rules": { "allowReplace": true, "replacePenaltyMs": 500 },
+  "rules": { "allowReplace": true, "replacePenaltyMs": 3000 },
   "stars": { "two": 200, "three": 350 }
 }
 ```
@@ -387,7 +390,7 @@ A `docs/levels.md` sheet will track the intended difficulty curve (grid size, de
 
 - `PipeSectionTest`: every section maps each entry port to the correct exit port and returns `null` for closed sides.
 - `FlowSimulationTest`: scripted boards for straight run, corner chain, cross used once, cross used twice, reservoir slows by factor, leak into empty, leak into wrong side, leak off grid, finish hit from wrong side, win.
-- `GameEngineTest`: placement on empty, replace allowed/denied, replace lock, cannot replace filled/flowing cell, stack refills with pooled sections only, seeded random is reproducible, score accumulates.
+- `GameEngineTest`: placement on empty, replace allowed/denied, replacement timing and landing, cannot replace filled/flowing cell, stack refills with pooled sections only, seeded random is reproducible, score accumulates.
 - `LevelValidatorTest` plus a parameterised test that loads every bundled level file and validates it.
 - A **headless solver** test helper that, given a level and a seed, plays a known-good sequence of placements and asserts a win. Used to prove every shipped level is winnable with its stack seed range.
 
@@ -419,7 +422,9 @@ Room was chosen over DataStore because progress is per-level rows that are liste
 | `music_volume` | Float | 0.6 |
 | `vibration_enabled` | Boolean | on |
 
-Reset progress clears `level_history` only; the settings are kept.
+The same file also holds app state that is not a setting: `music_last_started_track` (String, absent until a track has started), the id of the last background track that started, read by `MusicRotationStore` so the next launch begins one track further. It shares the one `settings` DataStore instance; Android allows only one per file.
+
+Reset progress clears `level_history` only; the settings and the music rotation are kept.
 
 No accounts, no network in the first release.
 
@@ -481,7 +486,9 @@ Each milestone ends in something runnable. Estimates are in focused working days
 
 ### Milestone 5 – Polish (4 days)
 
-- [ ] Sound effects: place, replace, flow tick, reservoir gurgle, leak, win. Background music optional.
+- [x] Sound effects: place (a random `section_placement_NNN` variant), replace (`section_destroy_NNN`), refused drop or tap (`section_placement_failed`), and the level complete and level lost dialogs (`level_complete`, `level_failed`), at the stored sound volume. A new variant is only a new numbered file in `assets/sfx/`.
+- [x] Background music: ten tracks in playlist order with wrap-around, rotating the starting track across launches, paused in the background, with audio focus and the music settings; credits on the About panel.
+- [ ] Sound effects still open: flow tick, reservoir gurgle.
 - [ ] Animations: section drop-in on place, liquid particles on leak, finish flash on win, stack slide.
 - [ ] Haptic tick on placement.
 - [ ] Pause overlay; handle `onStop` by pausing the tick loop.
@@ -521,7 +528,7 @@ Decisions assumed in this plan that you may want to change. All are data or smal
 | # | Question | Assumed answer |
 |---|----------|----------------|
 | 1 | Reservoir port layout | Decided: horizontal only (L↔R), a slow straight with a tank |
-| 2 | Can an unfilled placed pipe be replaced? | Yes, with a 500 ms lock, configurable per level |
+| 2 | Can an unfilled placed pipe be replaced? | Yes, as a 3 s replacement (break, wait, land), configurable per level |
 | 3 | Can the player start the flow early? | Yes, for a time bonus |
 | 4 | Grid size | 7 × 9 default, per-level override |
 | 5 | Can start/finish sit in the middle of the grid? | Yes, level designer's choice |

@@ -49,6 +49,32 @@ object LeakOutTextStyles {
         letterSpacing = 0.5.sp,
     )
 
+    /** Deep Flow `display.lg` (design-system 3.1): dialog and screen titles. */
+    val DisplayLg = TextStyle(fontFamily = WendyOne, fontWeight = FontWeight.Normal, fontSize = 28.sp, lineHeight = 1.1.em)
+
+    /** Deep Flow `display.md`: section headers. */
+    val DisplayMd = TextStyle(fontFamily = WendyOne, fontWeight = FontWeight.Normal, fontSize = 22.sp, lineHeight = 1.15.em)
+
+    /** Deep Flow `display.xs`: uppercase eyebrow labels, such as panel titles. */
+    val DisplayXs = TextStyle(
+        fontFamily = WendyOne,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 1.2.em,
+        letterSpacing = 0.5.sp,
+    )
+
+    // Deep Flow body styles. Varela Round is not bundled yet, so they use Fredoka, the UI face in use.
+
+    /** Deep Flow `body.lg`: dialog body. */
+    val BodyLg = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Medium, fontSize = 18.sp, lineHeight = 1.5.em)
+
+    /** Deep Flow `body.md`: default body, settings row labels. */
+    val BodyMd = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Medium, fontSize = 16.sp, lineHeight = 1.5.em)
+
+    /** Deep Flow `body.sm`: secondary copy. */
+    val BodySm = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Medium, fontSize = 14.sp, lineHeight = 1.45.em)
+
     /** Title / Hero: 36-48 sp, bold, uppercase, line height 1.1. The welcome title scales it up. */
     val TitleHero = TextStyle(
         fontFamily = Fredoka,

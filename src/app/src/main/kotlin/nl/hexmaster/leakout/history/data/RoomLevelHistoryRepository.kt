@@ -37,4 +37,6 @@ class RoomLevelHistoryRepository(private val database: LeakOutDatabase) : LevelH
 
     override fun observeAll(): Flow<List<LevelHistory>> =
         dao.observeAll().map { rows -> rows.map(LevelHistoryEntity::toDomain) }
+
+    override suspend fun clearAll() = dao.deleteAll()
 }

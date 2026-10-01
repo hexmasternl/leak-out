@@ -134,6 +134,7 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Once the route is complete, a round fast forward / slow button sits in the bottom right corner, 16 dp from the edges. Back and going to the background also pause the game.
 4. **Pause dialog** – opened from the cog wheel: Resume, Restart, a separator and Exit to the main menu (welcome screen). Tapping outside does nothing; Back works as Resume.
 5. **Level complete / failed overlay** – level complete (the level complete dialog, see 1.9): "Level complete!", the stars, pipe points, unused pipes and total, and Next level, Restart and Exit to the main menu. Level failed (the level lost dialog, see 1.9): "Leaked!", the score, Restart and Exit to the main menu.
+6. **Settings** – opened from the welcome screen's Settings button; Back returns to the welcome screen. Two columns: Audio (sound effects and music switches with volume sliders, disabled with "Coming soon" until audio lands) and Feel (vibration) on the left, Progress (finished levels and stars, and Reset progress with a confirm dialog) and About (name, version, maker, privacy line) on the right.
 
 ---
 
@@ -408,7 +409,17 @@ Target: core module ≥ 90 % line coverage; it is small and entirely determinist
 
 Room was chosen over DataStore because progress is per-level rows that are listed and updated conditionally. Every schema version is exported to `app/schemas` and a version bump needs a written migration.
 
-**Settings: DataStore (Preferences).** DataStore holds settings only: `soundEnabled`, `musicEnabled`.
+**Settings: DataStore (Preferences).** `SettingsRepository` keeps the settings in the DataStore file `settings`. Each key has a default used while nothing is stored, and volumes are clamped to 0.0-1.0 on write and read:
+
+| Key | Type | Default |
+|-----|------|---------|
+| `sound_enabled` | Boolean | on |
+| `sound_volume` | Float | 0.8 |
+| `music_enabled` | Boolean | on |
+| `music_volume` | Float | 0.6 |
+| `vibration_enabled` | Boolean | on |
+
+Reset progress clears `level_history` only; the settings are kept.
 
 No accounts, no network in the first release.
 

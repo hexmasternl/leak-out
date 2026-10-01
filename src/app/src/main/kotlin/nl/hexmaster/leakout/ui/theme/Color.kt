@@ -98,4 +98,15 @@ object LeakOutColors {
 
     // 2.7 Text: text.muted (Deep theme)
     val TextMuted = Color(0xFF6E8296)
+
+    // 2.7 Text: text.primary and text.secondary (Deep theme)
+    val TextPrimary = Color(0xFFF2F7FB)
+    val TextSecondary = Color(0xFFA9BACB)
+
+    // 2.1 surface.overlay: secondary buttons, switch track when off
+    val SurfaceOverlay = Color(0xFF21405C)
+
+    // 2.1 lines: white at 8 % (line.subtle) and 16 % (line.strong)
+    val LineSubtle = Color(0x14FFFFFF)
+    val LineStrong = Color(0x29FFFFFF)
 }

@@ -26,3 +26,22 @@ The Audio panel SHALL show a "Sound effects" switch with a volume slider and a "
 #### Scenario: Coming soon note
 - **WHEN** the Audio panel is displayed
 - **THEN** the text "Coming soon" is visible on the Sound effects row
+
+### Requirement: About section
+The About panel SHALL show the app name "Leak Out", the installed version as "Version <versionName> (<versionCode>)", the maker credit and a privacy line saying that no account is used and the data stays on the device. Below these it SHALL show a "Music" section that lists every background track as its title and artist, in playlist order, read from the bundled `audio_credits.json`. If the credits cannot be read, the Music section SHALL be left out.
+
+#### Scenario: Version shown
+- **WHEN** the installed app has version name "0.1.0" and version code 1
+- **THEN** the About panel shows "Version 0.1.0 (1)"
+
+#### Scenario: About content
+- **WHEN** the About panel is displayed
+- **THEN** it shows "Leak Out", the maker credit and the privacy line
+
+#### Scenario: Music credits listed
+- **WHEN** the About panel is displayed with the bundled credits
+- **THEN** a "Music" section shows ten entries in playlist order, the first being "Ebb and Flow" by Fabian Measures and the last "Endless Garden" by Unheard Music Concepts
+
+#### Scenario: Credits unavailable
+- **WHEN** the credits file cannot be read
+- **THEN** the About panel shows no Music section and the rest of the panel is unchanged

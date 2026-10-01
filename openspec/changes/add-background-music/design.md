@@ -1,6 +1,6 @@
 ## Context
 
-`assets/audio/` at the repository root holds ten MP3 tracks and `credits.json`. The MP3s have been stripped of ID3v2, ID3v1 and cover art, so each file is a bare MPEG frame stream. `credits.json` lists the tracks in the intended playback order with `title`, `artist`, `album`, `file`, `license`, `licenseUrl` and `source`. As with the welcome and icon artwork, the root `assets/` folder is the design source. The app ships its own copy under `app/src/main/assets/`, next to `levels/` and `pipes/`.
+`assets/audio/` at the repository root holds ten MP3 tracks, `bg_music_0001.mp3` to `bg_music_0010.mp3`, and `audio_credits.json`. The MP3s have been stripped of ID3v2, ID3v1 and cover art, so each file is a bare MPEG frame stream. `audio_credits.json` lists the tracks in playback order, the order of the file numbers, with `title`, `artist` and `file`. As with the welcome and icon artwork, the root `assets/` folder is the design source. The app ships its own copy under `app/src/main/assets/`, next to `levels/` and `pipes/`.
 
 The plan (`docs/project-plan.md` §2.1) picks `MediaPlayer` for music. Change `app-settings-page` introduces `SettingsRepository` on DataStore Preferences (file `settings`), with `musicEnabled` (default on) and `musicVolume` (default 0.6). It also adds an Audio panel whose controls are disabled behind an `AUDIO_AVAILABLE` flag. This change builds on that one and is implemented after it.
 
@@ -13,18 +13,19 @@ The plan (`docs/project-plan.md` §2.1) picks `MediaPlayer` for music. Change `a
 - A fixed playlist order with wrap-around, where each cold start begins with the track after the one that last started.
 - Pause in the background and resume in place; well-behaved audio focus.
 - A working Music switch and volume slider that take effect immediately.
+- The musicians credited on the About panel, from the same file that drives the playlist.
 - Playlist logic testable on the JVM without `MediaPlayer`.
 
 **Non-Goals:**
 - Sound effects (place, leak, win). The Sound effects controls stay disabled.
-- A credits screen. The manifest carries the data so a later change can show it.
+- A separate credits screen, or license texts per track. The About panel lists title and artist only.
 - Shuffle, skip or track selection by the player.
 - Cross-fading between tracks, or music that changes with game state (for example tension near a leak).
 - Playback while the app is in the background, or a media notification.
 
 ## Decisions
 
-**Bundled copy with a manifest: `assets/music/playlist.json`.** The ten files are copied to `app/src/main/assets/music/` under lowercase, ASCII, space-free names derived from the title, for example `ebb-and-flow.mp3` and `thrusly-marylin.mp3`. This also drops the accidental `.mp3.mp3` extension. `playlist.json` has the same fields as `credits.json` plus an `id` (the file stem), with `file` holding the bundled name. The entries are in the same order. A JVM unit test reads both files and fails if they disagree on order, title or artist, or if a manifest entry points at a missing asset. That keeps the root source and the app copy from drifting without adding a Gradle copy-and-rename task. *Alternatives:* `res/raw` (rejected: resource names must be identifiers, there is no room for metadata, and assets are already how levels ship), and a Gradle `Sync` task from `../assets/audio` (rejected: renaming plus generating the manifest in build logic is more machinery than a checked copy).
+**One file is both playlist and credits: `assets/music/audio_credits.json`.** The source names are already asset-safe (`bg_music_NNNN.mp3`), so the ten tracks and `audio_credits.json` are copied unchanged to `app/src/main/assets/music/`. A track's id is its file stem (`bg_music_0001`), so the JSON needs no separate id field. Playlist order is array order. A JVM unit test fails if the app copy of `audio_credits.json` differs from the root source, if an entry points at a missing asset, or if a bundled track's size differs from its source. That keeps the two copies from drifting without build logic that reaches outside `src/`, which `CLAUDE.md` forbids. *Alternatives:* `res/raw` (rejected: no room for the credits metadata, and assets are already how levels ship), and adding `../assets/audio` as an asset source directory (rejected: it puts a non-`src/` path into the build).
 
 **The id is the rotation key, not the index.** The store holds the id of the last track that started. The next track is `playlist[(indexOf(id) + 1) % size]`. If the id is missing or unknown, playback starts at index 0. Storing the id means reordering or inserting tracks later never points at the wrong song, and a removed track degrades to "start at the top". This is a pure function in `MusicRotation` (`first(lastStartedId): Track` and `after(track): Track`), unit tested with no Android.
 
@@ -44,6 +45,8 @@ The plan (`docs/project-plan.md` §2.1) picks `MediaPlayer` for music. Change `a
 
 **Settings UI.** The settings change gates all four audio controls with `AUDIO_AVAILABLE`. That flag splits into `MUSIC_AVAILABLE = true` and `SOUND_EFFECTS_AVAILABLE = false`. The "Coming soon" note moves from the panel title to the Sound effects row, because the panel is no longer entirely unavailable. `SettingsViewModel` gains `onMusicEnabledChange` and `onMusicVolumeChange`. Slider writes are persisted when the drag ends, and the live value goes to the player during the drag so the player hears the change.
 
+**About panel music credits.** The About panel gains a "Music" section below the existing lines. It shows one row per track, in playlist order, with the title in `body.md` and the artist in `text.muted` ("Ebb and Flow · Fabian Measures"). The list comes from the same parsed `audio_credits.json` the player uses, through a small `MusicCredits` source passed to `SettingsViewModel`. It is not hard-coded in strings, so editing the JSON updates both the playlist and the credits. Titles and artists are proper names, so they are not translated. If the file cannot be read, the section is left out instead of showing an empty heading. The panel's column already scrolls, so ten rows need no extra layout.
+
 ## Risks / Trade-offs
 
 - [About 61 MB of audio inflates the APK] → Acceptable for a first release. A later change can re-encode to lower-bitrate Ogg/Opus or move music to Play Asset Delivery. The manifest abstraction keeps that change local.
@@ -59,5 +62,4 @@ No data migration: the new key is absent on existing installs, which means "star
 
 ## Open Questions
 
-- License confirmation for Kate Kody (both tracks), Tommaso Croce, legacyAlli, Koi-discovery and Unheard Music Concepts. Also whether CC BY-NC-SA (Jahzzar) is compatible with how the game will be distributed. This must be settled before a Play Store release, not before implementation.
-- Should a credits screen (reading `music/playlist.json` and `licenses/`) be a follow-up change? It is assumed yes, and it is not part of this change.
+- License confirmation for Kate Kody (`bg_music_0002`, `bg_music_0005`), Tommaso Croce (`0003`), Nicolaas Stulting (`0006`), legacyAlli (`0007`), Koi-discovery (`0008`) and Unheard Music Concepts (`0010`). Also whether CC BY-NC-SA (Jahzzar, `0009`) is compatible with how the game will be distributed. CC BY tracks require attribution, which the About credits provide. This must be settled before a Play Store release, not before implementation.

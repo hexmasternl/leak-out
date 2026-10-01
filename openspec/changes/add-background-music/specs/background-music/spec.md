@@ -1,19 +1,23 @@
 ## ADDED Requirements
 
 ### Requirement: Bundled playlist
-The app SHALL bundle the ten background tracks and a playlist manifest that lists each track's id, file, title, artist, album, license, license URL and source. The manifest order SHALL be the playback order, and SHALL equal the order of `assets/audio/credits.json` at the repository root, with the same title and artist for every entry.
+The app SHALL bundle the ten background tracks as `music/bg_music_0001.mp3` through `music/bg_music_0010.mp3`, and the credits file `music/audio_credits.json`, which lists each track's `title`, `artist` and `file`. The order of `audio_credits.json` SHALL be the playback order, and a track's id SHALL be its file name without the extension. The bundled credits file and tracks SHALL be identical to the design source in `assets/audio/` at the repository root.
 
-#### Scenario: Manifest matches the credits source
-- **WHEN** the bundled manifest and the repository's `credits.json` are compared
-- **THEN** both list the same ten tracks with the same titles and artists in the same order
+#### Scenario: Bundled copy matches the design source
+- **WHEN** the bundled `audio_credits.json` and tracks are compared with those in the repository's `assets/audio/`
+- **THEN** the credits files have the same content and each bundled track has the same size as its source
 
-#### Scenario: Every manifest entry has its audio file
-- **WHEN** each manifest entry is resolved against the bundled assets
+#### Scenario: Every credits entry has its audio file
+- **WHEN** each entry of `audio_credits.json` is resolved against the bundled assets
 - **THEN** an audio file exists for every entry
 
+#### Scenario: Playback order follows the file numbers
+- **WHEN** the playlist is loaded
+- **THEN** it holds ten tracks with ids `bg_music_0001` to `bg_music_0010` in that order
+
 #### Scenario: Track ids are unique
-- **WHEN** the manifest is loaded
-- **THEN** no two entries share an id
+- **WHEN** a credits file that lists the same file twice is loaded
+- **THEN** it is rejected and no music plays
 
 ### Requirement: Continuous playback in playlist order
 While music is enabled and the app is in the foreground, the app SHALL play one track at a time. When a track finishes, it SHALL start the next track in playlist order, and after the last track it SHALL start the first track. Playback SHALL continue unbroken when the player moves between screens.

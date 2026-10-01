@@ -11,19 +11,19 @@
 
 ## 2. Deployment workflow (`.github/workflows/deploy-play-internal.yml`)
 
-- [ ] 2.1 Create the workflow: `on: push: branches: [main]` and `workflow_dispatch`; `concurrency: { group: deploy-play, cancel-in-progress: false }`; `permissions: contents: read`; one job on `ubuntu-latest` with `environment: play-store` and `defaults.run.working-directory: src`
-- [ ] 2.2 Resolve the current release commit SHAs of `actions/checkout`, `actions/setup-java`, `gradle/actions/setup-gradle`, `actions/upload-artifact` and `r0adkll/upload-google-play`, and pin each by full SHA with the version as a comment
-- [ ] 2.3 Add checkout, Temurin JDK 21 and Gradle setup steps
-- [ ] 2.4 Add the secret check: list every empty secret among the five by name, refer to `docs/deployment.md`, exit non-zero; never echo values
-- [ ] 2.5 Run `./gradlew :core:test :app:testDebugUnitTest`
-- [ ] 2.6 Compute `versionCode = github.run_number + (vars.VERSION_CODE_OFFSET || 1)`, export it to later steps and write it to `$GITHUB_STEP_SUMMARY`
-- [ ] 2.7 Decode `PLAY_UPLOAD_KEYSTORE_BASE64` to `$RUNNER_TEMP/upload.jks` and run `./gradlew :app:bundleRelease -PversionCode=…` with the four `LEAKOUT_UPLOAD_*` variables set from the secrets
-- [ ] 2.8 Verify the bundle with `jarsigner -verify` and fail if it is not signed
-- [ ] 2.9 Upload with `r0adkll/upload-google-play`: `serviceAccountJsonPlainText` from `PLAY_SERVICE_ACCOUNT_JSON`, `packageName: nl.hexmaster.leakout`, `releaseFiles` pointing at `src/app/build/outputs/bundle/release/app-release.aab`, `track: ${{ vars.PLAY_TRACK || 'internal' }}`, `status: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}`
-- [ ] 2.10 Upload the `.aab` as a workflow artifact with a short retention (for example 14 days)
-- [ ] 2.11 Add an `if: always()` step that deletes `$RUNNER_TEMP/upload.jks`
-- [ ] 2.12 If AGP cannot install Android platform 37 on the runner by itself, add an explicit `sdkmanager "platforms;android-37"` step (check the runner image's installed SDKs first)
-- [ ] 2.13 Lint the workflow with `actionlint` (download the binary into the scratchpad, or run it with Docker) and fix every finding
+- [x] 2.1 Create the workflow: `on: push: branches: [main]` and `workflow_dispatch`; `concurrency: { group: deploy-play, cancel-in-progress: false }`; `permissions: contents: read`; one job on `ubuntu-latest` with `environment: play-store` and `defaults.run.working-directory: src`
+- [x] 2.2 Resolve the current release commit SHAs of `actions/checkout`, `actions/setup-java`, `gradle/actions/setup-gradle`, `actions/upload-artifact` and `r0adkll/upload-google-play`, and pin each by full SHA with the version as a comment
+- [x] 2.3 Add checkout, Temurin JDK 21 and Gradle setup steps
+- [x] 2.4 Add the secret check: list every empty secret among the five by name, refer to `docs/deployment.md`, exit non-zero; never echo values
+- [x] 2.5 Run `./gradlew :core:test :app:testDebugUnitTest`
+- [x] 2.6 Compute `versionCode = github.run_number + (vars.VERSION_CODE_OFFSET || 1)`, export it to later steps and write it to `$GITHUB_STEP_SUMMARY`
+- [x] 2.7 Decode `PLAY_UPLOAD_KEYSTORE_BASE64` to `$RUNNER_TEMP/upload.jks` and run `./gradlew :app:bundleRelease -PversionCode=…` with the four `LEAKOUT_UPLOAD_*` variables set from the secrets
+- [x] 2.8 Verify the bundle with `jarsigner -verify` and fail if it is not signed
+- [x] 2.9 Upload with `r0adkll/upload-google-play`: `serviceAccountJsonPlainText` from `PLAY_SERVICE_ACCOUNT_JSON`, `packageName: nl.hexmaster.leakout`, `releaseFiles` pointing at `src/app/build/outputs/bundle/release/app-release.aab`, `track: ${{ vars.PLAY_TRACK || 'internal' }}`, `status: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}`
+- [x] 2.10 Upload the `.aab` as a workflow artifact with a short retention (for example 14 days)
+- [x] 2.11 Add an `if: always()` step that deletes `$RUNNER_TEMP/upload.jks`
+- [x] 2.12 If AGP cannot install Android platform 37 on the runner by itself, add an explicit `sdkmanager "platforms;android-37"` step (check the runner image's installed SDKs first) *Not needed: the `ubuntu-latest` (24.04) image already has `android-37.0` and build-tools 37.0.0.*
+- [x] 2.13 Lint the workflow with `actionlint` (download the binary into the scratchpad, or run it with Docker) and fix every finding
 
 ## 3. Setup guide (`docs/deployment.md`)
 

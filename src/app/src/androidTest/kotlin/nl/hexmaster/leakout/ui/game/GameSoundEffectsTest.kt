@@ -77,10 +77,42 @@ class GameSoundEffectsTest {
     }
 
     @Test
-    fun replacingASectionPlaysOnlyTheDestroyedSound() {
+    fun replacingASectionPlaysTheDestroyedSoundAndThePlacedSoundWhenItLands() {
         show()
         compose.runOnIdle { assertTrue(session.placeSection(PipeSection.V, Position(1, 0))) }
         compose.dropOnCell(Position(1, 0))
+        assertEquals(listOf("section_destroy_001.mp3"), played())
+
+        compose.runOnIdle { session.sendTick(level.rules.replacePenaltyMs - 1) }
+        compose.waitForIdle()
+        assertEquals(listOf("section_destroy_001.mp3"), played())
+
+        compose.runOnIdle { session.sendTick(1) }
+        compose.waitForIdle()
+        assertEquals(listOf("section_destroy_001.mp3", "section_placement_001.mp3"), played())
+    }
+
+    @Test
+    fun tapsDuringAReplacementAreSilent() {
+        show()
+        compose.runOnIdle { assertTrue(session.placeSection(PipeSection.V, Position(1, 0))) }
+        compose.dropOnCell(Position(1, 0))
+        compose.cellNode(Position(1, 1)).performTouchInput { click() }
+        compose.cellNode(blocked).performTouchInput { click() }
+        compose.waitForIdle()
+        assertEquals(listOf("section_destroy_001.mp3"), played())
+    }
+
+    @Test
+    fun aReplacementEndedByARestartPlaysNoPlacedSound() {
+        show()
+        compose.runOnIdle { assertTrue(session.placeSection(PipeSection.V, Position(1, 0))) }
+        compose.dropOnCell(Position(1, 0))
+        compose.runOnIdle {
+            session.send(GameCommand.Restart)
+            session.sendTick(level.rules.replacePenaltyMs)
+        }
+        compose.waitForIdle()
         assertEquals(listOf("section_destroy_001.mp3"), played())
     }
 

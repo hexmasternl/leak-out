@@ -1,13 +1,13 @@
 ## 1. Gradle: version code and release signing (`app/build.gradle.kts`)
 
-- [ ] 1.1 Read `versionCode` from `providers.gradleProperty("versionCode")`, falling back to the current literal; fail the build with a clear message when the value is not a positive integer
-- [ ] 1.2 Add an `upload` signing config created only when `LEAKOUT_UPLOAD_STORE_FILE` is set, reading `LEAKOUT_UPLOAD_STORE_PASSWORD`, `LEAKOUT_UPLOAD_KEY_ALIAS` and `LEAKOUT_UPLOAD_KEY_PASSWORD`; fail with a message naming any of the three that is missing
-- [ ] 1.3 Use the `upload` signing config for the `release` build type when it exists; leave `debug` untouched
-- [ ] 1.4 Verify locally without the variables: `./gradlew :app:bundleRelease` succeeds and `jarsigner -verify` reports the bundle as unsigned; `./gradlew :app:assembleDebug` still works
-- [ ] 1.5 Verify locally with a throwaway keystore made with `keytool` in the scratchpad (never in the repo): `bundleRelease` succeeds and `jarsigner -verify -verbose -certs` shows the throwaway certificate
-- [ ] 1.6 Verify with the store file set but the alias missing: the build fails and names `LEAKOUT_UPLOAD_KEY_ALIAS`
-- [ ] 1.7 Verify `-PversionCode=42` ends up in the merged release manifest (`app/build/intermediates/merged_manifest/release/...`), that no property keeps the file's version code, and that `-PversionCode=abc` and `-PversionCode=0` fail the build
-- [ ] 1.8 Run `./gradlew :core:test :app:testDebugUnitTest` and confirm they still pass
+- [x] 1.1 Read `versionCode` from `providers.gradleProperty("versionCode")`, falling back to the current literal; fail the build with a clear message when the value is not a positive integer
+- [x] 1.2 Add an `upload` signing config created only when `LEAKOUT_UPLOAD_STORE_FILE` is set, reading `LEAKOUT_UPLOAD_STORE_PASSWORD`, `LEAKOUT_UPLOAD_KEY_ALIAS` and `LEAKOUT_UPLOAD_KEY_PASSWORD`; fail with a message naming any of the three that is missing
+- [x] 1.3 Use the `upload` signing config for the `release` build type when it exists; leave `debug` untouched
+- [x] 1.4 Verify locally without the variables: `./gradlew :app:bundleRelease` succeeds and `jarsigner -verify` reports the bundle as unsigned; `./gradlew :app:assembleDebug` still works
+- [x] 1.5 Verify locally with a throwaway keystore made with `keytool` in the scratchpad (never in the repo): `bundleRelease` succeeds and `jarsigner -verify -verbose -certs` shows the throwaway certificate
+- [x] 1.6 Verify with the store file set but the alias missing: the build fails and names `LEAKOUT_UPLOAD_KEY_ALIAS`
+- [x] 1.7 Verify `-PversionCode=42` ends up in the merged release manifest (`app/build/intermediates/merged_manifest/release/...`), that no property keeps the file's version code, and that `-PversionCode=abc` and `-PversionCode=0` fail the build
+- [x] 1.8 Run `./gradlew :core:test :app:testDebugUnitTest` and confirm they still pass
 
 ## 2. Deployment workflow (`.github/workflows/deploy-play-internal.yml`)
 

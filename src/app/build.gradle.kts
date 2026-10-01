@@ -7,6 +7,19 @@ plugins {
     alias(libs.plugins.room)
 }
 
+// CI passes -PversionCode=<n> so every Play upload has a higher code; local builds keep the default.
+val appVersionCode: Int = providers.gradleProperty("versionCode").orNull?.let { value ->
+    value.toIntOrNull()?.takeIf { it > 0 }
+        ?: throw GradleException("versionCode must be a positive integer, but was '$value'.")
+} ?: 1
+
+// Release signing with the Play upload key, configured only when CI provides it (see docs/deployment.md).
+// Without LEAKOUT_UPLOAD_STORE_FILE the release build stays unsigned, so no keystore is needed locally.
+val uploadStoreFile: String? = providers.environmentVariable("LEAKOUT_UPLOAD_STORE_FILE").orNull
+fun requiredSigningEnv(name: String): String =
+    providers.environmentVariable(name).orNull?.takeIf { it.isNotEmpty() }
+        ?: throw GradleException("LEAKOUT_UPLOAD_STORE_FILE is set, but $name is missing.")
+
 android {
     namespace = "nl.hexmaster.leakout"
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -15,14 +28,26 @@ android {
         applicationId = "nl.hexmaster.leakout"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 1
+        versionCode = appVersionCode
         versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (!uploadStoreFile.isNullOrEmpty()) {
+            create("upload") {
+                storeFile = file(uploadStoreFile)
+                storePassword = requiredSigningEnv("LEAKOUT_UPLOAD_STORE_PASSWORD")
+                keyAlias = requiredSigningEnv("LEAKOUT_UPLOAD_KEY_ALIAS")
+                keyPassword = requiredSigningEnv("LEAKOUT_UPLOAD_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfigs.findByName("upload")?.let { signingConfig = it }
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }

@@ -2,10 +2,18 @@
   "id": 15,
   "name": "Detour",
   "grid": { "columns": 13, "rows": 10 },
-  "start":  { "x": 1, "y": 1, "openSide": "BOTTOM" },
+  "start": { "x": 1, "y": 1, "openSide": "BOTTOM" },
   "finish": { "x": 11, "y": 8, "openSide": "TOP" },
-  "blocked": [ { "x": 4, "y": 0 }, { "x": 12, "y": 3 }, { "x": 6, "y": 4 }, { "x": 11, "y": 4 }, { "x": 1, "y": 5 }, { "x": 12, "y": 7 }, { "x": 9, "y": 9 } ],
-  "flow": { "initialDelayMs": 14000, "cellsPerSecond": 0.161 },
+  "blocked": [
+    { "x": 4, "y": 0 },
+    { "x": 12, "y": 3 },
+    { "x": 6, "y": 4 },
+    { "x": 11, "y": 4 },
+    { "x": 1, "y": 5 },
+    { "x": 12, "y": 7 },
+    { "x": 9, "y": 9 }
+  ],
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.161 },
   "stack": { "weights": { "X": 1, "RES": 0 } },
   "stars": { "one": 180, "two": 300, "three": 440 }
 }

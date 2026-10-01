@@ -37,3 +37,8 @@
 - [x] 6.2 `FieldLiquid.fills` maps the flow state to per-channel fills (used channels full, the head channel at its progress from its entry side); `PlayingField` reads the flow while drawing and passes the fills to `drawPipe`
 - [x] 6.3 The rounded head sits behind the leading edge (`LiquidSpans.withRoundHead`), extended along the path tangent past a channel's ends, so the front crosses section borders without a jump; the glow trails just behind the head
 - [x] 6.4 JVM tests `FieldLiquidTest` and `RoundHeadTest`; instrumented `PlayingFieldTest.liquidFlowsThroughThePipeAndTheTileKeepsItsColour`; `PipeTileTest` and `PlayingFieldTest` pass on the emulator
+
+## 7. Tap to place
+
+- [x] 7.1 `PlayingField` reports a tap (one finger, within the touch slop) with the cell under it; `GameScreen` sends `GameCommand.Place` for it, so the engine applies the same checks as a drop
+- [x] 7.2 Instrumented tests in `PlayingFieldTest`: taps place, replace, and respect liquid, the replace lock, blocked cells and the start; swipes, pinches and taps while paused place nothing; `PlayingFieldTest`, `FastForwardTest`, `GameEngineScreenTest` and `GameScreenTest` pass on the emulator

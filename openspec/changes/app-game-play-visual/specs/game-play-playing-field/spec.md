@@ -31,3 +31,18 @@ The field SHALL draw the liquid inside the pipe art of placed sections: every ch
 #### Scenario: Tile keeps its colour
 - **WHEN** liquid enters a placed section
 - **THEN** the cell around the pipe looks the same as while it was dry
+
+### Requirement: Tapping a tile places the next section
+Besides dragging, a tap on a field cell SHALL place the stack's next section there, under exactly the same rules as a drop: only on an empty cell, or on a placed section that may be replaced, and never while paused, after the level ended, during fast forward or during the replace lock. A tap SHALL be one finger lifted within the touch slop; a pan or a pinch SHALL NOT place anything.
+
+#### Scenario: Tap on an empty cell
+- **WHEN** the player taps an empty cell during play
+- **THEN** the stack's next section is placed on that cell
+
+#### Scenario: Tap on a cell that does not accept a section
+- **WHEN** the player taps a blocked cell, the start, the finish or a section the liquid has entered
+- **THEN** nothing is placed and the stack is unchanged
+
+#### Scenario: Pan does not place
+- **WHEN** the player swipes or pinches the field
+- **THEN** the view moves and nothing is placed

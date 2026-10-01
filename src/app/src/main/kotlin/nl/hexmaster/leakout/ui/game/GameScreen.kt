@@ -161,6 +161,8 @@ fun GameScreen(
                         filled = session.select { state.flow.used },
                         flow = { session.state.flow },
                         winAgeMs = if (outcome is Outcome.Won) ({ session.winAgeMs }) else null,
+                        // A tap places the next section like a drop; the engine refuses cells that do not accept it.
+                        onTap = { cell -> session.send(GameCommand.Place(cell)) },
                     )
                 }
             }

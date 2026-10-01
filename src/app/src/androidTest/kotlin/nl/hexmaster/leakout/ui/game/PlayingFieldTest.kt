@@ -259,6 +259,64 @@ class PlayingFieldTest {
         compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Placed H")
     }
 
+    @Test
+    fun tapsPlaceReplaceAndRespectLiquidTheReplaceLockAndBlockedCells() {
+        show(
+            FieldTest.level(
+                blocked = listOf(Position(0, 3)),
+                rules = PlacementRules(allowReplace = true, replacePenaltyMs = 60_000),
+                initialDelayMs = 120_000,
+            ),
+        )
+        compose.runOnIdle {
+            session.placeSection(PipeSection.V, Position(1, 1))
+            session.placeSection(PipeSection.V, Position(2, 1))
+            session.markLiquidEntered(Position(2, 1))
+        }
+
+        tapCell(Position(1, 2))
+        compose.cellNode(Position(1, 2)).assertContentDescriptionEquals("Placed H")
+
+        tapCell(Position(2, 1))
+        compose.cellNode(Position(2, 1)).assertContentDescriptionEquals("Placed V, filled")
+
+        tapCell(Position(1, 1))
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
+
+        // The replace locks placing for a while.
+        tapCell(Position(2, 2))
+        compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Empty")
+
+        compose.runOnIdle { session.sendTick(60_000) }
+        tapCell(Position(0, 3))
+        compose.cellNode(Position(0, 3)).assertContentDescriptionEquals("Blocked")
+        tapCell(Position(0, 0))
+        compose.cellNode(Position(0, 0)).assertContentDescriptionEquals("Start")
+        tapCell(Position(2, 2))
+        compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Placed H")
+        compose.runOnIdle { assertEquals(4, session.state.board.pipes.size) }
+    }
+
+    @Test
+    fun swipesPinchesAndPausedTapsDoNotPlace() {
+        show(FieldTest.large())
+        swipeField(Offset(-compose.px(120.dp), 0f))
+        pinchField(outwards = true)
+        compose.runOnIdle { assertEquals(0, session.state.board.pipes.size) }
+
+        compose.runOnIdle { session.send(GameCommand.Pause) }
+        compose.waitForIdle()
+        compose.onNodeWithTag(GameScreenTags.FIELD).performTouchInput { click(center) }
+        compose.waitForIdle()
+        compose.runOnIdle { assertEquals(0, session.state.board.pipes.size) }
+    }
+
+    private fun tapCell(cell: Position) {
+        val target = cellRectInField(cell).center
+        compose.onNodeWithTag(GameScreenTags.FIELD).performTouchInput { click(target) }
+        compose.waitForIdle()
+    }
+
     // 8.6
     @Test
     fun draggingASectionOverTheFieldDoesNotPanIt() {

@@ -143,8 +143,9 @@ fun rememberPlayingFieldState(grid: GridSize, start: Position): PlayingFieldStat
 
 /**
  * The level grid: draws the visible cells of [board] and the [highlighted] cell, pans with one
- * finger and zooms with two within the viewport's limits. It never rotates. All input is ignored
- * while [enabled] is false, for example during a section drag or while paused.
+ * finger and zooms with two within the viewport's limits. It never rotates. A tap (one finger that
+ * stays within the touch slop) calls [onTap] with the cell under it. All input is ignored while
+ * [enabled] is false, for example during a section drag or while paused.
  *
  * The [awards] are drawn as points popups on their tiles above everything else, timed by the game
  * clock [nowMs]. The clock is a lambda read only while drawing, so a clock tick redraws the canvas
@@ -181,9 +182,11 @@ fun PlayingField(
     filled: Set<ChannelUse> = emptySet(),
     flow: () -> FlowState? = { null },
     winAgeMs: (() -> Long)? = null,
+    onTap: (Position) -> Unit = {},
 ) {
     val density = LocalDensity.current
     val currentEnabled by rememberUpdatedState(enabled)
+    val currentOnTap by rememberUpdatedState(onTap)
     val textMeasurer = rememberTextMeasurer()
     val pipes = rememberPipeArtLibrary()
     val scratch = remember { LiquidScratch() }
@@ -195,7 +198,7 @@ fun PlayingField(
             .clip(FieldShape)
             .onSizeChanged { state.onMeasured(it.toSize(), density) }
             .onGloballyPositioned { state.onPositioned(it) }
-            .pointerInput(state) { detectPanAndZoom(state) { currentEnabled } },
+            .pointerInput(state) { detectPanAndZoom(state, { currentEnabled }) { point -> state.viewport?.cellAt(point)?.let(currentOnTap) } },
     ) {
         val viewport = state.viewport ?: return@Box
         Canvas(Modifier.fillMaxSize()) {
@@ -278,21 +281,31 @@ private fun Cell.describe(): String = when (this) {
 
 /**
  * One finger pans after the touch slop, two fingers zoom around their centroid and pan with it.
- * Rotation is never read, so a twist does nothing. A gesture stops as soon as [enabled] is false.
+ * Rotation is never read, so a twist does nothing. One finger that lifts within the touch slop is
+ * a tap at its down position (field coordinates) and goes to [onTap]. A gesture stops as soon as
+ * [enabled] is false, and then is no tap either.
  */
 private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectPanAndZoom(
     state: PlayingFieldState,
     enabled: () -> Boolean,
+    onTap: (Offset) -> Unit,
 ) {
     awaitEachGesture {
-        awaitFirstDown(requireUnconsumed = false)
+        val down = awaitFirstDown(requireUnconsumed = false)
         if (!enabled()) return@awaitEachGesture
         var pastSlop = false
+        var multiTouch = false
         var pendingPan = Offset.Zero
         var pendingZoom = 1f
         while (true) {
             val event = awaitPointerEvent()
-            if (!enabled() || event.changes.none { it.pressed }) break
+            if (!enabled()) break
+            if (event.changes.size > 1) multiTouch = true
+            if (event.changes.none { it.pressed }) {
+                val up = event.changes.firstOrNull { it.id == down.id }
+                if (!pastSlop && !multiTouch && up != null && !up.isConsumed) onTap(down.position)
+                break
+            }
             val zoom = event.calculateZoom()
             val pan = event.calculatePan()
             if (!pastSlop) {

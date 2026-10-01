@@ -49,9 +49,9 @@
 - [x] 7.3 JVM test `MusicRotation`: null id → first, id of track 4 → track 5, last → first, unknown id → first, `after` wraps
 - [x] 7.4 JVM test `BackgroundMusic` with a fake engine, fake focus, `InMemorySettingsRepository` and `InMemoryMusicRotationStore`, covering every `background-music` scenario: first launch, the rotation across simulated launches, later tracks recorded, completion and wrap, resume without advancing, music disabled at launch, toggling off and on, enabling in a silent session, volume changes, focus loss, transient loss and ducking, a failing track skipped, and every track failing
 - [x] 7.5 JVM test `SettingsViewModel`: the music switch and slider write `musicEnabled` and `musicVolume`; the UI state carries the music credits
-- [ ] 7.6 Instrumented test `DataStoreMusicRotationStore`: absent on a fresh file, the value survives a new store instance on the same file, and it coexists with `DataStoreSettingsRepository` on the shared instance
-- [ ] 7.7 Instrumented test `MediaPlayerMusicEngine`: plays a bundled track (prepared and playing within a timeout), pauses, resumes and reports completion (by seeking near the end)
-- [ ] 7.8 Instrumented test for `MainActivity`: the stored last-started id advances by one per cold launch, and stays unchanged when the activity goes through stop/start and through recreation
+- [x] 7.6 Instrumented test `DataStoreMusicRotationStore`: absent on a fresh file, the value survives a new store instance on the same file, and it coexists with `DataStoreSettingsRepository` on the shared instance
+- [x] 7.7 Instrumented test `MediaPlayerMusicEngine`: plays a bundled track (prepared and playing within a timeout), pauses, resumes and reports completion (by seeking near the end)
+- [x] 7.8 Instrumented test for `MainActivity`: the stored last-started id advances by one per cold launch, and stays unchanged when the activity goes through stop/start and through recreation
 - [ ] 7.9 Update the settings Compose UI test: the Music controls are enabled and change the stored values, the Music slider sends live values while dragging, no "Coming soon" note is shown, the About panel lists the ten music credits in order, and the Music section is left out without credits
 - [ ] 7.10 Run `:app:testDebugUnitTest` and the affected instrumented tests, and record the results
 

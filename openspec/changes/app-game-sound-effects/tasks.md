@@ -37,17 +37,17 @@
 
 ## 6. Settings
 
-- [ ] 6.1 Set `SOUND_EFFECTS_AVAILABLE = true` for the Sound effects switch and slider; if the flag is not yet split (task 0.1), split `AUDIO_AVAILABLE` into `SOUND_EFFECTS_AVAILABLE = true` and `MUSIC_AVAILABLE = false` and move the "Coming soon" note from the panel title to the Music row
-- [ ] 6.2 Add `onSoundEnabledChange` and `onSoundVolumeChange` to `SettingsViewModel`; the slider shows the live value while dragging and writes on release
-- [ ] 6.3 On slider release, while sound is on, call an `onSoundPreview(volume)` callback that `MainActivity` connects to `SoundEffects.preview`
-- [ ] 6.4 JVM unit tests for the new `SettingsViewModel` setters
+- [x] 6.1 Set `SOUND_EFFECTS_AVAILABLE = true` for the Sound effects switch and slider; if the flag is not yet split (task 0.1), split `AUDIO_AVAILABLE` into `SOUND_EFFECTS_AVAILABLE = true` and `MUSIC_AVAILABLE = false` and move the "Coming soon" note from the panel title to the Music row
+- [x] 6.2 Add `onSoundEnabledChange` and `onSoundVolumeChange` to `SettingsViewModel`; the slider shows the live value while dragging and writes on release
+- [x] 6.3 On slider release, while sound is on, call an `onSoundPreview(volume)` callback that `MainActivity` connects to `SoundEffects.preview`
+- [x] 6.4 JVM unit tests for the new `SettingsViewModel` setters
 
 ## 7. Instrumented tests
 
-- [ ] 7.1 Game screen with a recording `SoundEffects`: drop on an empty tile plays one placed sound; tap on an empty tile plays one placed sound; replacing a section plays one destroy sound and no placed sound; drop on a blocked tile and tap on the start tile play one failed sound; letting go over the stack and a drag cancelled by pause play nothing
-- [ ] 7.2 Game screen: winning plays the level complete sound once when the dialog appears and not again during the tally; restart and win again plays it once more; a leak plays the level failed sound only once the lost dialog appears; sound off plays nothing
-- [ ] 7.3 Game screen: going to the background during the finish flash or the leak effect plays the end sound once after returning to the foreground, and not while stopped
-- [ ] 7.4 Settings screen: the Sound effects switch and slider are enabled and write `soundEnabled` and `soundVolume`; releasing the slider calls the preview only while sound is on; the Music controls match the music flag, with "Coming soon" on the Music row only when music is not available
+- [x] 7.1 Game screen with a recording `SoundEffects`: drop on an empty tile plays one placed sound; tap on an empty tile plays one placed sound; replacing a section plays one destroy sound and no placed sound; drop on a blocked tile and tap on the start tile play one failed sound; letting go over the stack and a drag cancelled by pause play nothing
+- [x] 7.2 Game screen: winning plays the level complete sound once when the dialog appears and not again during the tally; restart and win again plays it once more; a leak plays the level failed sound only once the lost dialog appears; sound off plays nothing
+- [x] 7.3 Game screen: going to the background during the finish flash or the leak effect plays the end sound once after returning to the foreground, and not while stopped
+- [x] 7.4 Settings screen: the Sound effects switch and slider are enabled and write `soundEnabled` and `soundVolume`; releasing the slider calls the preview only while sound is on; the Music controls match the music flag, with "Coming soon" on the Music row only when music is not available
 - [ ] 7.5 Run `:app:testDebugUnitTest` and the affected instrumented tests on the emulator, and make sure they pass
 
 ## 8. Docs

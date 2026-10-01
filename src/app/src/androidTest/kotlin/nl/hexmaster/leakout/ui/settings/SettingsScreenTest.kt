@@ -26,7 +26,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
-import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso
@@ -59,6 +58,7 @@ class SettingsScreenTest {
     val compose = createComposeRule()
 
     private var backs = 0
+    private val previews = mutableListOf<Float>()
     private lateinit var settings: InMemorySettingsRepository
     private lateinit var history: InMemoryLevelHistoryRepository
 
@@ -80,7 +80,12 @@ class SettingsScreenTest {
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale ?: density.fontScale)) {
                 LeakOutTheme {
                     Box(Modifier.size(widthDp.dp, heightDp.dp)) {
-                        SettingsScreen(viewModel = viewModel, appInfo = AppInfo("0.1.0", 1), onBack = { backs++ })
+                        SettingsScreen(
+                            viewModel = viewModel,
+                            appInfo = AppInfo("0.1.0", 1),
+                            onBack = { backs++ },
+                            onSoundPreview = { previews += it },
+                        )
                     }
                 }
             }
@@ -122,35 +127,65 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun audioControlsAreDisabledAndCannotBeChanged() {
+    fun soundEffectsControlsAreEnabled() {
         showScreen()
-        listOf(
-            compose.onNodeWithTag(SettingsTags.SOUND_SWITCH),
-            compose.onNodeWithTag(SettingsTags.MUSIC_SWITCH),
-            soundSlider(),
-            musicSlider(),
-        ).forEach { it.assertIsNotEnabled() }
+        compose.onNodeWithTag(SettingsTags.SOUND_SWITCH).assertIsEnabled()
+        soundSlider().assertIsEnabled()
+    }
 
-        compose.onNodeWithTag(SettingsTags.SOUND_SWITCH).performClick()
-        compose.onNodeWithTag(SettingsTags.MUSIC_SWITCH).performClick()
-        soundSlider().performTouchInput { swipeLeft() }
-        musicSlider().performTouchInput { swipeRight() }
-        compose.waitForIdle()
-
-        compose.onNodeWithTag(SettingsTags.SOUND_SWITCH).assertIsOn()
-        compose.onNodeWithTag(SettingsTags.MUSIC_SWITCH).assertIsOn()
-        soundSlider().assertSliderValue(0.8f)
-        musicSlider().assertSliderValue(0.6f)
+    @Test
+    fun soundEffectsSwitchChangesTheStoredValue() {
+        showScreen()
+        val sound = compose.onNodeWithTag(SettingsTags.SOUND_SWITCH)
+        sound.performClick()
+        sound.assertIsOff()
         compose.runOnIdle {
-            assertEquals(emptyList<String>(), settings.writes)
-            assertEquals(Settings.Default, stored())
+            assertFalse(stored().soundEnabled)
+            assertEquals(listOf("soundEnabled"), settings.writes)
         }
     }
 
     @Test
-    fun comingSoonIsShownInTheAudioPanel() {
+    fun soundEffectsSliderStoresOnReleaseAndPreviews() {
         showScreen()
-        compose.onNodeWithTag(SettingsTags.COMING_SOON).assertIsDisplayed().assertTextEquals("Coming soon")
+        soundSlider().performTouchInput { swipeLeft() }
+        compose.waitForIdle()
+        soundSlider().assertSliderValue(0f)
+        compose.runOnIdle {
+            assertEquals(0f, stored().soundVolume)
+            assertEquals(listOf("soundVolume"), settings.writes)
+            assertEquals(listOf(0f), previews)
+        }
+    }
+
+    @Test
+    fun noPreviewWhileSoundEffectsAreOff() {
+        showScreen(Settings(soundEnabled = false))
+        soundSlider().performTouchInput { swipeLeft() }
+        compose.runOnIdle {
+            assertEquals(0f, stored().soundVolume)
+            assertEquals(emptyList<Float>(), previews)
+        }
+    }
+
+    @Test
+    fun musicControlsAreDisabledUntilMusicIsAvailable() {
+        showScreen()
+        compose.onNodeWithTag(SettingsTags.MUSIC_SWITCH).assertIsNotEnabled()
+        musicSlider().assertIsNotEnabled()
+        compose.onNodeWithTag(SettingsTags.MUSIC_SWITCH).performClick()
+        musicSlider().performTouchInput { swipeLeft() }
+        compose.waitForIdle()
+        compose.onNodeWithTag(SettingsTags.MUSIC_SWITCH).assertIsOn()
+        musicSlider().assertSliderValue(0.6f)
+        compose.runOnIdle { assertEquals(emptyList<String>(), settings.writes) }
+    }
+
+    @Test
+    fun comingSoonIsShownOnTheMusicRowOnly() {
+        showScreen()
+        compose.onNodeWithTag(SettingsTags.MUSIC_COMING_SOON, useUnmergedTree = true).assertIsDisplayed().assertTextEquals("Coming soon")
+        compose.onNodeWithTag(SettingsTags.SOUND_COMING_SOON, useUnmergedTree = true).assertDoesNotExist()
     }
 
     @Test

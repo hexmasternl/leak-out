@@ -112,10 +112,10 @@ From the repository's `src/` folder, point the build at the keystore from step 1
 Windows PowerShell:
 
 ```powershell
-$env:LEAKOUT_UPLOAD_STORE_FILE     = "C:\path\to\leak-out-upload.jks"
-$env:LEAKOUT_UPLOAD_STORE_PASSWORD = "<keystore password>"
+$env:LEAKOUT_UPLOAD_STORE_FILE     = "D:\projects\github.com\hexmasternl\leak-out\src\leak-out-upload.jks"
+$env:LEAKOUT_UPLOAD_STORE_PASSWORD = "BK^OZM*3YVWAzGks^4fv@1iHkyxf1kvL"
 $env:LEAKOUT_UPLOAD_KEY_ALIAS      = "upload"
-$env:LEAKOUT_UPLOAD_KEY_PASSWORD   = "<keystore password>"
+$env:LEAKOUT_UPLOAD_KEY_PASSWORD   = "BK^OZM*3YVWAzGks^4fv@1iHkyxf1kvL"
 .\gradlew.bat :app:bundleRelease -PversionCode=1
 ```
 

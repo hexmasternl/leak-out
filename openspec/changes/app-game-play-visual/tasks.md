@@ -30,3 +30,10 @@
 - [x] 5.2 Run `./gradlew :app:testDebugUnitTest` and `./gradlew :core:test` from `src/` and make sure they pass (app 246 and core 309 tests pass)
 - [x] 5.3 Run the affected instrumented tests (`PipeTileTest`, `PipeLabScreenTest`, `PlayingFieldTest`, `GameScreenTest` and the other game screen tests touched above) on the emulator and make sure they pass (skipped at the user's request: only PipeTileTest was run, 9/9 pass)
 - [x] 5.4 Check the game and the Pipe Lab on the emulator: stack, dragged copy and placed pipes show the new art with the glass (skipped at the user's request)
+
+## 6. Liquid flow on the field
+
+- [x] 6.1 Drop the blue tint on tiles the liquid entered; the tile keeps its colour
+- [x] 6.2 `FieldLiquid.fills` maps the flow state to per-channel fills (used channels full, the head channel at its progress from its entry side); `PlayingField` reads the flow while drawing and passes the fills to `drawPipe`
+- [x] 6.3 The rounded head sits behind the leading edge (`LiquidSpans.withRoundHead`), extended along the path tangent past a channel's ends, so the front crosses section borders without a jump; the glow trails just behind the head
+- [x] 6.4 JVM tests `FieldLiquidTest` and `RoundHeadTest`; instrumented `PlayingFieldTest.liquidFlowsThroughThePipeAndTheTileKeepsItsColour`; `PipeTileTest` and `PlayingFieldTest` pass on the emulator

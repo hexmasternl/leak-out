@@ -14,3 +14,20 @@ The field SHALL draw the grid, the start cell with its open side, the finish cel
 #### Scenario: Pipe art follows zoom
 - **WHEN** the player zooms in on a placed section
 - **THEN** the section's pipe art is drawn at the new cell size, filling the cell
+
+## ADDED Requirements
+
+### Requirement: Liquid flows through the placed pipes
+The field SHALL draw the liquid inside the pipe art of placed sections: every channel the liquid has run through full, and the channel the liquid head is in filled from its entry side up to the head's progress. The progress SHALL come from the engine unchanged, so the liquid moves linearly in time with no easing, and the next section SHALL start filling the moment the previous one is full. The liquid head SHALL be rounded with its front exactly on the head, so it crosses into the next section without a jump. The tile under a pipe SHALL keep its colour when liquid enters it.
+
+#### Scenario: Liquid fills the head section
+- **WHEN** the liquid head is half way through a placed straight it entered from the left
+- **THEN** the left half of that pipe shows liquid and the right half is dry
+
+#### Scenario: Flow runs on into the next section
+- **WHEN** the liquid head moves from one placed section into the next
+- **THEN** the first section is full up to its exit border and the next fills from its entry border
+
+#### Scenario: Tile keeps its colour
+- **WHEN** liquid enters a placed section
+- **THEN** the cell around the pipe looks the same as while it was dry

@@ -350,6 +350,72 @@ class PlayingFieldTest {
         assertPipeArtOfH(cell)
     }
 
+    @Test
+    fun liquidFlowsThroughThePipeAndTheTileKeepsItsColour() {
+        show()
+        val first = Position(1, 0)
+        compose.runOnIdle {
+            assertTrue(session.placeSection(PipeSection.H, first))
+            assertTrue(session.placeSection(PipeSection.H, Position(2, 0)))
+            session.endCountdown()
+        }
+        compose.waitForIdle()
+        val dry = fieldPixels()
+        val rect = cellRectInField(first)
+
+        // 0.8 cells per second: 1250 ms through the start, then half of the first H.
+        compose.runOnIdle { session.sendTick(1_250 + 625) }
+        compose.waitForIdle()
+        val half = fieldPixels()
+        assertTrue("liquid near the entry", half.isLiquidAt(rect, 0.15f, 0.5f))
+        assertTrue("liquid just behind the middle", half.isLiquidAt(rect, 0.4f, 0.5f))
+        assertTrue("dry past the head", !half.isLiquidAt(rect, 0.7f, 0.5f) && !half.isLiquidAt(rect, 0.9f, 0.5f))
+        assertTileUnchanged(dry, half, rect)
+
+        // A quarter later the front has moved on a quarter of the pipe, at the same speed.
+        compose.runOnIdle { session.sendTick(312) }
+        compose.waitForIdle()
+        val threeQuarters = fieldPixels()
+        assertTrue("liquid at 0.65", threeQuarters.isLiquidAt(rect, 0.65f, 0.5f))
+        assertTrue("dry at 0.9", !threeQuarters.isLiquidAt(rect, 0.9f, 0.5f))
+
+        // On into the next H: the first is full to its exit border, and still only its pipe is blue.
+        compose.runOnIdle { session.sendTick(313 + 625) }
+        compose.waitForIdle()
+        val full = fieldPixels()
+        for (fx in listOf(0.1f, 0.5f, 0.95f)) assertTrue("full at $fx", full.isLiquidAt(rect, fx, 0.5f))
+        assertTrue("the next H fills from its entry", full.isLiquidAt(cellRectInField(Position(2, 0)), 0.15f, 0.5f))
+        assertTileUnchanged(dry, full, rect)
+    }
+
+    private fun fieldPixels(): PixelMap = compose.onNodeWithTag(GameScreenTags.FIELD).captureToImage().toPixelMap()
+
+    private fun cellRectInField(cell: Position): Rect {
+        val field = compose.fieldRect()
+        return compose.cellRect(cell).translate(-field.left, -field.top)
+    }
+
+    /** Liquid at [fx] across the bore around [fy], off the lighter highlight on the centre line. */
+    private fun PixelMap.isLiquidAt(rect: Rect, fx: Float, fy: Float): Boolean =
+        listOf(-0.07f, -0.05f, 0.05f, 0.07f).any { dy ->
+            val c = this[(rect.left + rect.width * fx).toInt(), (rect.top + rect.height * (fy + dy)).toInt()]
+            c.red < 0.5f && c.green > 0.45f && c.blue > 0.6f && c.blue - c.red > 0.35f
+        }
+
+    /** Away from the bore the cell looks exactly as it did while dry: the tile is not tinted. */
+    private fun assertTileUnchanged(dry: PixelMap, wet: PixelMap, rect: Rect) {
+        for (fx in listOf(0.1f, 0.5f, 0.9f)) {
+            for (fy in listOf(0.1f, 0.2f, 0.8f, 0.9f)) {
+                val x = (rect.left + rect.width * fx).toInt()
+                val y = (rect.top + rect.height * fy).toInt()
+                val a = dry[x, y]
+                val b = wet[x, y]
+                val same = abs(a.red - b.red) < 0.02f && abs(a.green - b.green) < 0.02f && abs(a.blue - b.blue) < 0.02f
+                assertTrue("tile colour at ($fx, $fy) changed from $a to $b", same)
+            }
+        }
+    }
+
     /**
      * The H art spans the whole cell: at its centre line the dark bore, just above it the lighter
      * steel body (view box y ≈ 34, which the old stand-in left as background), from edge to edge.

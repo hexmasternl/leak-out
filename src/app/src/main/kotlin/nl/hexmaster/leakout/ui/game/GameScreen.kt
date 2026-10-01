@@ -159,6 +159,7 @@ fun GameScreen(
                         lossAgeMs = { session.lossAgeMs },
                         head = session.select { (state.flow as? FlowState.Flowing)?.position },
                         filled = session.select { state.flow.used },
+                        flow = { session.state.flow },
                         winAgeMs = if (outcome is Outcome.Won) ({ session.winAgeMs }) else null,
                     )
                 }

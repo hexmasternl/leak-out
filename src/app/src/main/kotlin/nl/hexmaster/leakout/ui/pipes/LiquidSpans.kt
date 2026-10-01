@@ -89,3 +89,30 @@ object LiquidSpans {
             PathSpan(1f - to, 1f - from, head = (1f - to).takeIf { head })
         }
 }
+
+/**
+ * A span drawn with a rounded head: [body] is the part drawn as a band and [capCenter] the centre
+ * of the round cap, both as fractions of the path. The cap sits behind the leading edge, so its
+ * front is exactly on the head; near a border its centre may lie before 0 or past 1, and the
+ * renderer extends the path there along its end tangent. [capCenter] is `null` without a head.
+ */
+data class HeadedSpan(val body: PathSpan, val capCenter: Float?)
+
+/**
+ * Where the band stops and the cap goes for [span] with a cap of radius [capFraction] (a fraction
+ * of the path length). The liquid front then moves at exactly the speed of the head and leaves a
+ * channel at the same moment the next one starts, so the flow runs on across sections.
+ */
+fun LiquidSpans.withRoundHead(span: PathSpan, capFraction: Float): HeadedSpan {
+    val head = span.head ?: return HeadedSpan(span, null)
+    require(capFraction >= 0f) { "The cap cannot be negative, was $capFraction" }
+    // The liquid runs towards the end of the path when its head is the end of the span.
+    val forwards = kotlin.math.abs(head - span.end) <= kotlin.math.abs(head - span.start)
+    return if (forwards) {
+        val center = head - capFraction
+        HeadedSpan(PathSpan(span.start, center.coerceIn(span.start, span.end)), center)
+    } else {
+        val center = head + capFraction
+        HeadedSpan(PathSpan(center.coerceIn(span.start, span.end), span.end), center)
+    }
+}

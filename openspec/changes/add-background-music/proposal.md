@@ -8,7 +8,7 @@ The game is silent. Ten background tracks are now in `assets/audio/` as `bg_musi
 - **Fixed playlist order**: tracks play in the order of `audio_credits.json`, which is the order of the file numbers. When a track ends the next one starts, and after the last track it wraps to the first.
 - **Rotation across launches**: the app stores the id of the last track that *started*. On the next cold start it begins with the track after that one, not with track 1. If no id is stored, or the stored id is no longer in the playlist, playback starts at the first track.
 - **Lifecycle**: music plays on every screen (welcome, library, settings, game) as one continuous stream. It pauses when the app goes to the background and resumes the same track at the same position when it comes back. It respects audio focus: it pauses when another app takes focus and ducks for short interruptions.
-- **Settings**: the Music switch and volume slider on the Settings screen become interactive and take effect immediately. Sound effects stay disabled with the "Coming soon" note, because effects are not part of this change.
+- **Settings**: the Music switch and volume slider on the Settings screen become interactive and take effect immediately. Sound effects were already enabled by change `app-game-sound-effects`, so after this change no audio control shows "Coming soon".
 - **Music credits on the About panel**: a "Music" section lists every track as title and artist, in playlist order, read from the bundled `audio_credits.json`.
 
 ## Capabilities
@@ -17,7 +17,7 @@ The game is silent. Ten background tracks are now in `assets/audio/` as `bg_musi
 - `background-music`: the bundled playlist and its order, continuous playback with wrap-around, rotation of the starting track across launches, lifecycle and audio-focus behaviour, and reacting to the music settings.
 
 ### Modified Capabilities
-- `settings-screen`: the requirement "Audio panel is complete but disabled" changes so that the Music switch and slider are enabled while Sound effects stays disabled. A new requirement adds the music credits to the About panel. This capability is introduced by change `app-settings-page`, which must be merged and archived before this change is implemented.
+- `settings-screen`: the requirement "Audio panel is complete but disabled" changes so that the Music switch and slider are enabled alongside the already enabled Sound effects controls. A new requirement adds the music credits to the About panel. This capability is introduced by change `app-settings-page`, which must be merged and archived before this change is implemented.
 
 ## Impact
 

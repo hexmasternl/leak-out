@@ -17,7 +17,7 @@ The plan (`docs/project-plan.md` §2.1) picks `MediaPlayer` for music. Change `a
 - Playlist logic testable on the JVM without `MediaPlayer`.
 
 **Non-Goals:**
-- Sound effects (place, leak, win). The Sound effects controls stay disabled.
+- Sound effects (place, leak, win). Those came with change `app-game-sound-effects`, which already enabled their controls.
 - A separate credits screen, or license texts per track. The About panel lists title and artist only.
 - Shuffle, skip or track selection by the player.
 - Cross-fading between tracks, or music that changes with game state (for example tension near a leak).
@@ -43,7 +43,7 @@ The plan (`docs/project-plan.md` §2.1) picks `MediaPlayer` for music. Change `a
 
 **Failure handling.** If a track fails to open or prepare, or the player reports an error, the controller logs it and moves to the next track without recording the failed one. After every track has failed in one session the controller stops trying, and the game keeps running silently. An empty or unreadable manifest also means silence, never a crash.
 
-**Settings UI.** The settings change gates all four audio controls with `AUDIO_AVAILABLE`. That flag splits into `MUSIC_AVAILABLE = true` and `SOUND_EFFECTS_AVAILABLE = false`. The "Coming soon" note moves from the panel title to the Sound effects row, because the panel is no longer entirely unavailable. `SettingsViewModel` gains `onMusicEnabledChange` and `onMusicVolumeChange`. Slider writes are persisted when the drag ends, and the live value goes to the player during the drag so the player hears the change.
+**Settings UI.** Change `app-game-sound-effects` already split the audio flag into `SOUND_EFFECTS_AVAILABLE = true` and `MUSIC_AVAILABLE = false`, with "Coming soon" on the Music row. This change sets `MUSIC_AVAILABLE = true`, so the note is gone from the panel. `SettingsViewModel` gains `onMusicEnabledChange` and `onMusicVolumeChange`. Slider writes are persisted when the drag ends, and the live value goes to the player during the drag so the player hears the change.
 
 **About panel music credits.** The About panel gains a "Music" section below the existing lines. It shows one row per track, in playlist order, with the title in `body.md` and the artist in `text.muted` ("Ebb and Flow · Fabian Measures"). The list comes from the same parsed `audio_credits.json` the player uses, through a small `MusicCredits` source passed to `SettingsViewModel`. It is not hard-coded in strings, so editing the JSON updates both the playlist and the credits. Titles and artists are proper names, so they are not translated. If the file cannot be read, the section is left out instead of showing an empty heading. The panel's column already scrolls, so ten rows need no extra layout.
 

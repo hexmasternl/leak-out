@@ -47,6 +47,10 @@ Work is specified and tracked with [OpenSpec](https://github.com/Fission-AI/Open
 - `development` is the integration branch, branched from `main`.
 - Each OpenSpec change is implemented on `feature/<change-name>`, branched from `development`, in its own worktree under `../leak-out-worktrees/<change-name>`. The `openspec-work-on-change` skill sets this up and owns committing and pushing.
 
+## Releases
+
+Every push to `main` runs `.github/workflows/deploy-play-internal.yml`: it runs the unit tests, builds a signed release bundle and uploads it to the Play Console's internal testing track. Signing material and Play credentials live only in GitHub secrets: never commit a keystore or key, and none is needed locally (without the `LEAKOUT_UPLOAD_*` variables the release build is simply unsigned). The version code comes from `-PversionCode` in CI; bump `versionName` by hand. Setup of every secret, key and variable: [docs/deployment.md](docs/deployment.md).
+
 ## Keeping Claude Code and Copilot in sync
 
 Instructions, skills, commands/prompts and custom agents exist once per tool. `scripts/sync-agent-config.mjs` copies a change made on one side to the other:

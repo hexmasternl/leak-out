@@ -43,8 +43,8 @@
 
 ## 4. Project instructions
 
-- [ ] 4.1 Add a short "Releases" section to `CLAUDE.md`: pushes to `main` deploy to the internal testing track via the workflow, signing material is never committed or needed locally, and the setup is in `docs/deployment.md`
-- [ ] 4.2 Run `node scripts/sync-agent-config.mjs --check` and make sure `AGENTS.md` and `.github/copilot-instructions.md` are in sync
+- [x] 4.1 Add a short "Releases" section to `CLAUDE.md`: pushes to `main` deploy to the internal testing track via the workflow, signing material is never committed or needed locally, and the setup is in `docs/deployment.md`
+- [x] 4.2 Run `node scripts/sync-agent-config.mjs --check` and make sure `AGENTS.md` and `.github/copilot-instructions.md` are in sync
 
 ## 5. First deployment (after merge into `main`, with the repository owner)
 

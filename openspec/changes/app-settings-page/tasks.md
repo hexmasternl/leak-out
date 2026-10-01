@@ -14,8 +14,8 @@
 
 ## 3. Settings state
 
-- [ ] 3.1 Add `AppInfo(versionName, versionCode)`, `ProgressSummary(levelsFinished, starsEarned)` and `SettingsUiState`
-- [ ] 3.2 Implement `SettingsViewModel` combining `SettingsRepository.settings` with `LevelHistoryRepository.observeAll()` into a `StateFlow<SettingsUiState?>` (null while loading), with `onVibrationChange` and `onResetConfirmed`
+- [x] 3.1 Add `AppInfo(versionName, versionCode)`, `ProgressSummary(levelsFinished, starsEarned)` and `SettingsUiState`
+- [x] 3.2 Implement `SettingsViewModel` combining `SettingsRepository.settings` with `LevelHistoryRepository.observeAll()` into a `StateFlow<SettingsUiState?>` (null while loading), with `onVibrationChange` and `onResetConfirmed`
 
 ## 4. Settings screen UI
 
@@ -37,7 +37,7 @@
 
 - [x] 6.1 JVM test `Settings` defaults and `InMemorySettingsRepository`: setters, observed changes, volume clamping above and below range
 - [x] 6.2 JVM test `InMemoryLevelHistoryRepository.clearAll`: records removed, observers get an empty list
-- [ ] 6.3 JVM test `SettingsViewModel`: the progress summary from the history, the vibration change written, reset clearing the history but not the settings
+- [x] 6.3 JVM test `SettingsViewModel`: the progress summary from the history, the vibration change written, reset clearing the history but not the settings
 - [ ] 6.4 Instrumented test `DataStoreSettingsRepository`: defaults on an empty file, values persist across a new repository instance on the same file, and clamping of out-of-range stored values
 - [ ] 6.5 Instrumented test `LevelHistoryDao.deleteAll` on an in-memory Room database
 - [ ] 6.6 Compose UI test: panels and titles shown, audio controls disabled and unchanged on tap, "Coming soon" shown, vibration toggles, reset button disabled with empty history, the dialog opens and cancels by button and Back, confirming clears the summary, and the About version text

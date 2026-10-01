@@ -18,22 +18,22 @@
 
 ## 3. SoundPool player and lifetime
 
-- [ ] 3.1 Implement `SoundPoolSoundEffectPlayer`: `SoundPool.Builder().setMaxStreams(4)` with `AudioAttributes(USAGE_GAME, CONTENT_TYPE_SONIFICATION)`, load every `sfx/` asset at creation through `assets.openFd`, skip (and log in debug) a play whose load has not completed, release the pool in `release()`
-- [ ] 3.2 Add `SoundEffectsViewModel`: builds the catalogue from `assets.list("sfx")`, owns `SoundEffects` and the player, collects `SettingsRepository.settings` into `SoundEffects` in `viewModelScope`, releases the player in `onCleared`
-- [ ] 3.3 Wire it in `MainActivity` with the shared settings repository (no second DataStore instance), and pass `SoundEffects` to `GameScreen`
-- [ ] 3.4 Instrumented test: `SoundPoolSoundEffectPlayer` loads all bundled effects and plays each without error, and `release()` is safe to call twice
+- [x] 3.1 Implement `SoundPoolSoundEffectPlayer`: `SoundPool.Builder().setMaxStreams(4)` with `AudioAttributes(USAGE_GAME, CONTENT_TYPE_SONIFICATION)`, load every `sfx/` asset at creation through `assets.openFd`, skip (and log in debug) a play whose load has not completed, release the pool in `release()`
+- [x] 3.2 Add `SoundEffectsViewModel`: builds the catalogue from `assets.list("sfx")`, owns `SoundEffects` and the player, collects `SettingsRepository.settings` into `SoundEffects` in `viewModelScope`, releases the player in `onCleared`
+- [x] 3.3 Wire it in `MainActivity` with the shared settings repository (no second DataStore instance), and pass `SoundEffects` to `GameScreen`
+- [x] 3.4 Instrumented test: `SoundPoolSoundEffectPlayer` loads all bundled effects and plays each without error, and `release()` is safe to call twice
 
 ## 4. Placement sounds in the game
 
-- [ ] 4.1 Add `GameSession.place(at): PlaceResult` (`Placed`, `Replaced`, `Rejected`): read whether the tile holds a `Cell.Pipe` before sending `GameCommand.Place`, and classify by that and by the command's result
-- [ ] 4.2 Give `GameScreen` an optional `soundEffects: SoundEffects? = null` parameter; route `FieldDropTarget.tryPlace` and the field's `onTap` through `session.place` and play `SectionPlaced`, `SectionDestroyed` or `PlacementFailed`
-- [ ] 4.3 Keep drops outside the level's tiles (`field.cellAt` is null) and cancelled drags silent
-- [ ] 4.4 JVM unit tests for `GameSession.place`: empty tile is `Placed`, replacing an unfilled section is `Replaced`, blocked/start/finish, filled section, replace not allowed and replace lock are `Rejected`, and the state is unchanged when rejected
+- [x] 4.1 Add `GameSession.place(at): PlaceResult` (`Placed`, `Replaced`, `Rejected`): read whether the tile holds a `Cell.Pipe` before sending `GameCommand.Place`, and classify by that and by the command's result
+- [x] 4.2 Give `GameScreen` an optional `soundEffects: SoundEffects? = null` parameter; route `FieldDropTarget.tryPlace` and the field's `onTap` through `session.place` and play `SectionPlaced`, `SectionDestroyed` or `PlacementFailed`
+- [x] 4.3 Keep drops outside the level's tiles (`field.cellAt` is null) and cancelled drags silent
+- [x] 4.4 JVM unit tests for `GameSession.place`: empty tile is `Placed`, replacing an unfilled section is `Replaced`, blocked/start/finish, filled section, replace not allowed and replace lock are `Rejected`, and the state is unchanged when rejected
 
 ## 5. End-of-level sounds
 
-- [ ] 5.1 In `GameScreen`, play `LevelComplete` when `showWinDialog` turns true and `LevelFailed` when `showLostDialog` turns true, once per attempt each, tracked with a `remember(session)` marker of played attempts
-- [ ] 5.2 Gate both on the lifecycle being at least `STARTED`, so a dialog that appears while the app is in the background plays its sound once on return
+- [x] 5.1 In `GameScreen`, play `LevelComplete` when `showWinDialog` turns true and `LevelFailed` when `showLostDialog` turns true, once per attempt each, tracked with a `remember(session)` marker of played attempts
+- [x] 5.2 Gate both on the lifecycle being at least `STARTED`, so a dialog that appears while the app is in the background plays its sound once on return
 
 ## 6. Settings
 

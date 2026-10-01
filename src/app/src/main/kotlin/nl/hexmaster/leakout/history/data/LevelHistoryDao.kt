@@ -23,6 +23,10 @@ interface LevelHistoryDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(entity: LevelHistoryEntity)
 
+    /** Every row at once: the reset progress action. */
+    @Query("DELETE FROM level_history")
+    suspend fun deleteAll()
+
     @Update
     suspend fun update(entity: LevelHistoryEntity)
 }

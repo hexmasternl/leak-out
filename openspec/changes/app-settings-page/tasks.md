@@ -1,16 +1,16 @@
 ## 1. Settings persistence
 
-- [ ] 1.1 Add `androidx.datastore:datastore-preferences` (latest stable, pinned exactly) to `gradle/libs.versions.toml` and the app module
-- [ ] 1.2 Add the `Settings` data class (`soundEnabled`, `soundVolume`, `musicEnabled`, `musicVolume`, `vibrationEnabled`) with the defaults on, 0.8, on, 0.6, on
-- [ ] 1.3 Define the `SettingsRepository` interface: `settings: Flow<Settings>` and one suspend setter per field
-- [ ] 1.4 Implement `DataStoreSettingsRepository` (file `settings`, keys `sound_enabled`, `sound_volume`, `music_enabled`, `music_volume`, `vibration_enabled`; missing keys read as defaults; volumes clamped to 0.0-1.0 on write and read)
-- [ ] 1.5 Add `InMemorySettingsRepository` for tests and previews, with the same clamping
+- [x] 1.1 Add `androidx.datastore:datastore-preferences` (latest stable, pinned exactly) to `gradle/libs.versions.toml` and the app module
+- [x] 1.2 Add the `Settings` data class (`soundEnabled`, `soundVolume`, `musicEnabled`, `musicVolume`, `vibrationEnabled`) with the defaults on, 0.8, on, 0.6, on
+- [x] 1.3 Define the `SettingsRepository` interface: `settings: Flow<Settings>` and one suspend setter per field
+- [x] 1.4 Implement `DataStoreSettingsRepository` (file `settings`, keys `sound_enabled`, `sound_volume`, `music_enabled`, `music_volume`, `vibration_enabled`; missing keys read as defaults; volumes clamped to 0.0-1.0 on write and read)
+- [x] 1.5 Add `InMemorySettingsRepository` for tests and previews, with the same clamping
 - [ ] 1.6 Provide a single DataStore-backed instance to the app from `MainActivity`
 
 ## 2. Clearing level history
 
-- [ ] 2.1 Add `@Query("DELETE FROM level_history") suspend fun deleteAll()` to `LevelHistoryDao`
-- [ ] 2.2 Add `suspend fun clearAll()` to `LevelHistoryRepository` and implement it in `RoomLevelHistoryRepository` and `InMemoryLevelHistoryRepository`
+- [x] 2.1 Add `@Query("DELETE FROM level_history") suspend fun deleteAll()` to `LevelHistoryDao`
+- [x] 2.2 Add `suspend fun clearAll()` to `LevelHistoryRepository` and implement it in `RoomLevelHistoryRepository` and `InMemoryLevelHistoryRepository`
 
 ## 3. Settings state
 
@@ -35,8 +35,8 @@
 
 ## 6. Tests
 
-- [ ] 6.1 JVM test `Settings` defaults and `InMemorySettingsRepository`: setters, observed changes, volume clamping above and below range
-- [ ] 6.2 JVM test `InMemoryLevelHistoryRepository.clearAll`: records removed, observers get an empty list
+- [x] 6.1 JVM test `Settings` defaults and `InMemorySettingsRepository`: setters, observed changes, volume clamping above and below range
+- [x] 6.2 JVM test `InMemoryLevelHistoryRepository.clearAll`: records removed, observers get an empty list
 - [ ] 6.3 JVM test `SettingsViewModel`: the progress summary from the history, the vibration change written, reset clearing the history but not the settings
 - [ ] 6.4 Instrumented test `DataStoreSettingsRepository`: defaults on an empty file, values persist across a new repository instance on the same file, and clamping of out-of-range stored values
 - [ ] 6.5 Instrumented test `LevelHistoryDao.deleteAll` on an in-memory Room database

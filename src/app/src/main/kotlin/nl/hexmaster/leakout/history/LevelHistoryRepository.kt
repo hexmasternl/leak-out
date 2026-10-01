@@ -23,6 +23,9 @@ interface LevelHistoryRepository {
 
     /** Every record, ordered by level id, now and after every change. */
     fun observeAll(): Flow<List<LevelHistory>>
+
+    /** Deletes every record in one operation, so every level reads as unfinished. Settings are not touched. */
+    suspend fun clearAll()
 }
 
 /** Whether [levelId] has been finished: it has a record. */
@@ -55,4 +58,8 @@ class InMemoryLevelHistoryRepository(initial: List<LevelHistory> = emptyList()) 
 
     override fun observeAll(): Flow<List<LevelHistory>> =
         records.asStateFlow().map { all -> all.values.sortedBy { it.levelId } }
+
+    override suspend fun clearAll() {
+        records.value = emptyMap()
+    }
 }

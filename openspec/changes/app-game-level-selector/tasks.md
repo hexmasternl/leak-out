@@ -14,9 +14,9 @@
 
 ## 3. View model
 
-- [ ] 3.1 Add `starProgress` (`min(earned / threshold, 1)`, 1 when the threshold is 0) and `showStarProgress` (a next page exists) to `LevelLibraryUiState`
-- [ ] 3.2 Update `LevelLibraryViewModelTest`: progress values below, at and above the threshold, hidden on the last page, follows the current page, next disabled until the gate is met
-- [ ] 3.3 Run `./gradlew :app:testDebugUnitTest` and make sure it passes
+- [x] 3.1 Add `starProgress` (`min(earned / threshold, 1)`, 1 when the threshold is 0) and `showStarProgress` (a next page exists) to `LevelLibraryUiState`
+- [x] 3.2 Update `LevelLibraryViewModelTest`: progress values below, at and above the threshold, hidden on the last page, follows the current page, next disabled until the gate is met
+- [x] 3.3 Run `./gradlew :app:testDebugUnitTest` and make sure it passes
 
 ## 4. UI
 

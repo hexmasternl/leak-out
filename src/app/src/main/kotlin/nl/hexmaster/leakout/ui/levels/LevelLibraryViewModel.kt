@@ -36,17 +36,30 @@ data class LevelLibraryUiState(
 
     val hasNext: Boolean get() = currentIndex < accessiblePages.lastIndex
 
-    /** The next page exists but cannot be entered yet: the screen shows star progress towards it. */
+    /** The next page exists but cannot be entered yet. */
     val nextPageLocked: Boolean
         get() = library.page(currentPage + 1)?.isAccessible == false
 
     /** Stars earned on the current page, shown against [LevelLibrary.pageUnlockStars]. */
     val currentPageStars: Int get() = library.page(currentPage)?.earnedStars ?: 0
 
+    /** A next page exists, so the star progress towards opening it is shown; hidden on the last page. */
+    val showStarProgress: Boolean get() = library.page(currentPage + 1) != null
+
+    /** Fill of the star progress bar for the current page, see [starProgress]. */
+    val starProgress: Float get() = starProgress(currentPageStars, library.pageUnlockStars)
+
+    /** The current page has earned enough stars to open the next one: the bar uses the success style. */
+    val starGoalReached: Boolean get() = currentPageStars >= library.pageUnlockStars
+
     companion object {
         val Loading = LevelLibraryUiState(LevelLibrary(emptyList(), 0), currentPage = 1, loaded = false)
     }
 }
+
+/** `min(earned / threshold, 1)`, clamped to `0..1`; full when [threshold] is 0, as the gate is then always met. */
+fun starProgress(earned: Int, threshold: Int): Float =
+    if (threshold <= 0) 1f else (earned.toFloat() / threshold).coerceIn(0f, 1f)
 
 /** One-off effects for the host. */
 sealed interface LevelLibraryEvent {
@@ -80,7 +93,7 @@ class LevelLibraryViewModel(
             LevelLibraryUiState(library, page, loaded = true)
         }.stateIn(viewModelScope, SharingStarted.Eagerly, LevelLibraryUiState.Loading)
 
-    /** The player moved to page [number]. Pages without an unlocked level are refused. */
+    /** The player moved to page [number]. Pages that are not open are refused. */
     fun onPageChange(number: Int) {
         if (uiState.value.library.page(number)?.isAccessible == true) selectedPage.value = number
     }

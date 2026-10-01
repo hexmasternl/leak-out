@@ -20,9 +20,9 @@
 
 ## 4. UI
 
-- [ ] 4.1 Replace the star text hint in `LevelLibraryScreen` with a star progress bar in the hint row (design system track and fill, Fredoka label "earned / threshold" with a star glyph, success style when reached), with a test tag and a content description
-- [ ] 4.2 Keep the locked-tile message showing briefly in the same row, then restore the bar
-- [ ] 4.3 Update string resources (remove the unused star hint string, add the progress label and content description) and the Compose previews (below threshold, reached, last page)
-- [ ] 4.4 Update `LevelLibraryScreenTest`: levels 1-3 tappable on a fresh install, level 4 locked, skipping a level, next button disabled until 50 stars, progress bar label and visibility per page, locked message in the bar row
-- [ ] 4.5 Run the affected instrumented tests (`LevelLibraryScreenTest`, plus `WelcomeScreenTest`/`MainActivityTest` if the play menu flow is touched) on the emulator and make sure they pass
-- [ ] 4.6 Verify on a landscape emulator that the grid and progress bar fit without scrolling
+- [x] 4.1 Replace the star text hint in `LevelLibraryScreen` with a star progress bar in the hint row (design system track and fill, Fredoka label "earned / threshold" with a star glyph, success style when reached), with a test tag and a content description
+- [x] 4.2 Keep the locked-tile message showing briefly in the same row, then restore the bar
+- [x] 4.3 Update string resources (remove the unused star hint string, add the progress label and content description) and the Compose previews (below threshold, reached, last page)
+- [x] 4.4 Update `LevelLibraryScreenTest`: levels 1-3 tappable on a fresh install, level 4 locked, skipping a level, next button disabled until 50 stars, progress bar label and visibility per page, locked message in the bar row
+- [x] 4.5 Run the affected instrumented tests (`LevelLibraryScreenTest`, plus `WelcomeScreenTest`/`MainActivityTest` if the play menu flow is touched) on the emulator and make sure they pass
+- [x] 4.6 Verify on a landscape emulator that the grid and progress bar fit without scrolling

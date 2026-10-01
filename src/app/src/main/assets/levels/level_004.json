@@ -5,7 +5,7 @@
   "start":  { "x": 0, "y": 5, "openSide": "RIGHT" },
   "finish": { "x": 8, "y": 0, "openSide": "LEFT" },
   "blocked": [],
-  "flow": { "initialDelayMs": 18500, "cellsPerSecond": 0.45 },
+  "flow": { "initialDelayMs": 18500, "cellsPerSecond": 0.113 },
   "stack": { "weights": { "X": 0, "RES": 0 } },
   "stars": { "one": 90, "two": 140, "three": 210 }
 }

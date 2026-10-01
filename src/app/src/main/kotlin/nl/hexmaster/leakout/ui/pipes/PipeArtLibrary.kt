@@ -23,19 +23,24 @@ import java.util.concurrent.ConcurrentHashMap
 import nl.hexmaster.leakout.core.level.PipeSection
 
 /**
- * Loads the pipe assets once and keeps them ready to draw: parsed [PipeArt] plus Compose [Path]s
- * and [Brush]es in the 0–100 view box. The tile scales the canvas, so one prepared set serves
+ * Loads the pipe assets once and keeps them ready to draw: parsed [PipeArt] and the section's
+ * glass overlay, plus Compose [Path]s and [Brush]es in the 0–100 view box. The tile scales the canvas, so one prepared set serves
  * every cell size.
  */
 class PipeArtLibrary(private val open: (fileName: String) -> InputStream) {
     private val art = ConcurrentHashMap<PipeSection, PipeArt>()
+    private val glass = ConcurrentHashMap<PipeSection, List<SvgShape>>()
     private val prepared = ConcurrentHashMap<PipeSection, PreparedPipeArt>()
 
     fun art(section: PipeSection): PipeArt =
         art.getOrPut(section) { open(fileName(section)).use { PipeArtParser.parse(it) } }
 
+    /** The shapes of the section's glass overlay, drawn above everything else. */
+    fun glass(section: PipeSection): List<SvgShape> =
+        glass.getOrPut(section) { open(glassFileName(section)).use { PipeArtParser.parseGlass(it) } }
+
     fun prepared(section: PipeSection): PreparedPipeArt =
-        prepared.getOrPut(section) { PreparedPipeArt.from(art(section)) }
+        prepared.getOrPut(section) { PreparedPipeArt.from(art(section), glass(section)) }
 
     /** Parses and prepares every section now, so the first frame that draws them does not have to. */
     fun preloadAll() {
@@ -46,6 +51,8 @@ class PipeArtLibrary(private val open: (fileName: String) -> InputStream) {
         const val ASSET_DIR = "pipes"
 
         fun fileName(section: PipeSection): String = "$ASSET_DIR/${section.name.lowercase()}.svg"
+
+        fun glassFileName(section: PipeSection): String = "$ASSET_DIR/${section.name.lowercase()}-glass.svg"
 
         @Volatile private var shared: PipeArtLibrary? = null
 
@@ -86,16 +93,18 @@ class PreparedPipeArt(
     val art: PipeArt,
     val under: List<PreparedShape>,
     val over: List<PreparedShape>,
+    val glass: List<PreparedShape>,
     val channels: List<PreparedChannel>,
     val tankClip: Path?,
 ) {
     fun channel(id: String): PreparedChannel = channels.first { it.channel.id == id }
 
     companion object {
-        fun from(art: PipeArt): PreparedPipeArt = PreparedPipeArt(
+        fun from(art: PipeArt, glass: List<SvgShape> = emptyList()): PreparedPipeArt = PreparedPipeArt(
             art = art,
             under = art.under.map(::prepare),
             over = art.over.map(::prepare),
+            glass = glass.map(::prepare),
             channels = art.channels.map { PreparedChannel(it, parsePath(it.pathData)) },
             tankClip = art.tank?.let { tank ->
                 Path().apply { addOval(Rect(Offset(tank.cx, tank.cy), tank.r)) }

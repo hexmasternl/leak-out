@@ -4,6 +4,8 @@
 # Toolchain
 agp = "9.4.1"
 kotlin = "2.4.20"
+# KSP runs the Room compiler. KSP2 is versioned on its own line, independent of Kotlin.
+ksp = "2.3.12"
 jdk = "21"
 compileSdk = "37"
 targetSdk = "37"
@@ -15,9 +17,13 @@ activityCompose = "1.13.0"
 core = "1.19.0"
 coreSplashscreen = "1.2.0"
 lifecycle = "2.9.4"
+room = "2.8.5"
+datastore = "1.2.1"
 
 # Kotlin libraries
 kotlinxSerialization = "1.11.0"
+# Matches the kotlinx-coroutines-core that Compose and lifecycle already pull in.
+kotlinxCoroutines = "1.9.0"
 
 # Test
 junit = "4.13.2"
@@ -44,9 +50,15 @@ androidx-activity-compose = { group = "androidx.activity", name = "activity-comp
 androidx-core = { group = "androidx.core", name = "core", version.ref = "core" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 # Kotlin
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 
 # Test
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -67,3 +79,6 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 # Pure Kotlin JVM modules (core) are not Android modules, so they apply the Kotlin plugin themselves.
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+# Room with Kotlin compiles through KSP; the Room plugin exports the schema.
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+room = { id = "androidx.room", version.ref = "room" }

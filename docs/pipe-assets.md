@@ -1,6 +1,8 @@
 # Pipe assets
 
-The artwork of every pipe section is an SVG file in `src/app/src/main/assets/pipes/`, one per section, named after its id in lower case: `h.svg`, `v.svg`, `lt.svg`, `lb.svg`, `rt.svg`, `rb.svg`, `x.svg`, `res.svg`. These files are the only source of the pipe art. Open them in any SVG editor. The app reads them at runtime (`PipeArtParser`), draws the art and puts the liquid on top along the channels marked in the file.
+The artwork of every pipe section is an SVG file in `src/app/src/main/assets/pipes/`, one per section, named after its id in lower case: `h.svg`, `v.svg`, `lt.svg`, `lb.svg`, `rt.svg`, `rb.svg`, `x.svg`, `res.svg`. Each section also has a **glass overlay**, `<id>-glass.svg` (`h-glass.svg` … `res-glass.svg`), with translucent highlights that make the pipe look like glass. These files are the only source of the pipe art. Open them in any SVG editor. The app reads them at runtime (`PipeArtParser`), draws the art, puts the liquid on top along the channels marked in the file, and lays the glass over everything.
+
+The stack, the section under the finger while dragging, the playing field and the Pipe Lab all draw pipes with this same art (`PipeTile` and `drawPipe`), so an edit shows up everywhere.
 
 The look follows [design-system.md](design-system.md) sections 6.3 and 6.4.
 
@@ -24,6 +26,22 @@ The look follows [design-system.md](design-system.md) sections 6.3 and 6.4.
   - `X` has `channel-v` (top–bottom) and then `channel-h` (left–right).
 - **Tank** (`RES` only): the circle `tank` is the inside of the tank. The tank liquid rises in it from the bottom. The reservoir channel must be the straight line `M0 50 L100 50`.
 - **Bridge** (`X` only): the rectangle `bridge` is where the liquid of the channel in `data-hides` is not drawn, because that channel passes under the horizontal pipe.
+
+## Glass overlay
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <g id="glass"> drawn above everything: tint, rim lines, specular streak </g>
+</svg>
+```
+
+- **View box**: `0 0 100 100`, the same cell as the section asset.
+- **`glass`**: exactly one group, required. All the overlay's art lives in it. It uses the same SVG subset and colours as the section assets, usually white at a low opacity.
+- No channels, tank or bridge: those belong in the section asset, and loading an overlay that has one fails.
+
+## Layer order
+
+Bottom to top: the section's `under` group, the liquid (channels in file order), the `over` group, the glass overlay.
 
 ## Sizes
 
@@ -52,8 +70,8 @@ Paint: `#RRGGBB`, `#RGB`, `none` or `url(#gradient-id)`.
 
 Anything else, such as `text`, `style="…"` or `transform="…"`, makes loading fail with an error that names it. Elements and attributes in other namespaces (what Inkscape and other editors add) are ignored, so saving from an editor is fine as long as it writes plain attributes. If an editor writes `style="…"`, switch it to presentation attributes (in Inkscape: *Preferences → Input/Output → SVG output → Style properties → Presentation attributes*).
 
-After editing an asset, run `./gradlew :app:testDebugUnitTest` from `src/`; `PipeAssetsTest` checks the format, the channels, the flanges and the colours.
+After editing an asset, run `./gradlew :app:testDebugUnitTest` from `src/`; `PipeAssetsTest` checks the format, the channels, the flanges and the colours of the section assets and the glass overlays.
 
 ## Previewing
 
-Debug builds have a second launcher entry, **Pipe Lab**, that shows every section and plays the liquid with controls for direction, flow speed and reservoir speed.
+Debug builds have a second launcher entry, **Pipe Lab**, that shows every section, with its glass, and plays the liquid with controls for direction, flow speed and reservoir speed.

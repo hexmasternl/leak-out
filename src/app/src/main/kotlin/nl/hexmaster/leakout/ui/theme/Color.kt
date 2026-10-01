@@ -60,6 +60,15 @@ object LeakOutColors {
     // 2.1 surface.raised
     val SurfaceRaised = Color(0xFF19324A)
 
+    // 2.1 surface.abyss and surface.base
+    val SurfaceAbyss = Color(0xFF07111C)
+    val SurfaceBase = Color(0xFF122538)
+
+    // 2.5 status: success.500 and the 16 % tints used by the level tiles
+    val Success500 = Color(0xFF3DDC97)
+    val SuccessTint = Color(0x293DDC97)
+    val LeakTint = Color(0x29FF5A5F)
+
     // 2.3 Liquid (hero colour)
     val LiquidGlow = Color(0xFF9DF3FF)
     val Liquid300 = Color(0xFF5EE7FF)
@@ -89,4 +98,15 @@ object LeakOutColors {
 
     // 2.7 Text: text.muted (Deep theme)
     val TextMuted = Color(0xFF6E8296)
+
+    // 2.7 Text: text.primary and text.secondary (Deep theme)
+    val TextPrimary = Color(0xFFF2F7FB)
+    val TextSecondary = Color(0xFFA9BACB)
+
+    // 2.1 surface.overlay: secondary buttons, switch track when off
+    val SurfaceOverlay = Color(0xFF21405C)
+
+    // 2.1 lines: white at 8 % (line.subtle) and 16 % (line.strong)
+    val LineSubtle = Color(0x14FFFFFF)
+    val LineStrong = Color(0x29FFFFFF)
 }

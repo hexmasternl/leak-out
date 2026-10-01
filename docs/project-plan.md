@@ -134,6 +134,7 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Once the route is complete, a round fast forward / slow button sits in the bottom right corner, 16 dp from the edges. Back and going to the background also pause the game.
 4. **Pause dialog** – opened from the cog wheel: Resume, Restart, a separator and Exit to the main menu (welcome screen). Tapping outside does nothing; Back works as Resume.
 5. **Level complete / failed overlay** – level complete (the level complete dialog, see 1.9): "Level complete!", the stars, pipe points, unused pipes and total, and Next level, Restart and Exit to the main menu. Level failed (the level lost dialog, see 1.9): "Leaked!", the score, Restart and Exit to the main menu.
+6. **Settings** – opened from the welcome screen's Settings button; Back returns to the welcome screen. Two columns: Audio (sound effects and music switches with volume sliders, disabled with "Coming soon" until audio lands) and Feel (vibration) on the left, Progress (finished levels and stars, and Reset progress with a confirm dialog) and About (name, version, maker, privacy line) on the right.
 
 ---
 
@@ -148,7 +149,7 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 | Board rendering | Compose `Canvas` with a frame-clock driven loop | Simple grid game; no need for a game engine. Can swap to a `SurfaceView` later if profiling shows the need |
 | Game loop | `withFrameNanos` inside a `LaunchedEffect` | Frame-synced delta time, pauses with the composable |
 | Serialization | `kotlinx.serialization` (JSON) | Level files |
-| Persistence | Jetpack DataStore (Preferences) | Level progress and settings |
+| Persistence | Room (SQLite) for level progress; Jetpack DataStore (Preferences) for settings | Progress is per-level rows updated conditionally; settings are a few flags |
 | Audio | `SoundPool` for effects, `MediaPlayer` for music | Low-latency, built in |
 | DI | None initially; manual construction in a small `AppContainer` | Project is small; add Hilt only if it grows |
 | Tests | JUnit 5 + kotlin.test for `core`; Compose UI tests for screens | Core logic must be testable without a device |
@@ -184,7 +185,8 @@ leak-out/
             ├── ui/game/            GameScreen, BoardCanvas, StackPanel, overlays
             ├── render/             PipeDrawer (paths per section), LiquidDrawer, palette
             ├── audio/
-            ├── data/               LevelRepository (assets), ProgressRepository (DataStore)
+            ├── history/            LevelHistoryRepository; data/: Room database, entity and DAO
+            ├── data/               LevelRepository (assets), SettingsRepository (DataStore)
             └── LeakOutApp.kt, MainActivity.kt
 ```
 
@@ -398,11 +400,26 @@ Target: core module ≥ 90 % line coverage; it is small and entirely determinist
 
 ### 2.10 Persistence
 
-`ProgressRepository` (DataStore Preferences):
+**Level progress: Room (SQLite).** `LevelHistoryRepository` keeps one row per finished level in the `level_history` table of `LeakOutDatabase`:
 
-- `highestUnlockedLevel: Int`
-- per level: `bestScore`, `stars`
-- settings: `soundEnabled`, `musicEnabled`
+- `level_id` (primary key), `highscore`, `stars` (0-3, the stars earned with that highscore)
+- a row exists only for finished levels, so "finished" means "has a row"; a leak is never recorded
+- a win replaces the row only when it scores strictly higher, updating highscore and stars together
+- unlocking is derived from these rows by the level library rules; nothing like `highestUnlockedLevel` is stored
+
+Room was chosen over DataStore because progress is per-level rows that are listed and updated conditionally. Every schema version is exported to `app/schemas` and a version bump needs a written migration.
+
+**Settings: DataStore (Preferences).** `SettingsRepository` keeps the settings in the DataStore file `settings`. Each key has a default used while nothing is stored, and volumes are clamped to 0.0-1.0 on write and read:
+
+| Key | Type | Default |
+|-----|------|---------|
+| `sound_enabled` | Boolean | on |
+| `sound_volume` | Float | 0.8 |
+| `music_enabled` | Boolean | on |
+| `music_volume` | Float | 0.6 |
+| `vibration_enabled` | Boolean | on |
+
+Reset progress clears `level_history` only; the settings are kept.
 
 No accounts, no network in the first release.
 

@@ -5,7 +5,7 @@
   "start":  { "x": 4, "y": 0, "openSide": "BOTTOM" },
   "finish": { "x": 6, "y": 8, "openSide": "TOP" },
   "blocked": [ { "x": 10, "y": 0 }, { "x": 6, "y": 2 }, { "x": 3, "y": 3 }, { "x": 0, "y": 4 }, { "x": 3, "y": 5 } ],
-  "flow": { "initialDelayMs": 14500, "cellsPerSecond": 0.7 },
+  "flow": { "initialDelayMs": 14500, "cellsPerSecond": 0.157 },
   "stack": { "weights": { "X": 1, "RES": 0 } },
   "stars": { "one": 160, "two": 270, "three": 400 }
 }

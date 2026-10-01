@@ -2,17 +2,28 @@ package nl.hexmaster.leakout
 
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.core.content.pm.PackageInfoCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import nl.hexmaster.leakout.ui.game.GameScreenTags
 import nl.hexmaster.leakout.ui.game.HudTags
 import nl.hexmaster.leakout.ui.game.PauseTags
+import nl.hexmaster.leakout.ui.levels.LevelLibraryTags
+import nl.hexmaster.leakout.ui.levels.levelTileTag
+import nl.hexmaster.leakout.ui.settings.SettingsTags
 import nl.hexmaster.leakout.ui.splash.SplashScreenTags
 import nl.hexmaster.leakout.ui.splash.SplashTiming
+import nl.hexmaster.leakout.ui.title.PlayMenuTags
 import nl.hexmaster.leakout.ui.title.WelcomeScreenTags
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -85,10 +96,42 @@ class MainActivityTest {
         assertTrue(config.screenWidthDp > config.screenHeightDp)
     }
 
+    /** Play, then a choice on the play menu; the history is read off the main thread, so wait for [tag]. */
+    private fun playThen(choice: String, tag: String) {
+        compose.onNodeWithTag(WelcomeScreenTags.PLAY).performClick()
+        compose.onNodeWithTag(PlayMenuTags.DIALOG).assertIsDisplayed()
+        compose.onNodeWithTag(choice).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
+    fun continueStartsALevel() {
+        skipSplash()
+        playThen(PlayMenuTags.CONTINUE, GameScreenTags.SCREEN)
+        compose.onNodeWithTag(PlayMenuTags.DIALOG).assertDoesNotExist()
+        compose.onNodeWithTag(GameScreenTags.SCREEN).assertIsDisplayed()
+    }
+
+    @Test
+    fun selectLevelOpensTheLevelLibraryAndBackReturnsToTheWelcomeScreen() {
+        skipSplash()
+        playThen(PlayMenuTags.SELECT_LEVEL, LevelLibraryTags.SCREEN)
+        compose.onNodeWithTag(PlayMenuTags.DIALOG).assertDoesNotExist()
+        compose.onNodeWithTag(LevelLibraryTags.SCREEN).assertIsDisplayed()
+        compose.onNodeWithTag(levelTileTag(1)).assertIsDisplayed()
+
+        compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(LevelLibraryTags.SCREEN).assertDoesNotExist()
+        compose.onNodeWithTag(WelcomeScreenTags.SCREEN).assertIsDisplayed()
+    }
+
     @Test
     fun exitFromThePauseMenuShowsTheWelcomeScreen() {
         skipSplash()
-        compose.onNodeWithTag(WelcomeScreenTags.PLAY).performClick()
+        playThen(PlayMenuTags.SELECT_LEVEL, LevelLibraryTags.SCREEN)
+        compose.onNodeWithTag(levelTileTag(1)).performClick()
         compose.waitForIdle()
         compose.onNodeWithTag(GameScreenTags.SCREEN).assertIsDisplayed()
 
@@ -98,6 +141,71 @@ class MainActivityTest {
 
         compose.onNodeWithTag(GameScreenTags.SCREEN).assertDoesNotExist()
         compose.onNodeWithTag(WelcomeScreenTags.SCREEN).assertIsDisplayed()
+    }
+
+    private fun openSettings() {
+        compose.onNodeWithTag(WelcomeScreenTags.SETTINGS).performClick()
+        // The panels appear once the settings and the history have been read off the main thread.
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag(SettingsTags.VIBRATION_SWITCH).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag(SettingsTags.SCREEN).assertIsDisplayed()
+        compose.onNodeWithTag(SettingsTags.TITLE).assertTextEquals("SETTINGS")
+    }
+
+    @Test
+    fun settingsOpensFromTheWelcomeScreenAndTheBackButtonReturns() {
+        skipSplash()
+        openSettings()
+        compose.onNodeWithTag(WelcomeScreenTags.SCREEN).assertDoesNotExist()
+
+        compose.onNodeWithTag(SettingsTags.BACK).performClick()
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(SettingsTags.SCREEN).assertDoesNotExist()
+        compose.onNodeWithTag(WelcomeScreenTags.SCREEN).assertIsDisplayed()
+    }
+
+    @Test
+    fun systemBackFromSettingsReturnsToTheWelcomeScreen() {
+        skipSplash()
+        openSettings()
+
+        compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(SettingsTags.SCREEN).assertDoesNotExist()
+        compose.onNodeWithTag(WelcomeScreenTags.SCREEN).assertIsDisplayed()
+    }
+
+    @Test
+    fun aboutShowsTheInstalledVersion() {
+        skipSplash()
+        openSettings()
+        val activity = compose.activity
+        @Suppress("DEPRECATION")
+        val info = activity.packageManager.getPackageInfo(activity.packageName, 0)
+        compose.onNodeWithTag(SettingsTags.ABOUT_VERSION)
+            .performScrollTo()
+            .assertTextEquals("Version ${info.versionName} (${PackageInfoCompat.getLongVersionCode(info)})")
+    }
+
+    @Test
+    fun vibrationSurvivesLeavingTheSettingsScreen() {
+        skipSplash()
+        openSettings()
+        val vibration = { compose.onNodeWithTag(SettingsTags.VIBRATION_SWITCH).performScrollTo() }
+        // The device keeps whatever an earlier run stored, so flip it and flip it back afterwards.
+        val wasOn = vibration().fetchSemanticsNode().config[SemanticsProperties.ToggleableState] == ToggleableState.On
+        vibration().performClick()
+        try {
+            compose.onNodeWithTag(SettingsTags.BACK).performClick()
+            compose.waitForIdle()
+            openSettings()
+            if (wasOn) vibration().assertIsOff() else vibration().assertIsOn()
+        } finally {
+            vibration().performClick()
+            compose.waitForIdle()
+        }
+        if (wasOn) vibration().assertIsOn() else vibration().assertIsOff()
     }
 
     @Test

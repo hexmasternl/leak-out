@@ -8,13 +8,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.PixelMap
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.pinch
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -255,6 +259,64 @@ class PlayingFieldTest {
         compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Placed H")
     }
 
+    @Test
+    fun tapsPlaceReplaceAndRespectLiquidTheReplaceLockAndBlockedCells() {
+        show(
+            FieldTest.level(
+                blocked = listOf(Position(0, 3)),
+                rules = PlacementRules(allowReplace = true, replacePenaltyMs = 60_000),
+                initialDelayMs = 120_000,
+            ),
+        )
+        compose.runOnIdle {
+            session.placeSection(PipeSection.V, Position(1, 1))
+            session.placeSection(PipeSection.V, Position(2, 1))
+            session.markLiquidEntered(Position(2, 1))
+        }
+
+        tapCell(Position(1, 2))
+        compose.cellNode(Position(1, 2)).assertContentDescriptionEquals("Placed H")
+
+        tapCell(Position(2, 1))
+        compose.cellNode(Position(2, 1)).assertContentDescriptionEquals("Placed V, filled")
+
+        tapCell(Position(1, 1))
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
+
+        // The replace locks placing for a while.
+        tapCell(Position(2, 2))
+        compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Empty")
+
+        compose.runOnIdle { session.sendTick(60_000) }
+        tapCell(Position(0, 3))
+        compose.cellNode(Position(0, 3)).assertContentDescriptionEquals("Blocked")
+        tapCell(Position(0, 0))
+        compose.cellNode(Position(0, 0)).assertContentDescriptionEquals("Start")
+        tapCell(Position(2, 2))
+        compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Placed H")
+        compose.runOnIdle { assertEquals(4, session.state.board.pipes.size) }
+    }
+
+    @Test
+    fun swipesPinchesAndPausedTapsDoNotPlace() {
+        show(FieldTest.large())
+        swipeField(Offset(-compose.px(120.dp), 0f))
+        pinchField(outwards = true)
+        compose.runOnIdle { assertEquals(0, session.state.board.pipes.size) }
+
+        compose.runOnIdle { session.send(GameCommand.Pause) }
+        compose.waitForIdle()
+        compose.onNodeWithTag(GameScreenTags.FIELD).performTouchInput { click(center) }
+        compose.waitForIdle()
+        compose.runOnIdle { assertEquals(0, session.state.board.pipes.size) }
+    }
+
+    private fun tapCell(cell: Position) {
+        val target = cellRectInField(cell).center
+        compose.onNodeWithTag(GameScreenTags.FIELD).performTouchInput { click(target) }
+        compose.waitForIdle()
+    }
+
     // 8.6
     @Test
     fun draggingASectionOverTheFieldDoesNotPanIt() {
@@ -320,6 +382,116 @@ class PlayingFieldTest {
         compose.waitForIdle()
         assertSameRect(initial, compose.cellRect(start))
         compose.onAllNodes(hasContentDescription("Placed H"), useUnmergedTree = true).assertCountEquals(0)
+    }
+
+    @Test
+    fun placedSectionIsDrawnWithItsPipeArt() {
+        show()
+        val cell = Position(1, 1)
+        assertTrue(session.placeSection(PipeSection.H, cell))
+        compose.waitForIdle()
+
+        compose.cellNode(cell).assert(SemanticsMatcher.expectValue(FieldPipeSection, PipeSection.H))
+        compose.cellNode(Position(2, 2)).assert(SemanticsMatcher.keyNotDefined(FieldPipeSection))
+        assertPipeArtOfH(cell)
+    }
+
+    @Test
+    fun pipeArtFollowsZoom() {
+        show(FieldTest.large())
+        pinchField(outwards = true)
+        val cell = cellAt(compose.fieldRect().center)
+        assertTrue(session.placeSection(PipeSection.H, cell))
+        compose.waitForIdle()
+
+        assertTrue("zoomed in", compose.cellRect(cell).width > compose.px(40.dp) + 1)
+        assertPipeArtOfH(cell)
+    }
+
+    @Test
+    fun liquidFlowsThroughThePipeAndTheTileKeepsItsColour() {
+        show()
+        val first = Position(1, 0)
+        compose.runOnIdle {
+            assertTrue(session.placeSection(PipeSection.H, first))
+            assertTrue(session.placeSection(PipeSection.H, Position(2, 0)))
+            session.endCountdown()
+        }
+        compose.waitForIdle()
+        val dry = fieldPixels()
+        val rect = cellRectInField(first)
+
+        // 0.8 cells per second: 1250 ms through the start, then half of the first H.
+        compose.runOnIdle { session.sendTick(1_250 + 625) }
+        compose.waitForIdle()
+        val half = fieldPixels()
+        assertTrue("liquid near the entry", half.isLiquidAt(rect, 0.15f, 0.5f))
+        assertTrue("liquid just behind the middle", half.isLiquidAt(rect, 0.4f, 0.5f))
+        assertTrue("dry past the head", !half.isLiquidAt(rect, 0.7f, 0.5f) && !half.isLiquidAt(rect, 0.9f, 0.5f))
+        assertTileUnchanged(dry, half, rect)
+
+        // A quarter later the front has moved on a quarter of the pipe, at the same speed.
+        compose.runOnIdle { session.sendTick(312) }
+        compose.waitForIdle()
+        val threeQuarters = fieldPixels()
+        assertTrue("liquid at 0.65", threeQuarters.isLiquidAt(rect, 0.65f, 0.5f))
+        assertTrue("dry at 0.9", !threeQuarters.isLiquidAt(rect, 0.9f, 0.5f))
+
+        // On into the next H: the first is full to its exit border, and still only its pipe is blue.
+        compose.runOnIdle { session.sendTick(313 + 625) }
+        compose.waitForIdle()
+        val full = fieldPixels()
+        for (fx in listOf(0.1f, 0.5f, 0.95f)) assertTrue("full at $fx", full.isLiquidAt(rect, fx, 0.5f))
+        assertTrue("the next H fills from its entry", full.isLiquidAt(cellRectInField(Position(2, 0)), 0.15f, 0.5f))
+        assertTileUnchanged(dry, full, rect)
+    }
+
+    private fun fieldPixels(): PixelMap = compose.onNodeWithTag(GameScreenTags.FIELD).captureToImage().toPixelMap()
+
+    private fun cellRectInField(cell: Position): Rect {
+        val field = compose.fieldRect()
+        return compose.cellRect(cell).translate(-field.left, -field.top)
+    }
+
+    /** Liquid at [fx] across the bore around [fy], off the lighter highlight on the centre line. */
+    private fun PixelMap.isLiquidAt(rect: Rect, fx: Float, fy: Float): Boolean =
+        listOf(-0.07f, -0.05f, 0.05f, 0.07f).any { dy ->
+            val c = this[(rect.left + rect.width * fx).toInt(), (rect.top + rect.height * (fy + dy)).toInt()]
+            c.red < 0.5f && c.green > 0.45f && c.blue > 0.6f && c.blue - c.red > 0.35f
+        }
+
+    /** Away from the bore the cell looks exactly as it did while dry: the tile is not tinted. */
+    private fun assertTileUnchanged(dry: PixelMap, wet: PixelMap, rect: Rect) {
+        for (fx in listOf(0.1f, 0.5f, 0.9f)) {
+            for (fy in listOf(0.1f, 0.2f, 0.8f, 0.9f)) {
+                val x = (rect.left + rect.width * fx).toInt()
+                val y = (rect.top + rect.height * fy).toInt()
+                val a = dry[x, y]
+                val b = wet[x, y]
+                val same = abs(a.red - b.red) < 0.02f && abs(a.green - b.green) < 0.02f && abs(a.blue - b.blue) < 0.02f
+                assertTrue("tile colour at ($fx, $fy) changed from $a to $b", same)
+            }
+        }
+    }
+
+    /**
+     * The H art spans the whole cell: at its centre line the dark bore, just above it the lighter
+     * steel body (view box y ≈ 34, which the old stand-in left as background), from edge to edge.
+     */
+    private fun assertPipeArtOfH(cell: Position) {
+        val field = compose.fieldRect()
+        val image = compose.onNodeWithTag(GameScreenTags.FIELD).captureToImage().toPixelMap()
+        val rect = compose.cellRect(cell).translate(-field.left, -field.top)
+        for (fx in listOf(0.2f, 0.5f, 0.8f)) {
+            val bore = image.brightnessAt(rect, fx, 0.5f)
+            val body = image.brightnessAt(rect, fx, 0.34f)
+            assertTrue("steel body $body brighter than the bore $bore at $fx", body > bore + 0.15f)
+        }
+    }
+
+    private fun PixelMap.brightnessAt(rect: Rect, fx: Float, fy: Float): Float {
+        val c = this[(rect.left + rect.width * fx).toInt(), (rect.top + rect.height * fy).toInt()]
+        return c.red + c.green + c.blue
     }
 
     private fun show(level: Level = FieldTest.level()) {

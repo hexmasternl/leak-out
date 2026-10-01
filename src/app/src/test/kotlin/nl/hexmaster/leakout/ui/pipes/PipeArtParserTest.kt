@@ -148,4 +148,65 @@ class PipeArtParserTest {
         assertThrows(UnsupportedSvgException::class.java) { parse(minimal.replace("#5C7189", "steelblue")) }
         assertEquals(0xAABBCC, PipeArtParser.parseColour("#ABC"))
     }
+
+    private fun parseGlass(body: String): List<SvgShape> =
+        PipeArtParser.parseGlass(
+            """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">$body</svg>""".byteInputStream(),
+        )
+
+    @Test
+    fun `reads a glass overlay`() {
+        val glass = parseGlass(
+            """
+            <g id="glass" stroke="#FFFFFF">
+              <path d="M0 42 L100 42" fill="none" stroke-width="3" stroke-opacity="0.5" stroke-linecap="round"/>
+              <rect x="0" y="30" width="100" height="40" fill="#FFFFFF" fill-opacity="0.06"/>
+            </g>
+            """,
+        )
+        assertEquals(2, glass.size)
+        val streak = glass[0] as SvgShape.PathShape
+        assertEquals("M0 42 L100 42", streak.pathData)
+        assertEquals(SvgPaint.Solid(0xFFFFFF), streak.style.stroke)
+        assertNull(streak.style.fill)
+        assertEquals(3f, streak.style.strokeWidth)
+        assertEquals(0.5f, streak.style.strokeOpacity)
+        assertEquals(SvgLineCap.ROUND, streak.style.lineCap)
+        assertEquals(0.06f, (glass[1] as SvgShape.RectShape).style.fillOpacity)
+    }
+
+    @Test
+    fun `glass overlay without a glass group fails naming it`() {
+        val error = assertThrows(UnsupportedSvgException::class.java) {
+            parseGlass("""<g id="over"><path d="M0 42 L100 42" stroke="#FFFFFF"/></g>""")
+        }
+        assertTrue(error.message, error.message!!.contains("glass"))
+        val missing = assertThrows(UnsupportedSvgException::class.java) { parseGlass("") }
+        assertTrue(missing.message, missing.message!!.contains("\"glass\""))
+    }
+
+    @Test
+    fun `glass overlay with an unsupported element fails naming it`() {
+        val error = assertThrows(UnsupportedSvgException::class.java) {
+            parseGlass("""<g id="glass"><text>shine</text></g>""")
+        }
+        assertTrue(error.message, error.message!!.contains("<text>"))
+    }
+
+    @Test
+    fun `glass overlay with a channel tank or bridge fails naming it`() {
+        for (mark in listOf(
+            """<path id="channel-main" data-from="left" data-to="right" d="M0 50 L100 50"/>""",
+            """<circle id="tank" cx="50" cy="50" r="26"/>""",
+            """<rect id="bridge" x="0" y="27" width="100" height="46"/>""",
+        )) {
+            val id = Regex("id=\"([^\"]+)\"").find(mark)!!.groupValues[1]
+            val inside = assertThrows(UnsupportedSvgException::class.java) { parseGlass("""<g id="glass">$mark</g>""") }
+            assertTrue(inside.message, inside.message!!.contains(id))
+            val beside = assertThrows(UnsupportedSvgException::class.java) {
+                parseGlass("""<g id="glass"><path d="M0 42 L100 42" stroke="#FFFFFF"/></g>$mark""")
+            }
+            assertTrue(beside.message, beside.message!!.contains(id))
+        }
+    }
 }

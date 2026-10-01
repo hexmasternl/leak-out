@@ -133,6 +133,29 @@ class LevelHistoryDatabaseTest {
     }
 
     @Test
+    fun theDaoDeletesEveryRow() = runBlocking {
+        val dao = database.levelHistoryDao()
+        listOf(LevelHistoryEntity(1, 10, 3), LevelHistoryEntity(2, 20, 2), LevelHistoryEntity(3, 30, 1)).forEach { dao.insert(it) }
+        dao.deleteAll()
+        assertEquals(emptyList<LevelHistoryEntity>(), dao.observeAll().first())
+        assertNull(dao.get(1))
+        // The table is empty, not broken: a level can be finished again as a first completion.
+        assertEquals(RecordResult.FirstCompletion, repository.recordCompletion(1, 5, 1))
+    }
+
+    @Test
+    fun clearingTheHistoryEmptiesItsObservers() = runBlocking {
+        repository.recordCompletion(1, 10, 3)
+        repository.recordCompletion(2, 20, 2)
+        repository.recordCompletion(3, 30, 1)
+        val emptied = async(start = CoroutineStart.UNDISPATCHED) {
+            withTimeout(5_000) { repository.observeAll().first { it.isEmpty() } }
+        }
+        repository.clearAll()
+        assertEquals(emptyList<LevelHistory>(), emptied.await())
+    }
+
+    @Test
     fun recordsSurviveReopeningTheDatabase() = runBlocking {
         val name = "level-history-reopen-test.db"
         context.deleteDatabase(name)

@@ -5,7 +5,7 @@
   "start":  { "x": 0, "y": 8, "openSide": "RIGHT" },
   "finish": { "x": 14, "y": 8, "openSide": "LEFT" },
   "blocked": [ { "x": 6, "y": 0 }, { "x": 10, "y": 0 }, { "x": 6, "y": 1 }, { "x": 10, "y": 2 }, { "x": 14, "y": 2 }, { "x": 4, "y": 3 }, { "x": 13, "y": 3 }, { "x": 4, "y": 4 }, { "x": 0, "y": 5 }, { "x": 2, "y": 6 }, { "x": 12, "y": 6 }, { "x": 2, "y": 7 }, { "x": 9, "y": 7 }, { "x": 10, "y": 8 }, { "x": 5, "y": 9 }, { "x": 7, "y": 10 }, { "x": 13, "y": 10 } ],
-  "flow": { "initialDelayMs": 11500, "cellsPerSecond": 0.85 },
+  "flow": { "initialDelayMs": 11500, "cellsPerSecond": 0.187 },
   "stack": { "weights": { "X": 2, "RES": 0 } },
   "stars": { "one": 230, "two": 380, "three": 560 }
 }

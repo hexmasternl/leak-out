@@ -46,7 +46,7 @@ Every achievement in the catalogue SHALL have a Play Games id resource named `ac
 
 #### Scenario: Ids for the catalogue
 - **WHEN** the catalogue is checked against the app resources
-- **THEN** each of the 25 keys has a matching `achievement_<key>` string resource
+- **THEN** every catalogue key has a matching `achievement_<key>` string resource
 
 ### Requirement: Works without Play Games
 When the Play Games app id is not configured (not a positive number), the system SHALL NOT initialise the Play Games SDK, the sign-in state SHALL be unavailable, and achievements SHALL still be decided, stored and shown locally.

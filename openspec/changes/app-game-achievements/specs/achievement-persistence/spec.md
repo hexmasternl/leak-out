@@ -23,18 +23,18 @@ When an attempt ends in a win or a loss, the system SHALL update the player stat
 - **THEN** the stored number of sections placed grows by 4
 
 ### Requirement: Existing players receive their progress achievements
-When the app starts, the system SHALL evaluate the progress and lifetime achievements from the stored level history and player stats and store any newly unlocked achievement. A player who finished levels before achievements existed SHALL receive the progress achievements those levels earn.
+When the app starts, including the first start after an update that adds levels or achievements, the system SHALL evaluate the progress and lifetime achievements from the stored level history and player stats and store any newly unlocked achievement. A player who finished levels before achievements existed SHALL receive the progress achievements those levels earn.
 
 #### Scenario: Upgrade with history
 - **WHEN** the app is updated on a device whose history holds 14 finished levels, and the app starts
-- **THEN** First Leak Fixed (if level 1 is finished) and Halfway Down the Drain are unlocked, and Master Plumber has progress 14 of 24
+- **THEN** First Leak Fixed (if level 1 is finished) and Getting the Hang of It are unlocked, and Pack 1 Complete has progress 14 of 24
 
 ### Requirement: Achievements outlast a progress reset
 Resetting progress from the settings screen SHALL delete the level history only. Unlocked achievements, achievement progress, player stats and loss streaks SHALL be kept.
 
 #### Scenario: Reset keeps achievements
-- **WHEN** Halfway Down the Drain is unlocked and the player confirms Reset progress
-- **THEN** Halfway Down the Drain is still unlocked and the level history is empty
+- **WHEN** Getting the Hang of It is unlocked and the player confirms Reset progress
+- **THEN** Getting the Hang of It is still unlocked and the level history is empty
 
 ### Requirement: Database upgrade keeps existing data
 The database upgrade that adds the achievement tables SHALL keep every existing level history record.

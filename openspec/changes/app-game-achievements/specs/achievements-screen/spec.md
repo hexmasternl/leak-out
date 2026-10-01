@@ -12,15 +12,15 @@ Tapping "Achievements" on the settings screen SHALL open the achievements screen
 - **THEN** the settings screen is shown
 
 ### Requirement: All achievements are listed
-The achievements screen SHALL list all 25 achievements in catalogue order from the local data, signed in or not, and SHALL show the number unlocked out of 25. The list SHALL scroll when it does not fit.
+The achievements screen SHALL list every achievement in the catalogue, in catalogue order, from the local data, signed in or not, and SHALL show the number unlocked out of the number in the catalogue. The list SHALL scroll when it does not fit.
 
 #### Scenario: Count
-- **WHEN** 7 achievements are unlocked
+- **WHEN** the catalogue holds 25 achievements and 7 are unlocked
 - **THEN** the screen shows "7 / 25"
 
 #### Scenario: Works signed out
 - **WHEN** the player is not signed in to Play Games and opens the achievements screen
-- **THEN** all 25 achievements are listed
+- **THEN** every achievement in the catalogue is listed
 
 ### Requirement: Achievement states are shown
 An unlocked achievement SHALL show its icon in full colour, its name, its description and its unlock date. A locked achievement that is not hidden SHALL show its icon dimmed, its name and its description; an incremental one SHALL also show a progress bar and its progress as "<progress> / <steps>". A locked hidden achievement SHALL show a generic icon, the name "Hidden achievement" and the description "Keep playing to find out." An unlocked hidden achievement SHALL be shown like any other unlocked achievement.

@@ -75,10 +75,10 @@ The Play Games panel SHALL show the Play Games sign-in state. When signed in, it
 - **THEN** the panel shows "Play Games is not available" and no Sign in button
 
 ### Requirement: Achievements button
-The Play Games panel SHALL always show an "Achievements" button with the number of unlocked achievements out of 25, whatever the sign-in state. Tapping it SHALL open the achievements screen.
+The Play Games panel SHALL always show an "Achievements" button with the number of unlocked achievements out of the number in the catalogue, whatever the sign-in state. Tapping it SHALL open the achievements screen.
 
 #### Scenario: Button shows the count
-- **WHEN** 12 achievements are unlocked
+- **WHEN** the catalogue holds 25 achievements and 12 are unlocked
 - **THEN** the Achievements button shows "12 / 25"
 
 #### Scenario: Open while signed out

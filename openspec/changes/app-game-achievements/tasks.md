@@ -13,14 +13,14 @@
 
 ## 2. Achievement catalogue and rules (core)
 
-- [ ] 2.1 Add `core/achievements/Achievement` enum with key, group, type, steps, hidden and XP exactly as in the `game-achievements` spec
-- [ ] 2.2 Catalogue tests: 25 entries, unique keys, XP sum 1000 and multiples of 5, steps within 2-10000
+- [ ] 2.1 Add `core/achievements/Achievement` enum with key, group, type, steps, hidden and XP exactly as the launch catalogue in the `game-achievements` spec, plus the pack id for `pack_<n>_*` entries
+- [ ] 2.2 Catalogue tests: unique keys, launch XP 595 (≤ 1000 overall), multiples of 5, steps within 2-10000, and a pinned list of published entries (key, steps, hidden, XP) that may only grow
 - [ ] 2.3 Add `AttemptSummary.from(state, recordResult)` built from the state at the moment the outcome first becomes won or lost (cross doubles from `passes` on X tiles, distinct tiles left, free cells, pieces on board, fast forward at win)
 - [ ] 2.4 Add `PlayerStats` (sections placed, losses, loss streak per level) with a pure `after(summary)` and `afterAbandoned(placements)`
 - [ ] 2.5 Implement `AchievementRules.evaluate(summary?, statsBefore, statsAfter, history, stored)` returning newly unlocked achievements and clamped, never-decreasing steps
 - [ ] 2.6 Unit tests for every scenario in the `game-achievements` spec, one group per achievement group
 - [ ] 2.7 Reachability test: scripted engine attempts on bundled levels that unlock each skill and hidden achievement (Crossroads King on a level that can draw crosses; Long Way Round and Wall to Wall on a large grid)
-- [ ] 2.8 Test that the bundled level library holds 24 levels (pins Master Plumber and Perfectionist steps)
+- [ ] 2.8 Reachability-against-content test: every milestone fits the bundled library (levels ≤ level count, stars ≤ 3 × level count) and pack achievements exist only for full library pages; progress rules use `LevelLibraryLayout.pageOf`, never the library size
 - [ ] 2.9 Run `./gradlew :core:test` and make sure it passes
 
 ## 3. Local store (app)
@@ -50,7 +50,7 @@
 ## 6. Play Games integration (app)
 
 - [ ] 6.1 Add `com.google.android.gms:play-services-games-v2` (latest stable, pinned exactly) to `gradle/libs.versions.toml` and the app module
-- [ ] 6.2 Add `res/values/games-ids.xml` with placeholder app id `0` and an `achievement_<key>` string for all 25 keys; add the `com.google.android.gms.games.APP_ID` manifest meta-data
+- [ ] 6.2 Add `res/values/games-ids.xml` with placeholder app id `0` and an `achievement_<key>` string for every catalogue key; add the `com.google.android.gms.games.APP_ID` manifest meta-data
 - [ ] 6.3 Add `LeakOutApplication` that initialises `PlayGamesSdk` only when the app id is a positive number
 - [ ] 6.4 Implement `PlayGamesAuth` with `state: StateFlow<SignInState>` (`Unavailable`, `SignedOut`, `SigningIn`, `SignedIn(displayName)`), silent check at start and `signIn(activity)`
 - [ ] 6.5 Define `AchievementSync` with `PlayGamesAchievementSync` (`unlock`, `setSteps`, never `increment`) and `NoOpAchievementSync`
@@ -61,7 +61,7 @@
 ## 7. Settings screen changes (app)
 
 - [ ] 7.1 Add the Play Games panel at the top of the right column: sign-in state text, glass "Sign in" button (disabled while signing in, hidden when signed in or unavailable)
-- [ ] 7.2 Add the always-visible "Achievements  N / 25" glass button that navigates to `Screen.Achievements`
+- [ ] 7.2 Add the always-visible "Achievements  N / total" glass button that navigates to `Screen.Achievements`
 - [ ] 7.3 Update the reset dialog body ("Achievements are kept.") and the About privacy line
 - [ ] 7.4 Extend `SettingsViewModel`/`SettingsUiState` with the sign-in state and unlocked count
 - [ ] 7.5 Compose tests for the panel in all four sign-in states, the Achievements button count and navigation, and the updated texts; update existing settings tests
@@ -70,7 +70,7 @@
 
 - [ ] 8.1 Add `Screen.Achievements` to `MainActivity`; back button and system Back return to Settings
 - [ ] 8.2 Build `AchievementsViewModel` from `AchievementRepository.observeAll()` and `PlayGamesAuth.state`
-- [ ] 8.3 Build `ui/achievements/AchievementsScreen.kt`: top bar (back, "Achievements", "N / 25", "Play Games" button only when signed in), scrolling grid of cards
+- [ ] 8.3 Build `ui/achievements/AchievementsScreen.kt`: top bar (back, "Achievements", "N / total", "Play Games" button only when signed in), scrolling grid of cards
 - [ ] 8.4 Card states: unlocked (colour icon, date, `success.tint`), locked (dimmed desaturated icon, progress bar with "x / y" for incremental), hidden locked ("?" medallion, "Hidden achievement", "Keep playing to find out.")
 - [ ] 8.5 "Play Games" launches `AchievementsClient.getAchievementsIntent()`
 - [ ] 8.6 Card semantics merged: name, locked/unlocked, "x of y"
@@ -78,14 +78,15 @@
 
 ## 9. Icons
 
-- [ ] 9.1 Review the 25 proposed icons in `openspec/changes/app-game-achievements/icons/` (SVG sources, 512×512 PNGs, `preview.html` contact sheet) and adjust any that are rejected
+- [ ] 9.1 Review the proposed icons in `openspec/changes/app-game-achievements/icons/` (SVG sources, 512×512 PNGs, `preview.html` contact sheet) and adjust any that are rejected
 - [ ] 9.2 Copy the approved PNGs to `app/src/main/res/drawable-nodpi/achievement_<key>.png` plus a `achievement_hidden.png` for the hidden placeholder
 - [ ] 9.3 Map each `Achievement` to its drawable in `app` and test that every key has one
 
 ## 10. Documentation
 
 - [ ] 10.1 Add an achievements section to `docs/project-plan.md` (catalogue table, rules, persistence, Play Games sync)
-- [ ] 10.2 Add `docs/play-games-setup.md`: the Play Console checklist (create the app, PGS project, OAuth credentials for debug/upload/app-signing SHA-1, 25 achievements with names, descriptions, XP, steps, hidden flags and icons, testers, export `games-ids.xml`)
+- [ ] 10.3 Add `docs/achievements.md`: the growth rules (add only, reachable with shipped levels, XP budget table from design 1a) and a checklist for adding a level pack (catalogue entries, strings, icons via `generate-icons.mjs`, Play Console entries, pinned-list update)
+- [ ] 10.2 Add `docs/play-games-setup.md`: the Play Console checklist (create the app, PGS project, OAuth credentials for debug/upload/app-signing SHA-1, all catalogue achievements with names, descriptions, XP, steps, hidden flags and icons, testers, export `games-ids.xml`)
 
 ## 11. Verification
 

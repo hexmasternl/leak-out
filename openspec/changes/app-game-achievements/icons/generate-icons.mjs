@@ -153,38 +153,51 @@ const valve = (cx, cy, r = 54) => {
     `<circle cx="${cx}" cy="${cy}" r="16" fill="${T.b300}" stroke="${T.b700}" stroke-width="4"/>`;
 };
 
+// A glass gauge tube filled to [level] (0-1); later levels-finished tiers fill it further.
+function gauge(level) {
+  const top = 122, h = 250, y = top + h * (1 - level);
+  return `<rect x="206" y="112" width="100" height="270" rx="50" fill="${T.s900}" stroke="${T.s300}" stroke-width="10"/>` +
+    `<clipPath id="tube"><rect x="216" y="122" width="80" height="250" rx="40"/></clipPath>` +
+    `<g clip-path="url(#tube)"><rect x="200" y="${y}" width="120" height="${h}" fill="url(#liquid)"/>` +
+    `<path d="M 200 ${y} Q 230 ${y - 10} 256 ${y} T 320 ${y}" fill="none" stroke="${T.glow}" stroke-width="6"/></g>` +
+    [0.25, 0.5, 0.75].map(f => `<line x1="316" y1="${top + h * f}" x2="340" y2="${top + h * f}" stroke="${T.b300}" stroke-width="6" stroke-linecap="round"/>`).join('') +
+    `<circle cx="240" cy="330" r="7" fill="${T.glow}" opacity="0.8"/><circle cx="268" cy="350" r="5" fill="${T.glow}" opacity="0.7"/>`;
+}
+
+const threeStars = () => star(160, 280, 62) + star(352, 280, 62) + star(256, 220, 84) +
+  `<path d="M 256 90 l 8 20 l 20 8 l -20 8 l -8 20 l -8 -20 l -20 -8 l 20 -8 Z" fill="${T.glow}"/>` +
+  `<path d="M 376 160 l 5 12 l 12 5 l -12 5 l -5 12 l -5 -12 l -12 -5 l 12 -5 Z" fill="${T.glow}" opacity="0.8"/>`;
+
+// A brass trophy full of liquid with the pack number as roman bars on its base.
+function trophy(pack) {
+  let bars = '';
+  for (let i = 0; i < pack; i++) {
+    const x = 256 + (i - (pack - 1) / 2) * 16;
+    bars += `<rect x="${x - 4}" y="${355}" width="8" height="24" rx="4" fill="${T.b900}"/>`;
+  }
+  return `<path d="M 166 150 L 346 150 L 334 252 A 78 78 0 0 1 178 252 Z" fill="url(#brass)" stroke="${T.b700}" stroke-width="6" stroke-linejoin="round"/>` +
+    `<path d="M 186 196 L 326 196 L 320 252 A 64 64 0 0 1 192 252 Z" fill="url(#liquid)"/>` +
+    `<path d="M 186 196 Q 221 186 256 196 T 326 196" fill="none" stroke="${T.glow}" stroke-width="5"/>` +
+    `<path d="M 166 170 C 116 170 116 236 186 244" fill="none" stroke="${T.b500}" stroke-width="14" stroke-linecap="round"/>` +
+    `<path d="M 346 170 C 396 170 396 236 326 244" fill="none" stroke="${T.b500}" stroke-width="14" stroke-linecap="round"/>` +
+    `<rect x="236" y="322" width="40" height="22" fill="${T.b700}"/>` +
+    `<rect x="186" y="342" width="140" height="48" rx="12" fill="url(#brass)" stroke="${T.b700}" stroke-width="5"/>` + bars;
+}
+
 const icons = {
   first_leak_fixed: ['progress',
     pipe('M 130 250 L 382 250') + flange(130, 250) + flange(382, 250) +
     badge(330, 336, check(330, 338, 0.9))],
 
-  halfway: ['progress',
-    `<rect x="206" y="112" width="100" height="270" rx="50" fill="${T.s900}" stroke="${T.s300}" stroke-width="10"/>` +
-    `<clipPath id="tube"><rect x="216" y="122" width="80" height="250" rx="40"/></clipPath>` +
-    `<g clip-path="url(#tube)"><rect x="200" y="247" width="120" height="140" fill="url(#liquid)"/>` +
-    `<path d="M 200 247 Q 230 237 256 247 T 320 247" fill="none" stroke="${T.glow}" stroke-width="6"/></g>` +
-    `<line x1="316" y1="247" x2="346" y2="247" stroke="${T.b300}" stroke-width="8" stroke-linecap="round"/>` +
-    `<line x1="166" y1="247" x2="196" y2="247" stroke="${T.b300}" stroke-width="8" stroke-linecap="round"/>` +
-    `<circle cx="240" cy="300" r="7" fill="${T.glow}" opacity="0.8"/><circle cx="268" cy="335" r="5" fill="${T.glow}" opacity="0.7"/>`],
-
-  master_plumber: ['progress',
-    `<path d="M 166 140 L 346 140 L 334 250 A 78 78 0 0 1 178 250 Z" fill="url(#brass)" stroke="${T.b700}" stroke-width="6" stroke-linejoin="round"/>` +
-    `<path d="M 186 190 L 326 190 L 320 250 A 64 64 0 0 1 192 250 Z" fill="url(#liquid)"/>` +
-    `<path d="M 186 190 Q 221 180 256 190 T 326 190" fill="none" stroke="${T.glow}" stroke-width="5"/>` +
-    `<path d="M 166 160 C 116 160 116 230 186 240" fill="none" stroke="${T.b500}" stroke-width="14" stroke-linecap="round"/>` +
-    `<path d="M 346 160 C 396 160 396 230 326 240" fill="none" stroke="${T.b500}" stroke-width="14" stroke-linecap="round"/>` +
-    `<rect x="236" y="320" width="40" height="34" fill="${T.b700}"/>` +
-    `<rect x="196" y="350" width="120" height="30" rx="10" fill="url(#brass)" stroke="${T.b700}" stroke-width="5"/>` +
-    star(256, 116, 22, 'url(#brass)', true)],
+  levels_finished_1: ['tier1', gauge(0.4)],
 
   star_collector_1: ['tier1', star(256, 236, 110) + numeral(1, 256, 372)],
   star_collector_2: ['tier2', star(256, 236, 110) + numeral(2, 256, 372)],
-  star_collector_3: ['tier3', star(256, 236, 110) + numeral(3, 256, 372)],
 
-  perfectionist: ['progress',
-    star(160, 280, 62) + star(352, 280, 62) + star(256, 220, 84) +
-    `<path d="M 256 90 l 8 20 l 20 8 l -20 8 l -8 20 l -8 -20 l -20 -8 l 20 -8 Z" fill="${T.glow}"/>` +
-    `<path d="M 376 160 l 5 12 l 12 5 l -12 5 l -5 12 l -5 -12 l -12 -5 l 12 -5 Z" fill="${T.glow}" opacity="0.8"/>`],
+  perfectionist_1: ['tier1', threeStars()],
+
+  pack_1_complete: ['progress', trophy(1) + star(256, 112, 22)],
+  pack_1_perfect: ['progress', trophy(1) + star(196, 118, 22) + star(256, 98, 26) + star(316, 118, 22)],
 
   zero_waste: ['skill',
     pipe('M 256 140 A 116 116 0 1 1 255.9 140 Z', { w: 60 }) +

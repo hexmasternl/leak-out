@@ -4,7 +4,7 @@ The engine (`core/engine`) is pure and immutable. One `GameState` describes an a
 
 The app has no Google Play dependencies. The app does not exist in the Play Console yet. Play Games Services (PGS) v2 needs a Play Console app, a PGS project linked to OAuth credentials for each signing key, and the achievements defined in the console. Their generated ids go in `games-ids.xml`.
 
-There are 24 bundled levels on grids from 8×6 to 16×12. Crosses can be drawn from level 12 on, so cross achievements are possible from level 12.
+There are 24 bundled levels on grids from 8×6 to 16×12, which fill library page 1. More levels will follow in packs of 24, up to 300 or more. Crosses can be drawn from level 12 on, so cross achievements are possible from level 12.
 
 ## Goals / Non-Goals
 
@@ -26,41 +26,65 @@ There are 24 bundled levels on grids from 8×6 to 16×12. Crosses can be drawn f
 
 ### 1. The catalogue
 
-`Achievement` is an enum in `core/achievements`. Each entry has a stable `key` (snake_case, also used as the `games-ids.xml` resource name `achievement_<key>`), a group, a type, `steps` for incremental achievements, `hidden` and `xp`. Names and descriptions are Android string resources, so they can be translated. The catalogue has a unit test that checks the XP adds up to exactly 1,000, every XP value is a multiple of 5, keys are unique, and steps are between 2 and 10,000 (PGS limits).
+`Achievement` is an enum in `core/achievements`. Each entry has a stable `key` (snake_case, also used as the `games-ids.xml` resource name `achievement_<key>`), a group, a type, `steps` for incremental achievements, `hidden` and `xp`. Names and descriptions are Android string resources, so they can be translated. The catalogue has a unit test that checks the XP adds up to at most 1,000, every XP value is a multiple of 5, keys are unique, and steps are between 2 and 10,000 (PGS limits).
+
+The launch catalogue (24 levels, one library page). XP shown per row; the launch total is **595**:
 
 | Key | Name | Group | Type / steps | Hidden | XP | Unlocks when |
 |---|---|---|---|---|---|---|
 | `first_leak_fixed` | First Leak Fixed | progress | standard | | 10 | level 1 is in the history |
-| `halfway` | Halfway Down the Drain | progress | incremental 12 | | 30 | 12 levels finished |
-| `master_plumber` | Master Plumber | progress | incremental 24 | | 100 | 24 levels finished |
-| `star_collector_1` | Star Collector I | progress | incremental 24 | | 20 | 24 stars in total |
-| `star_collector_2` | Star Collector II | progress | incremental 48 | | 40 | 48 stars in total |
-| `star_collector_3` | Star Collector III | progress | incremental 60 | | 100 | 60 stars in total |
-| `perfectionist` | Perfectionist | progress | incremental 24 | | 100 | 3 stars on all 24 levels |
+| `levels_finished_1` | Getting the Hang of It | progress | incremental 10 | | 15 | 10 levels finished |
+| `star_collector_1` | Star Collector I | progress | incremental 25 | | 15 | 25 stars in total |
+| `star_collector_2` | Star Collector II | progress | incremental 60 | | 30 | 60 stars in total |
+| `perfectionist_1` | Perfectionist I | progress | incremental 10 | | 30 | 10 levels with 3 stars |
+| `pack_1_complete` | Pack 1 Complete | progress | incremental 24 | | 30 | every level of library page 1 finished |
+| `pack_1_perfect` | Pack 1 Perfect | progress | incremental 24 | | 40 | every level of library page 1 with 3 stars |
 | `zero_waste` | Zero Waste | skill | standard | | 30 | a win with no unused sections |
 | `double_cross` | Double Cross | skill | standard | | 20 | liquid left a cross twice (both channels) in one attempt |
-| `crossroads_king` | Crossroads King | skill | standard | | 50 | 3 crosses each left twice in one attempt |
-| `ahead_of_the_flow` | Ahead of the Flow | skill | standard | | 40 | a win where the route was complete while the flow was still waiting |
+| `crossroads_king` | Crossroads King | skill | standard | | 40 | 3 crosses each left twice in one attempt |
+| `ahead_of_the_flow` | Ahead of the Flow | skill | standard | | 30 | a win where the route was complete while the flow was still waiting |
 | `full_throttle` | Full Throttle | skill | standard | | 15 | a win while fast forward is on |
-| `measure_twice` | Measure Twice | skill | standard | | 25 | a win with no replacements |
+| `measure_twice` | Measure Twice | skill | standard | | 20 | a win with no replacements |
 | `steady_hands` | Steady Hands | skill | standard | | 15 | a win without ever being paused |
-| `long_way_round` | The Long Way Round | skill | standard | | 40 | a win where the liquid left 30 or more distinct placed tiles |
-| `big_spender` | Big Spender | skill | standard | | 40 | a win with a final total of 500 or more |
-| `apprentice` | Apprentice | lifetime | incremental 100 | | 15 | 100 sections placed |
-| `journeyman` | Journeyman | lifetime | incremental 1,000 | | 40 | 1,000 sections placed |
-| `guildmaster` | Guildmaster | lifetime | incremental 5,000 | | 80 | 5,000 sections placed |
-| `never_give_up` | Never Give Up | lifetime | standard | | 30 | a win on a level right after 3 or more losses in a row on that level |
-| `personal_best` | Personal Best | lifetime | standard | | 20 | a win beats an existing highscore (`RecordResult.NewHighscore`) |
-| `wet_feet` | Wet Feet | lifetime | standard | | 10 | the first loss ever |
-| `instant_flood` | Instant Flood | hidden | standard | ✔ | 30 | a loss before the liquid has left any placed section |
-| `wall_to_wall` | Wall to Wall | hidden | standard | ✔ | 50 | a win where every free cell held a section when the level was won |
-| `photo_finish` | Photo Finish | hidden | standard | ✔ | 50 | a win where the route-completing section went on the tile the liquid head was about to enter |
+| `long_way_round` | The Long Way Round | skill | standard | | 30 | a win where the liquid left 30 or more distinct placed tiles |
+| `big_spender` | Big Spender | skill | standard | | 30 | a win with a final total of 500 or more |
+| `apprentice` | Apprentice | lifetime | incremental 100 | | 10 | 100 sections placed |
+| `journeyman` | Journeyman | lifetime | incremental 1,000 | | 25 | 1,000 sections placed |
+| `guildmaster` | Guildmaster | lifetime | incremental 5,000 | | 40 | 5,000 sections placed |
+| `never_give_up` | Never Give Up | lifetime | standard | | 20 | a win on a level right after 3 or more losses in a row on that level |
+| `personal_best` | Personal Best | lifetime | standard | | 15 | a win beats an existing highscore (`RecordResult.NewHighscore`) |
+| `wet_feet` | Wet Feet | lifetime | standard | | 5 | the first loss ever |
+| `instant_flood` | Instant Flood | hidden | standard | ✔ | 20 | a loss before the liquid has left any placed section |
+| `wall_to_wall` | Wall to Wall | hidden | standard | ✔ | 30 | a win where every free cell held a section when the level was won |
+| `photo_finish` | Photo Finish | hidden | standard | ✔ | 30 | a win where the route-completing section went on the tile the liquid head was about to enter |
 
-**Star Collector III is 60 stars, not 72.** 72 stars is 3 stars on every level, which is exactly Perfectionist, so the two would always unlock on the same win. At 60, Star Collector III is a step on the way. *Alternative:* keep 72 and accept the duplicate.
+Group totals: progress 170, skill 230, lifetime 115, hidden 80.
 
-**Counts are fixed numbers, not "all levels in the library".** PGS step counts are fixed in the console. A test checks that the library holds 24 levels, so adding levels later is a conscious catalogue change.
+**No achievement depends on "all levels" or on the size of the library.** The game will grow in packs of 24 levels (one library page each, `LevelLibraryLayout.LEVELS_PER_PAGE`) towards 300 or more. PGS step counts are fixed once published and published achievements can't be deleted. So progress uses two shapes that survive new content:
+- **Milestones**: absolute counts (levels finished, stars, levels with 3 stars). A new tier is a new achievement with a higher count. Existing tiers never change.
+- **Pack achievements**: `pack_<n>_complete` and `pack_<n>_perfect`, tied to library page *n*. A page always holds exactly 24 levels once it is shipped, so the 24 steps are structural, not "the first 24 levels".
 
-Precise definitions:
+### 1a. Growing the catalogue
+
+Rules for every later change that adds achievements, usually together with a level pack:
+1. **Add only.** Never remove an achievement, and never change a published key, steps, hidden flag or XP. The catalogue test pins the published entries.
+2. **Only publish what can be reached.** A milestone's count must be reachable with the shipped levels: levels finished ≤ level count, stars ≤ 3 × level count, 3-star levels ≤ level count. Pack achievements only for pages that are shipped and full. A test checks this against the bundled library, so a tier can't be published before its levels exist.
+3. **Mind the XP budget.** The total stays ≤ 1,000. About 405 XP is held back after launch. A guideline for spending it:
+
+| What | When | XP |
+|---|---|---|
+| `pack_<n>_complete` + `pack_<n>_perfect` | with each new pack, packs 2-13 | 10 + 10 per pack, 240 for 12 packs |
+| Levels finished 50 / 100 (*Master Plumber*) / 250 | from 50 / 100 / 250 levels shipped | 20 / 30 / 40 |
+| Star Collector III / IV: 150 / 400 stars | from 50 / 134 levels shipped | 20 / 30 |
+| Perfectionist II: 50 levels with 3 stars | from 50 levels shipped | 25 |
+| **Total** | | **405** |
+
+4. **Each addition is its own OpenSpec change.** It covers the catalogue entry, the strings, the icon (made with `icons/generate-icons.mjs`) and the Play Console entry. Players who already meet the new condition get it on the next start through the same backfill as existing players (decision 4).
+
+*Alternative:* publish the whole ladder up to 300 levels at launch (rejected: the top tiers would be unreachable for a long time, the thresholds would be fixed before the levels exist, and no XP would be left for new packs).
+
+### 1b. Precise definitions
+
 - *Free cell*: a grid cell that is not blocked, not the start and not the finish.
 - *Distinct placed tiles left* (Long Way Round): the number of tiles in `ScoreSheet.passes`. A cross counts once.
 - *Sections placed* (lifetime): every accepted `Place` command, replacements included. Attempts that are restarted or exited count too.
@@ -168,7 +192,7 @@ When the attempt unlocked achievements, the level complete and level lost dialog
 
 The style follows Deep Flow:
 - A full-bleed `surface.deep` background with a radial vignette. Play Games may crop to a circle, so everything important sits inside a centred disc of radius 200.
-- The medallion is a `surface.raised → surface.base` disc with a 1-pixel-style `line.highlight` top edge and a ring whose colour gives the group: progress and the single lifetime achievements `liquid.500`, skill `brass.500`, hidden `reservoir.500`. Tiered sets use `steel.300` (tier I), `liquid.300` (tier II) and `brass.300` (tier III): Apprentice/Journeyman/Guildmaster and Star Collector I-III.
+- The medallion is a `surface.raised → surface.base` disc with a 1-pixel-style `line.highlight` top edge and a ring whose colour gives the group: progress and the single lifetime achievements `liquid.500`, skill `brass.500`, hidden `reservoir.500`. Tiered sets use `steel.300` (tier I), `liquid.300` (tier II) and `brass.300` (tier III): Apprentice/Journeyman/Guildmaster, Star Collector, Perfectionist and the levels-finished milestones. Pack achievements show the pack number in roman numerals under a trophy (complete) or three stars (perfect). Later tiers and packs reuse these templates through the generator.
 - The proposed set is in `icons/`: SVG sources made by `icons/generate-icons.mjs` (design-system tokens as constants), the 512×512 PNGs in `icons/png/`, and a contact sheet in `icons/preview.html`. `achievement_hidden` is the placeholder for locked hidden achievements in the app. Play Games makes its own placeholder for those.
 - The glyph is drawn with the pipe recipe (steel body, bore, aqua liquid with `liquid.glow`) or with the rounded-stroke icon style (round caps and joins), scaled to the 512 grid. Liquid stays the brightest thing in each icon.
 - Tiered achievements carry roman numerals or pips in `display.xs` style, using Wendy One shapes drawn as paths, so they render without the font.
@@ -178,11 +202,12 @@ The style follows Deep Flow:
 
 - [The Play Console setup is outside the repo and blocks real PGS testing] → Every part except the sync is tested with the no-op and fake syncs. The tasks end with a manual setup checklist and a manual smoke test on a device with a tester account.
 - [The PGS ids are only known after the console setup] → `games-ids.xml` ships with placeholders and the `Unavailable` fallback. Replacing the file is the only change needed once the console exists.
+- [The XP budget runs out before the content does] → The 1a guideline spends exactly the held-back 405 XP over 12 packs and 6 tiers. Beyond pack 13 (more than 312 levels), pack achievements only fit if XP is freed in the guideline before it is spent, for example 5 + 5 XP per pack from pack 8 on. Whether Play Games accepts 0-XP achievements is still to be checked during the console setup. The budget is rechecked in every catalogue change.
 - [Achievements nobody can earn] → A `core` test plays a scripted solution with `LevelSolver` on a suitable bundled level for each skill and hidden achievement. It proves Crossroads King (level 12 or later), Long Way Round and Wall to Wall can be reached.
 - [Steady Hands fails because of an automatic pause the player didn't intend] → Accepted, and stated in the achievement's description ("Win a level without pausing or leaving the game").
 - [A double popup on unlock (dialog row + Play Games)] → Accepted. See decision 9.
 - [The Room migration breaks existing installs] → The migration only creates tables. A Room `MigrationTestHelper` test migrates a database that has history rows.
-- [Changing the catalogue after publishing] → PGS achievements can't be deleted once published. The catalogue keys and steps are final after the first release, and the catalogue test pins them.
+- [Changing the catalogue after publishing] → PGS achievements can't be deleted once published. The catalogue only grows (decision 1a), and the catalogue test pins every published entry.
 - [Icon cropping in Play Games] → All content stays inside the radius-200 safe disc.
 
 ## Migration Plan

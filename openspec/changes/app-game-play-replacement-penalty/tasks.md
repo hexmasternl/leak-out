@@ -16,22 +16,22 @@
 
 ## 3. App: session and sounds
 
-- [ ] 3.1 Add a pure `landed(before, after): Boolean` to `GameSounds.kt`, and have `GameSession` count landings in `send` (exposed as observable state)
-- [ ] 3.2 Make `placementSound(Rejected, state)` return null while `state.replacement != null`, and with a penalty of 0 have `placeWithSound` play `SectionDestroyed` followed by `SectionPlaced`
-- [ ] 3.3 In `GameScreen`, play `GameSound.SectionPlaced` once for every landing
-- [ ] 3.4 JVM tests (`GameSessionPlaceTest` and a new `GameSoundsTest` case): destroy at the drop, exactly one placement sound at the landing, no sound for taps during the sequence, no landing sound after a restart or a loss, both sounds in order with a penalty of 0; run `./gradlew :app:testDebugUnitTest`
+- [x] 3.1 Add a pure `landed(before, after): Boolean` to `GameSounds.kt`, and have `GameSession` count landings in `send` (exposed as observable state)
+- [x] 3.2 Make `placementSound(Rejected, state)` return null while `state.replacement != null`, and with a penalty of 0 have `placeWithSound` play `SectionDestroyed` followed by `SectionPlaced`
+- [x] 3.3 In `GameScreen`, play `GameSound.SectionPlaced` once for every landing
+- [x] 3.4 JVM tests (`GameSessionPlaceTest` and a new `GameSoundsTest` case): destroy at the drop, exactly one placement sound at the landing, no sound for taps during the sequence, no landing sound after a restart or a loss, both sounds in order with a penalty of 0; run `./gradlew :app:testDebugUnitTest`
 
 ## 4. App: input lock
 
-- [ ] 4.1 Derive `replacing` in `GameScreen`: disable the stack drag (`StackPanel enabled`) and the fast forward button while a replacement runs, and keep pause available
-- [ ] 4.2 Check that the drag highlight and the drop on `PlayingField` refuse every tile during the sequence (through `canPlace`)
+- [x] 4.1 Derive `replacing` in `GameScreen`: disable the stack drag (`StackPanel enabled`) and the fast forward button while a replacement runs, and keep pause available
+- [x] 4.2 Check that the drag highlight and the drop on `PlayingField` refuse every tile during the sequence (through `canPlace`)
 
 ## 5. App: animation
 
-- [ ] 5.1 Draw the break animation on the replacement tile in `PlayingField`: the `removed` section splits into seeded fragments that drift, rotate and fade over the first `min(600 ms, 40 %)` of the sequence, driven by the game clock
-- [ ] 5.2 Draw the busy ring, which fills with the sequence progress, plus the tile tint, for the rest of the sequence
-- [ ] 5.3 Add a short scale-in pop on the landed section (about 150 ms of game time), keyed on the tile and the landing time
-- [ ] 5.4 Keep the replacement tile out of the drop highlight, and use colours from `docs/design-system.md`
+- [x] 5.1 Draw the break animation on the replacement tile in `PlayingField`: the `removed` section splits into seeded fragments that drift, rotate and fade over the first `min(600 ms, 40 %)` of the sequence, driven by the game clock
+- [x] 5.2 Draw the busy ring, which fills with the sequence progress, plus the tile tint, for the rest of the sequence
+- [x] 5.3 Add a short scale-in pop on the landed section (about 150 ms of game time), keyed on the tile and the landing time
+- [x] 5.4 Keep the replacement tile out of the drop highlight, and use colours from `docs/design-system.md`
 
 ## 6. Instrumented tests
 

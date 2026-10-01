@@ -27,12 +27,16 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -55,10 +59,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.math.sin
 import nl.hexmaster.leakout.core.board.Board
 import nl.hexmaster.leakout.core.board.Cell
 import nl.hexmaster.leakout.core.engine.Award
 import nl.hexmaster.leakout.core.engine.FlowState
+import nl.hexmaster.leakout.core.engine.Replacement
 import nl.hexmaster.leakout.core.flow.Channel
 import nl.hexmaster.leakout.core.flow.ChannelUse
 import nl.hexmaster.leakout.core.level.GridSize
@@ -103,6 +109,10 @@ var SemanticsPropertyReceiver.pipeSection by FieldPipeSection
 /** Semantics flag on the finish cell while the level is won and its success ring is drawn. A test hook only. */
 val FinishFlash = SemanticsPropertyKey<Boolean>("FinishFlash")
 var SemanticsPropertyReceiver.finishFlash by FinishFlash
+
+/** Semantics flag on the field cell of a running replacement. A test hook only. */
+val ReplacingCell = SemanticsPropertyKey<Boolean>("ReplacingCell")
+var SemanticsPropertyReceiver.replacingCell by ReplacingCell
 
 /**
  * The screen state of the playing field: the viewport and where the field sits on the screen.
@@ -165,6 +175,10 @@ fun rememberPlayingFieldState(grid: GridSize, start: Position): PlayingFieldStat
  * While the level is won, [winAgeMs] gives the game time since the win (read only while drawing)
  * and the finish tile gets the success ring from [finishFlashFrame], above the pipes and below the
  * popups. It is null while not won.
+ *
+ * While a [replacement] runs, its old section breaks apart on the tile and then a busy ring fills
+ * up until the new section lands; the section that landed last, [landing], pops in. Both are timed
+ * by [nowMs].
  */
 @Composable
 fun PlayingField(
@@ -182,6 +196,8 @@ fun PlayingField(
     filled: Set<ChannelUse> = emptySet(),
     flow: () -> FlowState? = { null },
     winAgeMs: (() -> Long)? = null,
+    replacement: Replacement? = null,
+    landing: Landing? = null,
     onTap: (Position) -> Unit = {},
 ) {
     val density = LocalDensity.current
@@ -206,20 +222,31 @@ fun PlayingField(
             val liquid = flow()
             val flowing = liquid as? FlowState.Flowing
             val used = liquid?.used.orEmpty()
+            val now = nowMs()
+            val pop = landing?.let { landingPopScale(now - it.atMs) }
             for (position in cells) {
                 val cell = board[position]
                 val fills = if (cell is Cell.Pipe) FieldLiquid.fills(position, cell.section, used, flowing) else emptyMap()
-                drawCell(cell, viewport.cellRect(position), pipes, scratch, fills)
+                val rect = viewport.cellRect(position)
+                if (pop != null && cell is Cell.Pipe && position == landing?.at) {
+                    scale(pop, pivot = rect.center) { drawCell(cell, rect, pipes, scratch, fills) }
+                } else {
+                    drawCell(cell, rect, pipes, scratch, fills)
+                }
             }
+            replacement?.let { drawReplacement(it, viewport.cellRect(it.at), replacementFrame(it, now), pipes, scratch) }
             highlighted?.let { drawHighlight(viewport.cellRect(it)) }
             if (leakAt != null && leakSide != null) drawLeak(viewport.cellRect(leakAt), leakSide, leakFrame(lossAgeMs()))
             if (winAgeMs != null) {
                 val frame = finishFlashFrame(winAgeMs())
                 for (position in cells) if (board[position] is Cell.Finish) drawFinishRing(viewport.cellRect(position), frame)
             }
-            drawPopups(awards, nowMs(), viewport, textMeasurer)
+            drawPopups(awards, now, viewport, textMeasurer)
         }
-        CellSemantics(board, viewport, highlighted, awards, leakAt?.let { at -> leakSide?.let { at to it } }, head, filled, winAgeMs != null)
+        CellSemantics(
+            board, viewport, highlighted, awards, leakAt?.let { at -> leakSide?.let { at to it } }, head, filled, winAgeMs != null,
+            replacing = replacement?.at,
+        )
     }
 }
 
@@ -237,6 +264,7 @@ private fun CellSemantics(
     head: Position?,
     filled: Set<ChannelUse>,
     won: Boolean,
+    replacing: Position?,
 ) {
     val density = LocalDensity.current
     val cellDp = with(density) { viewport.cellPx.toDp() }
@@ -252,6 +280,7 @@ private fun CellSemantics(
         val channels = filledByCell[position].orEmpty().toSet()
         val flashing = won && board[position] is Cell.Finish
         val section = (board[position] as? Cell.Pipe)?.section
+        val isReplacing = position == replacing
         Box(
             Modifier
                 .offset { IntOffset(rect.left.roundToInt(), rect.top.roundToInt()) }
@@ -266,6 +295,7 @@ private fun CellSemantics(
                     filledChannels = channels
                     if (flashing) finishFlash = true
                     if (section != null) pipeSection = section
+                    if (isReplacing) replacingCell = true
                 },
         )
     }
@@ -405,6 +435,94 @@ private fun DrawScope.drawLeak(rect: Rect, side: Side, frame: LeakFrame) {
 }
 
 private const val LEAK_ROWS = 3
+
+/**
+ * The replacement on the tile [rect]. While breaking, the old section shakes and cracks along its
+ * quarters, then the quarters fly apart, turn, fall and fade, over the neighbours if need be. Once
+ * it is gone, the tile is tinted and a ring fills clockwise from the top up to the landing.
+ */
+private fun DrawScope.drawReplacement(
+    replacement: Replacement,
+    rect: Rect,
+    frame: ReplacementFrame,
+    pipes: PipeArtLibrary,
+    scratch: LiquidScratch,
+) {
+    val cell = rect.width
+    val breakProgress = frame.breakProgress
+    if (breakProgress == null) {
+        drawBusyRing(rect, frame.progress)
+        return
+    }
+    val art = pipes.prepared(replacement.removed)
+    val scatter = frame.scatter
+    if (scatter == 0f) {
+        val shake = sin(breakProgress * SHAKE_WAVES) * cell * 0.025f * frame.crack
+        translate(left = shake) {
+            clipRect(rect.left, rect.top, rect.right, rect.bottom) { drawPipe(art, rect, emptyMap(), scratch) }
+            drawCracks(rect, frame.crack)
+        }
+        return
+    }
+    val half = cell / 2f
+    for (fragment in fragmentsFor(replacement.at)) {
+        val piece = Rect(Offset(rect.left + fragment.column * half, rect.top + fragment.row * half), Size(half, half))
+        val dx = fragment.dx * cell * scatter
+        val dy = (fragment.dy * scatter + FRAGMENT_FALL * scatter * scatter) * cell
+        withTransform({
+            translate(dx, dy)
+            rotate(fragment.spinDegrees * scatter, piece.center)
+            clipRect(piece.left, piece.top, piece.right, piece.bottom)
+        }) {
+            withAlpha(1f - scatter, piece) { drawPipe(art, rect, emptyMap(), scratch) }
+        }
+    }
+}
+
+/** Cracks from the tile centre towards the middle of each side, along the seams the quarters break on, [crack] of the way. */
+private fun DrawScope.drawCracks(rect: Rect, crack: Float) {
+    if (crack <= 0f) return
+    val cell = rect.width
+    val c = rect.center
+    for (side in Side.entries) {
+        val out = Offset(side.dx.toFloat(), side.dy.toFloat())
+        val across = Offset(-out.y, out.x)
+        val kink = c + out * (cell * 0.22f * crack) + across * (cell * 0.05f)
+        val end = c + out * (cell * 0.5f * crack)
+        drawLine(LeakOutColors.InkDark, c, kink, cell * 0.035f, StrokeCap.Round)
+        drawLine(LeakOutColors.InkDark, kink, end, cell * 0.03f, StrokeCap.Round)
+    }
+}
+
+/** The tile tint and the ring that fills to [progress] while the new section is on its way. */
+private fun DrawScope.drawBusyRing(rect: Rect, progress: Float) {
+    val cell = rect.width
+    val inset = rect.deflate(cell * 0.04f)
+    drawRoundRect(LeakOutColors.Brass500.copy(alpha = 0.12f), inset.topLeft, inset.size, CornerRadius(cell * 0.14f))
+    val radius = cell * 0.28f
+    val stroke = cell * 0.07f
+    drawCircle(LeakOutColors.Steel700.copy(alpha = 0.7f), radius, rect.center, style = Stroke(stroke))
+    drawArc(
+        LeakOutColors.Brass300,
+        startAngle = -90f,
+        sweepAngle = 360f * progress,
+        useCenter = false,
+        topLeft = rect.center - Offset(radius, radius),
+        size = Size(radius * 2f, radius * 2f),
+        style = Stroke(stroke, cap = StrokeCap.Round),
+    )
+}
+
+/** Draws [block] into a layer over [bounds] at [alpha], so overlapping strokes fade as one. */
+private inline fun DrawScope.withAlpha(alpha: Float, bounds: Rect, block: DrawScope.() -> Unit) {
+    val canvas = drawContext.canvas
+    canvas.saveLayer(bounds, Paint().apply { this.alpha = alpha.coerceIn(0f, 1f) })
+    block()
+    canvas.restore()
+}
+
+private const val SHAKE_WAVES = 40f
+private const val FRAGMENT_FALL = 0.3f
 
 /**
  * The success ring on the finish tile [rect]: a soft green fill and a solid green outline, both at

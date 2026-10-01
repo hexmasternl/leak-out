@@ -6,6 +6,7 @@ import nl.hexmaster.leakout.audio.RecordingSoundEffectPlayer
 import nl.hexmaster.leakout.audio.SoundCatalog
 import nl.hexmaster.leakout.audio.SoundEffects
 import nl.hexmaster.leakout.core.board.Cell
+import nl.hexmaster.leakout.core.engine.GameCommand
 import nl.hexmaster.leakout.core.engine.Outcome
 import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.FlowSettings
@@ -58,12 +59,16 @@ class GameSessionPlaceTest {
     }
 
     @Test
-    fun `a tile holding an unfilled section is replaced`() {
+    fun `a tile holding an unfilled section is replaced after the penalty`() {
         val session = session()
         session.placeSection(PipeSection.H, Position(2, 0))
         val next = session.state.stack.next
         assertEquals(PlaceResult.Replaced, session.place(Position(2, 0)))
+        assertEquals(Cell.Empty, session.state.board[Position(2, 0)])
+        assertTrue(session.isReplacing)
+        session.send(GameCommand.Tick(2_000))
         assertEquals(Cell.Pipe(next), session.state.board[Position(2, 0)])
+        assertFalse(session.isReplacing)
     }
 
     @Test
@@ -89,11 +94,73 @@ class GameSessionPlaceTest {
     }
 
     @Test
-    fun `any tile is rejected while the replace lock runs`() {
+    fun `any tile is rejected while a replacement runs`() {
         val session = session()
         session.placeSection(PipeSection.H, Position(2, 0))
         assertEquals(PlaceResult.Replaced, session.place(Position(2, 0)))
         session.assertRejected(Position(3, 0))
+        session.assertRejected(Position(2, 0))
+    }
+
+    @Test
+    fun `a refusal is silent during a replacement`() {
+        val session = session()
+        session.placeSection(PipeSection.H, Position(2, 0))
+        session.place(Position(2, 0))
+        assertNull(placementSound(PlaceResult.Rejected, session.state))
+    }
+
+    @Test
+    fun `each landing is recorded once with its tile and time`() {
+        val session = session()
+        session.placeSection(PipeSection.H, Position(2, 0))
+        session.send(GameCommand.Tick(500))
+        session.place(Position(2, 0))
+        assertNull(session.lastLanding)
+        session.send(GameCommand.Tick(1_999))
+        assertNull(session.lastLanding)
+        session.send(GameCommand.Tick(1))
+        assertEquals(Landing(attempt = 1, at = Position(2, 0), atMs = 2_500), session.lastLanding)
+        val landing = session.lastLanding
+        session.send(GameCommand.Tick(5_000))
+        assertSame(landing, session.lastLanding)
+    }
+
+    @Test
+    fun `a replacement that ends with a restart does not land`() {
+        val session = session()
+        session.placeSection(PipeSection.H, Position(2, 0))
+        session.place(Position(2, 0))
+        val before = session.state
+        session.send(GameCommand.Restart)
+        assertFalse(landed(before, session.state))
+        session.send(GameCommand.Tick(5_000))
+        assertNull(session.lastLanding)
+    }
+
+    @Test
+    fun `a replacement that ends with a leak does not land`() {
+        // No route: the liquid leaks out of the start at 11 s, before the replacement lands at 12 s.
+        val session = session()
+        session.send(GameCommand.Tick(9_000))
+        session.placeSection(PipeSection.H, Position(2, 0))
+        session.send(GameCommand.Tick(1_000))
+        session.place(Position(2, 0))
+        session.send(GameCommand.Tick(5_000))
+        assertTrue(session.state.outcome is Outcome.Lost)
+        assertNull(session.lastLanding)
+        assertEquals(Cell.Empty, session.state.board[Position(2, 0)])
+    }
+
+    @Test
+    fun `the fast forward button is disabled during a replacement`() {
+        val session = session()
+        assertTrue(session.fastForwardEnabled)
+        session.placeSection(PipeSection.H, Position(2, 0))
+        session.place(Position(2, 0))
+        assertFalse(session.fastForwardEnabled)
+        session.send(GameCommand.Tick(2_000))
+        assertTrue(session.fastForwardEnabled)
     }
 
     @Test
@@ -112,18 +179,33 @@ class GameSessionPlaceTest {
         assertNull(placementSound(PlaceResult.Rejected, state.copy(outcome = Outcome.Won(atMs = 0))))
     }
 
+    private fun recordingSounds(player: RecordingSoundEffectPlayer) = SoundEffects(
+        SoundCatalog.from(listOf("section_placement_001.mp3", "section_destroy_001.mp3", "section_placement_failed.mp3")),
+        player,
+    )
+
     @Test
     fun `placing with sound plays what the placement did`() {
         val player = RecordingSoundEffectPlayer()
-        val sounds = SoundEffects(
-            SoundCatalog.from(listOf("section_placement_001.mp3", "section_destroy_001.mp3", "section_placement_failed.mp3")),
-            player,
-        )
+        val sounds = recordingSounds(player)
         val session = session()
         assertTrue(session.placeWithSound(Position(2, 0), sounds))
-        session.state = session.state.copy(replaceLockUntilMs = 0)
         assertTrue(session.placeWithSound(Position(2, 0), sounds))
+        // During the replacement a tap does nothing and stays silent.
+        assertFalse(session.placeWithSound(Position(3, 0), sounds))
+        session.send(GameCommand.Tick(2_000))
         assertFalse(session.placeWithSound(blocked, sounds))
         assertEquals(listOf("section_placement_001.mp3", "section_destroy_001.mp3", "section_placement_failed.mp3"), player.played)
+    }
+
+    @Test
+    fun `a replacement without a penalty plays the destroy and then the placement sound`() {
+        val player = RecordingSoundEffectPlayer()
+        val sounds = recordingSounds(player)
+        val session = session(PlacementRules(replacePenaltyMs = 0))
+        session.placeSection(PipeSection.H, Position(2, 0))
+        assertTrue(session.placeWithSound(Position(2, 0), sounds))
+        assertFalse(session.isReplacing)
+        assertEquals(listOf("section_destroy_001.mp3", "section_placement_001.mp3"), player.played)
     }
 }

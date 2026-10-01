@@ -6,34 +6,61 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filterNotNull
 import nl.hexmaster.leakout.audio.GameSound
 import nl.hexmaster.leakout.audio.SoundEffects
+import nl.hexmaster.leakout.core.board.Cell
 import nl.hexmaster.leakout.core.engine.GameState
 import nl.hexmaster.leakout.core.engine.Outcome
 import nl.hexmaster.leakout.core.level.Position
 
 /**
  * The sound of a placement that did [result]. A refusal only sounds while [state] takes sections:
- * after a win or a leak, while paused or in fast forward the player has nothing to place, so a
- * tap on the field there is not a failed placement.
+ * after a win or a leak, while paused, in fast forward or during a replacement the player has
+ * nothing to place, so a tap on the field there is not a failed placement.
  */
 fun placementSound(result: PlaceResult, state: GameState): GameSound? = when (result) {
     PlaceResult.Placed -> GameSound.SectionPlaced
     PlaceResult.Replaced -> GameSound.SectionDestroyed
     PlaceResult.Rejected -> GameSound.PlacementFailed.takeIf {
-        state.outcome is Outcome.Playing && !state.paused && !state.fastForward
+        state.outcome is Outcome.Playing && !state.paused && !state.fastForward && state.replacement == null
     }
 }
 
-/** Places the next section on [at] like [GameSession.place], plays its sound and returns whether it was placed. */
+/**
+ * Places the next section on [at] like [GameSession.place], plays its sound and returns whether it
+ * was placed. A replacement without a penalty lands at once, so its placement sound follows the destroy.
+ */
 fun GameSession.placeWithSound(at: Position, soundEffects: SoundEffects?): Boolean {
     val before = state
     val result = place(at)
     placementSound(result, before)?.let { soundEffects?.play(it) }
+    if (result == PlaceResult.Replaced && state.replacement == null) soundEffects?.play(GameSound.SectionPlaced)
     return result != PlaceResult.Rejected
+}
+
+/**
+ * Whether the replacement running in [before] landed on the way to [after]: same attempt, the
+ * replacement is over and its section is on the tile. One that ended with the attempt did not land.
+ */
+fun landed(before: GameState, after: GameState): Boolean {
+    val replacement = before.replacement ?: return false
+    return after.attempt == before.attempt &&
+        after.replacement == null &&
+        (after.board[replacement.at] as? Cell.Pipe)?.section == replacement.incoming
+}
+
+/** Plays the placement sound each time a replacement section lands in [session]. */
+@Composable
+internal fun ReplacementLandingSound(session: GameSession, soundEffects: SoundEffects?) {
+    LaunchedEffect(session, soundEffects) {
+        snapshotFlow { session.lastLanding }.drop(1).filterNotNull().collect { soundEffects?.play(GameSound.SectionPlaced) }
+    }
 }
 
 /**

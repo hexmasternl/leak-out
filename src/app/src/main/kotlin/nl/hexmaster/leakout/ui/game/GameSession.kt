@@ -35,12 +35,21 @@ class GameSession(level: Level, private val engine: GameEngine = GameEngine()) {
      * so the field and the penalty row change in the same frame.
      */
     fun send(command: GameCommand): Boolean {
-        var next = engine.handle(state, command)
-        if (next === state) return false
+        val before = state
+        var next = engine.handle(before, command)
+        if (next === before) return false
         winFrameOf(next)?.let { frame -> next = engine.handle(next, GameCommand.RemoveUnused(frame.sectionsRemoved)) }
         state = next
+        before.replacement?.takeIf { landed(before, next) }?.let { lastLanding = Landing(next.attempt, it.at, it.landsAtMs) }
         return true
     }
+
+    /** The replacement section that landed last in this session, if any; each landing plays the placement sound. */
+    var lastLanding: Landing? by mutableStateOf(null)
+        private set
+
+    /** Whether a replacement runs, during which the player cannot place, drag or fast forward. */
+    val isReplacing: Boolean get() = state.replacement != null
 
     /**
      * Places the stack's next section on [at] and says what that did: a new section on an empty
@@ -69,6 +78,9 @@ class GameSession(level: Level, private val engine: GameEngine = GameEngine()) {
 
     /** The fast forward button is shown during play once the route is complete, and while fast forward is on. */
     val showFastForward: Boolean get() = state.outcome is Outcome.Playing && (state.routeComplete || state.fastForward)
+
+    /** Whether the fast forward button can be tapped: not while a replacement runs. */
+    val fastForwardEnabled: Boolean get() = !isReplacing
 
     /** What the fast forward button does: fast forward when off, normal speed when on. */
     fun toggleFastForward(): Boolean = send(if (state.fastForward) GameCommand.NormalSpeed else GameCommand.FastForward)

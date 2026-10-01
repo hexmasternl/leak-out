@@ -94,7 +94,8 @@ fun SettingsPanel(
 /**
  * A 56 dp settings row (design system 5.8): leading icon, `body.md` label and a trailing pill
  * switch. The whole row is the toggle, so the label is part of the touch target and TalkBack reads
- * label and state together. A disabled row is drawn at 40 % and reports itself as disabled.
+ * label and state together. A disabled row is drawn at 40 % and reports itself as disabled. An
+ * optional [note], such as "Coming soon", sits before the switch and carries [noteTag] for tests.
  */
 @Composable
 fun SettingsSwitchRow(
@@ -104,6 +105,8 @@ fun SettingsSwitchRow(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    note: String? = null,
+    noteTag: String? = null,
 ) {
     Row(
         modifier = modifier
@@ -121,6 +124,14 @@ fun SettingsSwitchRow(
         )
         Spacer(Modifier.width(12.dp))
         Text(text = label, style = LeakOutTextStyles.BodyMd, color = LeakOutColors.TextPrimary, modifier = Modifier.weight(1f))
+        if (note != null) {
+            Text(
+                text = note,
+                style = LeakOutTextStyles.BodySm,
+                color = LeakOutColors.TextMuted,
+                modifier = (if (noteTag != null) Modifier.testTag(noteTag) else Modifier).padding(end = 12.dp),
+            )
+        }
         // No handler of its own: the row toggles, so the switch is only the picture of the state.
         Switch(checked = checked, onCheckedChange = null, enabled = enabled, colors = switchColors())
     }
@@ -129,6 +140,7 @@ fun SettingsSwitchRow(
 /**
  * A 48 dp row holding a volume slider under its switch, indented to the switch row's label. The
  * slider is labelled by [description] for TalkBack; disabled, it is drawn at 40 %.
+ * [onValueChangeFinished] is called when a drag or tap on the slider ends.
  */
 @Composable
 fun SettingsSliderRow(
@@ -137,6 +149,7 @@ fun SettingsSliderRow(
     description: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    onValueChangeFinished: (() -> Unit)? = null,
 ) {
     Box(
         modifier = modifier
@@ -149,6 +162,7 @@ fun SettingsSliderRow(
         Slider(
             value = value,
             onValueChange = onValueChange,
+            onValueChangeFinished = onValueChangeFinished,
             enabled = enabled,
             colors = sliderColors(),
             modifier = Modifier.fillMaxWidth().semantics { contentDescription = description },

@@ -6,6 +6,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
@@ -18,45 +23,53 @@ import nl.hexmaster.leakout.ui.components.CartoonButtonVariant
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
 
+/** Whether the sound effects controls can be used: the game plays its effects. */
+const val SOUND_EFFECTS_AVAILABLE = true
+
 /**
- * Whether the audio controls can be used. There is no audio engine yet, so the panel is complete
- * but disabled; enabling it is this flag plus wiring the callbacks of [AudioPanel].
+ * Whether the music controls can be used. There is no background music yet, so they are shown but
+ * disabled; enabling them is this flag plus wiring the music callbacks of [AudioPanel].
  */
-const val AUDIO_AVAILABLE = false
+const val MUSIC_AVAILABLE = false
 
 /**
  * Sound effects and music, each a switch with a volume slider, showing the stored [settings].
- * While [enabled] is false every control is disabled and the panel notes "Coming soon".
+ * A group that is not available is disabled and its switch row notes "Coming soon". A slider
+ * follows the finger while dragged and reports the volume once, on release; releasing the sound
+ * slider while sound is on also calls [onSoundPreview], so the player hears the new level.
  */
 @Composable
 fun AudioPanel(
     settings: Settings,
     modifier: Modifier = Modifier,
-    enabled: Boolean = AUDIO_AVAILABLE,
+    soundEffectsAvailable: Boolean = SOUND_EFFECTS_AVAILABLE,
+    musicAvailable: Boolean = MUSIC_AVAILABLE,
     onSoundEnabledChange: (Boolean) -> Unit = {},
     onSoundVolumeChange: (Float) -> Unit = {},
+    onSoundPreview: (Float) -> Unit = {},
     onMusicEnabledChange: (Boolean) -> Unit = {},
     onMusicVolumeChange: (Float) -> Unit = {},
 ) {
-    SettingsPanel(
-        title = stringResource(R.string.settings_audio),
-        note = if (enabled) null else stringResource(R.string.settings_coming_soon),
-        noteTag = SettingsTags.COMING_SOON,
-        modifier = modifier.testTag(SettingsTags.AUDIO_PANEL),
-    ) {
+    val comingSoon = stringResource(R.string.settings_coming_soon)
+    SettingsPanel(title = stringResource(R.string.settings_audio), modifier = modifier.testTag(SettingsTags.AUDIO_PANEL)) {
         SettingsSwitchRow(
             label = stringResource(R.string.settings_sound_effects),
             icon = R.drawable.ic_sound,
             checked = settings.soundEnabled,
             onCheckedChange = onSoundEnabledChange,
-            enabled = enabled,
+            enabled = soundEffectsAvailable,
+            note = if (soundEffectsAvailable) null else comingSoon,
+            noteTag = SettingsTags.SOUND_COMING_SOON,
             modifier = Modifier.testTag(SettingsTags.SOUND_SWITCH),
         )
-        SettingsSliderRow(
-            value = settings.soundVolume,
-            onValueChange = onSoundVolumeChange,
+        VolumeSliderRow(
+            stored = settings.soundVolume,
+            onVolumeChange = { volume ->
+                onSoundVolumeChange(volume)
+                if (settings.soundEnabled) onSoundPreview(volume)
+            },
             description = stringResource(R.string.settings_sound_volume),
-            enabled = enabled,
+            enabled = soundEffectsAvailable,
             modifier = Modifier.testTag(SettingsTags.SOUND_VOLUME),
         )
         SettingsSwitchRow(
@@ -64,17 +77,44 @@ fun AudioPanel(
             icon = R.drawable.ic_music,
             checked = settings.musicEnabled,
             onCheckedChange = onMusicEnabledChange,
-            enabled = enabled,
+            enabled = musicAvailable,
+            note = if (musicAvailable) null else comingSoon,
+            noteTag = SettingsTags.MUSIC_COMING_SOON,
             modifier = Modifier.testTag(SettingsTags.MUSIC_SWITCH),
         )
-        SettingsSliderRow(
-            value = settings.musicVolume,
-            onValueChange = onMusicVolumeChange,
+        VolumeSliderRow(
+            stored = settings.musicVolume,
+            onVolumeChange = onMusicVolumeChange,
             description = stringResource(R.string.settings_music_volume),
-            enabled = enabled,
+            enabled = musicAvailable,
             modifier = Modifier.testTag(SettingsTags.MUSIC_VOLUME),
         )
     }
+}
+
+/**
+ * A volume slider that shows the [stored] value, follows the finger while dragged and reports the
+ * new volume once on release. The dragged value stays until the stored value catches up, so the
+ * thumb does not jump back while the write is on its way.
+ */
+@Composable
+private fun VolumeSliderRow(
+    stored: Float,
+    onVolumeChange: (Float) -> Unit,
+    description: String,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    var dragged by remember { mutableStateOf<Float?>(null) }
+    LaunchedEffect(stored) { dragged = null }
+    SettingsSliderRow(
+        value = dragged ?: stored,
+        onValueChange = { dragged = it },
+        onValueChangeFinished = { dragged?.let(onVolumeChange) },
+        description = description,
+        enabled = enabled,
+        modifier = modifier,
+    )
 }
 
 /** The Vibration switch. It only stores the preference; nothing vibrates yet. */

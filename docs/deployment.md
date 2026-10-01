@@ -66,12 +66,9 @@ Local builds are not affected. Without the `LEAKOUT_UPLOAD_*` environment variab
 Run this **outside the repository**, in a folder you will clean up afterwards. Keystores must never be committed; `*.jks` and `*.keystore` are in `.gitignore` as a safety net, but don't rely on it.
 
 ```sh
-keytool -genkeypair -v \
-  -keystore leak-out-upload.jks \
-  -storetype PKCS12 \
-  -alias upload \
-  -keyalg RSA -keysize 4096 \
-  -validity 10000
+keytool -genkeypair -v -keystore leak-out-upload.jks -storetype PKCS12 -alias upload -keyalg RSA -keysize 4096 -validity 10000
+
+& "$env:JAVA_HOME\bin\keytool.exe" -genkeypair -v -keystore leak-out-upload.jks -storetype PKCS12 -alias upload -keyalg RSA -keysize 4096 -validity 10000
 ```
 
 On Windows PowerShell, put the command on one line or replace each `\` with a backtick (`` ` ``).
@@ -91,6 +88,7 @@ Check the result:
 
 ```sh
 keytool -list -v -keystore leak-out-upload.jks -alias upload
+& "$env:JAVA_HOME\bin\keytool.exe"  -list -v -keystore leak-out-upload.jks -alias upload
 ```
 
 You should see one `PrivateKeyEntry` with a `Valid until` date decades from now. Note the **SHA-1** fingerprint. It is useful when [the Play Console complains about the wrong key](#the-android-app-bundle-was-signed-with-the-wrong-key).

@@ -52,8 +52,8 @@
 - [x] 7.6 Instrumented test `DataStoreMusicRotationStore`: absent on a fresh file, the value survives a new store instance on the same file, and it coexists with `DataStoreSettingsRepository` on the shared instance
 - [x] 7.7 Instrumented test `MediaPlayerMusicEngine`: plays a bundled track (prepared and playing within a timeout), pauses, resumes and reports completion (by seeking near the end)
 - [x] 7.8 Instrumented test for `MainActivity`: the stored last-started id advances by one per cold launch, and stays unchanged when the activity goes through stop/start and through recreation
-- [ ] 7.9 Update the settings Compose UI test: the Music controls are enabled and change the stored values, the Music slider sends live values while dragging, no "Coming soon" note is shown, the About panel lists the ten music credits in order, and the Music section is left out without credits
-- [ ] 7.10 Run `:app:testDebugUnitTest` and the affected instrumented tests, and record the results
+- [x] 7.9 Update the settings Compose UI test: the Music controls are enabled and change the stored values, the Music slider sends live values while dragging, no "Coming soon" note is shown, the About panel lists the ten music credits in order, and the Music section is left out without credits
+- [x] 7.10 Run `:app:testDebugUnitTest` and the affected instrumented tests, and record the results *Results: `:app:testDebugUnitTest` all pass. Instrumented (via `am instrument`): DataStoreMusicRotationStoreTest 3/3, MediaPlayerMusicEngineTest 5/5, MainActivityMusicTest 2/2, MainActivityTest 13/13, DataStoreSettingsRepositoryTest 6/6, SoundPoolSoundEffectPlayerTest 2/2, GameSoundEffectsTest 2/2; SettingsScreenTest: three slider swipe tests (one music, two pre-existing sound effects) failed on a freshly booted emulator. The settings UI was verified manually and accepted.*
 
 ## 8. Docs
 

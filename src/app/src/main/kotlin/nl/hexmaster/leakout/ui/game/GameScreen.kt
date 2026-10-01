@@ -73,8 +73,7 @@ fun GameScreen(
 ) {
     val dragState = remember(session) { SectionDragState() }
     // Parse every pipe asset once up front, so no frame mid-game pays for a section's first draw.
-    val pipes = rememberPipeArtLibrary()
-    remember(pipes) { pipes.preloadAll() }
+    val pipes = rememberPipeArtLibrary().let { library -> remember(library) { library.apply { preloadAll() } } }
 
     // Each value is derived, so a clock tick recomposes only what changed, not the whole screen.
     val attempt = session.select { state.attempt }

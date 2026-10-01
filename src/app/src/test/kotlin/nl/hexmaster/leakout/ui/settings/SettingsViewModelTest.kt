@@ -8,6 +8,8 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import nl.hexmaster.leakout.audio.Playlist
+import nl.hexmaster.leakout.audio.Track
 import nl.hexmaster.leakout.core.library.TileState
 import nl.hexmaster.leakout.history.InMemoryLevelHistoryRepository
 import nl.hexmaster.leakout.history.LevelHistory
@@ -116,6 +118,39 @@ class SettingsViewModelTest {
         val vm = SettingsViewModel(settings, InMemoryLevelHistoryRepository())
         vm.onSoundVolumeChange(1.5f)
         assertEquals(1f, vm.uiState.value!!.settings.soundVolume)
+    }
+
+    @Test
+    fun `a music change is written and shown`() = runTest {
+        val settings = InMemorySettingsRepository()
+        val vm = SettingsViewModel(settings, InMemoryLevelHistoryRepository())
+        vm.onMusicEnabledChange(false)
+        assertFalse(settings.settings.first().musicEnabled)
+        assertFalse(vm.uiState.value!!.settings.musicEnabled)
+        vm.onMusicVolumeChange(0.3f)
+        assertEquals(0.3f, settings.settings.first().musicVolume)
+        assertEquals(0.3f, vm.uiState.value!!.settings.musicVolume)
+        assertEquals(listOf("musicEnabled", "musicVolume"), settings.writes)
+    }
+
+    @Test
+    fun `a music volume out of range is clamped`() = runTest {
+        val vm = SettingsViewModel(InMemorySettingsRepository(), InMemoryLevelHistoryRepository())
+        vm.onMusicVolumeChange(-2f)
+        assertEquals(0f, vm.uiState.value!!.settings.musicVolume)
+    }
+
+    @Test
+    fun `the state carries the music credits in playlist order`() {
+        val tracks = listOf(Track("b.mp3", "Second", "Two"), Track("a.mp3", "First", "One"))
+        val vm = SettingsViewModel(InMemorySettingsRepository(), InMemoryLevelHistoryRepository(), Playlist(tracks))
+        assertEquals(tracks, vm.uiState.value!!.musicCredits)
+    }
+
+    @Test
+    fun `without credits the state has none`() {
+        val vm = SettingsViewModel(InMemorySettingsRepository(), InMemoryLevelHistoryRepository(), null)
+        assertTrue(vm.uiState.value!!.musicCredits.isEmpty())
     }
 
     @Test

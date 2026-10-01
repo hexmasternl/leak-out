@@ -1,5 +1,6 @@
 package nl.hexmaster.leakout.ui.settings
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,8 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import nl.hexmaster.leakout.R
+import nl.hexmaster.leakout.audio.Track
 import nl.hexmaster.leakout.settings.Settings
 import nl.hexmaster.leakout.ui.components.CartoonButton
 import nl.hexmaster.leakout.ui.components.CartoonButtonVariant
@@ -26,17 +31,15 @@ import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
 /** Whether the sound effects controls can be used: the game plays its effects. */
 const val SOUND_EFFECTS_AVAILABLE = true
 
-/**
- * Whether the music controls can be used. There is no background music yet, so they are shown but
- * disabled; enabling them is this flag plus wiring the music callbacks of [AudioPanel].
- */
-const val MUSIC_AVAILABLE = false
+/** Whether the music controls can be used: the background music follows them. */
+const val MUSIC_AVAILABLE = true
 
 /**
  * Sound effects and music, each a switch with a volume slider, showing the stored [settings].
  * A group that is not available is disabled and its switch row notes "Coming soon". A slider
  * follows the finger while dragged and reports the volume once, on release; releasing the sound
- * slider while sound is on also calls [onSoundPreview], so the player hears the new level.
+ * slider while sound is on also calls [onSoundPreview], so the player hears the new level. The
+ * music slider sends every value to [onMusicVolumePreview] while dragged, so the music follows it.
  */
 @Composable
 fun AudioPanel(
@@ -49,6 +52,7 @@ fun AudioPanel(
     onSoundPreview: (Float) -> Unit = {},
     onMusicEnabledChange: (Boolean) -> Unit = {},
     onMusicVolumeChange: (Float) -> Unit = {},
+    onMusicVolumePreview: (Float) -> Unit = {},
 ) {
     val comingSoon = stringResource(R.string.settings_coming_soon)
     SettingsPanel(title = stringResource(R.string.settings_audio), modifier = modifier.testTag(SettingsTags.AUDIO_PANEL)) {
@@ -85,6 +89,7 @@ fun AudioPanel(
         VolumeSliderRow(
             stored = settings.musicVolume,
             onVolumeChange = onMusicVolumeChange,
+            onDrag = onMusicVolumePreview,
             description = stringResource(R.string.settings_music_volume),
             enabled = musicAvailable,
             modifier = Modifier.testTag(SettingsTags.MUSIC_VOLUME),
@@ -94,14 +99,15 @@ fun AudioPanel(
 
 /**
  * A volume slider that shows the [stored] value, follows the finger while dragged and reports the
- * new volume once on release. The dragged value stays until the stored value catches up, so the
- * thumb does not jump back while the write is on its way.
+ * new volume once on release; [onDrag] hears every value on the way. The dragged value stays until
+ * the stored value catches up, so the thumb does not jump back while the write is on its way.
  */
 @Composable
 private fun VolumeSliderRow(
     stored: Float,
     onVolumeChange: (Float) -> Unit,
     description: String,
+    onDrag: (Float) -> Unit = {},
     enabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -109,7 +115,10 @@ private fun VolumeSliderRow(
     LaunchedEffect(stored) { dragged = null }
     SettingsSliderRow(
         value = dragged ?: stored,
-        onValueChange = { dragged = it },
+        onValueChange = {
+            dragged = it
+            onDrag(it)
+        },
         onValueChangeFinished = { dragged?.let(onVolumeChange) },
         description = description,
         enabled = enabled,
@@ -192,5 +201,34 @@ fun AboutPanel(
             color = LeakOutColors.TextMuted,
         )
         extra()
+    }
+}
+
+/**
+ * The "Music" section of the About panel: every background track as its title and artist, in
+ * playlist order. Titles and artists are proper names, so they are not translated. Nothing is
+ * shown without [credits].
+ */
+@Composable
+fun MusicCredits(credits: List<Track>, modifier: Modifier = Modifier) {
+    if (credits.isEmpty()) return
+    Column(modifier.testTag(SettingsTags.MUSIC_CREDITS)) {
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = stringResource(R.string.settings_about_music).uppercase(),
+            style = LeakOutTextStyles.DisplayXs,
+            color = LeakOutColors.TextSecondary,
+        )
+        credits.forEachIndexed { index, track ->
+            Text(
+                text = buildAnnotatedString {
+                    append(track.title)
+                    withStyle(SpanStyle(color = LeakOutColors.TextMuted)) { append(" · ${track.artist}") }
+                },
+                style = LeakOutTextStyles.BodyMd,
+                color = LeakOutColors.TextPrimary,
+                modifier = Modifier.testTag(musicCreditTag(index)),
+            )
+        }
     }
 }

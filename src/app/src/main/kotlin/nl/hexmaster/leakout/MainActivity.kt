@@ -16,11 +16,18 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import nl.hexmaster.leakout.audio.AudioManagerAudioFocus
+import nl.hexmaster.leakout.audio.BundledMusic
+import nl.hexmaster.leakout.audio.DataStoreMusicRotationStore
+import nl.hexmaster.leakout.audio.MediaPlayerMusicEngine
+import nl.hexmaster.leakout.audio.MusicViewModel
 import nl.hexmaster.leakout.audio.SoundCatalog
 import nl.hexmaster.leakout.audio.SoundEffectsViewModel
 import nl.hexmaster.leakout.audio.SoundPoolSoundEffectPlayer
@@ -63,7 +70,25 @@ class MainActivity : ComponentActivity() {
     // The player's preferences, on the app's one shared settings DataStore (Context.settingsDataStore).
     private val settings: SettingsRepository by lazy { DataStoreSettingsRepository.create(this) }
     private val settingsViewModel: SettingsViewModel by viewModels {
-        viewModelFactory { initializer { SettingsViewModel(settings, history) } }
+        viewModelFactory { initializer { SettingsViewModel(settings, history, musicPlaylist) } }
+    }
+
+    // The bundled playlist, which is also the music credits on the About panel; null when unreadable.
+    private val musicPlaylist by lazy { BundledMusic.load(assets) }
+
+    // The background music, one stream across every screen, kept across configuration changes.
+    private val musicViewModel: MusicViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                MusicViewModel(
+                    settings = settings,
+                    store = DataStoreMusicRotationStore.create(this@MainActivity),
+                    playlist = musicPlaylist,
+                    engine = MediaPlayerMusicEngine(assets),
+                    focus = AudioManagerAudioFocus(this@MainActivity),
+                )
+            }
+        }
     }
 
     // The game's sound effects, loaded once and kept across configuration changes.
@@ -94,6 +119,15 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
         hideSystemBars()
+        // Music plays while the activity is visible: it pauses on stop and resumes in place on start.
+        val music = musicViewModel.music
+        lifecycle.addObserver(
+            object : DefaultLifecycleObserver {
+                override fun onStart(owner: LifecycleOwner) = music.onForeground()
+
+                override fun onStop(owner: LifecycleOwner) = music.onBackground()
+            },
+        )
         setContent {
             LeakOutTheme {
                 SplashGate {
@@ -124,6 +158,7 @@ class MainActivity : ComponentActivity() {
                             appInfo = appInfo,
                             onBack = { screen = Screen.Welcome },
                             onSoundPreview = soundEffectsViewModel.soundEffects::preview,
+                            onMusicVolumePreview = music::previewVolume,
                         )
                         Screen.Welcome -> WelcomeScreen(
                             resolveNextLevel = ::resolveNextLevel,

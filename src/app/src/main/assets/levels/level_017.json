@@ -2,10 +2,21 @@
   "id": 17,
   "name": "Rubble Field",
   "grid": { "columns": 14, "rows": 10 },
-  "start":  { "x": 0, "y": 7, "openSide": "RIGHT" },
+  "start": { "x": 0, "y": 7, "openSide": "RIGHT" },
   "finish": { "x": 13, "y": 6, "openSide": "LEFT" },
-  "blocked": [ { "x": 5, "y": 0 }, { "x": 7, "y": 1 }, { "x": 8, "y": 1 }, { "x": 0, "y": 2 }, { "x": 9, "y": 2 }, { "x": 7, "y": 4 }, { "x": 12, "y": 4 }, { "x": 2, "y": 6 }, { "x": 7, "y": 6 }, { "x": 2, "y": 8 } ],
-  "flow": { "initialDelayMs": 13000, "cellsPerSecond": 0.17 },
+  "blocked": [
+    { "x": 5, "y": 0 },
+    { "x": 7, "y": 1 },
+    { "x": 8, "y": 1 },
+    { "x": 0, "y": 2 },
+    { "x": 9, "y": 2 },
+    { "x": 7, "y": 4 },
+    { "x": 12, "y": 4 },
+    { "x": 2, "y": 6 },
+    { "x": 7, "y": 6 },
+    { "x": 2, "y": 8 }
+  ],
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.17 },
   "stack": { "weights": { "X": 1, "RES": 0 } },
   "stars": { "one": 200, "two": 320, "three": 480 }
 }

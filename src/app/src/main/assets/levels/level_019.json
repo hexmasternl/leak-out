@@ -2,10 +2,25 @@
   "id": 19,
   "name": "Tight Squeeze",
   "grid": { "columns": 14, "rows": 11 },
-  "start":  { "x": 1, "y": 1, "openSide": "BOTTOM" },
+  "start": { "x": 1, "y": 1, "openSide": "BOTTOM" },
   "finish": { "x": 12, "y": 9, "openSide": "TOP" },
-  "blocked": [ { "x": 7, "y": 0 }, { "x": 5, "y": 1 }, { "x": 6, "y": 2 }, { "x": 9, "y": 2 }, { "x": 5, "y": 4 }, { "x": 2, "y": 5 }, { "x": 5, "y": 5 }, { "x": 10, "y": 6 }, { "x": 0, "y": 8 }, { "x": 5, "y": 8 }, { "x": 6, "y": 9 }, { "x": 7, "y": 10 }, { "x": 8, "y": 10 }, { "x": 12, "y": 10 } ],
-  "flow": { "initialDelayMs": 12000, "cellsPerSecond": 0.178 },
+  "blocked": [
+    { "x": 7, "y": 0 },
+    { "x": 5, "y": 1 },
+    { "x": 6, "y": 2 },
+    { "x": 9, "y": 2 },
+    { "x": 5, "y": 4 },
+    { "x": 2, "y": 5 },
+    { "x": 5, "y": 5 },
+    { "x": 10, "y": 6 },
+    { "x": 0, "y": 8 },
+    { "x": 5, "y": 8 },
+    { "x": 6, "y": 9 },
+    { "x": 7, "y": 10 },
+    { "x": 8, "y": 10 },
+    { "x": 12, "y": 10 }
+  ],
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.178 },
   "stack": { "weights": { "X": 2, "RES": 0 } },
   "stars": { "one": 220, "two": 350, "three": 520 }
 }

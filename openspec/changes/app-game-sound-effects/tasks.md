@@ -48,8 +48,8 @@
 - [x] 7.2 Game screen: winning plays the level complete sound once when the dialog appears and not again during the tally; restart and win again plays it once more; a leak plays the level failed sound only once the lost dialog appears; sound off plays nothing
 - [x] 7.3 Game screen: going to the background during the finish flash or the leak effect plays the end sound once after returning to the foreground, and not while stopped
 - [x] 7.4 Settings screen: the Sound effects switch and slider are enabled and write `soundEnabled` and `soundVolume`; releasing the slider calls the preview only while sound is on; the Music controls match the music flag, with "Coming soon" on the Music row only when music is not available
-- [ ] 7.5 Run `:app:testDebugUnitTest` and the affected instrumented tests on the emulator, and make sure they pass
+- [x] 7.5 Run `:app:testDebugUnitTest` and the affected instrumented tests on the emulator, and make sure they pass (unit tests run and passing; instrumented tests compiled but not run on an emulator, at the user's request)
 
 ## 8. Docs
 
-- [ ] 8.1 Update `docs/project-plan.md`: the sound effects, their events and the `assets/sfx/` folder, and the Settings description (Sound effects no longer "Coming soon")
+- [x] 8.1 Update `docs/project-plan.md`: the sound effects, their events and the `assets/sfx/` folder, and the Settings description (Sound effects no longer "Coming soon")

@@ -134,7 +134,7 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Once the route is complete, a round fast forward / slow button sits in the bottom right corner, 16 dp from the edges. Back and going to the background also pause the game.
 4. **Pause dialog** – opened from the cog wheel: Resume, Restart, a separator and Exit to the main menu (welcome screen). Tapping outside does nothing; Back works as Resume.
 5. **Level complete / failed overlay** – level complete (the level complete dialog, see 1.9): "Level complete!", the stars, pipe points, unused pipes and total, and Next level, Restart and Exit to the main menu. Level failed (the level lost dialog, see 1.9): "Leaked!", the score, Restart and Exit to the main menu.
-6. **Settings** – opened from the welcome screen's Settings button; Back returns to the welcome screen. Two columns: Audio (sound effects and music switches with volume sliders, disabled with "Coming soon" until audio lands) and Feel (vibration) on the left, Progress (finished levels and stars, and Reset progress with a confirm dialog) and About (name, version, maker, privacy line) on the right.
+6. **Settings** – opened from the welcome screen's Settings button; Back returns to the welcome screen. Two columns: Audio (sound effects and music switches with volume sliders; the sound effects controls work and releasing their slider plays a preview, the music controls stay disabled with "Coming soon" on the Music row until music lands) and Feel (vibration) on the left, Progress (finished levels and stars, and Reset progress with a confirm dialog) and About (name, version, maker, privacy line) on the right.
 
 ---
 
@@ -150,7 +150,7 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 | Game loop | `withFrameNanos` inside a `LaunchedEffect` | Frame-synced delta time, pauses with the composable |
 | Serialization | `kotlinx.serialization` (JSON) | Level files |
 | Persistence | Room (SQLite) for level progress; Jetpack DataStore (Preferences) for settings | Progress is per-level rows updated conditionally; settings are a few flags |
-| Audio | `SoundPool` for effects, `MediaPlayer` for music | Low-latency, built in |
+| Audio | `SoundPool` for effects (`app/src/main/assets/sfx/`, copied from the root `assets/sfx/`), `MediaPlayer` for music | Low-latency, built in |
 | DI | None initially; manual construction in a small `AppContainer` | Project is small; add Hilt only if it grows |
 | Tests | JUnit 5 + kotlin.test for `core`; Compose UI tests for screens | Core logic must be testable without a device |
 | Build | Gradle Kotlin DSL, version catalog (`libs.versions.toml`), AGP 8.x | Standard |
@@ -481,7 +481,8 @@ Each milestone ends in something runnable. Estimates are in focused working days
 
 ### Milestone 5 – Polish (4 days)
 
-- [ ] Sound effects: place, replace, flow tick, reservoir gurgle, leak, win. Background music optional.
+- [x] Sound effects: place (a random `section_placement_NNN` variant), replace (`section_destroy_NNN`), refused drop or tap (`section_placement_failed`), and the level complete and level lost dialogs (`level_complete`, `level_failed`), at the stored sound volume. A new variant is only a new numbered file in `assets/sfx/`.
+- [ ] Sound effects still open: flow tick, reservoir gurgle. Background music optional.
 - [ ] Animations: section drop-in on place, liquid particles on leak, finish flash on win, stack slide.
 - [ ] Haptic tick on placement.
 - [ ] Pause overlay; handle `onStop` by pausing the tick loop.

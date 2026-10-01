@@ -24,7 +24,7 @@ Every level is one JSON file in `src/app/src/main/assets/levels/`, named `level_
   },
   "rules": {                        // optional
     "allowReplace": true,           // optional: may an unfilled pipe be replaced
-    "replacePenaltyMs": 500         // optional, 0 or more: placement lock after a replacement
+    "replacePenaltyMs": 3000        // optional, 0 or more: length of a replacement, no placing meanwhile
   },
   "stars": { "one": 100, "two": 200, "three": 350 }  // required, positive, strictly increasing
 }
@@ -62,7 +62,7 @@ Defaults live in `LevelDefaults`. Each optional field can be overridden on its o
 | `stack.weights.LT`, `LB`, `RT`, `RB` | 2 |
 | `stack.weights.X`, `RES` | 0 |
 | `rules.allowReplace` | true |
-| `rules.replacePenaltyMs` | 500 |
+| `rules.replacePenaltyMs` | 3000 |
 
 ## Coordinates and open sides
 

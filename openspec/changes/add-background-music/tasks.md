@@ -16,18 +16,18 @@
 
 ## 3. Rotation persistence
 
-- [ ] 3.1 Define `MusicRotationStore` (`suspend fun lastStartedTrackId(): String?`, `suspend fun setLastStartedTrackId(id: String)`)
-- [ ] 3.2 Implement `DataStoreMusicRotationStore` with key `music_last_started_track` on the existing `settings` DataStore instance (never a second instance for the same file)
-- [ ] 3.3 Add `InMemoryMusicRotationStore` for tests
+- [x] 3.1 Define `MusicRotationStore` (`suspend fun lastStartedTrackId(): String?`, `suspend fun setLastStartedTrackId(id: String)`)
+- [x] 3.2 Implement `DataStoreMusicRotationStore` with key `music_last_started_track` on the existing `settings` DataStore instance (never a second instance for the same file)
+- [x] 3.3 Add `InMemoryMusicRotationStore` for tests
 
 ## 4. Playback engine and controller
 
-- [ ] 4.1 Define the `MusicEngine` seam: `play(track)` (open and prepare asynchronously, then start), `pause()`, `resume()`, `setVolume(Float)`, `release()`, with completion and error callbacks
-- [ ] 4.2 Implement `MediaPlayerMusicEngine`: `assets.openFd("music/<file>")`, `AudioAttributes(USAGE_GAME, CONTENT_TYPE_MUSIC)`, `prepareAsync`, and release of the old player before a new track
-- [ ] 4.3 Define the `AudioFocus` seam (request, abandon, and focus-change callbacks for gain, loss, transient loss and can-duck) and implement it with `AudioManager` and `AudioFocusRequest`
-- [ ] 4.4 Implement `BackgroundMusic` (controller): pick the first track from `MusicRotation` and the store; record the id each time a new track starts (not on resume); advance and wrap on completion; on an error, skip without recording and go silent after every track has failed in one session
-- [ ] 4.5 In `BackgroundMusic`, collect `SettingsRepository.settings`: `musicEnabled` off pauses and on resumes (or starts the rotation's track if none has started); `musicVolume` is applied immediately; ducking plays at 20 % of the set volume
-- [ ] 4.6 Expose `onForeground()` and `onBackground()` on `BackgroundMusic`: foreground requests focus and starts or resumes; background pauses and abandons focus
+- [x] 4.1 Define the `MusicEngine` seam: `play(track)` (open and prepare asynchronously, then start), `pause()`, `resume()`, `setVolume(Float)`, `release()`, with completion and error callbacks
+- [x] 4.2 Implement `MediaPlayerMusicEngine`: `assets.openFd("music/<file>")`, `AudioAttributes(USAGE_GAME, CONTENT_TYPE_MUSIC)`, `prepareAsync`, and release of the old player before a new track
+- [x] 4.3 Define the `AudioFocus` seam (request, abandon, and focus-change callbacks for gain, loss, transient loss and can-duck) and implement it with `AudioManager` and `AudioFocusRequest`
+- [x] 4.4 Implement `BackgroundMusic` (controller): pick the first track from `MusicRotation` and the store; record the id each time a new track starts (not on resume); advance and wrap on completion; on an error, skip without recording and go silent after every track has failed in one session
+- [x] 4.5 In `BackgroundMusic`, collect `SettingsRepository.settings`: `musicEnabled` off pauses and on resumes (or starts the rotation's track if none has started); `musicVolume` is applied immediately; ducking plays at 20 % of the set volume
+- [x] 4.6 Expose `onForeground()` and `onBackground()` on `BackgroundMusic`: foreground requests focus and starts or resumes; background pauses and abandons focus
 
 ## 5. App wiring
 
@@ -47,7 +47,7 @@
 - [x] 7.1 JVM test of the bundled copy against its source: `app/src/main/assets/music/audio_credits.json` has the same content as the root `assets/audio/audio_credits.json`, it lists `bg_music_0001.mp3` … `bg_music_0010.mp3` in order, and every bundled track exists with the same size as its source
 - [x] 7.2 JVM test `AudioCreditsParser`: a valid file (ids are file stems), and empty, invalid JSON and duplicate-file inputs yielding no playlist
 - [x] 7.3 JVM test `MusicRotation`: null id → first, id of track 4 → track 5, last → first, unknown id → first, `after` wraps
-- [ ] 7.4 JVM test `BackgroundMusic` with a fake engine, fake focus, `InMemorySettingsRepository` and `InMemoryMusicRotationStore`, covering every `background-music` scenario: first launch, the rotation across simulated launches, later tracks recorded, completion and wrap, resume without advancing, music disabled at launch, toggling off and on, enabling in a silent session, volume changes, focus loss, transient loss and ducking, a failing track skipped, and every track failing
+- [x] 7.4 JVM test `BackgroundMusic` with a fake engine, fake focus, `InMemorySettingsRepository` and `InMemoryMusicRotationStore`, covering every `background-music` scenario: first launch, the rotation across simulated launches, later tracks recorded, completion and wrap, resume without advancing, music disabled at launch, toggling off and on, enabling in a silent session, volume changes, focus loss, transient loss and ducking, a failing track skipped, and every track failing
 - [ ] 7.5 JVM test `SettingsViewModel`: the music switch and slider write `musicEnabled` and `musicVolume`; the UI state carries the music credits
 - [ ] 7.6 Instrumented test `DataStoreMusicRotationStore`: absent on a fresh file, the value survives a new store instance on the same file, and it coexists with `DataStoreSettingsRepository` on the shared instance
 - [ ] 7.7 Instrumented test `MediaPlayerMusicEngine`: plays a bundled track (prepared and playing within a timeout), pauses, resumes and reports completion (by seeking near the end)

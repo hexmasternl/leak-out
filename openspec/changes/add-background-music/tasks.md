@@ -5,14 +5,14 @@
 ## 1. Music assets
 
 - [x] 1.1 Rename the design-source tracks in `assets/audio/` to `bg_music_0001.mp3` … `bg_music_0010.mp3` in playback order, and `credits.json` to `audio_credits.json` with each `file` updated
-- [ ] 1.2 Copy the ten tracks and `audio_credits.json` unchanged from `assets/audio/` (repository root) to `app/src/main/assets/music/`
-- [ ] 1.3 Check that the APK keeps the MP3s uncompressed (`assets.openFd("music/<file>")` works); add `androidResources { noCompress += "mp3" }` only if it does not
+- [x] 1.2 Copy the ten tracks and `audio_credits.json` unchanged from `assets/audio/` (repository root) to `app/src/main/assets/music/`
+- [x] 1.3 Check that the APK keeps the MP3s uncompressed (`assets.openFd("music/<file>")` works); add `androidResources { noCompress += "mp3" }` only if it does not
 
 ## 2. Playlist and rotation logic (pure Kotlin, `app/.../audio/`)
 
-- [ ] 2.1 Add `Track` (id = file stem, file, title, artist) and `Playlist` (ordered, non-empty, unique ids)
-- [ ] 2.2 Add `AudioCreditsParser` for `audio_credits.json` using kotlinx.serialization; a missing, invalid or empty file, or one listing the same file twice, yields no playlist instead of throwing
-- [ ] 2.3 Add `MusicRotation` with `first(lastStartedId: String?): Track` (the track after the stored id, wrapping; the first track when the id is null or unknown) and `after(track: Track): Track` (wrapping)
+- [x] 2.1 Add `Track` (id = file stem, file, title, artist) and `Playlist` (ordered, non-empty, unique ids)
+- [x] 2.2 Add `AudioCreditsParser` for `audio_credits.json` using kotlinx.serialization; a missing, invalid or empty file, or one listing the same file twice, yields no playlist instead of throwing
+- [x] 2.3 Add `MusicRotation` with `first(lastStartedId: String?): Track` (the track after the stored id, wrapping; the first track when the id is null or unknown) and `after(track: Track): Track` (wrapping)
 
 ## 3. Rotation persistence
 
@@ -44,9 +44,9 @@
 
 ## 7. Tests
 
-- [ ] 7.1 JVM test of the bundled copy against its source: `app/src/main/assets/music/audio_credits.json` has the same content as the root `assets/audio/audio_credits.json`, it lists `bg_music_0001.mp3` … `bg_music_0010.mp3` in order, and every bundled track exists with the same size as its source
-- [ ] 7.2 JVM test `AudioCreditsParser`: a valid file (ids are file stems), and empty, invalid JSON and duplicate-file inputs yielding no playlist
-- [ ] 7.3 JVM test `MusicRotation`: null id → first, id of track 4 → track 5, last → first, unknown id → first, `after` wraps
+- [x] 7.1 JVM test of the bundled copy against its source: `app/src/main/assets/music/audio_credits.json` has the same content as the root `assets/audio/audio_credits.json`, it lists `bg_music_0001.mp3` … `bg_music_0010.mp3` in order, and every bundled track exists with the same size as its source
+- [x] 7.2 JVM test `AudioCreditsParser`: a valid file (ids are file stems), and empty, invalid JSON and duplicate-file inputs yielding no playlist
+- [x] 7.3 JVM test `MusicRotation`: null id → first, id of track 4 → track 5, last → first, unknown id → first, `after` wraps
 - [ ] 7.4 JVM test `BackgroundMusic` with a fake engine, fake focus, `InMemorySettingsRepository` and `InMemoryMusicRotationStore`, covering every `background-music` scenario: first launch, the rotation across simulated launches, later tracks recorded, completion and wrap, resume without advancing, music disabled at launch, toggling off and on, enabling in a silent session, volume changes, focus loss, transient loss and ducking, a failing track skipped, and every track failing
 - [ ] 7.5 JVM test `SettingsViewModel`: the music switch and slider write `musicEnabled` and `musicVolume`; sound effects writes do not happen; the UI state carries the music credits
 - [ ] 7.6 Instrumented test `DataStoreMusicRotationStore`: absent on a fresh file, the value survives a new store instance on the same file, and it coexists with `DataStoreSettingsRepository` on the shared instance

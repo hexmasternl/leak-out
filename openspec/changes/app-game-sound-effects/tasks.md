@@ -1,20 +1,20 @@
 ## 0. Prerequisite
 
-- [ ] 0.1 Confirm change `app-settings-page` is merged into `development` (`SettingsRepository` with `soundEnabled` and `soundVolume` is in `app/`), and check whether `add-background-music` has already split `AUDIO_AVAILABLE` into `MUSIC_AVAILABLE` and `SOUND_EFFECTS_AVAILABLE`; note the result for task 6.1
+- [x] 0.1 Confirm change `app-settings-page` is merged into `development` (`SettingsRepository` with `soundEnabled` and `soundVolume` is in `app/`), and check whether `add-background-music` has already split `AUDIO_AVAILABLE` into `MUSIC_AVAILABLE` and `SOUND_EFFECTS_AVAILABLE`; note the result for task 6.1
 
 ## 1. Sound assets
 
-- [ ] 1.1 Copy the seven MP3s unchanged from `assets/sfx/` (repository root) to `app/src/main/assets/sfx/`
-- [ ] 1.2 Check that the APK keeps the MP3s uncompressed (`assets.openFd("sfx/<file>")` works); add `noCompress` only if it does not
-- [ ] 1.3 JVM unit test: the app's `assets/sfx/` holds the same file names with the same bytes as the root `assets/sfx/`
+- [x] 1.1 Copy the seven MP3s unchanged from `assets/sfx/` (repository root) to `app/src/main/assets/sfx/`
+- [x] 1.2 Check that the APK keeps the MP3s uncompressed (`assets.openFd("sfx/<file>")` works); add `noCompress` only if it does not
+- [x] 1.3 JVM unit test: the app's `assets/sfx/` holds the same file names with the same bytes as the root `assets/sfx/`
 
 ## 2. Catalogue and controller (pure Kotlin, `app/.../audio/`)
 
-- [ ] 2.1 Add the `GameSound` enum (`SectionPlaced`, `SectionDestroyed`, `PlacementFailed`, `LevelComplete`, `LevelFailed`) with its group names
-- [ ] 2.2 Add `SoundCatalog.from(fileNames)`: strip `.mp3`, strip a trailing `_NNN` (exactly three digits), map the group to a `GameSound`, ignore unknown groups and non-MP3 files
-- [ ] 2.3 Define the `SoundEffectPlayer` seam (`play(file, volume)`, `release()`) and a recording fake for tests
-- [ ] 2.4 Implement `SoundEffects`: holds the catalogue, an injectable `Random` and the current enabled flag and volume; `play(sound)` is silent when sound is off, the volume is 0 or the sound has no files, and otherwise plays a random variant at the volume; `preview(volume)` plays a `SectionPlaced` variant at the given volume when sound is on
-- [ ] 2.5 JVM unit tests: grouping of the bundled names (three placement variants, one of each other sound, `section_placement_failed` kept separate), unknown files ignored, missing sound silent, seeded random covers all three variants, single variant always chosen, sound off and volume 0 silent, volume passed through, settings changes apply to the next play, preview respects the enabled flag
+- [x] 2.1 Add the `GameSound` enum (`SectionPlaced`, `SectionDestroyed`, `PlacementFailed`, `LevelComplete`, `LevelFailed`) with its group names
+- [x] 2.2 Add `SoundCatalog.from(fileNames)`: strip `.mp3`, strip a trailing `_NNN` (exactly three digits), map the group to a `GameSound`, ignore unknown groups and non-MP3 files
+- [x] 2.3 Define the `SoundEffectPlayer` seam (`play(file, volume)`, `release()`) and a recording fake for tests
+- [x] 2.4 Implement `SoundEffects`: holds the catalogue, an injectable `Random` and the current enabled flag and volume; `play(sound)` is silent when sound is off, the volume is 0 or the sound has no files, and otherwise plays a random variant at the volume; `preview(volume)` plays a `SectionPlaced` variant at the given volume when sound is on
+- [x] 2.5 JVM unit tests: grouping of the bundled names (three placement variants, one of each other sound, `section_placement_failed` kept separate), unknown files ignored, missing sound silent, seeded random covers all three variants, single variant always chosen, sound off and volume 0 silent, volume passed through, settings changes apply to the next play, preview respects the enabled flag
 
 ## 3. SoundPool player and lifetime
 

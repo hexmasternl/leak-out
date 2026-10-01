@@ -97,8 +97,8 @@ fun LevelLibraryScreen(
 
 /**
  * Stateless level library: header, the pager over accessible pages between previous/next buttons,
- * and a hint row with the locked-tap message or the star progress towards a locked next page.
- * Pages without an unlocked level are not in the pager, so neither swiping nor the buttons reach them.
+ * and a hint row with the locked-tap message or the star progress bar towards the next page.
+ * Pages that are not open are not in the pager, so neither swiping nor the buttons reach them.
  */
 @Composable
 fun LevelLibraryContent(
@@ -216,7 +216,10 @@ private fun PageButton(text: String, description: String, enabled: Boolean, tag:
     )
 }
 
-/** Locked-tap message for [LOCKED_MESSAGE_MS], otherwise the star progress when the next page is locked. */
+/**
+ * The hint row: the locked-tap message for [LOCKED_MESSAGE_MS], otherwise the star progress towards
+ * the next page. Both share this fixed-height row so the grid never moves; on the last page it is empty.
+ */
 @Composable
 private fun Hint(state: LevelLibraryUiState, lockedFeedback: LockedFeedback?) {
     var lockedMessageFor by remember { mutableStateOf<Int?>(null) }
@@ -226,16 +229,6 @@ private fun Hint(state: LevelLibraryUiState, lockedFeedback: LockedFeedback?) {
         delay(LOCKED_MESSAGE_MS)
         lockedMessageFor = null
     }
-    val text = when {
-        lockedMessageFor != null -> stringResource(R.string.level_library_locked_message, lockedMessageFor!!)
-        state.nextPageLocked -> stringResource(
-            R.string.level_library_star_progress,
-            state.currentPageStars,
-            state.library.pageUnlockStars,
-            state.currentPage + 1,
-        )
-        else -> ""
-    }
     val textSize = with(LocalDensity.current) { HINT_TEXT_DP.dp.toSp() }
     Box(
         modifier = Modifier
@@ -244,14 +237,22 @@ private fun Hint(state: LevelLibraryUiState, lockedFeedback: LockedFeedback?) {
             .semantics { liveRegion = LiveRegionMode.Polite },
         contentAlignment = Alignment.Center,
     ) {
-        if (text.isNotEmpty()) {
-            Text(
-                text = text,
+        val lockedLevel = lockedMessageFor
+        when {
+            lockedLevel != null -> Text(
+                text = stringResource(R.string.level_library_locked_message, lockedLevel),
                 style = LeakOutTextStyles.Header2.copy(fontSize = textSize),
-                color = if (lockedMessageFor != null) LeakOutColors.SurfaceCard else LeakOutColors.Brass300,
+                color = LeakOutColors.SurfaceCard,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 modifier = Modifier.testTag(LevelLibraryTags.HINT),
+            )
+            state.showStarProgress -> StarProgressBar(
+                earned = state.currentPageStars,
+                threshold = state.library.pageUnlockStars,
+                progress = state.starProgress,
+                reached = state.starGoalReached,
+                nextPage = state.currentPage + 1,
             )
         }
     }
@@ -261,23 +262,33 @@ private const val HEADER_TEXT_DP = 20f
 private const val HINT_TEXT_DP = 15f
 const val LOCKED_MESSAGE_MS = 1500L
 
-private fun previewState(stars: Map<Int, Int>, levels: Int = 48): LevelLibraryUiState {
+private fun previewState(stars: Map<Int, Int>, levels: Int = 48, page: Int? = null): LevelLibraryUiState {
     val library = LevelLibraryRules.compute(levels, stars, LevelLibraryConfig.Default)
-    return LevelLibraryUiState(library, library.initialPage(), loaded = true)
+    return LevelLibraryUiState(library, page ?: library.initialPage(), loaded = true)
 }
 
-@Preview(name = "Library: next page locked 800x360", widthDp = 800, heightDp = 360)
+@Preview(name = "Library: below the threshold 800x360", widthDp = 800, heightDp = 360)
 @Composable
-private fun LevelLibraryLockedNextPreview() {
+private fun LevelLibraryBelowThresholdPreview() {
+    // Levels 2 and 3 skipped, 15 to 17 playable ahead; 34 of 50 stars.
+    val stars = mapOf(1 to 3, 4 to 2, 14 to 2) + (5..13).associateWith { 3 }
     LeakOutTheme {
-        LevelLibraryContent(previewState((1..9).associateWith { it % 3 + 1 }), onPageChange = {}, onLevelTap = {})
+        LevelLibraryContent(previewState(stars, page = 1), onPageChange = {}, onLevelTap = {})
     }
 }
 
-@Preview(name = "Library: two pages 640x320 (small)", widthDp = 640, heightDp = 320)
+@Preview(name = "Library: threshold reached 640x320 (small)", widthDp = 640, heightDp = 320)
 @Composable
-private fun LevelLibrarySmallPreview() {
+private fun LevelLibraryReachedPreview() {
     LeakOutTheme {
-        LevelLibraryContent(previewState((1..20).associateWith { 3 }, levels = 30), onPageChange = {}, onLevelTap = {})
+        LevelLibraryContent(previewState((1..19).associateWith { 3 }, page = 1), onPageChange = {}, onLevelTap = {})
+    }
+}
+
+@Preview(name = "Library: last page 800x360", widthDp = 800, heightDp = 360)
+@Composable
+private fun LevelLibraryLastPagePreview() {
+    LeakOutTheme {
+        LevelLibraryContent(previewState((1..26).associateWith { 3 }, levels = 30), onPageChange = {}, onLevelTap = {})
     }
 }

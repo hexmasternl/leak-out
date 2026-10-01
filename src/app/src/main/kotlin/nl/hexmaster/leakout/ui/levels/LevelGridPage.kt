@@ -65,7 +65,9 @@ fun LevelGridPage(
 @Preview(name = "Partial last page", widthDp = 632, heightDp = 264, backgroundColor = 0xFF0C1A2A, showBackground = true)
 @Composable
 private fun LevelGridPagePreview() {
-    val library = LevelLibraryRules.compute(30, (1..26).associateWith { it % 3 + 1 }, LevelLibraryConfig.Default)
+    // Page 1 full at 3 stars opens page 2; 25 and 26 finished, 27 to 29 in the unlock window.
+    val stars = (1..26).associateWith { if (it <= 24) 3 else it % 3 + 1 }
+    val library = LevelLibraryRules.compute(30, stars, LevelLibraryConfig.Default)
     LeakOutTheme {
         LevelGridPage(page = library.page(2)!!, onLevelTap = {})
     }

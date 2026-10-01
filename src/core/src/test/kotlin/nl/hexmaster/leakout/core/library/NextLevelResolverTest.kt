@@ -6,7 +6,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class NextLevelResolverTest {
-    private val config = LevelLibraryConfig(pageUnlockStars = 36)
+    private val config = LevelLibraryConfig.Default
 
     private fun resolve(total: Int, stars: Map<Int, Int>) = NextLevelResolver.resolve(total, stars, config)
 
@@ -73,11 +73,35 @@ class NextLevelResolverTest {
     }
 
     @Test
-    fun `first level of a page below the star threshold is unlocked once the level before it is finished`() {
-        // 24 stars on page 1 is below the 36 needed, yet finishing level 24 unlocks 25 by the library rules.
-        val next = resolve(48, finished(1..24, stars = 1))
+    fun `the next level is locked behind the star gate even with level 24 finished`() {
+        // 48 stars on page 1 is below the 50 needed, so page 2 stays closed.
+        val next = resolve(48, finished(1..24, stars = 2))
+        assertEquals(25, next.levelId)
+        assertFalse(next.isUnlocked)
+        assertEquals(ContinueTarget.OpenLibrary(1), next.continueTarget)
+    }
+
+    @Test
+    fun `the next level on page 2 is unlocked once page 1 reaches the star gate`() {
+        val next = resolve(48, finished(1..24, stars = 3))
         assertEquals(25, next.levelId)
         assertTrue(next.isUnlocked)
+        assertEquals(ContinueTarget.StartLevel(25), next.continueTarget)
+    }
+
+    @Test
+    fun `the next level is reachable after skipping levels`() {
+        val next = resolve(48, mapOf(1 to 3, 4 to 2))
+        assertEquals(5, next.levelId)
+        assertTrue(next.isUnlocked)
+        assertEquals(ContinueTarget.StartLevel(5), next.continueTarget)
+    }
+
+    @Test
+    fun `a window of one keeps continue sequential`() {
+        val sequential = LevelLibraryConfig(unlockWindow = 1)
+        assertTrue(NextLevelResolver.resolve(48, mapOf(1 to 3), sequential).isUnlocked)
+        assertEquals(2, NextLevelResolver.resolve(48, mapOf(1 to 3), sequential).levelId)
     }
 
     @Test

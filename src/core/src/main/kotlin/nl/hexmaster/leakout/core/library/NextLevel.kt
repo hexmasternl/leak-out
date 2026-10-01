@@ -22,7 +22,7 @@ data class NextLevel(val levelId: Int, val page: Int, val isUnlocked: Boolean, v
 sealed interface ContinueTarget {
     data class StartLevel(val levelId: Int) : ContinueTarget
 
-    /** The next level cannot be started; show the library on [page] so the star hint explains why. */
+    /** The next level cannot be started; show the library on [page] so the star progress bar explains why. */
     data class OpenLibrary(val page: Int) : ContinueTarget
 }
 

@@ -74,6 +74,9 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.compose)
 
+    // Reads the background music credits (assets/music/audio_credits.json).
+    implementation(libs.kotlinx.serialization.json)
+
     // Room: the on-device level history.
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

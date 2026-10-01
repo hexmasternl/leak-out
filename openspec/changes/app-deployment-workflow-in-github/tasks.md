@@ -27,19 +27,19 @@
 
 ## 3. Setup guide (`docs/deployment.md`)
 
-- [ ] 3.1 Overview: what the workflow does, when it runs, and a short explanation (or diagram) of the upload key, the app signing key held by Google, and the service account
-- [ ] 3.2 Prerequisites: Play Console developer account with admin rights, GitHub repository admin access, a JDK for `keytool`
-- [ ] 3.3 Create the upload keystore: exact `keytool -genkeypair` command (RSA, 2048 bits or more, 25+ years validity, alias), where to keep it and the passwords (password manager, never the repo), and how to back it up
-- [ ] 3.4 Play Console: create the app (package `nl.hexmaster.leakout`), opt in to Play App Signing, build a signed bundle locally with the `LEAKOUT_UPLOAD_*` variables and version code 1, and upload it by hand to the internal testing track; list the minimum setup the console requires before testers can install
-- [ ] 3.5 Add testers to the internal testing track (email list) and share the opt-in link; explain how to use a named closed track instead and set `PLAY_TRACK`
-- [ ] 3.6 Google Cloud: create or pick a project, enable the Google Play Android Developer API, create a service account and download its JSON key; warn to keep the key file out of the repo and delete the local copy once stored
-- [ ] 3.7 Play Console: invite the service account's email under Users and permissions, grant access to this app only with permission to release to testing tracks; note that permissions can take time to apply
-- [ ] 3.8 GitHub: create the `play-store` environment with deployment branches limited to `main` (optionally required reviewers); add each of the five secrets with what it holds and how to get it, including one-line base64 commands for Windows PowerShell, macOS and Linux
-- [ ] 3.9 GitHub: add the repository variables `PLAY_TRACK`, `PLAY_RELEASE_STATUS` and `VERSION_CODE_OFFSET` with their defaults and when to change them (`draft` while the app has never been published; offset above the highest version code already uploaded)
-- [ ] 3.10 Running it: merge `development` into `main` or use *Run workflow*; what a successful run and job summary look like; where to find the release in the Play Console
-- [ ] 3.11 Troubleshooting: missing secret, version code already used, package not found, "Only releases with status draft may be created on draft app", service account has no permission, upload signed with the wrong key, unit test failure, Android SDK platform missing
-- [ ] 3.12 Maintenance: rotate the service-account key, reset a lost or leaked upload key through Play Console support, change the track, raise the version-code offset, bump `versionName`, and an optional move to Workload Identity Federation
-- [ ] 3.13 Check that the set of secret and variable names in the workflow and in the guide is identical (for example with `grep -o` on both files and a diff)
+- [x] 3.1 Overview: what the workflow does, when it runs, and a short explanation (or diagram) of the upload key, the app signing key held by Google, and the service account
+- [x] 3.2 Prerequisites: Play Console developer account with admin rights, GitHub repository admin access, a JDK for `keytool`
+- [x] 3.3 Create the upload keystore: exact `keytool -genkeypair` command (RSA, 2048 bits or more, 25+ years validity, alias), where to keep it and the passwords (password manager, never the repo), and how to back it up
+- [x] 3.4 Play Console: create the app (package `nl.hexmaster.leakout`), opt in to Play App Signing, build a signed bundle locally with the `LEAKOUT_UPLOAD_*` variables and version code 1, and upload it by hand to the internal testing track; list the minimum setup the console requires before testers can install
+- [x] 3.5 Add testers to the internal testing track (email list) and share the opt-in link; explain how to use a named closed track instead and set `PLAY_TRACK`
+- [x] 3.6 Google Cloud: create or pick a project, enable the Google Play Android Developer API, create a service account and download its JSON key; warn to keep the key file out of the repo and delete the local copy once stored
+- [x] 3.7 Play Console: invite the service account's email under Users and permissions, grant access to this app only with permission to release to testing tracks; note that permissions can take time to apply
+- [x] 3.8 GitHub: create the `play-store` environment with deployment branches limited to `main` (optionally required reviewers); add each of the five secrets with what it holds and how to get it, including one-line base64 commands for Windows PowerShell, macOS and Linux
+- [x] 3.9 GitHub: add the repository variables `PLAY_TRACK`, `PLAY_RELEASE_STATUS` and `VERSION_CODE_OFFSET` with their defaults and when to change them (`draft` while the app has never been published; offset above the highest version code already uploaded)
+- [x] 3.10 Running it: merge `development` into `main` or use *Run workflow*; what a successful run and job summary look like; where to find the release in the Play Console
+- [x] 3.11 Troubleshooting: missing secret, version code already used, package not found, "Only releases with status draft may be created on draft app", service account has no permission, upload signed with the wrong key, unit test failure, Android SDK platform missing
+- [x] 3.12 Maintenance: rotate the service-account key, reset a lost or leaked upload key through Play Console support, change the track, raise the version-code offset, bump `versionName`, and an optional move to Workload Identity Federation
+- [x] 3.13 Check that the set of secret and variable names in the workflow and in the guide is identical (for example with `grep -o` on both files and a diff)
 
 ## 4. Project instructions
 

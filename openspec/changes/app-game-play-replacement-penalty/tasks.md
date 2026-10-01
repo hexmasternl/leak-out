@@ -1,18 +1,18 @@
 ## 1. Core: level default
 
-- [ ] 1.1 Change `LevelDefaults.REPLACE_PENALTY_MS` to 3000 in `core/.../level/LevelDefaults.kt`
-- [ ] 1.2 Update `LevelParserTest` (minimal level gets 3000) and add a test for a custom `replacePenaltyMs` of 1500; run `:core:test`
+- [x] 1.1 Change `LevelDefaults.REPLACE_PENALTY_MS` to 3000 in `core/.../level/LevelDefaults.kt`
+- [x] 1.2 Update `LevelParserTest` (minimal level gets 3000) and add a test for a custom `replacePenaltyMs` of 1500; run `:core:test`
 
 ## 2. Core: replacement sequence in the engine
 
-- [ ] 2.1 Add `Replacement(at, removed, incoming, startedAtMs, landsAtMs)` and `GameState.replacement: Replacement?`, initialised to null in `GameEngine.start`
-- [ ] 2.2 In `GameEngine.place`, for `PlacementCheck.Replace` with a penalty above 0: empty the cell, move the stack, store the `Replacement`, set `replaceLockUntilMs = landsAtMs`, and recompute `routeComplete`. With a penalty of 0, keep the instant swap
-- [ ] 2.3 In `GameEngine.tick`, split the tick at `landsAtMs`: advance to the landing time, land `incoming` if the outcome is still playing and the tile is empty, clear `replacement`, recompute `routeComplete`, then advance the rest
-- [ ] 2.4 Clear `replacement` when the outcome becomes won or lost, and refuse `FastForward` while a replacement runs
-- [ ] 2.5 `GameEngineTest`: the tile is empty and the stack moved at the drop; the section lands exactly at `landsAtMs` (2999 vs 3000); placement is refused during the sequence; a penalty of 0 swaps at once; pause freezes the sequence; restart clears it
-- [ ] 2.6 `GameEngineTest`: the liquid entering the tile before the landing leaks there and nothing lands; a loss elsewhere ends the sequence; the route is incomplete during the sequence and completes on the landing; fast forward is refused during the sequence
-- [ ] 2.7 Tick-independence test: the same replacement scenario with 1 ms ticks and with one long tick ends in an equal board, flow, score and outcome
-- [ ] 2.8 Update `PlacementTest` and `HeadlessPlayTest` for the new behaviour; run `./gradlew :core:test` and make sure it passes
+- [x] 2.1 Add `Replacement(at, removed, incoming, startedAtMs, landsAtMs)` and `GameState.replacement: Replacement?`, initialised to null in `GameEngine.start`
+- [x] 2.2 In `GameEngine.place`, for `PlacementCheck.Replace` with a penalty above 0: empty the cell, move the stack, store the `Replacement`, set `replaceLockUntilMs = landsAtMs`, and recompute `routeComplete`. With a penalty of 0, keep the instant swap
+- [x] 2.3 In `GameEngine.tick`, split the tick at `landsAtMs`: advance to the landing time, land `incoming` if the outcome is still playing and the tile is empty, clear `replacement`, recompute `routeComplete`, then advance the rest
+- [x] 2.4 Clear `replacement` when the outcome becomes won or lost, and refuse `FastForward` while a replacement runs
+- [x] 2.5 `GameEngineTest`: the tile is empty and the stack moved at the drop; the section lands exactly at `landsAtMs` (2999 vs 3000); placement is refused during the sequence; a penalty of 0 swaps at once; pause freezes the sequence; restart clears it
+- [x] 2.6 `GameEngineTest`: the liquid entering the tile before the landing leaks there and nothing lands; a loss elsewhere ends the sequence; the route is incomplete during the sequence and completes on the landing; fast forward is refused during the sequence
+- [x] 2.7 Tick-independence test: the same replacement scenario with 1 ms ticks and with one long tick ends in an equal board, flow, score and outcome
+- [x] 2.8 Update `PlacementTest` and `HeadlessPlayTest` for the new behaviour; run `./gradlew :core:test` and make sure it passes
 
 ## 3. App: session and sounds
 

@@ -32,6 +32,7 @@ class GameEngine(private val random: Random = Random.Default) {
         sheet = ScoreSheet(),
         awards = emptyList(),
         replaceLockUntilMs = 0L,
+        replacement = null,
         clockMs = 0L,
         paused = false,
         fastForward = false,
@@ -47,7 +48,11 @@ class GameEngine(private val random: Random = Random.Default) {
         GameCommand.Pause -> if (state.outcome is Outcome.Playing && !state.paused) state.copy(paused = true) else state
         GameCommand.Resume -> if (state.paused) state.copy(paused = false) else state
         GameCommand.FastForward ->
-            if (state.routeComplete && !state.isStopped && !state.fastForward) state.copy(fastForward = true) else state
+            if (state.routeComplete && !state.isStopped && !state.fastForward && state.replacement == null) {
+                state.copy(fastForward = true)
+            } else {
+                state
+            }
         GameCommand.NormalSpeed -> if (state.fastForward && !state.isStopped) state.copy(fastForward = false) else state
         is GameCommand.Place -> place(state, command.at)
         is GameCommand.Tick -> tick(state, command.dtMs)
@@ -66,31 +71,73 @@ class GameEngine(private val random: Random = Random.Default) {
             Placement.check(state.board, state.level.rules, at, state.clockMs, state.replaceLockUntilMs)
         }
 
+    /**
+     * Puts the stack's next section on [at]. A replacement with a penalty empties the tile and starts
+     * a [Replacement] that lands the section after the penalty; until then no placement is accepted.
+     */
     private fun place(state: GameState, at: Position): GameState {
         val check = placement(state, at)
         if (!check.accepted) return state
-        val board = state.board.with(at, Cell.Pipe(state.stack.next))
+        val incoming = state.stack.next
+        val stack = state.stack.afterPlacement(WeightedPool(state.level.stack.weights), random)
+        val penaltyMs = state.level.rules.replacePenaltyMs
+        if (check == PlacementCheck.Replace && penaltyMs > 0) {
+            val removed = (state.board[at] as Cell.Pipe).section
+            val landsAtMs = state.clockMs + penaltyMs
+            val board = state.board.with(at, Cell.Empty)
+            return state.copy(
+                board = board,
+                stack = stack,
+                replaceLockUntilMs = landsAtMs,
+                replacement = Replacement(at, removed, incoming, state.clockMs, landsAtMs),
+                routeComplete = RouteTracer.trace(board, state.level) is Route.Complete,
+            )
+        }
+        val board = state.board.with(at, Cell.Pipe(incoming))
         return state.copy(
             board = board,
-            stack = state.stack.afterPlacement(WeightedPool(state.level.stack.weights), random),
-            replaceLockUntilMs = if (check == PlacementCheck.Replace) {
-                state.clockMs + state.level.rules.replacePenaltyMs
-            } else {
-                state.replaceLockUntilMs
-            },
+            stack = stack,
             routeComplete = RouteTracer.trace(board, state.level) is Route.Complete,
         )
     }
 
     /**
-     * Moves the clock by [dtMs], drops old awards and, while playing, runs the flow on the flow time
-     * (`dtMs` times [GameState.flowTimeScale]). After a win or a loss only the clock moves, for the end effects.
+     * Moves the clock by [dtMs]. A replacement that lands within the tick splits it at the landing
+     * time, so the liquid meets the tile as it is at that moment whatever the tick length.
      */
     private fun tick(state: GameState, dtMs: Long): GameState {
         if (dtMs <= 0 || state.paused) return state
+        val replacement = state.replacement ?: return advance(state, dtMs)
+        val toLandingMs = replacement.landsAtMs - state.clockMs
+        if (toLandingMs > dtMs) return advance(state, dtMs)
+        val landed = land(advance(state, toLandingMs))
+        return advance(landed, dtMs - toLandingMs)
+    }
+
+    /**
+     * Moves the clock by [dtMs], drops old awards and, while playing, runs the flow on the flow time
+     * (`dtMs` times [GameState.flowTimeScale]). After a win or a loss only the clock moves, for the
+     * end effects, and a replacement in progress is dropped.
+     */
+    private fun advance(state: GameState, dtMs: Long): GameState {
+        if (dtMs <= 0) return state
         val clockMs = state.clockMs + dtMs
         val moved = state.copy(clockMs = clockMs, awards = state.awards.filter { it.ageAt(clockMs) < Award.VISIBLE_MS })
-        return if (state.outcome is Outcome.Playing) FlowSimulation.advance(moved, dtMs * state.flowTimeScale) else moved
+        if (state.outcome !is Outcome.Playing) return moved
+        val next = FlowSimulation.advance(moved, dtMs * state.flowTimeScale)
+        return if (next.outcome !is Outcome.Playing && next.replacement != null) next.copy(replacement = null) else next
+    }
+
+    /** Puts the replacement's section on its tile and ends the replacement. Nothing lands after the attempt ended. */
+    private fun land(state: GameState): GameState {
+        val replacement = state.replacement ?: return state
+        if (state.outcome !is Outcome.Playing || state.board[replacement.at] != Cell.Empty) return state.copy(replacement = null)
+        val board = state.board.with(replacement.at, Cell.Pipe(replacement.incoming))
+        return state.copy(
+            board = board,
+            replacement = null,
+            routeComplete = RouteTracer.trace(board, state.level) is Route.Complete,
+        )
     }
 
     /**

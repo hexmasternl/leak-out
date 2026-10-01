@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.core.content.pm.PackageInfoCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -26,10 +27,15 @@ import nl.hexmaster.leakout.core.library.NextLevelResolver
 import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.history.data.LeakOutDatabase
 import nl.hexmaster.leakout.history.data.RoomLevelHistoryRepository
+import nl.hexmaster.leakout.settings.DataStoreSettingsRepository
+import nl.hexmaster.leakout.settings.SettingsRepository
 import nl.hexmaster.leakout.ui.game.GameScreen
 import nl.hexmaster.leakout.ui.levels.LevelLibraryScreen
 import nl.hexmaster.leakout.ui.levels.LevelLibraryViewModel
 import nl.hexmaster.leakout.ui.levels.asHistoryReader
+import nl.hexmaster.leakout.ui.settings.AppInfo
+import nl.hexmaster.leakout.ui.settings.SettingsScreen
+import nl.hexmaster.leakout.ui.settings.SettingsViewModel
 import nl.hexmaster.leakout.ui.splash.SplashGate
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import nl.hexmaster.leakout.ui.title.WelcomeScreen
@@ -38,6 +44,7 @@ import nl.hexmaster.leakout.ui.title.WelcomeScreen
 private sealed interface Screen {
     data object Welcome : Screen
     data object Library : Screen
+    data object Settings : Screen
     data class Game(val level: Level) : Screen
 }
 
@@ -48,6 +55,19 @@ class MainActivity : ComponentActivity() {
     private val history: LevelHistoryRepository by lazy { RoomLevelHistoryRepository(LeakOutDatabase.get(this)) }
     private val library: LevelLibraryViewModel by viewModels {
         viewModelFactory { initializer { LevelLibraryViewModel(history.asHistoryReader(), levels) } }
+    }
+
+    // The player's preferences, on the app's one shared settings DataStore (Context.settingsDataStore).
+    private val settings: SettingsRepository by lazy { DataStoreSettingsRepository.create(this) }
+    private val settingsViewModel: SettingsViewModel by viewModels {
+        viewModelFactory { initializer { SettingsViewModel(settings, history) } }
+    }
+
+    // Read once: the installed version does not change while the process runs.
+    private val appInfo: AppInfo by lazy {
+        @Suppress("DEPRECATION") // The int-flag overload works on every supported API level (min 26).
+        val info = packageManager.getPackageInfo(packageName, 0)
+        AppInfo(versionName = info.versionName.orEmpty(), versionCode = PackageInfoCompat.getLongVersionCode(info))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,11 +105,16 @@ class MainActivity : ComponentActivity() {
                             onStartLevel = { id -> levels.load(id)?.let { screen = Screen.Game(it) } },
                             onBack = { screen = Screen.Welcome },
                         )
+                        Screen.Settings -> SettingsScreen(
+                            viewModel = settingsViewModel,
+                            appInfo = appInfo,
+                            onBack = { screen = Screen.Welcome },
+                        )
                         Screen.Welcome -> WelcomeScreen(
                             resolveNextLevel = ::resolveNextLevel,
                             onStartLevel = { id -> levels.load(id)?.let { screen = Screen.Game(it) } },
                             onOpenLevelLibrary = openLibrary,
-                            onSettings = { /* TODO: navigate to settings once that screen exists. */ },
+                            onSettings = { screen = Screen.Settings },
                             onExit = { finishAffinity() },
                         )
                     }

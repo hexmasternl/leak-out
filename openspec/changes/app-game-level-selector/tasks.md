@@ -1,16 +1,16 @@
 ## 1. Configuration
 
-- [ ] 1.1 In `core/.../library/LevelLibraryConfig.kt` set `DEFAULT_PAGE_UNLOCK_STARS = 50`, add `unlockWindow` with `DEFAULT_UNLOCK_WINDOW = 3`, and validate `pageUnlockStars` in `0..72` and `unlockWindow >= 1`
-- [ ] 1.2 Unit tests for the defaults and for rejecting a threshold of -1 or 73 and a window of 0
+- [x] 1.1 In `core/.../library/LevelLibraryConfig.kt` set `DEFAULT_PAGE_UNLOCK_STARS = 50`, add `unlockWindow` with `DEFAULT_UNLOCK_WINDOW = 3`, and validate `pageUnlockStars` in `0..72` and `unlockWindow >= 1`
+- [x] 1.2 Unit tests for the defaults and for rejecting a threshold of -1 or 73 and a window of 0
 
 ## 2. Unlock rules (core)
 
-- [ ] 2.1 Add `isOpen` to `LibraryPage` and make `isAccessible` mean open; compute page openness in `LevelLibraryRules.compute`: page 1 always, page `p` when page `p-1` is open and totals at least `pageUnlockStars`
-- [ ] 2.2 Replace the sequential rule with the unlock window: on an open page a level is unlocked when finished, among the first `unlockWindow` levels of the page, or within `unlockWindow` levels after a finished level; on a closed page only finished levels are playable
-- [ ] 2.3 Change `LevelLibrary.initialPage()` to the page of the level after the highest finished level when it is playable, else the last open page, else page 1
-- [ ] 2.4 Update `LevelLibraryRulesTest` with the spec scenarios: fresh install (1-3), window extension, skipping (1 and 4 finished), at most two skipped in a row, window not crossing a closed page, threshold reached/not reached with level 24 finished, improved stars opening a page, pages opening in order, window of 1, partial last page, initial page cases
-- [ ] 2.5 Update `NextLevelResolverTest` for the new rules (next level locked behind the star gate, next level reachable after skipping)
-- [ ] 2.6 Run `./gradlew :core:test` and make sure it passes
+- [x] 2.1 Add `isOpen` to `LibraryPage` and make `isAccessible` mean open; compute page openness in `LevelLibraryRules.compute`: page 1 always, page `p` when page `p-1` is open and totals at least `pageUnlockStars`
+- [x] 2.2 Replace the sequential rule with the unlock window: on an open page a level is unlocked when finished, among the first `unlockWindow` levels of the page, or within `unlockWindow` levels after a finished level; on a closed page only finished levels are playable
+- [x] 2.3 Change `LevelLibrary.initialPage()` to the page of the level after the highest finished level when it is playable, else the last open page, else page 1
+- [x] 2.4 Update `LevelLibraryRulesTest` with the spec scenarios: fresh install (1-3), window extension, skipping (1 and 4 finished), at most two skipped in a row, window not crossing a closed page, threshold reached/not reached with level 24 finished, improved stars opening a page, pages opening in order, window of 1, partial last page, initial page cases
+- [x] 2.5 Update `NextLevelResolverTest` for the new rules (next level locked behind the star gate, next level reachable after skipping)
+- [x] 2.6 Run `./gradlew :core:test` and make sure it passes
 
 ## 3. View model
 

@@ -17,10 +17,12 @@ data class LevelTile(val levelId: Int, val state: TileState) {
  *
  * @param number 1-based page number.
  * @param earnedStars stars earned over the levels of this page; unplayed levels count 0.
+ * @param isOpen page 1 always; a later page once the page before it is open and has earned the
+ *   page unlock stars.
  */
-data class LibraryPage(val number: Int, val tiles: List<LevelTile>, val earnedStars: Int) {
-    /** A page can be shown only when it holds at least one playable level. */
-    val isAccessible: Boolean get() = tiles.any { it.isPlayable }
+data class LibraryPage(val number: Int, val tiles: List<LevelTile>, val earnedStars: Int, val isOpen: Boolean) {
+    /** Only open pages can be shown, even when a closed page holds a finished level. */
+    val isAccessible: Boolean get() = isOpen
 }
 
 /** The whole library, derived from the level count and the history; nothing is stored per page. */
@@ -33,12 +35,20 @@ data class LevelLibrary(val pages: List<LibraryPage>, val pageUnlockStars: Int) 
         page(LevelLibraryLayout.pageOf(levelId))?.tiles?.firstOrNull { it.levelId == levelId }
 
     /**
-     * The page to open on: the one holding the lowest unlocked, unfinished level, or the last
-     * accessible page when every unlocked level is finished. Page 1 when there are no levels.
+     * The page to open on: the page of the level after the highest finished level when that level
+     * is playable, else the last open page; page 1 when nothing is finished. It follows the highest
+     * finished level, as [NextLevelResolver] does, so a skipped level on an earlier page does not
+     * pull the library back.
      */
     fun initialPage(): Int {
-        val next = pages.asSequence().flatMap { it.tiles }.firstOrNull { it.state == TileState.Unlocked }
-        return next?.let { LevelLibraryLayout.pageOf(it.levelId) } ?: accessiblePages.lastOrNull()?.number ?: 1
+        val tiles = pages.flatMap { it.tiles }
+        val highest = tiles.lastOrNull { it.state is TileState.Completed }?.levelId ?: return 1
+        val next = tile((highest + 1).coerceAtMost(tiles.size))
+        return if (next?.isPlayable == true) {
+            LevelLibraryLayout.pageOf(next.levelId)
+        } else {
+            accessiblePages.lastOrNull()?.number ?: 1
+        }
     }
 }
 
@@ -57,9 +67,10 @@ object LevelLibraryLayout {
 }
 
 /**
- * The unlock rules. Level 1 is always unlocked; level `n` unlocks once `n-1` is finished; the
- * first level of page `p+1` also unlocks once page `p` totals at least `{x}` stars. A finished
- * level is always unlocked.
+ * The unlock rules. Page 1 is always open; page `p` opens once page `p-1` is open and totals at
+ * least `{x}` stars. On an open page a level is unlocked when it is finished, among the first
+ * [LevelLibraryConfig.unlockWindow] levels of the page, or within that window after a finished
+ * level. On a closed page only finished levels are playable, so the window never crosses into it.
  */
 object LevelLibraryRules {
     /**
@@ -69,23 +80,27 @@ object LevelLibraryRules {
     fun compute(totalLevels: Int, stars: Map<Int, Int>, config: LevelLibraryConfig): LevelLibrary {
         val count = totalLevels.coerceAtLeast(0)
         val pageCount = LevelLibraryLayout.pageCount(count)
+        val window = config.unlockWindow
         fun starsOf(id: Int): Int = (stars[id] ?: 0).coerceIn(0, LevelLibraryLayout.MAX_STARS_PER_LEVEL)
-        val pageStars = IntArray(pageCount) { index ->
-            val first = LevelLibraryLayout.firstLevelOf(index + 1)
-            (first..minOf(first + LevelLibraryLayout.LEVELS_PER_PAGE - 1, count)).sumOf(::starsOf)
+        fun levelsOf(page: Int): IntRange {
+            val first = LevelLibraryLayout.firstLevelOf(page)
+            return first..minOf(first + LevelLibraryLayout.LEVELS_PER_PAGE - 1, count)
+        }
+        val pageStars = IntArray(pageCount) { index -> levelsOf(index + 1).sumOf(::starsOf) }
+        val pageOpen = BooleanArray(pageCount)
+        for (index in 0 until pageCount) {
+            pageOpen[index] = index == 0 || (pageOpen[index - 1] && pageStars[index - 1] >= config.pageUnlockStars)
         }
 
         fun isUnlocked(id: Int): Boolean {
-            if (id == 1 || id in stars || (id - 1) in stars) return true
             val page = LevelLibraryLayout.pageOf(id)
-            return page > 1 && id == LevelLibraryLayout.firstLevelOf(page) &&
-                pageStars[page - 2] >= config.pageUnlockStars
+            if (!pageOpen[page - 1]) return false
+            if (id < LevelLibraryLayout.firstLevelOf(page) + window) return true
+            return (1..window).any { (id - it) in stars }
         }
 
         val pages = (1..pageCount).map { number ->
-            val first = LevelLibraryLayout.firstLevelOf(number)
-            val last = minOf(first + LevelLibraryLayout.LEVELS_PER_PAGE - 1, count)
-            val tiles = (first..last).map { id ->
+            val tiles = levelsOf(number).map { id ->
                 val state = when {
                     id in stars -> TileState.Completed(starsOf(id))
                     isUnlocked(id) -> TileState.Unlocked
@@ -93,7 +108,7 @@ object LevelLibraryRules {
                 }
                 LevelTile(id, state)
             }
-            LibraryPage(number, tiles, pageStars[number - 1])
+            LibraryPage(number, tiles, pageStars[number - 1], pageOpen[number - 1])
         }
         return LevelLibrary(pages, config.pageUnlockStars)
     }

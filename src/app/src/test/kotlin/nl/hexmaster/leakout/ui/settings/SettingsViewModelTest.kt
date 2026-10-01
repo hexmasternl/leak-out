@@ -8,11 +8,15 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import nl.hexmaster.leakout.core.library.TileState
 import nl.hexmaster.leakout.history.InMemoryLevelHistoryRepository
 import nl.hexmaster.leakout.history.LevelHistory
 import nl.hexmaster.leakout.settings.InMemorySettingsRepository
 import nl.hexmaster.leakout.settings.Settings
 import nl.hexmaster.leakout.settings.SettingsRepository
+import nl.hexmaster.leakout.ui.levels.LevelCatalog
+import nl.hexmaster.leakout.ui.levels.LevelLibraryViewModel
+import nl.hexmaster.leakout.ui.levels.asHistoryReader
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -107,5 +111,21 @@ class SettingsViewModelTest {
         assertEquals(stored, settings.settings.first())
         assertEquals(stored, vm.uiState.value!!.settings)
         assertTrue(settings.writes.isEmpty())
+    }
+
+    @Test
+    fun `after a reset the level library is back to a fresh install`() = runTest {
+        val history = InMemoryLevelHistoryRepository(twelveLevels)
+        val library = LevelLibraryViewModel(history.asHistoryReader(), LevelCatalog { 48 })
+        assertEquals(TileState.Completed(3), library.uiState.value.library.tile(1)!!.state)
+
+        SettingsViewModel(InMemorySettingsRepository(), history).onResetConfirmed()
+
+        val tiles = library.uiState.value.library.pages.flatMap { it.tiles }
+        assertTrue(tiles.none { it.state is TileState.Completed })
+        // The spec says "only level 1": the library rules (app-game-level-selector) open a window of
+        // three levels at the start of page 1, so a reset gives exactly what a first launch gives.
+        assertEquals(listOf(1, 2, 3), tiles.filter { it.isPlayable }.map { it.levelId })
+        assertEquals(LevelLibraryViewModel(InMemoryLevelHistoryRepository().asHistoryReader(), LevelCatalog { 48 }).uiState.value, library.uiState.value)
     }
 }

@@ -59,11 +59,16 @@ object SettingsTags {
     const val RESET_CONFIRM = "settings_reset_confirm"
     const val ABOUT_PANEL = "settings_about_panel"
     const val ABOUT_VERSION = "settings_about_version"
+    const val MUSIC_CREDITS = "settings_music_credits"
 }
+
+/** The tag of the music credit at [index] in playlist order, starting at 0. */
+fun musicCreditTag(index: Int) = "settings_music_credit_$index"
 
 /**
  * The settings screen bound to [viewModel]. The back button and system Back leave through [onBack].
- * Releasing the sound volume slider while sound is on plays a preview through [onSoundPreview].
+ * Releasing the sound volume slider while sound is on plays a preview through [onSoundPreview];
+ * dragging the music volume slider sends each value to [onMusicVolumePreview].
  */
 @Composable
 fun SettingsScreen(
@@ -72,6 +77,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     onSoundPreview: (Float) -> Unit = {},
+    onMusicVolumePreview: (Float) -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     SettingsContent(
@@ -84,6 +90,9 @@ fun SettingsScreen(
         onSoundEnabledChange = viewModel::onSoundEnabledChange,
         onSoundVolumeChange = viewModel::onSoundVolumeChange,
         onSoundPreview = onSoundPreview,
+        onMusicEnabledChange = viewModel::onMusicEnabledChange,
+        onMusicVolumeChange = viewModel::onMusicVolumeChange,
+        onMusicVolumePreview = onMusicVolumePreview,
     )
 }
 
@@ -105,6 +114,9 @@ fun SettingsContent(
     onSoundEnabledChange: (Boolean) -> Unit = {},
     onSoundVolumeChange: (Float) -> Unit = {},
     onSoundPreview: (Float) -> Unit = {},
+    onMusicEnabledChange: (Boolean) -> Unit = {},
+    onMusicVolumeChange: (Float) -> Unit = {},
+    onMusicVolumePreview: (Float) -> Unit = {},
 ) {
     var dialogOpen by rememberSaveable { mutableStateOf(initialDialogOpen) }
     // The dialog is its own window and takes Back first, so this only leaves when it is closed.
@@ -137,6 +149,9 @@ fun SettingsContent(
                     onSoundEnabledChange = onSoundEnabledChange,
                     onSoundVolumeChange = onSoundVolumeChange,
                     onSoundPreview = onSoundPreview,
+                    onMusicEnabledChange = onMusicEnabledChange,
+                    onMusicVolumeChange = onMusicVolumeChange,
+                    onMusicVolumePreview = onMusicVolumePreview,
                 )
                 FeelPanel(vibrationEnabled = state.settings.vibrationEnabled, onVibrationChange = onVibrationChange)
             }
@@ -149,7 +164,7 @@ fun SettingsContent(
                 verticalArrangement = Arrangement.spacedBy(SettingsMetrics.Gutter),
             ) {
                 ProgressPanel(progress = state.progress, onResetProgress = { dialogOpen = true })
-                AboutPanel(appInfo = appInfo)
+                AboutPanel(appInfo = appInfo) { MusicCredits(state.musicCredits) }
             }
         }
     }

@@ -31,16 +31,16 @@
 
 ## 5. App wiring
 
-- [ ] 5.1 Add `MusicViewModel` owning `BackgroundMusic`, created with the shared DataStore, the settings repository and the asset manager; `onCleared` releases the engine
-- [ ] 5.2 In `MainActivity`, obtain `MusicViewModel` and add a lifecycle observer: `onStart` → `onForeground()`, `onStop` → `onBackground()`
-- [ ] 5.3 Confirm the debug Pipe Lab activity does not create or drive `BackgroundMusic`
+- [x] 5.1 Add `MusicViewModel` owning `BackgroundMusic`, created with the shared DataStore, the settings repository and the asset manager; `onCleared` releases the engine
+- [x] 5.2 In `MainActivity`, obtain `MusicViewModel` and add a lifecycle observer: `onStart` → `onForeground()`, `onStop` → `onBackground()`
+- [x] 5.3 Confirm the debug Pipe Lab activity does not create or drive `BackgroundMusic`
 
 ## 6. Settings screen
 
-- [ ] 6.1 Set `MUSIC_AVAILABLE = true` (the split into `MUSIC_AVAILABLE` and `SOUND_EFFECTS_AVAILABLE` already came with `app-game-sound-effects`, which enabled sound effects), and enable the Music switch and slider with normal semantics
-- [ ] 6.2 Remove the "Coming soon" note from the Music row; with sound effects already enabled, no Audio row shows it
-- [ ] 6.3 Add `onMusicEnabledChange` and `onMusicVolumeChange` to `SettingsViewModel`: the switch writes immediately; the slider sends live values to the music while dragging and persists `musicVolume` when the drag ends
-- [ ] 6.4 Add the music credits (the parsed playlist, or none) to the Settings UI state, and render a "Music" section in the About panel below the existing lines: one row per track in playlist order, title in `body.md` and artist in `text.muted`; leave the section out when no credits are available
+- [x] 6.1 Set `MUSIC_AVAILABLE = true` (the split into `MUSIC_AVAILABLE` and `SOUND_EFFECTS_AVAILABLE` already came with `app-game-sound-effects`, which enabled sound effects), and enable the Music switch and slider with normal semantics
+- [x] 6.2 Remove the "Coming soon" note from the Music row; with sound effects already enabled, no Audio row shows it
+- [x] 6.3 Add `onMusicEnabledChange` and `onMusicVolumeChange` to `SettingsViewModel`: the switch writes immediately; the slider sends live values to the music while dragging and persists `musicVolume` when the drag ends
+- [x] 6.4 Add the music credits (the parsed playlist, or none) to the Settings UI state, and render a "Music" section in the About panel below the existing lines: one row per track in playlist order, title in `body.md` and artist in `text.muted`; leave the section out when no credits are available
 
 ## 7. Tests
 
@@ -48,7 +48,7 @@
 - [x] 7.2 JVM test `AudioCreditsParser`: a valid file (ids are file stems), and empty, invalid JSON and duplicate-file inputs yielding no playlist
 - [x] 7.3 JVM test `MusicRotation`: null id → first, id of track 4 → track 5, last → first, unknown id → first, `after` wraps
 - [x] 7.4 JVM test `BackgroundMusic` with a fake engine, fake focus, `InMemorySettingsRepository` and `InMemoryMusicRotationStore`, covering every `background-music` scenario: first launch, the rotation across simulated launches, later tracks recorded, completion and wrap, resume without advancing, music disabled at launch, toggling off and on, enabling in a silent session, volume changes, focus loss, transient loss and ducking, a failing track skipped, and every track failing
-- [ ] 7.5 JVM test `SettingsViewModel`: the music switch and slider write `musicEnabled` and `musicVolume`; the UI state carries the music credits
+- [x] 7.5 JVM test `SettingsViewModel`: the music switch and slider write `musicEnabled` and `musicVolume`; the UI state carries the music credits
 - [ ] 7.6 Instrumented test `DataStoreMusicRotationStore`: absent on a fresh file, the value survives a new store instance on the same file, and it coexists with `DataStoreSettingsRepository` on the shared instance
 - [ ] 7.7 Instrumented test `MediaPlayerMusicEngine`: plays a bundled track (prepared and playing within a timeout), pauses, resumes and reports completion (by seeking near the end)
 - [ ] 7.8 Instrumented test for `MainActivity`: the stored last-started id advances by one per cold launch, and stays unchanged when the activity goes through stop/start and through recreation

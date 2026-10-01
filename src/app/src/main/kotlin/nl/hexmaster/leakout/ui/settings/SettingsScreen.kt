@@ -43,7 +43,8 @@ object SettingsTags {
     const val LEFT_COLUMN = "settings_left_column"
     const val RIGHT_COLUMN = "settings_right_column"
     const val AUDIO_PANEL = "settings_audio_panel"
-    const val COMING_SOON = "settings_coming_soon"
+    const val SOUND_COMING_SOON = "settings_sound_coming_soon"
+    const val MUSIC_COMING_SOON = "settings_music_coming_soon"
     const val SOUND_SWITCH = "settings_sound_switch"
     const val SOUND_VOLUME = "settings_sound_volume"
     const val MUSIC_SWITCH = "settings_music_switch"
@@ -60,13 +61,17 @@ object SettingsTags {
     const val ABOUT_VERSION = "settings_about_version"
 }
 
-/** The settings screen bound to [viewModel]. The back button and system Back leave through [onBack]. */
+/**
+ * The settings screen bound to [viewModel]. The back button and system Back leave through [onBack].
+ * Releasing the sound volume slider while sound is on plays a preview through [onSoundPreview].
+ */
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     appInfo: AppInfo,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onSoundPreview: (Float) -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     SettingsContent(
@@ -76,6 +81,9 @@ fun SettingsScreen(
         onVibrationChange = viewModel::onVibrationChange,
         onResetConfirmed = viewModel::onResetConfirmed,
         modifier = modifier,
+        onSoundEnabledChange = viewModel::onSoundEnabledChange,
+        onSoundVolumeChange = viewModel::onSoundVolumeChange,
+        onSoundPreview = onSoundPreview,
     )
 }
 
@@ -94,6 +102,9 @@ fun SettingsContent(
     onResetConfirmed: () -> Unit,
     modifier: Modifier = Modifier,
     initialDialogOpen: Boolean = false,
+    onSoundEnabledChange: (Boolean) -> Unit = {},
+    onSoundVolumeChange: (Float) -> Unit = {},
+    onSoundPreview: (Float) -> Unit = {},
 ) {
     var dialogOpen by rememberSaveable { mutableStateOf(initialDialogOpen) }
     // The dialog is its own window and takes Back first, so this only leaves when it is closed.
@@ -121,7 +132,12 @@ fun SettingsContent(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(SettingsMetrics.Gutter),
             ) {
-                AudioPanel(settings = state.settings)
+                AudioPanel(
+                    settings = state.settings,
+                    onSoundEnabledChange = onSoundEnabledChange,
+                    onSoundVolumeChange = onSoundVolumeChange,
+                    onSoundPreview = onSoundPreview,
+                )
                 FeelPanel(vibrationEnabled = state.settings.vibrationEnabled, onVibrationChange = onVibrationChange)
             }
             Column(

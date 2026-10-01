@@ -21,6 +21,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import nl.hexmaster.leakout.audio.SoundCatalog
+import nl.hexmaster.leakout.audio.SoundEffectsViewModel
+import nl.hexmaster.leakout.audio.SoundPoolSoundEffectPlayer
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.library.NextLevel
 import nl.hexmaster.leakout.core.library.NextLevelResolver
@@ -63,6 +66,16 @@ class MainActivity : ComponentActivity() {
         viewModelFactory { initializer { SettingsViewModel(settings, history) } }
     }
 
+    // The game's sound effects, loaded once and kept across configuration changes.
+    private val soundEffectsViewModel: SoundEffectsViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val catalog = SoundCatalog.from(assets.list(SoundCatalog.ASSET_DIR).orEmpty().asList())
+                SoundEffectsViewModel(settings, catalog, SoundPoolSoundEffectPlayer(assets, catalog.files))
+            }
+        }
+    }
+
     // Read once: the installed version does not change while the process runs.
     private val appInfo: AppInfo by lazy {
         @Suppress("DEPRECATION") // The int-flag overload works on every supported API level (min 26).
@@ -98,6 +111,7 @@ class MainActivity : ComponentActivity() {
                                 onExit = { screen = Screen.Welcome },
                                 onNextLevel = next?.let { { screen = Screen.Game(it) } },
                                 history = history,
+                                soundEffects = soundEffectsViewModel.soundEffects,
                             )
                         }
                         Screen.Library -> LevelLibraryScreen(
@@ -109,6 +123,7 @@ class MainActivity : ComponentActivity() {
                             viewModel = settingsViewModel,
                             appInfo = appInfo,
                             onBack = { screen = Screen.Welcome },
+                            onSoundPreview = soundEffectsViewModel.soundEffects::preview,
                         )
                         Screen.Welcome -> WelcomeScreen(
                             resolveNextLevel = ::resolveNextLevel,

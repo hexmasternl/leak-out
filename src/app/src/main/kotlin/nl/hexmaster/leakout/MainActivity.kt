@@ -123,6 +123,7 @@ class MainActivity : ComponentActivity() {
                             viewModel = settingsViewModel,
                             appInfo = appInfo,
                             onBack = { screen = Screen.Welcome },
+                            onSoundPreview = soundEffectsViewModel.soundEffects::preview,
                         )
                         Screen.Welcome -> WelcomeScreen(
                             resolveNextLevel = ::resolveNextLevel,

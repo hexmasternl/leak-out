@@ -98,6 +98,27 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `a sound effects change is written and shown`() = runTest {
+        val settings = InMemorySettingsRepository()
+        val vm = SettingsViewModel(settings, InMemoryLevelHistoryRepository())
+        vm.onSoundEnabledChange(false)
+        assertFalse(settings.settings.first().soundEnabled)
+        assertFalse(vm.uiState.value!!.settings.soundEnabled)
+        vm.onSoundVolumeChange(0.3f)
+        assertEquals(0.3f, settings.settings.first().soundVolume)
+        assertEquals(0.3f, vm.uiState.value!!.settings.soundVolume)
+        assertEquals(listOf("soundEnabled", "soundVolume"), settings.writes)
+    }
+
+    @Test
+    fun `a sound volume out of range is clamped`() = runTest {
+        val settings = InMemorySettingsRepository()
+        val vm = SettingsViewModel(settings, InMemoryLevelHistoryRepository())
+        vm.onSoundVolumeChange(1.5f)
+        assertEquals(1f, vm.uiState.value!!.settings.soundVolume)
+    }
+
+    @Test
     fun `reset clears the history and keeps every setting`() = runTest {
         val stored = Settings(soundEnabled = false, soundVolume = 0.3f, musicEnabled = false, musicVolume = 0.1f, vibrationEnabled = false)
         val settings = InMemorySettingsRepository(stored)

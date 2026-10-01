@@ -49,6 +49,16 @@ class SettingsViewModel(
         viewModelScope.launch { settingsRepository.setVibrationEnabled(enabled) }
     }
 
+    /** Turns the sound effects on or off; the next effect follows it. */
+    fun onSoundEnabledChange(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setSoundEnabled(enabled) }
+    }
+
+    /** Stores the sound effects volume, once the slider is released. */
+    fun onSoundVolumeChange(volume: Float) {
+        viewModelScope.launch { settingsRepository.setSoundVolume(volume) }
+    }
+
     /** Deletes the whole level history. The settings are kept on purpose. */
     fun onResetConfirmed() {
         viewModelScope.launch { historyRepository.clearAll() }

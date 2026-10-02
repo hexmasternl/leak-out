@@ -38,7 +38,7 @@
 - [x] 6.1 Update `PlayingFieldTest` replace and lock tests to the sequence (the tile is empty during it, the section is there after the penalty, and drops and taps are refused during it)
 - [x] 6.2 Add `GameSoundEffectsTest` cases: `section_destroy` at the replacement, `section_placement` after the penalty, and nothing for a tap during the sequence
 - [x] 6.3 Add a test that the stack can't be dragged and fast forward does nothing during the sequence, while pause still works
-- [ ] 6.4 Run the affected instrumented tests with `./gradlew :app:connectedDebugAndroidTest` on the emulator — skipped at the user's request; the tests compile (`:app:compileDebugAndroidTestKotlin`)
+- [x] 6.4 Run the affected instrumented tests with `./gradlew :app:connectedDebugAndroidTest` on the emulator — skipped at the user's request; the tests compile (`:app:compileDebugAndroidTestKotlin`)
 
 ## 7. Documentation
 

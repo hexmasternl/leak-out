@@ -26,6 +26,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import nl.hexmaster.leakout.achievements.playgames.showPlayGamesAchievements
 import nl.hexmaster.leakout.audio.AudioManagerAudioFocus
 import nl.hexmaster.leakout.audio.BundledMusic
 import nl.hexmaster.leakout.audio.DataStoreMusicRotationStore
@@ -38,10 +39,10 @@ import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.library.NextLevel
 import nl.hexmaster.leakout.core.library.NextLevelResolver
 import nl.hexmaster.leakout.history.LevelHistoryRepository
-import nl.hexmaster.leakout.history.data.LeakOutDatabase
-import nl.hexmaster.leakout.history.data.RoomLevelHistoryRepository
 import nl.hexmaster.leakout.settings.DataStoreSettingsRepository
 import nl.hexmaster.leakout.settings.SettingsRepository
+import nl.hexmaster.leakout.ui.achievements.AchievementsScreen
+import nl.hexmaster.leakout.ui.achievements.AchievementsViewModel
 import nl.hexmaster.leakout.ui.designer.AndroidLevelExporter
 import nl.hexmaster.leakout.ui.designer.LevelDesignerScreen
 import nl.hexmaster.leakout.ui.designer.LevelDesignerViewModel
@@ -62,6 +63,9 @@ private sealed interface Screen {
     data object Welcome : Screen
     data object Library : Screen
     data object Settings : Screen
+
+    /** The achievements, from the local store; reached from Settings, and Back returns there. */
+    data object Achievements : Screen
     data class Game(val level: Level) : Screen
 
     /** The level designer; only reachable while [FeatureFlags.levelDesigner] is on. */
@@ -87,7 +91,7 @@ class MainActivity : ComponentActivity() {
     private val levels by lazy { BundledLevels(assets) }
 
     // The player's finished levels, kept on the device across restarts.
-    private val history: LevelHistoryRepository by lazy { RoomLevelHistoryRepository(LeakOutDatabase.get(this)) }
+    private val history: LevelHistoryRepository by lazy { appContainer.history }
     private val library: LevelLibraryViewModel by viewModels {
         viewModelFactory { initializer { LevelLibraryViewModel(history.asHistoryReader(), levels) } }
     }
@@ -95,7 +99,22 @@ class MainActivity : ComponentActivity() {
     // The player's preferences, on the app's one shared settings DataStore (Context.settingsDataStore).
     private val settings: SettingsRepository by lazy { DataStoreSettingsRepository.create(this) }
     private val settingsViewModel: SettingsViewModel by viewModels {
-        viewModelFactory { initializer { SettingsViewModel(settings, history, musicPlaylist) } }
+        viewModelFactory {
+            initializer {
+                SettingsViewModel(
+                    settings,
+                    history,
+                    musicPlaylist,
+                    onProgressReset = appContainer.tracker::reconcile,
+                    achievements = appContainer.achievements,
+                    signIn = appContainer.playGames.auth.state,
+                )
+            }
+        }
+    }
+
+    private val achievementsViewModel: AchievementsViewModel by viewModels {
+        viewModelFactory { initializer { AchievementsViewModel(appContainer.achievements, appContainer.playGames.auth.state) } }
     }
 
     // The bundled playlist, which is also the music credits on the About panel; null when unreadable.
@@ -161,6 +180,14 @@ class MainActivity : ComponentActivity() {
                 override fun onStop(owner: LifecycleOwner) = music.onBackground()
             },
         )
+        // Play Games clients need an activity: the silent sign-in check and the achievement sync run on this one.
+        val playGames = appContainer.playGames
+        playGames.attach(this)
+        lifecycle.addObserver(
+            object : DefaultLifecycleObserver {
+                override fun onDestroy(owner: LifecycleOwner) = playGames.detach(this@MainActivity)
+            },
+        )
         setContent {
             LeakOutTheme {
                 SplashGate {
@@ -180,6 +207,7 @@ class MainActivity : ComponentActivity() {
                                 onExit = { screen = Screen.Welcome },
                                 onNextLevel = next?.let { { screen = Screen.Game(it) } },
                                 history = history,
+                                achievements = appContainer.tracker,
                                 soundEffects = soundEffectsViewModel.soundEffects,
                                 tips = settings,
                             )
@@ -205,6 +233,13 @@ class MainActivity : ComponentActivity() {
                             onBack = { screen = Screen.Welcome },
                             onSoundPreview = soundEffectsViewModel.soundEffects::preview,
                             onMusicVolumePreview = music::previewVolume,
+                            onSignIn = { playGames.auth.signIn(this@MainActivity) },
+                            onOpenAchievements = { screen = Screen.Achievements },
+                        )
+                        Screen.Achievements -> AchievementsScreen(
+                            viewModel = achievementsViewModel,
+                            onBack = { screen = Screen.Settings },
+                            onOpenPlayGames = { showPlayGamesAchievements(this@MainActivity) },
                         )
                         Screen.Welcome -> WelcomeScreen(
                             resolveNextLevel = ::resolveNextLevel,

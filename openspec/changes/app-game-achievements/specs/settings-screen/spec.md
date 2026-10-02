@@ -43,7 +43,7 @@ The Progress panel SHALL show a destructive "Reset progress" button. When the hi
 - **THEN** the library shows no finished levels and only level 1 is unlocked
 
 ### Requirement: About section
-The About panel SHALL show the app name "Leak Out", the installed version as "Version <versionName> (<versionCode>)", the maker credit and a privacy line saying that no account is needed and that achievements are shared with Google Play only when the player signs in to Google Play Games.
+The About panel SHALL show the app name "Leak Out", the installed version as "Version <versionName> (<versionCode>)", the maker credit and a privacy line saying that no account is needed and that achievements are shared with Google Play only when the player signs in to Google Play Games. Below these it SHALL show a "Music" section that lists every background track as its title and artist, in playlist order, read from the bundled `audio_credits.json`. If the credits cannot be read, the Music section SHALL be left out.
 
 #### Scenario: Version shown
 - **WHEN** the installed app has version name "0.1.0" and version code 1
@@ -52,6 +52,14 @@ The About panel SHALL show the app name "Leak Out", the installed version as "Ve
 #### Scenario: About content
 - **WHEN** the About panel is displayed
 - **THEN** it shows "Leak Out", the maker credit and the privacy line
+
+#### Scenario: Music credits listed
+- **WHEN** the About panel is displayed with the bundled credits
+- **THEN** a "Music" section shows ten entries in playlist order, the first being "Ebb and Flow" by Fabian Measures and the last "Endless Garden" by Unheard Music Concepts
+
+#### Scenario: Credits unavailable
+- **WHEN** the credits file cannot be read
+- **THEN** the About panel shows no Music section and the rest of the panel is unchanged
 
 ## ADDED Requirements
 

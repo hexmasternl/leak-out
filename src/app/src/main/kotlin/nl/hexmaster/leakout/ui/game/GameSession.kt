@@ -8,6 +8,10 @@ import androidx.compose.runtime.setValue
 import kotlin.random.Random
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
+import nl.hexmaster.leakout.achievements.AchievementTracker
+import nl.hexmaster.leakout.achievements.toRecordOutcome
+import nl.hexmaster.leakout.core.achievements.Achievement
+import nl.hexmaster.leakout.core.achievements.AttemptSummary
 import nl.hexmaster.leakout.core.board.Cell
 import nl.hexmaster.leakout.core.engine.GameCommand
 import nl.hexmaster.leakout.core.engine.GameEngine
@@ -45,6 +49,8 @@ class GameSession(level: Level, private val engine: GameEngine = GameEngine()) {
         winFrameOf(next)?.let { frame -> next = engine.handle(next, GameCommand.RemoveUnused(frame.sectionsRemoved)) }
         // A new attempt (restart) drops the tips of the old one; its own level-start tips are looked at again.
         if (next.attempt != before.attempt) clearTips()
+        // The achievements are decided from the board at the moment the attempt ended.
+        if (before.outcome is Outcome.Playing && next.outcome !is Outcome.Playing) ended = next
         state = next
         before.replacement?.takeIf { landed(before, next) }?.let { lastLanding = Landing(next.attempt, it.at, it.landsAtMs) }
         return true
@@ -235,6 +241,55 @@ class GameSession(level: Level, private val engine: GameEngine = GameEngine()) {
         if (won.outcome !is Outcome.Won || recorded?.first == won.attempt) return
         val result = withContext(NonCancellable) { history.recordCompletion(won.level.id, score.total, won.finalStars) }
         recorded = won.attempt to result
+    }
+
+    /** The state at the moment the last attempt was first won or lost; null while none has ended. */
+    private var ended: GameState? = null
+
+    /** The attempt whose end was handed to the achievement tracker, and what it unlocked once known. */
+    private var trackedAttempt: Int? = null
+    private var unlocked: Pair<Int, List<Achievement>>? by mutableStateOf(null)
+
+    /** The unfinished attempt whose placements were handed to the tracker on a restart or exit. */
+    private var abandonedAttempt: Int? = null
+
+    /**
+     * What this attempt's end unlocked, for the result dialogs; empty until the tracker has answered,
+     * and on any other attempt.
+     */
+    val unlockedThisAttempt: List<Achievement>
+        get() = unlocked?.takeIf { it.first == state.attempt }?.second.orEmpty()
+
+    /**
+     * Hands this attempt's end to [tracker] once it is won or lost, exactly once per attempt however
+     * often it is called. Call it after [recordWin], so a win's [recordResult] and the updated
+     * history are known. A tracking that has started finishes even if the caller is cancelled.
+     */
+    suspend fun recordAchievements(tracker: AchievementTracker) {
+        val end = ended?.takeIf { it.attempt == state.attempt } ?: state.takeIf { it.outcome !is Outcome.Playing } ?: return
+        if (trackedAttempt == end.attempt) return
+        trackedAttempt = end.attempt
+        val record = recorded?.takeIf { it.first == end.attempt }?.second?.toRecordOutcome()
+        withContext(NonCancellable) {
+            unlocked = end.attempt to tracker.onAttemptEnded(AttemptSummary.from(end, record))
+        }
+    }
+
+    /**
+     * The player restarts or exits this attempt before it ended: its placements go to [tracker]
+     * once. An attempt that was won or lost was already counted, so nothing happens then.
+     */
+    fun abandonAttempt(tracker: AchievementTracker?) {
+        val current = state
+        if (current.outcome !is Outcome.Playing || abandonedAttempt == current.attempt) return
+        abandonedAttempt = current.attempt
+        tracker?.attemptAbandoned(current.placements)
+    }
+
+    /** Restart (pause dialog or a result dialog): an unfinished attempt is first counted as abandoned. */
+    fun restart(tracker: AchievementTracker?): Boolean {
+        abandonAttempt(tracker)
+        return send(GameCommand.Restart)
     }
 
     private fun winAgeOf(state: GameState): Long = (state.outcome as? Outcome.Won)?.let { state.clockMs - it.atMs } ?: 0L

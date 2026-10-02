@@ -124,6 +124,9 @@ dependencies {
     // DataStore (Preferences): the player's settings.
     implementation(libs.androidx.datastore.preferences)
 
+    // Play Games Services v2: silent and manual sign-in, and pushing the local achievements to Play Games.
+    implementation(libs.play.services.games.v2)
+
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
 

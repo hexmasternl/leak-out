@@ -15,6 +15,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import nl.hexmaster.leakout.ui.achievements.AchievementsTags
 import nl.hexmaster.leakout.ui.game.GameScreenTags
 import nl.hexmaster.leakout.ui.game.HudTags
 import nl.hexmaster.leakout.ui.game.PauseTags
@@ -22,6 +23,7 @@ import nl.hexmaster.leakout.ui.game.keepsScreenOn
 import nl.hexmaster.leakout.ui.game.onboarding.TipOverlayTags
 import nl.hexmaster.leakout.ui.levels.LevelLibraryTags
 import nl.hexmaster.leakout.ui.levels.levelTileTag
+import nl.hexmaster.leakout.ui.settings.PlayGamesPanelTags
 import nl.hexmaster.leakout.ui.settings.SettingsTags
 import nl.hexmaster.leakout.ui.splash.SplashScreenTags
 import nl.hexmaster.leakout.ui.splash.SplashTiming
@@ -206,6 +208,40 @@ class MainActivityTest {
 
         compose.onNodeWithTag(SettingsTags.SCREEN).assertDoesNotExist()
         compose.onNodeWithTag(WelcomeScreenTags.SCREEN).assertIsDisplayed()
+    }
+
+    private fun openAchievements() {
+        compose.onNodeWithTag(PlayGamesPanelTags.ACHIEVEMENTS).performScrollTo().performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag(AchievementsTags.GRID).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag(AchievementsTags.SCREEN).assertIsDisplayed()
+        compose.onNodeWithTag(AchievementsTags.TITLE).assertTextEquals("ACHIEVEMENTS")
+        compose.onNodeWithTag(SettingsTags.SCREEN).assertDoesNotExist()
+    }
+
+    @Test
+    fun achievementsOpenFromSettingsAndSystemBackReturnsToSettings() {
+        skipSplash()
+        openSettings()
+        openAchievements()
+
+        compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(AchievementsTags.SCREEN).assertDoesNotExist()
+        compose.onNodeWithTag(SettingsTags.SCREEN).assertIsDisplayed()
+    }
+
+    @Test
+    fun theAchievementsBackButtonReturnsToSettings() {
+        skipSplash()
+        openSettings()
+        openAchievements()
+
+        compose.onNodeWithTag(AchievementsTags.BACK).performClick()
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(AchievementsTags.SCREEN).assertDoesNotExist()
+        compose.onNodeWithTag(SettingsTags.SCREEN).assertIsDisplayed()
     }
 
     @Test

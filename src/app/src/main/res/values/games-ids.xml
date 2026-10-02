@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Google Play game services IDs, exported from the Play Console on 2026-10-02.
+    Copy to app/src/main/res/values/games-ids.xml (task 6.2).
+    Five resources are renamed from the Console's name-based names to achievement_<key>:
+    getting_the_hang_of_it -> levels_finished_1, star_collector_i -> star_collector_1,
+    star_collector_ii -> star_collector_2, perfectionist_i -> perfectionist_1,
+    the_long_way_round -> long_way_round. The ids are unchanged.-->
+<resources>
+  <!--app_id-->
+  <string name="app_id" translatable="false">201820010117</string>
+  <!--package_name-->
+  <string name="package_name" translatable="false">nl.hexmaster.leakout</string>
+  <!--achievement First Leak Fixed-->
+  <string name="achievement_first_leak_fixed" translatable="false">CgkIhe2j6-8FEAIQAQ</string>
+  <!--achievement Getting the Hang of It-->
+  <string name="achievement_levels_finished_1" translatable="false">CgkIhe2j6-8FEAIQAg</string>
+  <!--achievement Star Collector I-->
+  <string name="achievement_star_collector_1" translatable="false">CgkIhe2j6-8FEAIQAw</string>
+  <!--achievement Star Collector II-->
+  <string name="achievement_star_collector_2" translatable="false">CgkIhe2j6-8FEAIQBA</string>
+  <!--achievement Perfectionist I-->
+  <string name="achievement_perfectionist_1" translatable="false">CgkIhe2j6-8FEAIQBQ</string>
+  <!--achievement Pack 1 Complete-->
+  <string name="achievement_pack_1_complete" translatable="false">CgkIhe2j6-8FEAIQBg</string>
+  <!--achievement Pack 1 Perfect-->
+  <string name="achievement_pack_1_perfect" translatable="false">CgkIhe2j6-8FEAIQBw</string>
+  <!--achievement Zero Waste-->
+  <string name="achievement_zero_waste" translatable="false">CgkIhe2j6-8FEAIQCA</string>
+  <!--achievement Double Cross-->
+  <string name="achievement_double_cross" translatable="false">CgkIhe2j6-8FEAIQCQ</string>
+  <!--achievement Crossroads King-->
+  <string name="achievement_crossroads_king" translatable="false">CgkIhe2j6-8FEAIQCg</string>
+  <!--achievement Ahead of the Flow-->
+  <string name="achievement_ahead_of_the_flow" translatable="false">CgkIhe2j6-8FEAIQCw</string>
+  <!--achievement Full Throttle-->
+  <string name="achievement_full_throttle" translatable="false">CgkIhe2j6-8FEAIQDA</string>
+  <!--achievement Measure Twice-->
+  <string name="achievement_measure_twice" translatable="false">CgkIhe2j6-8FEAIQDQ</string>
+  <!--achievement Steady Hands-->
+  <string name="achievement_steady_hands" translatable="false">CgkIhe2j6-8FEAIQDg</string>
+  <!--achievement The Long Way Round-->
+  <string name="achievement_long_way_round" translatable="false">CgkIhe2j6-8FEAIQDw</string>
+  <!--achievement Big Spender-->
+  <string name="achievement_big_spender" translatable="false">CgkIhe2j6-8FEAIQEA</string>
+  <!--achievement Apprentice-->
+  <string name="achievement_apprentice" translatable="false">CgkIhe2j6-8FEAIQEQ</string>
+  <!--achievement Journeyman-->
+  <string name="achievement_journeyman" translatable="false">CgkIhe2j6-8FEAIQEg</string>
+  <!--achievement Guildmaster-->
+  <string name="achievement_guildmaster" translatable="false">CgkIhe2j6-8FEAIQEw</string>
+  <!--achievement Never Give Up-->
+  <string name="achievement_never_give_up" translatable="false">CgkIhe2j6-8FEAIQFA</string>
+  <!--achievement Personal Best-->
+  <string name="achievement_personal_best" translatable="false">CgkIhe2j6-8FEAIQFQ</string>
+  <!--achievement Wet Feet-->
+  <string name="achievement_wet_feet" translatable="false">CgkIhe2j6-8FEAIQFg</string>
+  <!--achievement Instant Flood-->
+  <string name="achievement_instant_flood" translatable="false">CgkIhe2j6-8FEAIQFw</string>
+  <!--achievement Wall to Wall-->
+  <string name="achievement_wall_to_wall" translatable="false">CgkIhe2j6-8FEAIQGA</string>
+  <!--achievement Photo Finish-->
+  <string name="achievement_photo_finish" translatable="false">CgkIhe2j6-8FEAIQGQ</string>
+</resources>

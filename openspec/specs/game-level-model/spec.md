@@ -4,7 +4,7 @@
 TBD - created by archiving change app-game-level-model. Update Purpose after archive.
 ## Requirements
 ### Requirement: Level is described by a JSON document
-The system SHALL read a level from a JSON document. The fields `id`, `name`, `grid`, `start`, `finish`, `blocked`, `flow.initialDelayMs`, `flow.cellsPerSecond` and `stars` SHALL be required. The fields `flow.reservoirSpeedFactor`, `flow.speedRampPerCell`, `stack` and `rules`, and every field inside `stack` and `rules`, SHALL be optional.
+The system SHALL read a level from a JSON document. The fields `id`, `name`, `grid`, `start`, `finish`, `blocked`, `flow.initialDelayMs`, `flow.cellsPerSecond` and `stars` SHALL be required. The fields `flow.reservoirSpeedFactor`, `flow.speedRampPerCell`, `stack`, `rules` and `mandatory`, and every field inside `stack` and `rules`, SHALL be optional.
 
 #### Scenario: Complete level is parsed
 - **WHEN** a JSON document containing every field with valid values is parsed
@@ -164,7 +164,7 @@ The system SHALL define `flow` with an `initialDelayMs`, a `cellsPerSecond`, a `
 - **THEN** validation fails with an error that names `flow.speedRampPerCell`
 
 ### Requirement: Level has stack settings with a weight per pipe section
-The system SHALL define `stack` with a `visibleSize` and `weights`. `visibleSize` SHALL be between 1 and 10 inclusive. `weights` holds one non-negative integer per pipe section, keyed by the section ids `H`, `V`, `LT`, `LB`, `RT`, `RB`, `X` and `RES`. A section's weight divided by the sum of all weights is its target share of the sections dealt in an attempt. The weights of `H`, `V`, `LT`, `LB`, `RT` and `RB` SHALL be at least 1. A section with weight 0 SHALL never appear on the stack. The level SHALL report a section as allowed when its weight is greater than 0.
+The system SHALL define `stack` with a `visibleSize` and `weights`. `visibleSize` SHALL be between 1 and 10 inclusive. `visibleSize` is the number of stack sections the player is guaranteed to see; the stack itself SHALL hold ten sections more than `visibleSize`. `weights` holds one non-negative integer per pipe section, keyed by the section ids `H`, `V`, `LT`, `LB`, `RT`, `RB`, `X` and `RES`. A section's weight divided by the sum of all weights is its target share of the sections dealt in an attempt. The weights of `H`, `V`, `LT`, `LB`, `RT` and `RB` SHALL be at least 1. A section with weight 0 SHALL never appear on the stack. The level SHALL report a section as allowed when its weight is greater than 0.
 
 #### Scenario: Cross and reservoir enabled
 - **WHEN** a level has stack weights with `X` 1 and `RES` 2
@@ -189,6 +189,10 @@ The system SHALL define `stack` with a `visibleSize` and `weights`. `visibleSize
 #### Scenario: Visible size out of range
 - **WHEN** a level has a `visibleSize` of 0 or 11
 - **THEN** validation fails with an error that names `stack.visibleSize`
+
+#### Scenario: Default visible size gives a stack of fifteen
+- **WHEN** a level has no `stack` field
+- **THEN** its `visibleSize` is 5 and its stack holds 15 sections
 
 ### Requirement: Level has placement rules
 The system SHALL define `rules` with a boolean `allowReplace`, which says whether an unfilled pipe may be replaced, and an integer `replacePenaltyMs`, which is the time after a replacement during which no new placement is accepted. `replacePenaltyMs` SHALL be zero or greater.
@@ -269,3 +273,55 @@ The system SHALL report every validation problem found in a level in one result,
 - **WHEN** a level has a `cellsPerSecond` of 60 and a blocked cell outside the grid
 - **THEN** the validation result contains an error for `flow.cellsPerSecond` and an error for the blocked cell
 
+### Requirement: Level lists mandatory sections
+The system SHALL define `mandatory` as an array of at most 6 entries, each with an `x`, a `y` and a `section`. An absent or empty array SHALL mean the level has no mandatory sections. The parsed level SHALL keep the entries in authored order. A mandatory section's `section` SHALL NOT depend on its stack weight, so a level MAY list a mandatory cross while `stack.weights.X` is 0.
+
+#### Scenario: Level without mandatory sections
+- **WHEN** a level has no `mandatory` field
+- **THEN** the level is accepted with no mandatory sections
+
+#### Scenario: Valid mandatory sections
+- **WHEN** a level on a 7 by 9 grid lists a mandatory `X` at x 3, y 4 and a mandatory `RES` at x 5, y 2, and its stack weights for `X` and `RES` are 0
+- **THEN** the level is accepted with those two mandatory sections
+
+#### Scenario: Missing field in an entry
+- **WHEN** a mandatory entry omits `section`
+- **THEN** parsing fails with an error that names `mandatory[0].section`
+
+#### Scenario: Unknown section id
+- **WHEN** a mandatory entry has a `section` that is not a section id, such as `Z`
+- **THEN** parsing fails with an error that names the invalid value
+
+#### Scenario: Too many mandatory sections
+- **WHEN** a level lists 7 mandatory sections
+- **THEN** validation fails with an error that names `mandatory`
+
+### Requirement: Only a cross or a reservoir can be mandatory
+The system SHALL accept a mandatory entry only when its `section` is `X` or `RES`.
+
+#### Scenario: Mandatory straight
+- **WHEN** the second mandatory entry has `section` `H`
+- **THEN** validation fails with an error that names `mandatory[1].section` and states that only `X` and `RES` can be mandatory
+
+#### Scenario: Mandatory reservoir
+- **WHEN** a mandatory entry has `section` `RES`
+- **THEN** the entry is accepted
+
+### Requirement: Mandatory sections lie on free cells
+Every mandatory section SHALL lie inside the grid, SHALL NOT lie on a blocked cell, the start or the finish, and SHALL NOT share its cell with another mandatory section.
+
+#### Scenario: Mandatory section outside the grid
+- **WHEN** a mandatory section has an `x` that is at least the column count
+- **THEN** validation fails with an error that names the mandatory entry and its coordinates
+
+#### Scenario: Mandatory section on a blocked cell
+- **WHEN** a mandatory section has the same coordinates as a blocked cell
+- **THEN** validation fails with an error that names the mandatory entry and states that the cell is blocked
+
+#### Scenario: Mandatory section on the start or finish
+- **WHEN** a mandatory section has the same coordinates as the start or the finish
+- **THEN** validation fails with an error that names the mandatory entry and states that the start and finish cannot hold a section
+
+#### Scenario: Two mandatory sections on one cell
+- **WHEN** two mandatory entries have the same coordinates
+- **THEN** validation fails with an error that names the duplicated cell

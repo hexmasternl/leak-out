@@ -68,19 +68,23 @@ The five secrets SHALL be stored in a GitHub environment named `play-store` whos
 - **THEN** the run fails before the upload step
 
 ### Requirement: Every upload has a higher version code
-`app/build.gradle.kts` SHALL take `versionCode` from the Gradle property `versionCode` when it is given, and SHALL otherwise keep the version code written in the build file. A property value that is not a positive integer SHALL fail the build. The workflow SHALL pass `versionCode` = the workflow's run number + the repository variable `VERSION_CODE_OFFSET` (`1` when unset), and SHALL show the computed version code in the job summary. `versionName` SHALL stay as written in the build file.
+`app/build.gradle.kts` SHALL take `versionCode` and `versionName` from the Gradle properties `versionCode` and `versionName` when they are given, and SHALL otherwise keep the values written in the build file. A `versionCode` that is not a positive integer, or a `versionName` that is not `<major>.<minor>.<patch>`, SHALL fail the build. The workflow SHALL compute the version with GitVersion (configured in `GitVersion.yml`, GitHub Flow, patch increment on `main`, bumps through `+semver: minor|major`), pass its `MajorMinorPatch` as `versionName` and `major × 1000000 + minor × 1000 + patch` as `versionCode`, show both in the job summary, and tag the released commit `v<major>.<minor>.<patch>` after a successful upload. The run SHALL fail before building when the version is below the newest release tag, its tag already exists on another commit, or minor or patch is above 999 or major above 2099.
 
-#### Scenario: Version code from the run number
-- **WHEN** run number 17 builds with `VERSION_CODE_OFFSET` unset
-- **THEN** the uploaded bundle has `versionCode` 18 and the job summary shows 18
+#### Scenario: Next release after a tagged release
+- **WHEN** `main` is one merge past the release tag `v0.2.0`, with no `+semver:` bump
+- **THEN** the bundle has `versionName` `0.2.1` and `versionCode` 2001, and the commit is tagged `v0.2.1` after the upload
 
-#### Scenario: Offset raises the version code
-- **WHEN** run number 17 builds with `VERSION_CODE_OFFSET` set to `100`
-- **THEN** the uploaded bundle has `versionCode` 117
+#### Scenario: Minor bump
+- **WHEN** a commit since `v0.2.1` says `+semver: minor`
+- **THEN** the bundle has `versionName` `0.3.0` and `versionCode` 3000
 
-#### Scenario: Local build keeps the file's version code
-- **WHEN** the app is built without `-PversionCode`
-- **THEN** the version code is the one written in `app/build.gradle.kts`
+#### Scenario: Version below the newest release
+- **WHEN** GitVersion gives a version below the newest `v*` tag
+- **THEN** the run fails before building, and nothing is uploaded or tagged
+
+#### Scenario: Local build keeps the file's version
+- **WHEN** the app is built without `-PversionCode` and `-PversionName`
+- **THEN** the version code and name are the ones written in `app/build.gradle.kts`
 
 #### Scenario: Invalid version code property
 - **WHEN** the app is built with `-PversionCode=abc` or `-PversionCode=0`

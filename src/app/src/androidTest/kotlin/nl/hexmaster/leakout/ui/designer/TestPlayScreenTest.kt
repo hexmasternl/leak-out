@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -16,11 +18,18 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlin.random.Random
+import nl.hexmaster.leakout.core.board.Cell
 import nl.hexmaster.leakout.core.engine.Outcome
+import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.core.level.MandatorySection
+import nl.hexmaster.leakout.core.level.PipeSection
+import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.ui.game.FieldTest
 import nl.hexmaster.leakout.ui.game.GameScreenTags
 import nl.hexmaster.leakout.ui.game.GameSession
 import nl.hexmaster.leakout.ui.game.LevelCompleteTags
+import nl.hexmaster.leakout.ui.game.MandatoryTile
+import nl.hexmaster.leakout.ui.game.cellNode
 import nl.hexmaster.leakout.ui.game.WinTally
 import nl.hexmaster.leakout.ui.game.WinTiming
 import nl.hexmaster.leakout.ui.game.flowToEnd
@@ -43,7 +52,7 @@ class TestPlayScreenTest {
     private val session = GameSession(level, Random(7))
     private var exits = 0
 
-    private fun show() {
+    private fun show(level: Level = this.level, session: GameSession = this.session) {
         compose.setContent {
             LeakOutTheme {
                 Box(Modifier.size(800.dp, 360.dp).consumeWindowInsets(WindowInsets.safeDrawing)) {
@@ -52,6 +61,16 @@ class TestPlayScreenTest {
             }
         }
         compose.waitForIdle()
+    }
+
+    @Test
+    fun aTestPlayStartsWithTheDesignedMandatorySections() {
+        val reservoir = Position(1, 2)
+        val designed = FieldTest.level(id = 26, mandatory = listOf(MandatorySection(reservoir, PipeSection.RES)))
+        val session = GameSession(designed, Random(7))
+        show(designed, session)
+        assertEquals(Cell.Pipe(PipeSection.RES, mandatory = true), compose.runOnIdle { session.state.board[reservoir] })
+        compose.cellNode(reservoir).assert(SemanticsMatcher.expectValue(MandatoryTile, true))
     }
 
     @Test

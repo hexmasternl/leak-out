@@ -17,16 +17,16 @@
 
 ## 3. App: view model
 
-- [ ] 3.1 Add `DesignerTool.MANDATORY_CROSS` and `MANDATORY_RESERVOIR`, wire them in `onCellTap`, and make `onDrag` ignore them; copy and restore get calculated stars through the `LevelDraft` constructor
-- [ ] 3.2 Remove `NumberField.StarOne/Two/Three` and their branches
-- [ ] 3.3 Add `LevelDesignerViewModelTest` cases: place/remove/change with each tool, drag places only the first cell, copy of a bundled level recalculates stars and keeps mandatory sections, export JSON contains the mandatory list, restore from saved state keeps mandatory sections and the selected mandatory tool
-- [ ] 3.4 Run `./gradlew :app:testDebugUnitTest` and make sure everything passes
+- [x] 3.1 Add `DesignerTool.MANDATORY_CROSS` and `MANDATORY_RESERVOIR`, wire them in `onCellTap`, and make `onDrag` ignore them; copy and restore get calculated stars through the `LevelDraft` constructor
+- [x] 3.2 Remove `NumberField.StarOne/Two/Three` and their branches
+- [x] 3.3 Add `LevelDesignerViewModelTest` cases: place/remove/change with each tool, drag places only the first cell, copy of a bundled level recalculates stars and keeps mandatory sections, export JSON contains the mandatory list, restore from saved state keeps mandatory sections and the selected mandatory tool
+- [x] 3.4 Run `./gradlew :app:testDebugUnitTest` and make sure everything passes
 
 ## 4. App: screen
 
-- [ ] 4.1 Add the two tool chips (strings `designer_tool_mandatory_cross` "Mandatory cross" and `designer_tool_mandatory_reservoir` "Mandatory reservoir"), with the tool row wrapping; update `toolLabel`
-- [ ] 4.2 Replace the star inputs with read-only values tagged `designer_star_one/two/three`; remove the unused star field strings and update the preview
-- [ ] 4.3 Add `LevelDesignerScreenTest` cases: tapping a cell with the Mandatory cross tool places it, the star values update after blocking a cell and cannot be edited; add a `TestPlayScreenTest` case that a test play shows the mandatory section
+- [x] 4.1 Add the two tool chips (strings `designer_tool_mandatory_cross` "Mandatory cross" and `designer_tool_mandatory_reservoir` "Mandatory reservoir"), on a second tool row; update `toolLabel`
+- [x] 4.2 Replace the star inputs with read-only values tagged `designer_star_one/two/three`; remove the unused star field strings and update the preview
+- [x] 4.3 Add `LevelDesignerScreenTest` cases: tapping a cell with the Mandatory cross tool places it, the star values update after blocking a cell and cannot be edited; add a `TestPlayScreenTest` case that a test play shows the mandatory section
 - [ ] 4.4 Run only the affected instrumented tests (`LevelDesignerScreenTest`, `TestPlayScreenTest`) on the emulator and make sure they pass
 
 ## 5. Wrap up

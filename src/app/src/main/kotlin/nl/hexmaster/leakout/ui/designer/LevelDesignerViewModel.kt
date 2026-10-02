@@ -20,7 +20,7 @@ import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.ui.levels.LevelCatalog
 
 /** What a tap or drag on the designer grid does. */
-enum class DesignerTool { START, FINISH, BLOCK }
+enum class DesignerTool { START, FINISH, BLOCK, MANDATORY_CROSS, MANDATORY_RESERVOIR }
 
 /** The bundled levels as the designer uses them: how many there are, and a copy of one to start from. */
 interface DesignerLevels : LevelCatalog {
@@ -36,9 +36,6 @@ sealed interface NumberField {
     data object SpeedRampPerCell : NumberField
     data object VisibleStackSize : NumberField
     data object ReplacePenalty : NumberField
-    data object StarOne : NumberField
-    data object StarTwo : NumberField
-    data object StarThree : NumberField
     data class Weight(val section: PipeSection) : NumberField
 }
 
@@ -123,6 +120,8 @@ class LevelDesignerViewModel(
             DesignerTool.START -> edit { it.placeStart(cell) }
             DesignerTool.FINISH -> edit { it.placeFinish(cell) }
             DesignerTool.BLOCK -> edit { it.toggleBlocked(cell) }
+            DesignerTool.MANDATORY_CROSS -> edit { it.toggleMandatory(cell, PipeSection.X) }
+            DesignerTool.MANDATORY_RESERVOIR -> edit { it.toggleMandatory(cell, PipeSection.RES) }
         }
     }
 
@@ -137,10 +136,14 @@ class LevelDesignerViewModel(
         }
     }
 
-    /** The drag has moved onto [cell]. */
+    /**
+     * The drag has moved onto [cell]. The mandatory tools ignore it: they only act on the cell the
+     * drag started on, so a drag does not toggle a trail of sections on and off.
+     */
     fun onDrag(cell: Position) {
         when (_uiState.value.tool) {
             DesignerTool.BLOCK -> paintTarget?.let { target -> edit { it.paintBlocked(listOf(cell), target) } }
+            DesignerTool.MANDATORY_CROSS, DesignerTool.MANDATORY_RESERVOIR -> Unit
             else -> onCellTap(cell)
         }
     }
@@ -242,9 +245,6 @@ private fun apply(field: NumberField, text: String, draft: LevelDraft): LevelDra
         NumberField.SpeedRampPerCell -> double { draft.withFlow(level.flow.copy(speedRampPerCell = it)) }
         NumberField.VisibleStackSize -> int(draft::withVisibleStackSize)
         NumberField.ReplacePenalty -> long { draft.withRules(level.rules.copy(replacePenaltyMs = it)) }
-        NumberField.StarOne -> int { draft.withStars(level.stars.copy(one = it)) }
-        NumberField.StarTwo -> int { draft.withStars(level.stars.copy(two = it)) }
-        NumberField.StarThree -> int { draft.withStars(level.stars.copy(three = it)) }
         is NumberField.Weight -> int { draft.withWeight(field.section, it) }
     }
 }
@@ -258,8 +258,5 @@ private fun valueText(field: NumberField, level: Level): String = when (field) {
     NumberField.SpeedRampPerCell -> level.flow.speedRampPerCell.toString()
     NumberField.VisibleStackSize -> level.stack.visibleSize.toString()
     NumberField.ReplacePenalty -> level.rules.replacePenaltyMs.toString()
-    NumberField.StarOne -> level.stars.one.toString()
-    NumberField.StarTwo -> level.stars.two.toString()
-    NumberField.StarThree -> level.stars.three.toString()
     is NumberField.Weight -> level.stack.weightOf(field.section).toString()
 }

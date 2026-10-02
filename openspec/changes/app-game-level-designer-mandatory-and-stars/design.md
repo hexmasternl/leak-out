@@ -21,7 +21,7 @@ One operation covers both tools: on a cell holding `section` it removes the entr
 *Alternative:* let the Start, Finish and Block tools replace a mandatory section. Rejected: `LevelDraft` already refuses those cells, which is predictable and easy to test, and the developer can remove the section with its own tool first.
 
 ### Two `DesignerTool` entries
-`DesignerTool` gains `MANDATORY_CROSS` and `MANDATORY_RESERVOIR`, each mapping to `toggleMandatory(cell, X | RES)`. They reuse the tool row and its test tags (`designer_tool_mandatory_cross`, `designer_tool_mandatory_reservoir`). In `onDrag`, the mandatory tools do nothing: `onDragStart` already taps the first cell, and toggling every cell passed would flicker sections on and off. Five tool chips may not fit one row on a phone, so the row becomes a wrapping `FlowRow`.
+`DesignerTool` gains `MANDATORY_CROSS` and `MANDATORY_RESERVOIR`, each mapping to `toggleMandatory(cell, X | RES)`. They reuse the tool row and its test tags (`designer_tool_mandatory_cross`, `designer_tool_mandatory_reservoir`). In `onDrag`, the mandatory tools do nothing: `onDragStart` already taps the first cell, and toggling every cell passed would flicker sections on and off. Five chips do not fit one row of the 340dp panel, so the tools are laid out in rows of three: Start, Finish and Block, then the two mandatory tools.
 
 ### Stars derived in `LevelDraft`
 `StarBenchmarks.forFreeCells(n)` in `core` returns `one = roundTo10(6n)`, `two = roundTo10(7.5n)` and `three = 10n`. It is computed in integers: `three = 10n`, `two = (75n + 50) / 100 * 10`, `one = (60n + 50) / 100 * 10`, which rounds halves up for every n ≥ 0. `Level.freeCells` (grid cells minus distinct blocked cells inside the grid minus the two endpoints) is the input.

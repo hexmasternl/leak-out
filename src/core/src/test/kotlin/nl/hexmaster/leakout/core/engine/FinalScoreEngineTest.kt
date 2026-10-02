@@ -11,6 +11,7 @@ import nl.hexmaster.leakout.core.engine.GameCommand.Pause
 import nl.hexmaster.leakout.core.engine.GameCommand.RemoveUnused
 import nl.hexmaster.leakout.core.engine.GameCommand.Restart
 import nl.hexmaster.leakout.core.engine.GameCommand.Tick
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.StarBenchmarks
 
@@ -82,6 +83,18 @@ class FinalScoreEngineTest {
         for ((at, _) in unused) assertEquals(Cell.Empty, three.board[at])
         for ((at, section) in ROUTE) assertEquals(Cell.Pipe(section, liquidEntered = true), three.board[at])
         assertEquals(state.finalScore, three.finalScore)
+    }
+
+    @Test
+    fun `remove unused never takes a mandatory section off the board`() {
+        // A mandatory reservoir takes the place of the route's first straight.
+        val withMandatory = level.copy(mandatory = listOf(MandatorySection(p(1, 1), PipeSection.RES)))
+        val state = engine.runToEnd(engine.start(withMandatory).withPipes(ROUTE.drop(1) + unused))
+        assertIs<Outcome.Won>(state.outcome)
+        assertEquals(listOf(p(4, 0), p(0, 4), p(4, 4)), state.finalScore!!.unusedSections)
+        val removed = engine.handle(state, RemoveUnused(50))
+        assertEquals(3, removed.sectionsRemoved)
+        assertEquals(Cell.Pipe(PipeSection.RES, liquidEntered = true, mandatory = true), removed.board[p(1, 1)])
     }
 
     @Test

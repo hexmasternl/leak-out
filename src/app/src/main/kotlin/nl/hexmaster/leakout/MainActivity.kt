@@ -146,6 +146,7 @@ class MainActivity : ComponentActivity() {
                                 onNextLevel = next?.let { { screen = Screen.Game(it) } },
                                 history = history,
                                 soundEffects = soundEffectsViewModel.soundEffects,
+                                tips = settings,
                             )
                         }
                         Screen.Library -> LevelLibraryScreen(

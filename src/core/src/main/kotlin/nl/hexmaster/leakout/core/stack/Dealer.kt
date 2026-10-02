@@ -43,7 +43,7 @@ data class Dealer(
      * a section that is never forced (cross and reservoir).
      */
     fun droughtLimit(section: PipeSection): Int? =
-        if (section.mandatory) ceil(LevelDefaults.DROUGHT_FACTOR * totalWeight / weights.getValue(section)).toInt() else null
+        if (section.alwaysOnStack) ceil(LevelDefaults.DROUGHT_FACTOR * totalWeight / weights.getValue(section)).toInt() else null
 
     /** The section the drought limit deals next: the longest drought over its limit, ties in [PipeSection] order. */
     fun forced(): PipeSection? = order

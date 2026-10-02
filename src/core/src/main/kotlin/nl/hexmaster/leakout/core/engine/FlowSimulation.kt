@@ -4,6 +4,7 @@ import nl.hexmaster.leakout.core.board.Cell
 import nl.hexmaster.leakout.core.flow.Channel
 import nl.hexmaster.leakout.core.flow.ChannelUse
 import nl.hexmaster.leakout.core.flow.FlowStep
+import nl.hexmaster.leakout.core.flow.MandatoryProgress
 import nl.hexmaster.leakout.core.flow.channelFor
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Side
@@ -56,7 +57,9 @@ object FlowSimulation {
 
     /**
      * The head leaves its tile: the channel is filled, the section's points are awarded (the start
-     * gives none), then [FlowStep] decides between the next tile, the finish and a leak.
+     * gives none), then [FlowStep] decides between the next tile, the finish and a leak. The finish
+     * only wins when every mandatory section is used; otherwise it refuses the liquid and the
+     * attempt is lost at the finish's open side.
      */
     private fun leaveTile(state: GameState, flow: FlowState.Flowing): GameState {
         val used = flow.used + ChannelUse(flow.position, flow.channel)
@@ -75,11 +78,19 @@ object FlowSimulation {
                     flow = FlowState.Flowing(result.next, result.entry, section.channelFor(result.entry), 0.0, used),
                 )
             }
-            FlowStep.Result.Finish -> next.copy(
-                flow = FlowState.Ended(used),
-                outcome = Outcome.Won(state.clockMs),
-                finalScore = FinalScore.of(next.sheet.total, next.board),
-            )
+            FlowStep.Result.Finish -> if (MandatoryProgress.unused(state.level.mandatory, used).isEmpty()) {
+                next.copy(
+                    flow = FlowState.Ended(used),
+                    outcome = Outcome.Won(state.clockMs),
+                    finalScore = FinalScore.of(next.sheet.total, next.board),
+                )
+            } else {
+                val finish = state.level.finish
+                next.copy(
+                    flow = FlowState.Ended(used),
+                    outcome = Outcome.Lost(finish.position, finish.openSide, state.clockMs, LossReason.MANDATORY_MISSED),
+                )
+            }
             is FlowStep.Result.Leak ->
                 next.copy(flow = FlowState.Ended(used), outcome = Outcome.Lost(result.at, result.side, state.clockMs))
         }

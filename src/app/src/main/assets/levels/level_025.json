@@ -1,0 +1,21 @@
+{
+  "id": 25,
+  "name": "Detour Duty",
+  "grid": { "columns": 9, "rows": 7 },
+  "start": { "x": 0, "y": 3, "openSide": "RIGHT" },
+  "finish": { "x": 8, "y": 3, "openSide": "LEFT" },
+  "blocked": [
+    { "x": 0, "y": 0 },
+    { "x": 8, "y": 0 },
+    { "x": 6, "y": 4 },
+    { "x": 0, "y": 6 },
+    { "x": 8, "y": 6 }
+  ],
+  "flow": { "initialDelayMs": 30000, "cellsPerSecond": 0.15 },
+  "stack": { "weights": { "X": 0, "RES": 0 } },
+  "mandatory": [
+    { "x": 4, "y": 3, "section": "X" },
+    { "x": 3, "y": 5, "section": "RES" }
+  ],
+  "stars": { "one": 200, "two": 300, "three": 420 }
+}

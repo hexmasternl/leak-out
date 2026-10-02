@@ -202,7 +202,7 @@ class LevelValidatorTest {
     }
 
     @Test
-    fun `mandatory section with zero weight is rejected`() {
+    fun `always-on-stack section with zero weight is rejected`() {
         assertOnlyError("stack.weights.LT", valid(stack = StackSettings(weights = TestLevels.weights(PipeSection.LT to 0))))
     }
 
@@ -281,6 +281,74 @@ class LevelValidatorTest {
         assertOnlyError("stars.one", valid(stars = StarBenchmarks(0, 200, 350)))
         val errors = errors(valid(stars = StarBenchmarks(-10, -5, 350)))
         assertEquals(setOf("stars.one", "stars.two"), errors.map { it.field }.toSet())
+    }
+
+    // Mandatory sections
+
+    private fun mandatory(x: Int, y: Int, section: PipeSection = PipeSection.X) = MandatorySection(Position(x, y), section)
+
+    @Test
+    fun `level without mandatory sections is accepted`() = assertValid(valid(mandatory = emptyList()))
+
+    @Test
+    fun `mandatory cross and reservoir are accepted with zero stack weight`() {
+        val level = valid(mandatory = listOf(mandatory(3, 3, PipeSection.X), mandatory(5, 2, PipeSection.RES)))
+        assertEquals(0, level.stack.weightOf(PipeSection.X))
+        assertEquals(0, level.stack.weightOf(PipeSection.RES))
+        assertValid(level)
+    }
+
+    @Test
+    fun `seven mandatory sections are rejected`() {
+        val error = assertOnlyError("mandatory", valid(mandatory = (0 until 7).map { mandatory(it, 0) }))
+        assertTrue("at most 6" in error.message)
+    }
+
+    @Test
+    fun `six mandatory sections are accepted`() = assertValid(valid(mandatory = (0 until 6).map { mandatory(it, 0) }))
+
+    @Test
+    fun `mandatory straight is rejected`() {
+        val level = valid(mandatory = listOf(mandatory(2, 2, PipeSection.RES), mandatory(4, 2, PipeSection.H)))
+        val error = assertOnlyError("mandatory[1].section", level)
+        assertTrue("only X and RES" in error.message)
+    }
+
+    @Test
+    fun `mandatory section outside the grid is rejected`() {
+        val error = assertOnlyError("mandatory[0]", valid(mandatory = listOf(mandatory(7, 2))))
+        assertTrue("(7, 2)" in error.message)
+    }
+
+    @Test
+    fun `mandatory section on a blocked cell is rejected`() {
+        val error = assertOnlyError("mandatory[0]", valid(mandatory = listOf(mandatory(3, 4))))
+        assertTrue("blocked" in error.message)
+    }
+
+    @Test
+    fun `mandatory section on the start or finish is rejected`() {
+        for (cell in listOf(mandatory(0, 1), mandatory(6, 7))) {
+            val error = assertOnlyError("mandatory[0]", valid(mandatory = listOf(cell)))
+            assertTrue("start and finish cannot hold a section" in error.message)
+        }
+    }
+
+    @Test
+    fun `two mandatory sections on one cell are rejected`() {
+        val level = valid(mandatory = listOf(mandatory(2, 2), mandatory(4, 4, PipeSection.RES), mandatory(2, 2, PipeSection.RES)))
+        val error = assertOnlyError("mandatory[2]", level)
+        assertTrue("(2, 2)" in error.message)
+        assertTrue("mandatory[0]" in error.message)
+    }
+
+    @Test
+    fun `every mandatory problem is reported together`() {
+        val level = valid(
+            mandatory = listOf(mandatory(9, 9), mandatory(3, 4, PipeSection.LT), mandatory(1, 1), mandatory(1, 1)),
+        )
+        val fields = errors(level).map { it.field }
+        assertEquals(listOf("mandatory[0]", "mandatory[1]", "mandatory[1].section", "mandatory[3]"), fields.sorted())
     }
 
     // Reporting

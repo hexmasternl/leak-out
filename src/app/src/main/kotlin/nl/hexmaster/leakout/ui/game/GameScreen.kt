@@ -24,6 +24,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -34,22 +37,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import kotlin.math.roundToInt
 import kotlin.random.Random
+import kotlinx.coroutines.launch
 import nl.hexmaster.leakout.audio.GameSound
 import nl.hexmaster.leakout.audio.SoundEffects
 import nl.hexmaster.leakout.core.engine.FlowState
 import nl.hexmaster.leakout.core.engine.GameCommand
+import nl.hexmaster.leakout.core.engine.LossReason
 import nl.hexmaster.leakout.core.engine.Outcome
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.history.RecordResult
+import nl.hexmaster.leakout.settings.SettingsRepository
+import nl.hexmaster.leakout.settings.TipId
+import nl.hexmaster.leakout.ui.game.onboarding.DragHint
+import nl.hexmaster.leakout.ui.game.onboarding.LocalTipTargets
+import nl.hexmaster.leakout.ui.game.onboarding.TipOverlay
+import nl.hexmaster.leakout.ui.game.onboarding.TipScheduler
+import nl.hexmaster.leakout.ui.game.onboarding.TipTargets
+import nl.hexmaster.leakout.ui.game.onboarding.TipText
+import nl.hexmaster.leakout.ui.game.onboarding.tipContent
+import nl.hexmaster.leakout.ui.splash.rememberReducedMotion
 import nl.hexmaster.leakout.ui.pipes.rememberPipeArtLibrary
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 
@@ -74,6 +91,7 @@ fun GameScreen(
     random: Random = Random.Default,
     session: GameSession = remember(level, random) { GameSession(level, random) },
     soundEffects: SoundEffects? = null,
+    tips: SettingsRepository? = null,
 ) {
     val dragState = remember(session) { SectionDragState() }
     // Parse every pipe asset once up front, so no frame mid-game pays for a section's first draw.
@@ -91,7 +109,14 @@ fun GameScreen(
     val showLostDialog = session.select { showLostDialog }
     val showWinDialog = session.select { showWinDialog }
 
-    GameClock(session, paused)
+    // A new attempt starts the field fresh, a pause keeps it. The tips point at its cells.
+    val fieldState = remember(attempt, currentLevel) { PlayingFieldState(currentLevel.grid, currentLevel.start.position) }
+    val targets = remember(fieldState) { TipTargets(fieldState) }
+    val activeTip = session.select { activeTip }
+    // Until the level-start tips have been looked at, the countdown must not move.
+    val waitingForTips = tips != null && outcome is Outcome.Playing && session.select { tipsCheckedAttempt } != attempt
+
+    GameClock(session, paused || waitingForTips)
     ReplacementLandingSound(session, soundEffects)
     OncePerAttemptSound(session, showWinDialog, attempt, GameSound.LevelComplete, soundEffects)
     OncePerAttemptSound(session, showLostDialog, attempt, GameSound.LevelFailed, soundEffects)
@@ -106,7 +131,7 @@ fun GameScreen(
     }
     // A new attempt (restart, another level) ends any drag, so the section goes back to its slot.
     LaunchedEffect(session, attempt) { dragState.cancel() }
-    BackHandler(enabled = outcome is Outcome.Playing && !paused) { session.send(GameCommand.Pause) }
+    BackHandler(enabled = outcome is Outcome.Playing && !paused) { session.pauseByUser() }
     // During the leak effect and the finish flash Back does nothing. Once shown, a dialog handles
     // Back itself: the lost dialog as Exit, the level complete dialog as Exit once its tally is done.
     BackHandler(enabled = outcome !is Outcome.Playing && !showLostDialog && !showWinDialog) {}
@@ -115,17 +140,24 @@ fun GameScreen(
         when (session.state.outcome) {
             is Outcome.Won -> session.skipWinAnimation()
             is Outcome.Lost -> session.skipLeakEffect()
-            Outcome.Playing -> session.send(GameCommand.Pause)
+            Outcome.Playing -> session.pauseByUser()
         }
     }
 
+    CompositionLocalProvider(LocalTipTargets provides targets) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(LeakOutColors.SurfaceDeep)
             .testTag(GameScreenTags.SCREEN),
     ) {
-        Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                // Under a tip only the tip is read out; the game is dimmed and frozen.
+                .semantics { if (activeTip != null) hideFromAccessibility() },
+        ) {
             GameHud(
                 levelId = currentLevel.id,
                 flowSpeed = session.select { state.flowSpeed },
@@ -134,7 +166,7 @@ fun GameScreen(
                 stars = currentLevel.stars,
                 score = session.select { state.score },
                 attempt = attempt,
-                onPause = { session.send(GameCommand.Pause) },
+                onPause = { session.pauseByUser() },
                 pauseEnabled = outcome is Outcome.Playing,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -150,7 +182,6 @@ fun GameScreen(
                             StackLayout.metrics(360.dp - HudLayout.HEIGHT, currentLevel.stack.visibleSize).columnWidth + 16.dp,
                         ),
                     )
-                    val fieldState = rememberPlayingFieldState(currentLevel.grid, currentLevel.start.position)
                     val target = remember(session, fieldState, soundEffects) { FieldDropTarget(session, fieldState, soundEffects) }
                     dragState.dropTarget = target
                     val highlighted by remember(dragState, target) {
@@ -168,6 +199,7 @@ fun GameScreen(
                         nowMs = { session.state.clockMs },
                         leakAt = lost?.at,
                         leakSide = lost?.side,
+                        missed = session.select { missedMandatory },
                         lossAgeMs = { session.lossAgeMs },
                         head = session.select { (state.flow as? FlowState.Flowing)?.position },
                         filled = session.select { state.flow.used },
@@ -199,11 +231,13 @@ fun GameScreen(
             )
         }
         DragOverlay(dragState)
+        if (tips != null) GameTips(session, tips, targets, fieldState, showPauseDialog)
+    }
     }
 
     if (showPauseDialog) {
         PauseDialog(
-            onResume = { session.send(GameCommand.Resume) },
+            onResume = { session.resumeByUser() },
             onRestart = { session.send(GameCommand.Restart) },
             onExit = onExit,
         )
@@ -214,6 +248,7 @@ fun GameScreen(
             score = session.select { state.score },
             onRestart = { session.send(GameCommand.Restart) },
             onExit = onExit,
+            reason = session.select { (state.outcome as? Outcome.Lost)?.reason ?: LossReason.LEAK },
         )
     }
     if (showWinDialog) {
@@ -233,6 +268,107 @@ fun GameScreen(
         }
     }
 }
+
+/**
+ * The one-time tips (spec `game-play-onboarding`): looks at which are due at level start (once the
+ * stack has been laid out and the seen tips are read), after every placement and when the visible
+ * stack slots change, shows them over the game with [TipOverlay] and stores each one as seen in
+ * [tips] when it is closed. Back acts as Skip tour or Got it, except while the pause dialog is up.
+ */
+@Composable
+private fun GameTips(
+    session: GameSession,
+    tips: SettingsRepository,
+    targets: TipTargets,
+    fieldState: PlayingFieldState,
+    pauseDialogShown: Boolean,
+) {
+    val seen by remember(tips) { tips.seenTips }.collectAsState(initial = null)
+    val attempt = session.select { state.attempt }
+    val stack = session.select { state.stack }
+    val outcome = session.select { state.outcome }
+    val paused = session.select { state.paused }
+    val activeTip = session.select { activeTip }
+    val step = session.select { tourStep }
+    val checked = session.select { tipsCheckedAttempt }
+    val visibleSlots = targets.fullyVisibleSlots
+    val reducedMotion = rememberReducedMotion()
+    val scope = rememberCoroutineScope()
+    val revealMarginPx = with(LocalDensity.current) { RevealMargin.toPx() }
+
+    val mandatory = session.select { state.level.mandatory.map { it.position } }
+
+    fun due(atLevelStart: Boolean): List<TipId> =
+        TipScheduler.dueTips(stack, outcome, seen.orEmpty(), atLevelStart, visibleSlots.orEmpty(), mandatory)
+
+    LaunchedEffect(session, attempt, seen != null, visibleSlots != null, checked) {
+        if (checked != attempt && seen != null && visibleSlots != null) session.offerTips(due(atLevelStart = true), atLevelStart = true)
+    }
+    // A placement is the only thing that changes the stack; a resize can change the visible slots.
+    LaunchedEffect(session, stack, visibleSlots, seen, activeTip, paused, checked) {
+        if (checked == attempt && activeTip == null && !paused && seen != null && visibleSlots != null) session.offerTips(due(atLevelStart = false))
+    }
+
+    fun close() {
+        val tip = session.closeTip() ?: return
+        scope.launch { tips.markTipSeen(tip) }
+        // After the tour and the mandatory tip, which may pan, the field goes back to the view the level starts with.
+        if (tip == TipId.Intro || tip == TipId.Mandatory) scope.launch { fieldState.animateTo(fieldState.initialView(), reducedMotion) }
+    }
+    BackHandler(enabled = activeTip != null && !pauseDialogShown) { close() }
+
+    val tip = activeTip ?: return
+    val level = session.state.level
+    val hintCell = remember(attempt, stack) { TipScheduler.hintCell(level, session.state.board) }
+    // Field targets outside the view are panned into it first.
+    val revealed = when {
+        tip == TipId.Mandatory -> mandatory.firstOrNull()
+        tip != TipId.Intro -> null
+        step == 1 -> level.finish.position
+        step == 3 -> hintCell
+        else -> null
+    }
+    LaunchedEffect(tip, step, revealed) {
+        val view = fieldState.viewport ?: return@LaunchedEffect
+        if (revealed != null) fieldState.animateTo(view.revealCell(revealed, revealMarginPx), reducedMotion)
+    }
+    val next = stack.size - 1
+    val spotlights = when (tip) {
+        TipId.Intro -> when (step) {
+            0 -> listOfNotNull(targets.cell(level.start.position))
+            1 -> listOfNotNull(targets.cell(level.finish.position))
+            2 -> listOfNotNull(targets.stackColumn)
+            3 -> listOfNotNull(targets.slot(next), hintCell?.let(targets::cell))
+            else -> listOfNotNull(targets.fieldBounds())
+        }
+        TipId.Cross -> listOfNotNull(TipScheduler.tipSlot(stack, PipeSection.X, visibleSlots.orEmpty())?.let(targets::slot))
+        TipId.Reservoir -> listOfNotNull(TipScheduler.tipSlot(stack, PipeSection.RES, visibleSlots.orEmpty())?.let(targets::slot))
+        // Every mandatory section that is in the field's view; on a large level the first one is panned into it.
+        TipId.Mandatory -> {
+            val field = targets.fieldBounds()
+            mandatory.mapNotNull(targets::cell).filter { field == null || it.overlaps(field) }
+        }
+    }
+    val hint = if (tip == TipId.Intro && step == 3) {
+        val from = targets.slot(next)
+        val to = hintCell?.let(targets::cell)
+        if (from != null && to != null) DragHint(stack.next, from, to) else null
+    } else {
+        null
+    }
+    TipOverlay(
+        content = tipContent(tip, step, TipText.percent(level.flow.reservoirSpeedFactor)),
+        spotlights = spotlights,
+        hint = hint,
+        onNext = session::nextTourStep,
+        onSkip = ::close,
+        onDone = ::close,
+        reducedMotion = reducedMotion,
+    )
+}
+
+/** How far a revealed cell is kept from the field edge, so its spotlight and ring are not cut off. */
+private val RevealMargin = 16.dp
 
 /**
  * Reads one value from the session, recomposing the caller only when that value changes. The game

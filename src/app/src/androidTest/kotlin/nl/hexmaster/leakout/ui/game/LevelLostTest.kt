@@ -39,6 +39,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlin.random.Random
 import nl.hexmaster.leakout.core.engine.Outcome
 import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
@@ -267,6 +268,50 @@ class LevelLostTest {
             session.setScore(score)
         }
         compose.waitForIdle()
+    }
+
+    // Mandatory sections (app-game-play-mandatory-sections)
+
+    @Test
+    fun missedMandatorySectionPulsesThenTheDialogSaysWhyAfterOneSecond() {
+        val reservoir = Position(1, 2)
+        show(FieldTest.level(mandatory = listOf(MandatorySection(reservoir, PipeSection.RES))))
+        compose.runOnIdle {
+            for ((at, section) in FieldTest.ROUTE) assertTrue(session.placeSection(section, at))
+            session.flowToEnd()
+            val lost = session.state.outcome as Outcome.Lost
+            assertEquals(nl.hexmaster.leakout.core.engine.LossReason.MANDATORY_MISSED, lost.reason)
+        }
+        compose.waitForIdle()
+
+        // The liquid spurts out of the finish's open side and the reservoir pulses.
+        compose.cellNode(Position(3, 3)).assert(SemanticsMatcher.expectValue(LeakAt, Side.LEFT))
+        compose.cellNode(reservoir)
+            .assert(SemanticsMatcher.expectValue(MissedMandatory, true))
+            .assertContentDescriptionEquals("Mandatory RES, not used yet")
+        compose.cellNode(Position(2, 1)).assert(SemanticsMatcher.keyNotDefined(MissedMandatory))
+        tick(999)
+        compose.onNodeWithTag(LevelLostTags.DIALOG).assertDoesNotExist()
+        tick(1)
+
+        compose.onNodeWithTag(LevelLostTags.DIALOG).assertIsDisplayed()
+        compose.onNodeWithText("Leaked!", ignoreCase = true).assertIsDisplayed()
+        compose.onNodeWithText("The liquid missed a mandatory section. Level lost.").assertIsDisplayed()
+        compose.onNodeWithText("The pipe is leaking. Level lost.").assertDoesNotExist()
+    }
+
+    @Test
+    fun ordinaryLeakInALevelWithMandatorySectionsKeepsTheLeakMessage() {
+        show(FieldTest.level(mandatory = listOf(MandatorySection(Position(1, 2), PipeSection.RES))))
+        compose.runOnIdle {
+            assertTrue(session.placeSection(PipeSection.H, placed))
+            session.flowToEnd()
+        }
+        compose.waitForIdle()
+        compose.cellNode(Position(1, 2)).assert(SemanticsMatcher.keyNotDefined(MissedMandatory))
+        tick(1_000)
+        compose.onNodeWithText("The pipe is leaking. Level lost.").assertIsDisplayed()
+        compose.onNodeWithText("The liquid missed a mandatory section. Level lost.").assertDoesNotExist()
     }
 
     private fun tick(ms: Long) {

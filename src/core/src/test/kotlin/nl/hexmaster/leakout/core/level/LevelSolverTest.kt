@@ -109,4 +109,176 @@ class LevelSolverTest {
             listOf(Position(1, 0), Position(3, 0), Position(3, 1))
         assertTrue("finish" in unsolvable(valid(grid = grid, start = start, finish = finish, blocked = blocked)).reason)
     }
+
+    // --- Mandatory sections ---
+
+    private fun mandatory(x: Int, y: Int, section: PipeSection) = MandatorySection(Position(x, y), section)
+
+    /**
+     * Asserts that [path] is a route for [level]: adjacent steps from the start through the path into
+     * the finish, every ordinary cell free and used once, and every mandatory channel passed exactly
+     * once, straight through and in a direction the section allows.
+     */
+    private fun assertRoute(level: Level, path: List<Position>) {
+        val chain = listOf(level.start.position) + path + level.finish.position
+        chain.zipWithNext().forEach { (from, to) ->
+            assertTrue(Side.entries.any { from.neighbour(it) == to }, "$from and $to are not adjacent in $path")
+        }
+        val ordinary = path.filter { level.mandatoryAt(it) == null }
+        assertEquals(ordinary.size, ordinary.toSet().size, "an ordinary cell is used twice in $path")
+        ordinary.forEach { cell ->
+            assertTrue(cell in level.grid && !level.isBlocked(cell), "$cell is not a free cell")
+            assertTrue(cell != level.start.position && cell != level.finish.position, "$cell is an endpoint")
+        }
+        val passed = mutableListOf<Pair<Position, Boolean>>()
+        for (i in 1 until chain.size - 1) {
+            val section = level.mandatoryAt(chain[i])?.section ?: continue
+            val (before, cell, after) = Triple(chain[i - 1], chain[i], chain[i + 1])
+            val horizontal = before.y == cell.y
+            assertEquals(Position(2 * cell.x - before.x, 2 * cell.y - before.y), after, "the route turns inside the mandatory $section at $cell")
+            assertTrue(horizontal || section == PipeSection.X, "the mandatory $section at $cell is passed from top to bottom")
+            passed += cell to horizontal
+        }
+        val required = level.mandatory.flatMap { m ->
+            if (m.section == PipeSection.X) listOf(m.position to true, m.position to false) else listOf(m.position to true)
+        }
+        assertEquals(required.toSet(), passed.toSet(), "mandatory channels passed by $path")
+        assertEquals(passed.size, passed.toSet().size, "a mandatory channel is passed twice in $path")
+    }
+
+    @Test
+    fun `route through a mandatory reservoir`() {
+        val level = valid(mandatory = listOf(mandatory(3, 2, PipeSection.RES)))
+        val path = solvable(level).path
+        assertTrue(Position(3, 2) in path)
+        assertRoute(level, path)
+    }
+
+    @Test
+    fun `a mandatory reservoir that cannot be entered from the left is unsolvable`() {
+        val level = valid(blocked = listOf(Position(2, 2)), mandatory = listOf(mandatory(3, 2, PipeSection.RES)))
+        val reason = unsolvable(level).reason
+        assertTrue("mandatory RES at (3, 2)" in reason, reason)
+        assertTrue("(2, 2)" in reason, reason)
+    }
+
+    @Test
+    fun `a mandatory cross needs both channels`() {
+        val level = valid(blocked = listOf(Position(3, 1), Position(3, 3)), mandatory = listOf(mandatory(3, 2, PipeSection.X)))
+        val reason = unsolvable(level).reason
+        assertTrue("mandatory X at (3, 2)" in reason, reason)
+        assertTrue("top to bottom" in reason, reason)
+    }
+
+    @Test
+    fun `a mandatory cross with zero stack weight is solvable through both channels`() {
+        val level = valid(
+            stack = StackSettings(weights = weights(PipeSection.X to 0)),
+            mandatory = listOf(mandatory(3, 2, PipeSection.X)),
+        )
+        val path = solvable(level).path
+        assertEquals(2, path.count { it == Position(3, 2) })
+        assertRoute(level, path)
+    }
+
+    @Test
+    fun `a mandatory section on a facing cell is entered from the endpoint`() {
+        val atStart = valid(mandatory = listOf(mandatory(1, 1, PipeSection.RES)))
+        assertEquals(Position(1, 1), solvable(atStart).path.first())
+        assertRoute(atStart, solvable(atStart).path)
+
+        val atFinish = valid(mandatory = listOf(mandatory(5, 7, PipeSection.X)))
+        assertEquals(Position(5, 7), solvable(atFinish).path.last())
+        assertRoute(atFinish, solvable(atFinish).path)
+    }
+
+    @Test
+    fun `adjacent mandatory sections are passed one into the other`() {
+        val level = valid(mandatory = listOf(mandatory(2, 2, PipeSection.RES), mandatory(3, 2, PipeSection.X), mandatory(4, 2, PipeSection.RES)))
+        assertRoute(level, solvable(level).path)
+    }
+
+    @Test
+    fun `a mandatory section sealed off from the route is named`() {
+        // The reservoir at (3, 2) and both its neighbours are walled in, so no route can reach them.
+        val wall = listOf(Position(1, 2), Position(5, 2)) + (2..4).flatMap { listOf(Position(it, 1), Position(it, 3)) }
+        val level = valid(blocked = wall, mandatory = listOf(mandatory(3, 2, PipeSection.RES)))
+        val reason = unsolvable(level).reason
+        assertTrue("mandatory RES at (3, 2)" in reason, reason)
+    }
+
+    @Test
+    fun `a level without mandatory sections keeps its shortest route`() {
+        val level = valid(blocked = emptyList())
+        assertEquals(1 + 4 + 6, solvable(level).path.size)
+    }
+
+    @Test
+    fun `every route the solver returns is self-avoiding and passes each mandatory channel`() {
+        val random = kotlin.random.Random(42)
+        val grid = GridSize(10, 10)
+        val start = at(0, 4, Side.RIGHT)
+        val finish = at(9, 5, Side.LEFT)
+        var solved = 0
+        repeat(300) {
+            val cells = (0 until 10).flatMap { x -> (0 until 10).map { y -> Position(x, y) } }
+                .filter { it != start.position && it != finish.position }
+                .shuffled(random)
+            // Mandatory sections away from the edge, where every channel has two neighbours.
+            val inside = cells.filter { it.x in 1..8 && it.y in 1..8 }
+            val sections = inside.take(random.nextInt(1, 7)).map { MandatorySection(it, if (random.nextBoolean()) PipeSection.X else PipeSection.RES) }
+            val protected = setOf(start.facingCell, finish.facingCell) + sections.map { it.position }
+            val blocked = cells.filter { it !in protected && random.nextInt(100) < 15 }
+            val level = valid(grid = grid, start = start, finish = finish, blocked = blocked, mandatory = sections)
+            val result = LevelSolver.solve(level)
+            if (result is SolverResult.Solvable) {
+                assertRoute(level, result.path)
+                solved++
+            }
+        }
+        assertTrue(solved >= 50, "only $solved of 300 random levels were solvable")
+    }
+
+    @Test
+    fun `a 50 by 50 level with 6 mandatory sections solves within the time budget`() {
+        val grid = GridSize(50, 50)
+        val start = at(0, 25, Side.RIGHT)
+        val finish = at(49, 24, Side.LEFT)
+        val sections = listOf(
+            mandatory(10, 10, PipeSection.X), mandatory(40, 10, PipeSection.RES), mandatory(25, 25, PipeSection.X),
+            mandatory(10, 40, PipeSection.RES), mandatory(40, 40, PipeSection.X), mandatory(25, 5, PipeSection.RES),
+        )
+        val protected = sections.flatMap { m -> listOf(m.position) + Side.entries.map(m.position::neighbour) }.toSet() +
+            setOf(start.position, finish.position, start.facingCell, finish.facingCell)
+        // A scattered pattern of blocked cells, about one in eleven.
+        val blocked = (0 until 50).flatMap { x -> (0 until 50).map { y -> Position(x, y) } }
+            .filter { (it.x * 7 + it.y * 13) % 11 == 0 && it !in protected }
+        val level = valid(grid = grid, start = start, finish = finish, blocked = blocked, mandatory = sections)
+        assertEquals(emptyList(), LevelValidator.validate(level).errors)
+
+        val started = System.nanoTime()
+        val path = solvable(level).path
+        val elapsedMs = (System.nanoTime() - started) / 1_000_000
+        assertRoute(level, path)
+        assertTrue(elapsedMs < 2_000, "solving took $elapsedMs ms")
+    }
+
+    @Test
+    fun `an unsolvable 50 by 50 level with 6 mandatory sections gives up within the time budget`() {
+        // As above, but the finish is walled in behind its facing cell's neighbours, so the search runs out.
+        val grid = GridSize(50, 50)
+        val start = at(0, 25, Side.RIGHT)
+        val finish = at(49, 24, Side.LEFT)
+        val sections = listOf(
+            mandatory(10, 10, PipeSection.X), mandatory(40, 10, PipeSection.RES), mandatory(25, 25, PipeSection.X),
+            mandatory(10, 40, PipeSection.RES), mandatory(40, 40, PipeSection.X), mandatory(25, 5, PipeSection.RES),
+        )
+        val wall = listOf(Position(48, 23), Position(47, 24), Position(48, 25), Position(49, 23), Position(49, 25))
+        val level = valid(grid = grid, start = start, finish = finish, blocked = wall, mandatory = sections)
+
+        val started = System.nanoTime()
+        unsolvable(level)
+        val elapsedMs = (System.nanoTime() - started) / 1_000_000
+        assertTrue(elapsedMs < 10_000, "giving up took $elapsedMs ms")
+    }
 }

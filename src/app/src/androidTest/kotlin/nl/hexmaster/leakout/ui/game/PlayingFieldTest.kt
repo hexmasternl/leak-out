@@ -39,6 +39,7 @@ import nl.hexmaster.leakout.core.engine.FlowState
 import nl.hexmaster.leakout.core.engine.GameCommand
 import nl.hexmaster.leakout.core.level.GridSize
 import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.PlacementRules
 import nl.hexmaster.leakout.core.level.Position
@@ -456,6 +457,62 @@ class PlayingFieldTest {
         for (fx in listOf(0.1f, 0.5f, 0.95f)) assertTrue("full at $fx", full.isLiquidAt(rect, fx, 0.5f))
         assertTrue("the next H fills from its entry", full.isLiquidAt(cellRectInField(Position(2, 0)), 0.15f, 0.5f))
         assertTileUnchanged(dry, full, rect)
+    }
+
+    // Mandatory sections (app-game-play-mandatory-sections). The default route runs down column 2;
+    // its first V at (2, 1) is a mandatory cross here, so the liquid only uses its vertical channel.
+
+    private val mandatoryCross = Position(2, 1)
+
+    private fun showWithMandatoryCross() {
+        show(FieldTest.level(mandatory = listOf(MandatorySection(mandatoryCross, PipeSection.X))))
+        compose.runOnIdle {
+            for ((at, section) in FieldTest.ROUTE) if (at != mandatoryCross) assertTrue(session.placeSection(section, at))
+        }
+        compose.waitForIdle()
+    }
+
+    /** The tile colour in the top left corner of [cell], off the pipe art. */
+    private fun PixelMap.tileCorner(cell: Position): androidx.compose.ui.graphics.Color {
+        val rect = cellRectInField(cell)
+        return this[(rect.left + rect.width * 0.12f).toInt(), (rect.top + rect.height * 0.12f).toInt()]
+    }
+
+    private fun androidx.compose.ui.graphics.Color.isLeakTinted(): Boolean = red > 0.15f && red > green + 0.04f
+
+    @Test
+    fun mandatorySectionIsDrawnOnARedTintedTile() {
+        showWithMandatoryCross()
+        compose.cellNode(mandatoryCross)
+            .assert(SemanticsMatcher.expectValue(MandatoryTile, true))
+            .assert(SemanticsMatcher.expectValue(FieldPipeSection, PipeSection.X))
+            .assertContentDescriptionEquals("Mandatory X, not used yet")
+        val pixels = fieldPixels()
+        assertTrue("mandatory tile ${pixels.tileCorner(mandatoryCross)}", pixels.tileCorner(mandatoryCross).isLeakTinted())
+        // Only the mandatory cross: the placed V right below it keeps the plain tile.
+        val placed = Position(2, 2)
+        assertTrue("placed tile ${pixels.tileCorner(placed)}", !pixels.tileCorner(placed).isLeakTinted())
+        compose.cellNode(placed).assert(SemanticsMatcher.keyNotDefined(MandatoryTile))
+    }
+
+    @Test
+    fun mandatoryCrossKeepsItsTintWhenFilledAndIsNotUsedOnOneChannel() {
+        showWithMandatoryCross()
+        val dry = fieldPixels().tileCorner(mandatoryCross)
+        // 1 250 ms a cell: the start, (1, 0), (2, 0) and the cross are behind the head after 5 600 ms.
+        compose.runOnIdle {
+            session.endCountdown()
+            session.sendTick(5_600)
+        }
+        compose.waitForIdle()
+
+        compose.cellNode(mandatoryCross)
+            .assert(SemanticsMatcher.expectValue(FilledChannels, setOf(nl.hexmaster.leakout.core.flow.Channel.VERTICAL)))
+            .assertContentDescriptionEquals("Mandatory X, not used yet")
+        val wet = fieldPixels().tileCorner(mandatoryCross)
+        assertTrue("tint stays: $dry then $wet", wet.isLeakTinted())
+        assertEquals(dry.red, wet.red, 0.02f)
+        assertEquals(dry.green, wet.green, 0.02f)
     }
 
     private fun fieldPixels(): PixelMap = compose.onNodeWithTag(GameScreenTags.FIELD).captureToImage().toPixelMap()

@@ -67,6 +67,22 @@ data class FieldViewport(
         return (firstY..lastY).flatMap { y -> (firstX..lastX).map { x -> Position(x, y) } }
     }
 
+    /**
+     * The view panned just far enough that [position] is inside the field with [marginPx] to spare
+     * (when the field is large enough for that), at the same zoom and within the pan limits.
+     * A cell already in view leaves the view as it is.
+     */
+    fun revealCell(position: Position, marginPx: Float = 0f): FieldViewport {
+        val rect = cellRect(position)
+        fun delta(start: Float, end: Float, size: Float): Float = when {
+            end - start + 2 * marginPx > size -> size / 2 - (start + end) / 2
+            start < marginPx -> marginPx - start
+            end > size - marginPx -> size - marginPx - end
+            else -> 0f
+        }
+        return panBy(Offset(delta(rect.left, rect.right, fieldSize.width), delta(rect.top, rect.bottom, fieldSize.height)))
+    }
+
     private fun clamped(): FieldViewport = copy(
         offset = Offset(
             clampAxis(offset.x, fieldSize.width, cellPx * grid.columns),

@@ -58,7 +58,7 @@ class LevelModelTest {
     fun `default stack weights deal the straights and corners evenly with specials off`() {
         val settings = StackSettings()
         for (section in PipeSection.entries) {
-            assertEquals(if (section.mandatory) 7 else 0, settings.weightOf(section), "$section")
+            assertEquals(if (section.alwaysOnStack) 7 else 0, settings.weightOf(section), "$section")
         }
         assertEquals(1.0, LevelDefaults.STEERING_STRENGTH)
         assertEquals(2.5, LevelDefaults.DROUGHT_FACTOR)

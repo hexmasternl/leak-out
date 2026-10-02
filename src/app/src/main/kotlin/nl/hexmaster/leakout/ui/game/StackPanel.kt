@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -47,6 +48,8 @@ import nl.hexmaster.leakout.R
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.StackSettings
 import nl.hexmaster.leakout.core.stack.PipeStack
+import nl.hexmaster.leakout.ui.game.onboarding.LocalTipTargets
+import nl.hexmaster.leakout.ui.game.onboarding.TipTargets
 import nl.hexmaster.leakout.ui.splash.rememberReducedMotion
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 
@@ -81,9 +84,11 @@ fun StackPanel(
     enabled: Boolean = true,
 ) {
     val reducedMotion = rememberReducedMotion()
+    val targets = LocalTipTargets.current
     BoxWithConstraints(
         modifier = modifier
             .testTag(GameScreenTags.STACK_PANEL)
+            .onGloballyPositioned { targets?.registerStackPanel(it) }
             .fillMaxHeight()
             .background(LeakOutColors.SurfaceDeep.copy(alpha = 0.90f), RoundedCornerShape(24.dp))
             .border(1.dp, Color.White.copy(alpha = 0.16f), RoundedCornerShape(24.dp))
@@ -96,6 +101,7 @@ fun StackPanel(
         val tops = remember(metrics, stack.size, railHeight) { StackLayout.slotTops(metrics, stack.size, railHeight) }
         val fullyVisible = remember(metrics, stack.size, railHeight) { StackLayout.fullyVisibleSlots(metrics, stack.size, railHeight) }
         val composed = remember(metrics, stack.size, railHeight) { StackLayout.composedSlots(metrics, stack.size, railHeight) }
+        SideEffect { targets?.registerRail(stack.size, fullyVisible) }
 
         val motion = remember { StackMotion() }
         val falls = motion.sync(stack, metrics.pitch.value, reducedMotion)
@@ -109,6 +115,8 @@ fun StackPanel(
                 StackSlot(
                     id = id,
                     section = section,
+                    index = index,
+                    targets = targets,
                     isNext = isNext,
                     accessible = index in fullyVisible,
                     draggable = isNext && enabled,
@@ -161,6 +169,8 @@ private class StackMotion {
 private fun StackSlot(
     id: Int,
     section: PipeSection,
+    index: Int,
+    targets: TipTargets?,
     isNext: Boolean,
     accessible: Boolean,
     draggable: Boolean,
@@ -199,7 +209,10 @@ private fun StackSlot(
                 Modifier.clearAndSetSemantics {}
             },
         )
-        .onGloballyPositioned { coordinates = it }
+        .onGloballyPositioned {
+            coordinates = it
+            targets?.registerSlot(index, it)
+        }
         .then(
             if (draggable) {
                 Modifier.pointerInput(section, dragState) {

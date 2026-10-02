@@ -26,7 +26,11 @@ Every level is one JSON file in `src/app/src/main/assets/levels/`, named `level_
     "allowReplace": true,           // optional: may an unfilled pipe be replaced
     "replacePenaltyMs": 3000        // optional, 0 or more: length of a replacement, no placing meanwhile
   },
-  "stars": { "one": 100, "two": 200, "three": 350 }  // required, positive, strictly increasing
+  "stars": { "one": 100, "two": 200, "three": 350 }, // required, positive, strictly increasing
+  "mandatory": [                    // optional, at most 6; [] or absent for none
+    { "x": 3, "y": 2, "section": "X" },
+    { "x": 5, "y": 5, "section": "RES" }
+  ]
 }
 ```
 
@@ -62,6 +66,7 @@ Defaults live in `LevelDefaults`. Each optional field can be overridden on its o
 | `stack.weights.X`, `RES` | 0 |
 | `rules.allowReplace` | true |
 | `rules.replacePenaltyMs` | 3000 |
+| `mandatory` | none (see [Mandatory sections](#mandatory-sections)) |
 
 ## Coordinates and open sides
 
@@ -118,9 +123,26 @@ A level is rejected unless, for both the start and the finish:
 
 The start and the finish may share a facing cell: one pipe section then connects them.
 
+## Mandatory sections
+
+`mandatory` lists sections that are on the board when an attempt starts or restarts, without liquid. They are not drawn from the stack, and the stack does not depend on them. The player cannot remove or replace them, whatever `rules.allowReplace` says, and they stay on the board when the unused sections are removed after a win. The playing field draws them on a red-tinted tile.
+
+A level is rejected unless:
+
+1. It lists at most 6 mandatory sections (`LevelValidator.MAX_MANDATORY_SECTIONS`).
+2. Each `section` is `X` (cross) or `RES` (reservoir). Straights and corners cannot be mandatory.
+3. Each cell lies inside the grid, is not blocked, and is not the start or the finish.
+4. No two mandatory sections share a cell.
+
+A mandatory section ignores its stack weight, so a level can have a mandatory cross while `stack.weights.X` is 0.
+
+For the liquid a mandatory section is an ordinary section of its kind: it is entered through an open side, scores its points and slows the liquid down inside a reservoir. A mandatory section is **used** once the liquid has run through every channel it has, in either direction: both the horizontal and the vertical channel of a cross, the single left-to-right channel of a reservoir. The level is only won when the liquid enters the finish after every mandatory section is used. If the liquid reaches the finish with a mandatory section still unused, the finish refuses it and the level is lost. In the same way the route only counts as complete, and fast forward only becomes available, once it runs through every mandatory channel.
+
 ## Solvability
 
 `LevelValidator` only checks a level's shape and values; it does not check that the level can be won. That is a separate concern, handled by `LevelSolver`: it searches the grid for a route of adjacent cells from the start's facing cell to the finish's facing cell, using only cells that lie inside the grid, are not blocked, and are not the start or finish cell itself. Cross (`X`) and reservoir (`RES`) sections are never required for such a route, so their weights do not affect the outcome.
+
+With mandatory sections, the route must run through every mandatory channel, entering each section through an open side, and must not pass any cell twice except a mandatory cross (once per channel). The solver first checks that both entry neighbours of every mandatory channel can carry a pipe and names the section if they cannot. It then tries every order and direction of the mandatory channels, nearest first, and joins them with shortest paths; on a hopeless level it gives up after a bounded amount of work (`LevelSolver.MAX_SEARCH_WORK`, about a second). Because those shortest paths are chosen greedily, one can occasionally block a later one, so the solver may reject a crowded level that a player could still win. It never accepts a level that cannot be won: the route it finds is a real, self-avoiding route. If a level is wrongly rejected, move a mandatory section or a blocked cell; the failure names the section the solver could not reach.
 
 `LevelSolvabilityTest` runs the solver over every `level_NNN.json` file in the levels directory (the `leakout.levelsDir` system property, wired to the bundled assets folder) and fails per level, naming the file and why no route was found. So an unwinnable level fails `./gradlew :core:test` just like a parse or validation error, and pointing the property at another directory checks a different set of levels with the same suite.
 
@@ -130,5 +152,5 @@ The start and the finish may share a facing cell: one pipe section then connects
 
 ## Errors
 
-- **Parse errors** (shape and types) stop at the first problem and name the field by its path, for example `flow.cellsPerSecond`, `stack.weights.Z` or `blocked[1].y`.
+- **Parse errors** (shape and types) stop at the first problem and name the field by its path, for example `flow.cellsPerSecond`, `stack.weights.Z`, `blocked[1].y` or `mandatory[0].section`.
 - **Validation errors** (meaning) are all reported together, each naming its field, so a file can be fixed in one pass.

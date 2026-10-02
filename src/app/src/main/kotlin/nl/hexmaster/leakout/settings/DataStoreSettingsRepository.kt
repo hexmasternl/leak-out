@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -40,6 +41,9 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
         val MusicEnabled = booleanPreferencesKey("music_enabled")
         val MusicVolume = floatPreferencesKey("music_volume")
         val VibrationEnabled = booleanPreferencesKey("vibration_enabled")
+
+        /** The [TipId.key]s of the seen tips. */
+        val SeenTips = stringSetPreferencesKey("seen_tips")
     }
 
     override val settings: Flow<Settings> = dataStore.data
@@ -59,6 +63,16 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
 
     override suspend fun setVibrationEnabled(enabled: Boolean) = write { it[Keys.VibrationEnabled] = enabled }
 
+    override val seenTips: Flow<Set<TipId>> = dataStore.data
+        .catch { error -> if (error is IOException) emit(emptyPreferences()) else throw error }
+        .map(::readSeenTips)
+        .distinctUntilChanged()
+
+    // Keys of tips this version does not know are kept, so a downgrade does not show them again.
+    override suspend fun markTipSeen(tip: TipId) = write { it[Keys.SeenTips] = it[Keys.SeenTips].orEmpty() + tip.key }
+
+    override suspend fun resetTips() = write { it.remove(Keys.SeenTips) }
+
     private suspend fun write(change: (MutablePreferences) -> Unit) {
         dataStore.edit(change)
     }
@@ -72,6 +86,9 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
             musicVolume = Settings.clampVolume(preferences[Keys.MusicVolume] ?: Settings.DEFAULT_MUSIC_VOLUME),
             vibrationEnabled = preferences[Keys.VibrationEnabled] ?: Settings.DEFAULT_VIBRATION_ENABLED,
         )
+
+        /** The seen tips stored in [preferences]; none when the key is missing, unknown keys ignored. */
+        fun readSeenTips(preferences: Preferences): Set<TipId> = TipId.fromKeys(preferences[Keys.SeenTips].orEmpty())
 
         /** The repository on the app's shared [settingsDataStore]. */
         fun create(context: Context): DataStoreSettingsRepository =

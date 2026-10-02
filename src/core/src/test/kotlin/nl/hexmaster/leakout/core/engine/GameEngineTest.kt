@@ -18,6 +18,7 @@ import nl.hexmaster.leakout.core.engine.GameCommand.Resume
 import nl.hexmaster.leakout.core.engine.GameCommand.Start
 import nl.hexmaster.leakout.core.engine.GameCommand.Tick
 import nl.hexmaster.leakout.core.level.FlowSettings
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.PlacementRules
 import nl.hexmaster.leakout.core.level.Side
@@ -455,6 +456,49 @@ class GameEngineTest {
         val state = engine.start(level).withPipes(ROUTE.take(2))
         assertSame(state, engine.handle(state, FastForward))
         assertFalse(engine.handle(state, FastForward).fastForward)
+    }
+
+    // --- Mandatory sections ---
+
+    private val mandatoryLevel = engineLevel(
+        rules = PlacementRules(allowReplace = true),
+        mandatory = listOf(MandatorySection(p(1, 1), PipeSection.RES), MandatorySection(p(3, 3), PipeSection.X)),
+    )
+
+    @Test
+    fun `a level starts with its mandatory sections and an ordinary stack`() {
+        val state = engine.start(mandatoryLevel)
+        assertEquals(Cell.Pipe(PipeSection.RES, mandatory = true), state.board[p(1, 1)])
+        assertEquals(Cell.Pipe(PipeSection.X, mandatory = true), state.board[p(3, 3)])
+        assertEquals(engine.start(level).stack.sections.size, state.stack.sections.size)
+        assertTrue(state.stack.sections.all { it == PipeSection.H })
+    }
+
+    @Test
+    fun `a drop on a mandatory section is refused and the stack does not change`() {
+        val state = engine.start(mandatoryLevel)
+        for (at in listOf(p(1, 1), p(3, 3))) {
+            assertFalse(engine.canPlace(state, at), "tile $at")
+            val after = engine.handle(state, Place(at))
+            assertSame(state, after, "tile $at")
+            assertEquals(state.stack, after.stack)
+        }
+    }
+
+    @Test
+    fun `restart puts the mandatory sections back without liquid`() {
+        val played = engine.runToEnd(engine.start(mandatoryLevel))
+        assertEquals(Cell.Pipe(PipeSection.RES, liquidEntered = true, mandatory = true), played.board[p(1, 1)])
+        val restarted = engine.handle(played, Restart)
+        assertEquals(Cell.Pipe(PipeSection.RES, mandatory = true), restarted.board[p(1, 1)])
+        assertEquals(Cell.Pipe(PipeSection.X, mandatory = true), restarted.board[p(3, 3)])
+    }
+
+    @Test
+    fun `fast forward is refused while the route misses a mandatory section`() {
+        val skipping = engine.start(engineLevel(mandatory = listOf(MandatorySection(p(4, 4), PipeSection.RES)))).withPipes(ROUTE)
+        assertFalse(skipping.routeComplete)
+        assertSame(skipping, engine.handle(skipping, FastForward))
     }
 
     @Test

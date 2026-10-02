@@ -1,5 +1,8 @@
 package nl.hexmaster.leakout.ui.game
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -156,15 +159,61 @@ class PlayingFieldState(private val grid: GridSize, private val start: Position)
         private set
 
     private var coordinates: LayoutCoordinates? = null
+    private var density: Density? = null
+
+    /** Where the field's top-left corner is in the root, updated on every layout pass. */
+    var originInRoot: Offset? by mutableStateOf(null)
+        private set
 
     internal fun onMeasured(size: Size, density: Density) {
         val current = viewport
         if (size.width <= 0f || size.height <= 0f) return
+        this.density = density
         if (current == null || current.fieldSize != size) viewport = FieldViewport.initial(size, grid, start, density)
     }
 
     internal fun onPositioned(coordinates: LayoutCoordinates) {
         this.coordinates = coordinates
+        originInRoot = coordinates.positionInRoot()
+    }
+
+    /** The on-screen rect of [position] in root coordinates, at the current view; null before layout. */
+    fun cellInRoot(position: Position): Rect? {
+        val origin = originInRoot ?: return null
+        return viewport?.cellRect(position)?.translate(origin)
+    }
+
+    /** The field's own rect in root coordinates; null before layout. */
+    fun boundsInRoot(): Rect? {
+        val origin = originInRoot ?: return null
+        return viewport?.let { Rect(origin, it.fieldSize) }
+    }
+
+    /** The view the level starts with, at the current field size; null before layout. */
+    fun initialView(): FieldViewport? {
+        val current = viewport ?: return null
+        val density = density ?: return null
+        return FieldViewport.initial(current.fieldSize, grid, start, density)
+    }
+
+    /**
+     * Moves the view to [target]: at once with [reducedMotion], otherwise over `motion.settle`
+     * (240 ms, decelerating, so the pan never overshoots its limits).
+     */
+    suspend fun animateTo(target: FieldViewport?, reducedMotion: Boolean) {
+        val from = viewport ?: return
+        if (target == null || target == from) return
+        if (reducedMotion) {
+            viewport = target
+            return
+        }
+        animate(0f, 1f, animationSpec = tween(FIELD_SETTLE_MS, easing = FastOutSlowInEasing)) { t, _ ->
+            viewport = target.copy(
+                cellPx = from.cellPx + (target.cellPx - from.cellPx) * t,
+                offset = from.offset + (target.offset - from.offset) * t,
+            )
+        }
+        viewport = target
     }
 
     internal fun transform(zoom: Float, focus: Offset, pan: Offset) {
@@ -178,6 +227,8 @@ class PlayingFieldState(private val grid: GridSize, private val start: Position)
         return viewport?.cellAt(local)
     }
 }
+
+private const val FIELD_SETTLE_MS = 240
 
 @Composable
 fun rememberPlayingFieldState(grid: GridSize, start: Position): PlayingFieldState =

@@ -403,6 +403,63 @@ Bottom-anchored, 48 dp tall, `surface.raised`, `radius.pill`, `body.sm`. Slides 
 
 56 dp, label `body.md`, trailing switch. Switch track `radius.pill`: off `surface.overlay`, on `liquid.500` with a `liquid.glow` thumb.
 
+### 5.9 Tip overlay
+
+The one-time guided tips on the game screen (spec `game-play-onboarding`): the intro tour on the first level played, and single tips for the cross, the reservoir and mandatory sections. Unlike a dialog (5.6), a tip points at the real element it explains, so it is drawn over the whole game screen instead of centred.
+
+**Layers** (bottom to top, all inside the game screen, above the HUD, stack and field, below the pause dialog):
+
+1. **Scrim** – `surface.scrim` (`#07111C` at 72 %) over the whole screen, with a **spotlight** cut out around every target. The overlay consumes all pointer input outside its buttons, so nothing can be dragged, pinched or panned underneath, and taps on the scrim do nothing.
+2. **Spotlight** – a cut-out per target: the target's on-screen bounds grown by `space.2` (8 dp) on every side, corners `radius.md` (16 dp). A stack slot, a field cell and the whole stack column are each one rectangle; the mandatory tip has one cut-out per mandatory cell. Inside the cut-out the game is seen undimmed.
+3. **Glow ring** – around each cut-out a 2 dp `liquid.glow` stroke with a `G` glow in `liquid.glow` at 45 % (blur 24 dp). It pulses between 45 % and 70 % on `motion.pulse`.
+4. **Callout card** – a level 3 floating panel (shadow `0 24 64` black 60 %), `surface.base`, `radius.lg`, 1 dp `line.highlight` top edge, 16 dp (`space.4`) padding, max width 296 dp, so it fits beside the stack and a centre cell on a 640 × 360 dp screen.
+5. **Pointer** – a 16 × 8 dp triangle in `surface.base` on the card edge facing the target, centred on the target's centre and kept at least `radius.lg` from the card's corners. No pointer when no side has room (see Placement, last rule).
+
+**Callout content**, top to bottom:
+
+| Element | Style | Notes |
+|---------|-------|-------|
+| Step counter | `display.xs` `liquid.300` | "1 / 5"; intro tour only. Single tips show an eyebrow instead: "TIP" in `display.xs` `brass.300` |
+| Title | `display.md` `text.primary` | At most about four words (3.2) |
+| Text | `body.md` `text.secondary` | Two or three lines at 296 dp; `body.md` rather than `body.lg` so the card fits a 360 dp tall screen at 130 % font |
+| Buttons | one row, 16 dp below the text, right-aligned, `space.3` (12 dp) apart | See below |
+
+| Tip | Buttons (left → right) |
+|-----|------------------------|
+| Intro steps 1–4 | tertiary "Skip tour", primary small "Next" |
+| Intro step 5 | primary small "Let's go" |
+| Cross, reservoir, mandatory | primary small "Got it" |
+
+Primary small is 40 dp face + 4 dp lip = 48 dp and the tertiary is 48 dp, so the row is 48 dp. Card height at 100 % font: 32 padding + 17 counter + 4 + 25 title + 8 + 72 text (three lines) + 16 + 48 buttons ≈ 222 dp, which fits in 360 − 2 × 16 dp.
+
+**Placement** (pure, JVM-tested): given the window size, the 16 dp screen gutter and the spotlight rect,
+
+1. Measure the free space to the right of, left of, below and above the spotlight, minus a 12 dp (`space.3`) gap to the spotlight.
+2. Take the side with the most room that fits the card; ties go right, left, below, above in that order.
+3. Along that side, centre the card on the target's centre, then shift it so it stays inside the gutter.
+4. If no side fits the card, put it in the screen half away from the target's centre, inside the gutter, without a pointer.
+
+The stack column sits on the left of the screen, so stack tips open to the right; a bottom-right cell opens to the left. On a 640 × 360 dp screen the field sits right of the stack, so a cell in the centre of the field (about x 342–392 dp) has room on its left only and opens to the left; on larger screens it opens to the right.
+
+**Drag hint** (intro step 4): a ghost of the next section at 50 % opacity, the size of a field cell, travels from the centre of the next stack slot to the centre of the hint cell (the nearest empty, non-blocked cell to the start's exit). While the ghost is on the cell, the cell shows the "valid target" look of 6.2 (`liquid.tint` fill, `line.strong` border). Both the next slot and the hint cell are spotlighted.
+
+**Off-screen targets**: when a field target (the finish on a large level, a mandatory cell) is outside the visible field, the field pans just far enough to show it, within the existing pan limits, before the spotlight moves there. When the tour ends, the field returns to the view the level starts with.
+
+**Texts** (English strings resource; the reservoir percentage is the level's `flow.reservoirSpeedFactor` × 100, rounded half up, shown here for 0.3):
+
+| Tip | Target | Title | Text |
+|-----|--------|-------|------|
+| Intro 1 / 5 | start tile | The Start | The liquid comes out of this valve when the countdown runs out. |
+| Intro 2 / 5 | finish tile | The Finish | Lead the liquid into this drain to complete the level. |
+| Intro 3 / 5 | stack column | Your Stack | These are the sections you get, in order. The next one to place is at the bottom. |
+| Intro 4 / 5 | next slot + hint cell | Placing Sections | Drag the next section from the stack onto an empty cell. Build a pipe from the start to the finish. |
+| Intro 5 / 5 | the field | Zoom and Pan | Pinch to zoom in or out, and drag the field to move around a larger level. |
+| Cross | the `X` slot in the stack | Cross Section | A cross has two separate channels and the liquid goes straight through. The first pass scores 10 points, a second pass through the other channel 50. Each channel can be used only once. |
+| Reservoir | the `RES` slot in the stack | Reservoir | A reservoir only connects left and right. While it fills, the liquid flows at 30 % speed, which buys you time. It scores 25 points. |
+| Mandatory | every mandatory cell | Mandatory Sections | These sections are already placed and can't be removed or replaced. The liquid must pass through every channel of each of them before it reaches the finish, or the level is lost. |
+
+**Screen reader**: when a tip appears it is announced as a polite live region: the title, the text, the target ("Highlighted: start valve") and, in the tour, "Step 1 of 5". The card is one pane (`paneTitle` = the title) and its buttons follow the text in reading order. The scrim and the game under it are hidden from accessibility while the tip is shown.
+
 ---
 
 ## 6. Game board
@@ -515,6 +572,9 @@ At the 44 dp minimum cell a square is about 3.2 dp; the 6 × 6 checker was check
 - **Missed mandatory section**: when the liquid reaches the finish with a mandatory section unused, the leak spurt comes out of the finish's open side, and every unused mandatory tile pulses twice in `leak.500` during the 1 s before the dialog: a fill at up to 35 % and a 3 dp edge, alpha `(1 − cos(4π t / 1 s)) / 2`. Game time, so it freezes on pause.
 - **Result dialog entry** (win and leak, 5.6): the scrim fades from 0 to its 72 % over `motion.quick` (160 ms ease-out) while the panel scales 0.92 → 1 with `motion.pop`. Closing is immediate.
 - **Leak splash** (leak dialog, 5.6): when the dialog opens, 6 droplets in `liquid.500` with `liquid.glow` highlights fly out of a `leak.500` centre blob towards the edge of the splash box over 600 ms ease-out, once, and rest there. It does not loop.
+- **Tip entry** (5.9): the scrim with its spotlight fades from 0 to 72 % over `motion.quick` while the callout card scales 0.92 → 1 with `motion.pop`, as a dialog does. The glow ring fades in with the scrim, then pulses on `motion.pulse`. Closing the last tip fades the scrim and card out over `motion.quick`.
+- **Tip step change** (5.9): the spotlight cut-out and glow ring move and resize from the old target to the new one with `motion.settle`; the card moves to its new place with `motion.settle` while its content cross-fades over `motion.quick`. When the field has to pan to show the target, the pan runs first with `motion.settle`, then the spotlight moves.
+- **Drag hint** (5.9, intro step 4): one loop takes `motion.pulse` (2 000 ms): the ghost fades in on the next slot over `motion.quick`, travels to the hint cell over 1 200 ms ease-in-out, rests there 400 ms with the cell in its valid target look, fades out over `motion.quick`, and the loop restarts. It runs while the step is shown.
 
 ### 7.3 Liquid progress
 
@@ -522,7 +582,7 @@ Progress is a 0–1 value per segment from the engine. The renderer clips the li
 
 ### 7.4 Reduced motion
 
-When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). The stack pieces do not accelerate, bounce or stagger: they all slide to their new slot together over 160 ms ease-out, and the new top piece fades in in its slot over 160 ms. Liquid fill and the win tally are gameplay, so they are unaffected.
+When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). Tips (5.9) fade in and out over 160 ms ease-out without the scale; the spotlight and card jump to the next target, the field jumps instead of panning, the glow ring is static at 60 %, and the drag hint is a static 2 dp `liquid.glow` arrow from the next slot to the hint cell with the ghost at rest on the cell. Liquid fill and the win tally are gameplay, so they are unaffected.
 
 ---
 

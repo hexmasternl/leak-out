@@ -4,8 +4,8 @@ Tracking issue: [#37 Stack animation](https://github.com/hexmasternl/leak-out/is
 
 ## 1. Docs
 
-- [ ] 1.1 Update `docs/design-system.md` §5.4 "Stack rail" to match the game (left-hand column in landscape, next piece at the bottom with the brass frame, preview pieces above, `visibleSize` slots guaranteed, extra pieces clipped at the top edge, no scrolling) and describe the gravity drop; add `motion.fall` (quadratic ease-in fall 120–260 ms, one ≤ 4 dp bounce over 120 ms, 24 ms stagger per piece from the bottom up) to §7.1/§7.2 and the stack rule to §7.4 reduced motion (160 ms ease-out slide, new piece fades in); update `docs/design-system.html` if it mirrors these sections; verify every token named exists in the document
-- [ ] 1.2 Update `docs/level-format.md`: `stack.visibleSize` is the guaranteed visible part of the stack, the stack holds `visibleSize + 10` sections; verify the defaults table and example still agree with `LevelDefaults`
+- [x] 1.1 Update `docs/design-system.md` §5.4 "Stack rail" to match the game (left-hand column in landscape, next piece at the bottom with the brass frame, preview pieces above, `visibleSize` slots guaranteed, extra pieces clipped at the top edge, no scrolling) and describe the gravity drop; add `motion.fall` (quadratic ease-in fall 120–260 ms, one ≤ 4 dp bounce over 120 ms, 24 ms stagger per piece from the bottom up) to §7.1/§7.2 and the stack rule to §7.4 reduced motion (160 ms ease-out slide, new piece fades in); update `docs/design-system.html` if it mirrors these sections; verify every token named exists in the document
+- [x] 1.2 Update `docs/level-format.md`: `stack.visibleSize` is the guaranteed visible part of the stack, the stack holds `visibleSize + 10` sections; verify the defaults table and example still agree with `LevelDefaults`
 
 ## 2. Core
 

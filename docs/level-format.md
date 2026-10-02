@@ -19,7 +19,7 @@ Every level is one JSON file in `src/app/src/main/assets/levels/`, named `level_
     "speedRampPerCell": 0.0         // optional, 0 or more: speed increase per filled cell
   },
   "stack": {                        // optional
-    "visibleSize": 5,               // optional, 1 to 10: sections shown on the stack
+    "visibleSize": 5,               // optional, 1 to 10: sections always visible on the stack
     "weights": { "H": 7, "V": 7, "LT": 7, "LB": 7, "RT": 7, "RB": 7, "X": 3, "RES": 3 }
   },
   "rules": {                        // optional
@@ -67,6 +67,10 @@ Defaults live in `LevelDefaults`. Each optional field can be overridden on its o
 
 - `x` is the column and `y` the row, both zero-based, with the origin at the top-left and `y` growing downward.
 - `openSide` is one of `LEFT`, `RIGHT`, `TOP`, `BOTTOM`: the side of the cell with the opening. The neighbouring cell on that side is the endpoint's *facing cell*, which a pipe must occupy to connect it.
+
+## Stack size
+
+`stack.visibleSize` is the number of stack sections the player is guaranteed to see. The stack itself holds ten sections more (`PipeStack.EXTRA_SECTIONS`): 15 with the default visible size of 5, at most 20. The stack rail sizes its slots so that the bottom `visibleSize` sections always fit; the extra sections continue upwards as far as the screen has room and are clipped at the top of the rail. Design and balance a level against `visibleSize`: how many of the extra sections a player sees depends on their screen.
 
 ## Stack weights
 

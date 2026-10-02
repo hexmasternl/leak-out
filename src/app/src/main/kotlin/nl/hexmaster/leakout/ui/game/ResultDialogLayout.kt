@@ -1,10 +1,7 @@
 package nl.hexmaster.leakout.ui.game
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,9 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,8 +25,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
@@ -39,9 +32,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
@@ -50,6 +41,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import nl.hexmaster.leakout.ui.components.DialogEntry
+import nl.hexmaster.leakout.ui.components.FloatingPanel
+import nl.hexmaster.leakout.ui.components.FloatingPanelMetrics
+import nl.hexmaster.leakout.ui.components.panelScale
 import nl.hexmaster.leakout.ui.splash.rememberReducedMotion
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
@@ -70,46 +65,16 @@ enum class ResultDialogLayout {
     }
 }
 
-/** Sizes of the result dialog layouts, from design-system.md 5.6. */
+/** Sizes of the result dialog layouts, from design-system.md 5.6; the shared panel sizes come from [FloatingPanelMetrics]. */
 object ResultDialogMetrics {
-    val Gutter: Dp = 16.dp
-    val Padding: Dp = 24.dp
-    val RegularMaxWidth: Dp = 360.dp
+    val Gutter: Dp = FloatingPanelMetrics.Gutter
+    val Padding: Dp = FloatingPanelMetrics.Padding
+    val RegularMaxWidth: Dp = FloatingPanelMetrics.MaxWidth
     val CompactMaxWidth: Dp = 600.dp
     val ButtonsColumnWidth: Dp = 200.dp
     val ColumnGap: Dp = 24.dp
-    val ButtonSpacing: Dp = 12.dp
-    val CornerRadius: Dp = 24.dp
-    val ShadowElevation: Dp = 24.dp
+    val ButtonSpacing: Dp = FloatingPanelMetrics.ButtonSpacing
 }
-
-/**
- * How a result dialog enters (design-system.md 7.2, 7.4): the scrim and panel fade in over
- * `motion.quick`; the panel also scales from [initialScale] to 1 with [scaleSpec], unless motion is
- * reduced, when there is no scale.
- */
-data class ResultDialogEntry(
-    val initialScale: Float,
-    val scaleSpec: AnimationSpec<Float>?,
-    val fadeMs: Int,
-) {
-    companion object {
-        const val FADE_MS = 160
-        const val INITIAL_SCALE = 0.92f
-
-        /** `motion.pop`: spring, stiffness medium-low, damping 0.6. */
-        val PopSpring: AnimationSpec<Float> = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMediumLow)
-
-        fun select(reducedMotion: Boolean): ResultDialogEntry = when {
-            reducedMotion -> ResultDialogEntry(initialScale = 1f, scaleSpec = null, fadeMs = FADE_MS)
-            else -> ResultDialogEntry(initialScale = INITIAL_SCALE, scaleSpec = PopSpring, fadeMs = FADE_MS)
-        }
-    }
-}
-
-/** Test-only semantics: the panel's current entry scale. */
-val PanelScale = SemanticsPropertyKey<Float>("PanelScale")
-var SemanticsPropertyReceiver.panelScale by PanelScale
 
 /**
  * The window of a result dialog: a full-window, see-through `surface.scrim` (platform dim off, so the
@@ -137,7 +102,7 @@ internal fun ResultDialogWindow(
     ) {
         val window = (LocalView.current.parent as? DialogWindowProvider)?.window
         SideEffect { window?.setDimAmount(0f) }
-        val entry = remember(reducedMotion) { ResultDialogEntry.select(reducedMotion) }
+        val entry = remember(reducedMotion) { DialogEntry.select(reducedMotion) }
         val alpha = remember { Animatable(0f) }
         val scale = remember { Animatable(entry.initialScale) }
         LaunchedEffect(entry) {
@@ -217,26 +182,14 @@ private class LayoutChoiceCache {
 private const val MEASURE_SLOT = "measure"
 private const val CONTENT_SLOT = "content"
 
-/**
- * Level 3 floating panel (design-system.md 4.3, 5.6): `radius.lg`, `surface.base`, a 1 dp
- * `line.highlight` top edge, no outline; max 360 dp wide in Regular and 600 dp in Compact.
- */
+/** The [FloatingPanel] of a result dialog: max 360 dp wide in Regular and 600 dp in Compact. */
 @Composable
 internal fun ResultDialogPanel(layout: ResultDialogLayout, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    val shape = RoundedCornerShape(ResultDialogMetrics.CornerRadius)
-    val shadow = Color.Black.copy(alpha = 0.6f)
-    Box(
-        modifier
-            .widthIn(max = if (layout == ResultDialogLayout.Regular) ResultDialogMetrics.RegularMaxWidth else ResultDialogMetrics.CompactMaxWidth)
-            .shadow(ResultDialogMetrics.ShadowElevation, shape, ambientColor = shadow, spotColor = shadow)
-            .background(LeakOutColors.SurfaceBase, shape)
-            .drawWithContent {
-                drawContent()
-                val inset = ResultDialogMetrics.CornerRadius.toPx()
-                val stroke = 1.dp.toPx()
-                drawLine(LeakOutColors.LineHighlight, Offset(inset, stroke / 2), Offset(size.width - inset, stroke / 2), stroke)
-            },
-    ) { content() }
+    FloatingPanel(
+        modifier = modifier,
+        maxWidth = if (layout == ResultDialogLayout.Regular) ResultDialogMetrics.RegularMaxWidth else ResultDialogMetrics.CompactMaxWidth,
+        content = content,
+    )
 }
 
 /** The Regular layout: one centred column with the panel padding. */

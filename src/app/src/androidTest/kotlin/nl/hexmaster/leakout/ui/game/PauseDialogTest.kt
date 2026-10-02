@@ -26,6 +26,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlin.math.roundToInt
 import kotlin.random.Random
 import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.ui.components.PanelScale
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import org.junit.Assert.assertEquals

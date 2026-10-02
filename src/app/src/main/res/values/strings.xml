@@ -9,7 +9,7 @@
     <string name="welcome_exit">Exit</string>
     <string name="play_menu_title">Play</string>
     <string name="play_menu_continue">Continue</string>
-    <string name="play_menu_select_level">Select level</string>
+    <string name="play_menu_select_level">Select Level</string>
     <string name="game_section_h">Horizontal straight</string>
     <string name="game_section_v">Vertical straight</string>
     <string name="game_section_lt">Left-top corner</string>

@@ -910,7 +910,7 @@ td:first-child{color:var(--text-1)}
 
       <div class="panel" style="margin-top:24px">
         <h3 style="margin-bottom:6px">Points popup at 44 dp and 120 dp</h3>
-        <p class="small muted">Fredoka Bold at 0.4c: a solid <code>surface.deep</code> fill, a <code>liquid.glow</code> edge 1 dp wide (a 2 dp stroke under the fill, so the overlaps inside the glyphs stay hidden) and a 6 dp <code>liquid.glow</code> glow at 70 %. It fades in, holds and fades out over 1 s while rising a quarter of a tile. The last row is the slim version it replaces.</p>
+        <p class="small muted">Fredoka Bold at 0.33c: a solid <code>surface.deep</code> fill, a <code>liquid.glow</code> edge 1 dp wide (a 2 dp stroke under the fill, so the overlaps inside the glyphs stay hidden) and a 6 dp <code>liquid.glow</code> glow at 70 %. It fades in, holds and fades out over 1 s while rising a quarter of a tile. The last row is the slim version it replaces.</p>
         <div class="popup-sizes" id="popupSizes"></div>
       </div>
 
@@ -1243,7 +1243,7 @@ const popupSamples = [
   popupSamples.forEach(([t, o, text, name])=>{
     const art = t==='EMPTY' ? '' : pipeSVG(t, o);
     const label = `${name} · ${size} dp${variant ? ' · slim (before)' : ''}`;
-    ps.insertAdjacentHTML('beforeend', `<div class="step"><div class="cell" style="width:${size}px; height:${size}px">${art}<span class="popup ${variant}" style="font-size:${size*0.4}px">${text}</span></div><span class="caption">${label}</span></div>`);
+    ps.insertAdjacentHTML('beforeend', `<div class="step"><div class="cell" style="width:${size}px; height:${size}px">${art}<span class="popup ${variant}" style="font-size:${size*(variant ? 0.4 : 0.33)}px">${text}</span></div><span class="caption">${label}</span></div>`);
   });
 });
 

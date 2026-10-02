@@ -13,7 +13,7 @@ When a section has run full, its points ("+10", "+15", "+25", "+50") pop up on t
   - Its look: the glyphs are **filled solid with `surface.deep`**, edged with a **thin 1 dp `liquid.glow` edge**, over a **soft `liquid.glow` glow** (blur 6 dp at 70 %). The glow carries the number on the dark board; the dark fill keeps the digits' counters open.
   - §7.4 *Reduced motion*: the popup is gameplay feedback; it keeps its fade and rise (no change), and its glow is static anyway.
   - The `docs/design-system.html` gallery gets a popup sample over an empty tile, a filled straight and a filled corner.
-- **App complies with the design system**: `drawPopups` in `PlayingField` draws the glow, the `surface.deep` fill and the `liquid.glow` stroke, replacing the `InkDark` outline and white fill. Text size (0.4 c), font, position, timing, rise and scale stay as they are.
+- **App complies with the design system**: `drawPopups` in `PlayingField` draws the glow, the `surface.deep` fill and the `liquid.glow` stroke, replacing the `InkDark` outline and white fill. The text shrinks from 0.4 to 0.33 of the tile (agreed on #51); font, position, timing, rise and scale stay as they are.
 - No `core` change: awards, points and their timing are unchanged.
 
 ## Capabilities

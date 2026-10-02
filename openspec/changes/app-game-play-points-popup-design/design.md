@@ -13,7 +13,7 @@ The design system has no popup entry at all; the colours it does define for "ali
 - The popup look is described in the design system and the app follows it, with tokens only.
 
 **Non-Goals:**
-- Timing, rise, scale, size (0.4 c), font, or position of the popup. The fade and rise stay exactly as they are.
+- Timing, rise, scale, font, or position of the popup. The fade and rise stay exactly as they are.
 - Popups anywhere other than the playing field (the result dialog tally is unaffected).
 - A Daylight-theme variant: the game board is always drawn in the Deep palette.
 
@@ -28,16 +28,14 @@ The design system has no popup entry at all; the colours it does define for "ali
 4. **Glow is a `liquid.glow` blur, 6 dp radius at 70 %, not the 24 dp `G` level.** A dark number on the dark board needs a halo to separate it from the pipe art; the 24 dp `G` glow is sized for buttons and the finish ring and would cover a whole 44 dp tile and its neighbours. 6 dp at 70 % gives a tight, bright halo around the digits. It is drawn as a text shadow (`Shadow(LiquidGlow.copy(alpha = 0.7f × popup alpha), Offset.Zero, 6.dp.toPx())`) on a fill pass in `liquid.glow`, the same technique `ResultDialogLayout` uses for the score glow, so no native canvas or `BlurMaskFilter` is needed. The final values are settled on the design-system gallery (task 1.3) and recorded in the design system; the spec only requires "a soft glow".
    *Alternative*: `BlurMaskFilter` on the native canvas, as in `CountdownBar`. Rejected: more code for the same look, and `drawText` already supports shadows.
 
-5. **Style lives in a pure `PopupStyle` object in `PointsPopup.kt`.** Colours (`SurfaceDeep`, `LiquidGlow`), stroke width, glow radius and glow alpha, next to `PopupTiming`. `drawPopups` only reads it. This makes the tokens unit-testable on the JVM and replaces the private `POPUP_OUTLINE` constant. `POPUP_TEXT_FRACTION` moves there too, unchanged at 0.4.
+5. **Style lives in a pure `PopupStyle` object in `PointsPopup.kt`.** Colours (`SurfaceDeep`, `LiquidGlow`), stroke width, glow radius and glow alpha, next to `PopupTiming`. `drawPopups` only reads it. This makes the tokens unit-testable on the JVM and replaces the private `POPUP_OUTLINE` constant. `POPUP_TEXT_FRACTION` moves there too, reduced from 0.4 to 0.33 (decision 7).
 
 6. **Reduced motion: no change.** The glow is static (it does not pulse), and the fade and rise are gameplay feedback that §7.4 already leaves alone; the design system says so explicitly.
+
+7. **Text shrinks from 0.4 c to 0.33 c.** The issue title says the indicator is too large. On approving the gallery (task 1.4), the product owner asked for a smaller number as well as the thinner edge. 0.33 c (about 14.5 sp at the 44 dp minimum cell) keeps "+50" well inside its tile, also at full rise. It is still sized to the tile, so it scales with zoom.
 
 ## Risks / Trade-offs
 
 - [The dark fill on a dark empty tile could read as a hole] → The glow and stroke carry the shape; verified on the gallery over an empty tile, a filled straight and a filled corner (task 1.3) and on the emulator screenshot (task 3.1) before the change is accepted on the issue.
 - [The three passes multiply text drawing per popup] → At most a handful of popups are on screen at once and the `TextLayoutResult` is measured once and reused, so the cost is negligible.
 - [Shadow blur radius is in px on `drawText`] → Converted from dp per frame with the field's density; covered by the unit test of `PopupStyle` (dp values) and the screenshot check (rendered).
-
-## Open Questions
-
-- Whether "too large" in the issue title also means a smaller text size. The body only asks about the border, and a thin border already makes the number look lighter; the size stays at 0.4 c unless the product owner asks for a change when approving the gallery screenshots (task 1.4). Changing the fraction would be a one-constant change and does not affect the tasks.

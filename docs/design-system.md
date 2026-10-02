@@ -247,7 +247,7 @@ Left to right, all items centred vertically:
 3. **Countdown bar** – takes all free space between the flow speed and the score bar, at least 96 dp wide.
    - Track: `radius.pill`, 8 dp tall, `line.subtle`.
    - Fill: from the left, the remaining countdown divided by the level's `flow.initialDelayMs`. Full when the attempt starts, empty when the liquid starts. It follows flow time, so it freezes on pause and drains 10× in fast forward.
-   - Colour by time left (flow time): `liquid.500` above 5 s, `brass.500` at 5 s or less, `leak.500` at 2 s or less. The fill carries a `G` glow in the same colour.
+   - Colour by time left (flow time): `liquid.500` above 5 s, `brass.500` at 5 s or less, `leak.500` at 2 s or less. The fill carries a `G` glow in the same colour at 45 %, with the blur reduced to 8 dp so it stays inside the 48 dp panel.
    - Once the liquid flows, the bar fades out (see 7.2) and its slot stays empty, so no other item moves. A level with `flow.initialDelayMs` 0 never shows it.
 4. **Score bar** – directly left of the pause button, fixed 200 dp wide, so it never changes size with the score.
    - Track: `radius.pill`, 20 dp tall, `surface.abyss` with a 1 dp `line.subtle` border.

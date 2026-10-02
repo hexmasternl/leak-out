@@ -90,10 +90,8 @@ class PointsPopupTest {
     @Test
     fun `popup style uses the design-system tokens`() {
         assertEquals(0.33f, PopupStyle.TEXT_FRACTION, 1e-6f)
-        assertEquals(LeakOutColors.SurfaceDeep, PopupStyle.fill)
-        assertEquals(LeakOutColors.LiquidGlow, PopupStyle.stroke)
+        assertEquals(LeakOutColors.TextPrimary, PopupStyle.fill)
         assertEquals(LeakOutColors.LiquidGlow, PopupStyle.glow)
-        assertEquals(2.dp, PopupStyle.strokeWidth)
         assertEquals(6.dp, PopupStyle.glowRadius)
     }
 

@@ -56,17 +56,15 @@ object PointsFormat {
 }
 
 /**
- * How a points popup is drawn (design system 7.2): a [glow] halo, a [stroke] of which the fill on
- * top hides the inner half (so a 1 dp edge shows and the glyphs' overlapping contours stay hidden),
- * and an opaque [fill]. The board is always Deep, so these are the Deep tokens in both themes.
+ * How a points popup is drawn (design system 7.2): a soft [glow] halo under an opaque, light
+ * [fill]. There is no outline or dark edge. The board is always Deep, so these are the Deep tokens
+ * in both themes.
  */
 object PopupStyle {
     /** The text size, relative to the cell size. */
     const val TEXT_FRACTION = 0.33f
 
-    val fill: Color = LeakOutColors.SurfaceDeep
-    val stroke: Color = LeakOutColors.LiquidGlow
-    val strokeWidth = 2.dp
+    val fill: Color = LeakOutColors.TextPrimary
     val glow: Color = LeakOutColors.LiquidGlow
     val glowRadius = 6.dp
     const val GLOW_ALPHA = 0.7f

@@ -37,7 +37,7 @@ class PopupScreenshotTest {
     val compose = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun popupHasADeepFillAGlowEdgeAndNoInkOutline() {
+    fun popupHasALightFillAGlowAndNoDarkBorder() {
         compose.runOnUiThread { compose.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
         compose.waitForIdle()
         var popups by mutableStateOf(false)
@@ -56,28 +56,28 @@ class PopupScreenshotTest {
         val shown = capture()
         val bareCounts = counts(bare)
         val shownCounts = counts(shown)
-        // The opaque deep fill covers part of the pipe, the liquid and the tile.
-        assertTrue("deep fill drawn: $bareCounts -> $shownCounts", shownCounts.deep > bareCounts.deep + MIN_PIXELS)
-        // The liquid-glow edge and halo surround the glyphs.
+        // The opaque light fill covers part of the pipe, the liquid and the tile.
+        assertTrue("light fill drawn: $bareCounts -> $shownCounts", shownCounts.light > bareCounts.light + MIN_PIXELS)
+        // The liquid-glow halo surrounds the glyphs.
         assertTrue("glow edge drawn: $bareCounts -> $shownCounts", shownCounts.glow > bareCounts.glow + MIN_PIXELS)
-        // No slim ink outline and no white fill.
+        // No dark border: neither a deep nor an ink outline.
         assertTrue("no ink outline: $bareCounts -> $shownCounts", shownCounts.ink <= bareCounts.ink + INK_SLACK)
-        assertTrue("no white fill: $bareCounts -> $shownCounts", shownCounts.white <= bareCounts.white + INK_SLACK)
+        assertTrue("no deep border: $bareCounts -> $shownCounts", shownCounts.deep <= bareCounts.deep + INK_SLACK)
         val dir = File(compose.activity.getExternalFilesDir(null), "popup-screenshots").apply { mkdirs() }
         File(dir, "popups.png").outputStream().use { shown.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
     private fun capture(): Bitmap = compose.onNodeWithTag(TAG).captureToImage().asAndroidBitmap()
 
-    private data class Counts(val deep: Int, val glow: Int, val ink: Int, val white: Int)
+    private data class Counts(val light: Int, val deep: Int, val glow: Int, val ink: Int)
 
     private fun counts(bitmap: Bitmap): Counts {
         val pixels = IntArray(bitmap.width * bitmap.height).also { bitmap.getPixels(it, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height) }
         return Counts(
+            light = pixels.count { it.isCloseTo(LeakOutColors.TextPrimary.toArgb(), tolerance = 4) },
             deep = pixels.count { it.isCloseTo(LeakOutColors.SurfaceDeep.toArgb(), tolerance = 4) },
             glow = pixels.count { it.isCloseTo(LeakOutColors.LiquidGlow.toArgb()) },
             ink = pixels.count { it.isCloseTo(LeakOutColors.InkDark.toArgb(), tolerance = 4) },
-            white = pixels.count { it.isCloseTo(0xFFFFFFFF.toInt(), tolerance = 4) },
         )
     }
 

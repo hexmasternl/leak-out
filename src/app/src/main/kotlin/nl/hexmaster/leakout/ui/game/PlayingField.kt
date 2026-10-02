@@ -809,7 +809,7 @@ private fun DrawScope.drawFinishRing(rect: Rect, frame: FinishFlashFrame) {
 
 /**
  * "+N" for every popup whose tile touches the field, as [PopupStyle] describes: Fredoka bold at a
- * third of a tile, a liquid-glow halo and stroke under an opaque deep fill, centred on the tile and
+ * third of a tile, a liquid-glow halo under an opaque light fill, centred on the tile and
  * lifted by its rise. Off-field popups are skipped but keep their timing, since the age comes from
  * [nowMs].
  */
@@ -817,7 +817,6 @@ private fun DrawScope.drawPopups(popups: List<Award>, nowMs: Long, viewport: Fie
     if (popups.isEmpty()) return
     val field = Rect(Offset.Zero, size)
     val style = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Bold, fontSize = (viewport.cellPx * PopupStyle.TEXT_FRACTION).toSp())
-    val edge = Stroke(PopupStyle.strokeWidth.toPx(), join = StrokeJoin.Round)
     val glowRadius = PopupStyle.glowRadius.toPx()
     for (popup in popups) {
         val frame = popupFrame(popup.ageAt(nowMs)) ?: continue
@@ -828,7 +827,6 @@ private fun DrawScope.drawPopups(popups: List<Award>, nowMs: Long, viewport: Fie
         val topLeft = center - Offset(layout.size.width / 2f, layout.size.height / 2f)
         scale(frame.scale, pivot = center) {
             drawText(layout, PopupStyle.glow, topLeft, alpha = frame.alpha, shadow = Shadow(PopupStyle.glowColor(frame.alpha), Offset.Zero, glowRadius))
-            drawText(layout, PopupStyle.stroke, topLeft, alpha = frame.alpha, drawStyle = edge)
             drawText(layout, PopupStyle.fill, topLeft, alpha = frame.alpha)
         }
     }

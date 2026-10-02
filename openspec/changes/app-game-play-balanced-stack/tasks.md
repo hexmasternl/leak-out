@@ -22,7 +22,7 @@ Tracking issue: [#35 Random tile stack population needs to be less random](https
 ## 4. Levels and docs
 
 - [x] 4.1 Re-tune the bundled levels in `app/src/main/assets/levels/`: `"X": 1` → `"X": 3`, `"X": 2` → `"X": 6`; verify every level still parses, validates and is solvable with `./gradlew :core:test` (`LevelSolvabilityTest` and the bundled-level tests)
-- [ ] 4.2 Update `docs/level-format.md`: example and defaults table (weights 7), "Stack weights" explains that a weight is a target share, and a new "How the stack deals" section on deficit steering, the drought limit (standard sections only) and why a retry still deals a different sequence
+- [x] 4.2 Update `docs/level-format.md`: example and defaults table (weights 7), "Stack weights" explains that a weight is a target share, and a new "How the stack deals" section on deficit steering, the drought limit (standard sections only) and why a retry still deals a different sequence
 
 ## 5. Verify
 

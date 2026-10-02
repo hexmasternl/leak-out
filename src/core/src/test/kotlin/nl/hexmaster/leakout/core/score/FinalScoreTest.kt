@@ -35,6 +35,18 @@ class FinalScoreTest {
     }
 
     @Test
+    fun `mandatory sections are never unused`() {
+        val board = empty
+            .pipe(1, 1, PipeSection.H, entered = true)
+            .with(Position(4, 0), Cell.Pipe(PipeSection.X, mandatory = true))
+            .with(Position(5, 5), Cell.Pipe(PipeSection.RES, liquidEntered = true, mandatory = true))
+            .pipe(2, 8, PipeSection.LT)
+        val score = FinalScore.of(50, board)
+        assertEquals(listOf(Position(2, 8)), score.unusedSections)
+        assertEquals(47, score.total)
+    }
+
+    @Test
     fun `no unused sections cost nothing`() {
         val board = empty.pipe(1, 1, PipeSection.H, entered = true).pipe(2, 1, PipeSection.LB, entered = true)
         val score = FinalScore.of(25, board)

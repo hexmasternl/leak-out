@@ -30,10 +30,10 @@ Tracking issue: [#43 Level designer](https://github.com/hexmasternl/leak-out/iss
 
 ## 5. Designer UI (app)
 
-- [ ] 5.1 Build `DesignerGrid`: canvas that fits the whole grid, draws cells, blocked cells and endpoints with open sides using the game's drawing code, highlights error cells and draws the solver path faintly; maps taps and drags to cells for the selected tool
-- [ ] 5.2 Build the control panel sections: grid size steppers (disabled at 4 and 50), tool selector (Start, Finish, Block), open side controls for start and finish, Clear blocked, id and name, flow, stack weights and visible size, rules, stars, status with error list, and Test play / Export / Start from bundled level actions
-- [ ] 5.3 Build `LevelDesignerScreen` (landscape, game theme, safe-area insets) with back handling and the discard-changes confirmation dialog
-- [ ] 5.4 Add strings and test tags; Compose previews for a blank, an invalid and an unsolvable design
+- [x] 5.1 Build `DesignerGrid`: canvas that fits the whole grid, draws cells, blocked cells and endpoints with open sides using the game's drawing code, highlights error cells and draws the solver path faintly; maps taps and drags to cells for the selected tool
+- [x] 5.2 Build the control panel sections: grid size steppers (disabled at 4 and 50), tool selector (Start, Finish, Block), open side controls for start and finish, Clear blocked, id and name, flow, stack weights and visible size, rules, stars, status with error list, and Test play / Export / Start from bundled level actions
+- [x] 5.3 Build `LevelDesignerScreen` (landscape, game theme, safe-area insets) with back handling and the discard-changes confirmation dialog
+- [x] 5.4 Add strings and test tags; Compose previews for a blank, an invalid and an unsolvable design
 - [ ] 5.5 Instrumented Compose tests: tap with Start tool moves the start, drag with Block tool blocks a row, steppers disabled at limits, invalid design disables Test play and Export and lists errors, back with changes shows the dialog
 
 ## 6. Welcome screen entry and navigation (app)

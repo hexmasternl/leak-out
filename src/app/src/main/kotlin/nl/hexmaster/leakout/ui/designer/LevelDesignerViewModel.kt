@@ -94,6 +94,9 @@ class LevelDesignerViewModel(
 
     // Starting points
 
+    /** How many bundled levels a design can be copied from, ids `1..bundledLevelCount`. */
+    val bundledLevelCount: Int get() = levels.levelCount()
+
     /** Replaces the design with a blank level. */
     fun newBlank() = replace(blank())
 

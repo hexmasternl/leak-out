@@ -46,7 +46,7 @@ function pipe({pts, w, fill=1, radius}) {
   s += st(C.s100, 6*k, `opacity="0.5" transform="translate(${-(w/2)+16*k},${-(w/2)+16*k})"`);
   s += st(C.s900, wb);
   const dash = fill < 1 ? `pathLength="1" stroke-dasharray="${fill} 1"` : '';
-  s += st(C.lglow, wl+30*k, `opacity="0.55" filter="url(#blur24)" ${dash}`);
+  s += st(C.lglow, wl+14*k, `opacity="0.4" filter="url(#blur24)" ${dash}`);
   s += st(C.l700, wl, dash);
   s += st(C.l500, wl-8*k, `transform="translate(${-2*k},${-4*k})" ${dash}`);
   s += st(C.l300, 6*k, `opacity="0.85" transform="translate(${-(wl/2)+8*k},${-(wl/2)+8*k})" ${dash}`);
@@ -128,35 +128,45 @@ function background(rounded) {
   }
 }
 
-// The subject: liquid enters from the left through a brass valve, rounds an
-// elbow and heads down and out of frame. The elbow is leaking - that is the game.
+// The subject, zoomed in on what matters: liquid enters from the left through a
+// brass valve, rounds an elbow and heads down and out of frame. The elbow is
+// leaking - that is the game. The parts are drawn large and the fine detail
+// (second flange, trailing bubbles, small drops) is left out, so the valve,
+// the bend and the leak still read on a 48 dp launcher icon.
 function subject() {
-  const w = 150;
-  const ex = 590, ey = 440;                // elbow
-  pipe({pts:[[-60, ey], [ex, ey], [ex, S+60]], w, fill:0.76});
-  flange(150, ey, false, w);
-  flange(ex, 720, true, w);
-  valve(325, ey, 108);
+  const w = 220;
+  const ex = 640, ey = 400, br = 200;      // elbow corner and bend radius
+  const hy = 730;                          // liquid head, a little down the vertical leg
+  // dash fraction that puts the end of the liquid at the head
+  const bend = bezierLength([ex-br, ey], [ex, ey], [ex, ey+br]);
+  const total = (ex-br+80) + bend + (S+80-ey-br);
+  const fill = ((ex-br+80) + bend + (hy-ey-br)) / total;
+  pipe({pts:[[-80, ey], [ex, ey], [ex, S+80]], w, fill, radius:br});
+  flange(70, ey, false, w);
+  valve(345, ey, 135);
 
-  // liquid head just past the elbow (fill 0.76 lands around y = 790)
-  const hx = ex, hy = 800;
-  p(`<circle cx="${hx}" cy="${hy}" r="42" fill="${C.lglow}" opacity="0.7" filter="url(#blur24)"/>
-     <circle cx="${hx-2}" cy="${hy-4}" r="27" fill="${C.lglow}"/>
-     <circle cx="${hx-8}" cy="${hy-70}" r="6" fill="${C.lglow}" opacity="0.8"/>
-     <circle cx="${hx+10}" cy="${hy-118}" r="4.5" fill="${C.lglow}" opacity="0.7"/>
-     <circle cx="${hx-4}" cy="${hy-160}" r="5" fill="${C.lglow}" opacity="0.55"/>`);
+  // liquid head
+  p(`<circle cx="${ex}" cy="${hy}" r="58" fill="${C.lglow}" opacity="0.7" filter="url(#blur24)"/>
+     <circle cx="${ex-3}" cy="${hy-6}" r="38" fill="${C.lglow}"/>`);
 
   // the leak: spray from the outer bend of the elbow, up and to the right
-  // the outer surface of the bend passes through the elbow point itself, so the spray starts right there
-  const lx = ex + 22, ly = ey - 22;
-  p(`<circle cx="${lx-10}" cy="${ly+10}" r="34" fill="${C.lglow}" opacity="0.6" filter="url(#blur24)"/>
-     <path d="M${lx-22},${ly+22} Q${lx+14},${ly-14} ${lx+52},${ly-48}" fill="none" stroke="${C.l300}" stroke-width="10" stroke-linecap="round" opacity="0.9"/>
-     <path d="M${lx-14},${ly+30} Q${lx+26},${ly+4} ${lx+66},${ly-18}" fill="none" stroke="${C.lglow}" stroke-width="5" stroke-linecap="round" opacity="0.65"/>
-     <path d="M${lx-26},${ly+14} Q${lx-4},${ly-24} ${lx+18},${ly-64}" fill="none" stroke="${C.lglow}" stroke-width="4" stroke-linecap="round" opacity="0.5"/>`);
-  drop(lx+72,  ly-86, 2.6, 38, 1);
-  drop(lx+124, ly-124, 1.9, 42, 0.95);
-  drop(lx+156, ly-62, 1.5, 62, 0.85);
-  drop(lx+98,  ly-20, 1.2, 72, 0.7);
+  const lx = ex + 20, ly = ey - 26;
+  p(`<circle cx="${lx-6}" cy="${ly+8}" r="52" fill="${C.lglow}" opacity="0.65" filter="url(#blur24)"/>
+     <path d="M${lx-20},${ly+20} L${lx+26},${ly-26}" stroke="${C.l300}" stroke-width="22" stroke-linecap="round"/>
+     <path d="M${lx-16},${ly+12} L${lx+18},${ly-22}" stroke="${C.lglow}" stroke-width="8" stroke-linecap="round"/>`);
+  drop(lx+78,  ly-80, 3.4, 40, 1);
+  drop(lx+128, ly-10, 2.6, 66, 0.95);
+  drop(lx+30,  ly-132, 2.2, 22, 0.85);
+}
+
+function bezierLength(a, c, b) {
+  let len = 0, [px, py] = a;
+  for (let i = 1; i <= 200; i++) {
+    const t = i/200, u = 1-t;
+    const x = u*u*a[0] + 2*u*t*c[0] + t*t*b[0], y = u*u*a[1] + 2*u*t*c[1] + t*t*b[1];
+    len += Math.hypot(x-px, y-py); px = x; py = y;
+  }
+  return len;
 }
 
 function svgOpen() {
@@ -173,10 +183,12 @@ function write(name, body) {
   console.log('wrote', file, out.join('\n').length, 'bytes');
 }
 
-// Full icon: rounded plate + subject. Use for the Play Store listing (512 px) and legacy launchers.
-write('app-icon.svg', () => { background(true); p(`<g clip-path="url(#squircle)">`); subject(); p(`</g>`); });
+// Launchers show only the central 72 of 108 dp of an adaptive icon. The full icon (Play Store
+// listing) shows the whole plate, so there the subject is scaled up by about 108/72 to match the launcher.
+const zoom = (z, body) => { p(`<g transform="translate(${CX},${CY}) scale(${z}) translate(${-CX},${-CY})">`); body(); p(`</g>`); };
+
+// Full icon: rounded plate + subject. Use for the Play Store listing (512 px).
+write('app-icon.svg', () => { background(true); p(`<g clip-path="url(#squircle)">`); zoom(1.3, subject); p(`</g>`); });
 // Adaptive layers: background is the plate edge-to-edge, foreground is the subject on transparency.
 write('adaptive-background.svg', () => background(false));
-// Launchers show only the central 72 of 108 dp, so the subject is scaled towards the centre a little;
-// the pipe ends still run off the visible area.
-write('adaptive-foreground.svg', () => { p(`<g transform="translate(${CX},${CY}) scale(0.84) translate(${-CX},${-CY})">`); subject(); p(`</g>`); });
+write('adaptive-foreground.svg', () => zoom(0.86, subject));

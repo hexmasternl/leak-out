@@ -14,13 +14,13 @@ Tracking issue: [#43 Level designer](https://github.com/hexmasternl/leak-out/iss
 
 ## 3. Level draft editing model (core)
 
-- [ ] 3.1 Implement `core/.../level/LevelDraft.kt` with `LevelDraft.new(id)` producing the blank level from the spec (7x5, start 0,2 `RIGHT`, finish 6,2 `LEFT`, flow 20000 ms / 0.4, stars 50/80/120, defaults elsewhere)
-- [ ] 3.2 `resize(columns, rows)`: clamp to 4..50, drop blocked cells outside the grid, move an outside start/finish to the nearest inside cell keeping its open side
-- [ ] 3.3 `placeStart`/`placeFinish` (keep open side, unblock target cell, ignore the other endpoint's cell, ignore cells outside the grid) and `setOpenSide`
-- [ ] 3.4 `toggleBlocked`, `paintBlocked(cells, blocked)` and `clearBlocked`, never blocking an endpoint and never adding a duplicate
-- [ ] 3.5 Field setters for id, name, flow, stack visible size and weights, rules and stars
-- [ ] 3.6 Implement `DesignStatus` (`Invalid(errors)`, `Unsolvable(reason)`, `Solvable(path)`) derived from `LevelValidator` then `LevelSolver`, plus mapping of error fields (`start.*`, `finish.*`, `blocked[i]`) to highlighted cells
-- [ ] 3.7 Unit tests for every `LevelDraft` operation and every spec scenario (grow, shrink drops blocked, shrink moves finish, range limits, start onto blocked, endpoints cannot share a cell, toggle, drag paint skipping an endpoint, clear) and for `DesignStatus` (blank is solvable, several errors listed with highlighted start, walled-off finish unsolvable)
+- [x] 3.1 Implement `core/.../level/LevelDraft.kt` with `LevelDraft.new(id)` producing the blank level from the spec (7x5, start 0,2 `RIGHT`, finish 6,2 `LEFT`, flow 20000 ms / 0.4, stars 50/80/120, defaults elsewhere)
+- [x] 3.2 `resize(columns, rows)`: clamp to 4..50, drop blocked cells outside the grid, move an outside start/finish to the nearest inside cell keeping its open side
+- [x] 3.3 `placeStart`/`placeFinish` (keep open side, unblock target cell, ignore the other endpoint's cell, ignore cells outside the grid) and `setOpenSide`
+- [x] 3.4 `toggleBlocked`, `paintBlocked(cells, blocked)` and `clearBlocked`, never blocking an endpoint and never adding a duplicate
+- [x] 3.5 Field setters for id, name, flow, stack visible size and weights, rules and stars
+- [x] 3.6 Implement `DesignStatus` (`Invalid(errors)`, `Unsolvable(reason)`, `Solvable(path)`) derived from `LevelValidator` then `LevelSolver`, plus mapping of error fields (`start.*`, `finish.*`, `blocked[i]`) to highlighted cells
+- [x] 3.7 Unit tests for every `LevelDraft` operation and every spec scenario (grow, shrink drops blocked, shrink moves finish, range limits, start onto blocked, endpoints cannot share a cell, toggle, drag paint skipping an endpoint, clear) and for `DesignStatus` (blank is solvable, several errors listed with highlighted start, walled-off finish unsolvable)
 
 ## 4. Designer view model and export (app)
 

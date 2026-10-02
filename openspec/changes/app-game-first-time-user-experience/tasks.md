@@ -6,7 +6,7 @@ Tracking issue: [#36 First time user experience](https://github.com/hexmasternl/
 
 - [x] 1.1 Add a "Tip overlay" component to `docs/design-system.md` §5 (scrim with spotlight cut-out, glow ring, callout card with pointer, step counter, Next / Skip tour / Let's go / Got it buttons) and its entry, step change and drag hint motion to §7.2 with reduced-motion variants in §7.4; verify every token named exists in §2–§4
 - [x] 1.2 Write the tip texts (5 intro steps, cross, reservoir, mandatory) into the design system section; verify they state the facts in the `game-play-onboarding` spec (10/50 points, 25 points, reservoir percentage, left–right only, mandatory loss rule)
-- [ ] 1.3 Build static Compose `@Preview` mock-ups (start step, placing step with hint, cross tip on the stack) and attach screenshots to issue #36; verify the previews render
+- [x] 1.3 Build static Compose `@Preview` mock-ups (start step, placing step with hint, cross tip on the stack) and attach screenshots to issue #36; verify the previews render
 - [ ] 1.4 Get the product owner's approval on issue #36 and record requested changes in the design system and spec; verify approval is noted on the issue before starting group 3
 
 ## 2. Seen tips storage

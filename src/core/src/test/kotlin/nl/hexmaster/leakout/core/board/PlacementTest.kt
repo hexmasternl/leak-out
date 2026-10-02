@@ -12,10 +12,15 @@ class PlacementTest {
     private val level = TestLevels.valid()
     private val unfilled = Position(2, 2)
     private val filled = Position(4, 4)
+    private val dryMandatory = Position(5, 2)
+    private val filledMandatory = Position(1, 6)
     private val board = Board.from(level)
         .with(unfilled, Cell.Pipe(PipeSection.H))
         .with(filled, Cell.Pipe(PipeSection.V))
         .markLiquidEntered(filled)
+        .with(dryMandatory, Cell.Pipe(PipeSection.X, mandatory = true))
+        .with(filledMandatory, Cell.Pipe(PipeSection.RES, mandatory = true))
+        .markLiquidEntered(filledMandatory)
     private val rules = PlacementRules(allowReplace = true, replacePenaltyMs = 500)
 
     private fun check(at: Position, rules: PlacementRules = this.rules, nowMs: Long = 0, lockUntilMs: Long = 0) =
@@ -47,6 +52,17 @@ class PlacementTest {
     fun `a pipe refuses when the level does not allow replacing`() {
         assertEquals(PlacementCheck.Rejected(Reason.REPLACE_NOT_ALLOWED), check(unfilled, rules.copy(allowReplace = false)))
         assertEquals(PlacementCheck.Place, check(Position(1, 1), rules.copy(allowReplace = false)))
+    }
+
+    @Test
+    fun `a dry mandatory section refuses even when replacing is allowed`() {
+        assertEquals(PlacementCheck.Rejected(Reason.FIXED), check(dryMandatory, rules.copy(allowReplace = true)))
+    }
+
+    @Test
+    fun `a mandatory section the liquid has entered refuses as fixed`() {
+        assertEquals(PlacementCheck.Rejected(Reason.FIXED), check(filledMandatory))
+        assertEquals(PlacementCheck.Rejected(Reason.FIXED), check(filledMandatory, rules.copy(allowReplace = false)))
     }
 
     @Test

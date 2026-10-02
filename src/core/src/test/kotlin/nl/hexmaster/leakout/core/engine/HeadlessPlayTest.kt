@@ -9,9 +9,11 @@ import kotlin.test.fail
 import nl.hexmaster.leakout.core.board.Cell
 import nl.hexmaster.leakout.core.engine.GameCommand.Place
 import nl.hexmaster.leakout.core.engine.GameCommand.Tick
+import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.LevelParser
 import nl.hexmaster.leakout.core.level.LevelSolver
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.ParseResult
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
@@ -31,14 +33,17 @@ class HeadlessPlayTest {
         return assertIs<ParseResult.Success>(LevelParser.parse(file.readText())).level
     }
 
-    /** The straight or corner section for each cell of the solver's path, so the path carries the liquid. */
+    /**
+     * The straight or corner section for each cell of the solver's path, so the path carries the
+     * liquid. The level's mandatory sections are already on the board and are left out.
+     */
     private fun routeFor(level: Level): List<Pair<Position, PipeSection>> {
         val path = assertIs<SolverResult.Solvable>(LevelSolver.solve(level)).path
         val cells = listOf(level.start.position) + path + level.finish.position
         return path.mapIndexed { i, cell ->
             val sides = setOf(sideTowards(cell, cells[i]), sideTowards(cell, cells[i + 2]))
             cell to PipeSection.entries.first { it != PipeSection.X && it != PipeSection.RES && it.openSides == sides }
-        }
+        }.filter { (cell, _) -> level.mandatoryAt(cell) == null }
     }
 
     private fun sideTowards(from: Position, to: Position): Side = Side.entries.first { from.neighbour(it) == to }
@@ -97,6 +102,58 @@ class HeadlessPlayTest {
         assertEquals(last, lost.at)
         assertEquals(30, end.score)
         assertTrue(engine.handle(end, Place(route[3].first)) === end, "no placing after the loss")
+    }
+
+    /**
+     * Start (0, 2) open right into a mandatory reservoir at (1, 2), then a mandatory cross at (2, 2);
+     * the finish at (2, 4) is open at the top. The stack deals standard sections only.
+     */
+    private val mandatoryLevel = engineLevel(
+        section = null,
+        start = Endpoint(Position(0, 2), Side.RIGHT),
+        finish = Endpoint(Position(2, 4), Side.TOP),
+        mandatory = listOf(MandatorySection(Position(1, 2), PipeSection.RES), MandatorySection(Position(2, 2), PipeSection.X)),
+    )
+
+    @Test
+    fun `a level with a mandatory cross and reservoir is won through both channels of the cross`() {
+        // Up and round after the cross, then down through it into the finish.
+        val route = listOf(
+            Position(3, 2) to PipeSection.LT,
+            Position(3, 1) to PipeSection.LB,
+            Position(2, 1) to PipeSection.RB,
+            Position(2, 3) to PipeSection.V,
+        )
+        val built = build(engine.start(mandatoryLevel), route)
+        assertTrue(built.routeComplete)
+
+        val end = play(built)
+        assertIs<Outcome.Won>(end.outcome)
+        assertEquals(25 + 10 + 15 + 15 + 15 + 50 + 10, end.score)
+        for (at in listOf(Position(1, 2), Position(2, 2))) {
+            val pipe = assertIs<Cell.Pipe>(end.board[at])
+            assertTrue(pipe.mandatory && pipe.liquidEntered, "mandatory section at $at")
+            assertTrue(at !in end.finalScore!!.unusedSections)
+        }
+    }
+
+    @Test
+    fun `a level with a mandatory cross is lost when the liquid passes it on one channel only`() {
+        // Down and round below the cross into the finish: the cross's vertical channel is never used.
+        val route = listOf(
+            Position(3, 2) to PipeSection.LB,
+            Position(3, 3) to PipeSection.LT,
+            Position(2, 3) to PipeSection.RB,
+        )
+        val built = build(engine.start(mandatoryLevel), route)
+        assertTrue(!built.routeComplete, "a route that misses a mandatory channel is not complete")
+
+        val end = play(built)
+        val lost = assertIs<Outcome.Lost>(end.outcome)
+        assertEquals(LossReason.MANDATORY_MISSED, lost.reason)
+        assertEquals(Position(2, 4) to Side.TOP, lost.at to lost.side)
+        assertEquals(25 + 10 + 15 + 15 + 15, end.score)
+        assertTrue(engine.handle(end, Place(Position(4, 4))) === end, "no placing after the loss")
     }
 
     @Test

@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -31,9 +34,12 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
+import nl.hexmaster.leakout.core.board.Board
+import nl.hexmaster.leakout.core.engine.FlowState
 import nl.hexmaster.leakout.core.engine.GameCommand
 import nl.hexmaster.leakout.core.level.GridSize
 import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.PlacementRules
 import nl.hexmaster.leakout.core.level.Position
@@ -453,6 +459,62 @@ class PlayingFieldTest {
         assertTileUnchanged(dry, full, rect)
     }
 
+    // Mandatory sections (app-game-play-mandatory-sections). The default route runs down column 2;
+    // its first V at (2, 1) is a mandatory cross here, so the liquid only uses its vertical channel.
+
+    private val mandatoryCross = Position(2, 1)
+
+    private fun showWithMandatoryCross() {
+        show(FieldTest.level(mandatory = listOf(MandatorySection(mandatoryCross, PipeSection.X))))
+        compose.runOnIdle {
+            for ((at, section) in FieldTest.ROUTE) if (at != mandatoryCross) assertTrue(session.placeSection(section, at))
+        }
+        compose.waitForIdle()
+    }
+
+    /** The tile colour in the top left corner of [cell], off the pipe art. */
+    private fun PixelMap.tileCorner(cell: Position): androidx.compose.ui.graphics.Color {
+        val rect = cellRectInField(cell)
+        return this[(rect.left + rect.width * 0.12f).toInt(), (rect.top + rect.height * 0.12f).toInt()]
+    }
+
+    private fun androidx.compose.ui.graphics.Color.isLeakTinted(): Boolean = red > 0.15f && red > green + 0.04f
+
+    @Test
+    fun mandatorySectionIsDrawnOnARedTintedTile() {
+        showWithMandatoryCross()
+        compose.cellNode(mandatoryCross)
+            .assert(SemanticsMatcher.expectValue(MandatoryTile, true))
+            .assert(SemanticsMatcher.expectValue(FieldPipeSection, PipeSection.X))
+            .assertContentDescriptionEquals("Mandatory X, not used yet")
+        val pixels = fieldPixels()
+        assertTrue("mandatory tile ${pixels.tileCorner(mandatoryCross)}", pixels.tileCorner(mandatoryCross).isLeakTinted())
+        // Only the mandatory cross: the placed V right below it keeps the plain tile.
+        val placed = Position(2, 2)
+        assertTrue("placed tile ${pixels.tileCorner(placed)}", !pixels.tileCorner(placed).isLeakTinted())
+        compose.cellNode(placed).assert(SemanticsMatcher.keyNotDefined(MandatoryTile))
+    }
+
+    @Test
+    fun mandatoryCrossKeepsItsTintWhenFilledAndIsNotUsedOnOneChannel() {
+        showWithMandatoryCross()
+        val dry = fieldPixels().tileCorner(mandatoryCross)
+        // 1 250 ms a cell: the start, (1, 0), (2, 0) and the cross are behind the head after 5 600 ms.
+        compose.runOnIdle {
+            session.endCountdown()
+            session.sendTick(5_600)
+        }
+        compose.waitForIdle()
+
+        compose.cellNode(mandatoryCross)
+            .assert(SemanticsMatcher.expectValue(FilledChannels, setOf(nl.hexmaster.leakout.core.flow.Channel.VERTICAL)))
+            .assertContentDescriptionEquals("Mandatory X, not used yet")
+        val wet = fieldPixels().tileCorner(mandatoryCross)
+        assertTrue("tint stays: $dry then $wet", wet.isLeakTinted())
+        assertEquals(dry.red, wet.red, 0.02f)
+        assertEquals(dry.green, wet.green, 0.02f)
+    }
+
     private fun fieldPixels(): PixelMap = compose.onNodeWithTag(GameScreenTags.FIELD).captureToImage().toPixelMap()
 
     private fun cellRectInField(cell: Position): Rect {
@@ -499,6 +561,147 @@ class PlayingFieldTest {
     private fun PixelMap.brightnessAt(rect: Rect, fx: Float, fy: Float): Float {
         val c = this[(rect.left + rect.width * fx).toInt(), (rect.top + rect.height * fy).toInt()]
         return c.red + c.green + c.blue
+    }
+
+    // Start valve and checkered finish (app-game-play-start-finish-design). The default test level
+    // has its start on (0, 0) opening right and its finish on (3, 3) opening left.
+
+    private val startCell = Position(0, 0)
+    private val finishCell = Position(3, 3)
+
+    @Test
+    fun startAndFinishAreStillFoundByTheirDescriptions() {
+        show()
+        compose.onNode(hasContentDescription("Start"), useUnmergedTree = true).assert(SemanticsMatcher.expectValue(EndpointGlowAlpha, glowOf(startCell)))
+        compose.onNode(hasContentDescription("Finish"), useUnmergedTree = true).assert(SemanticsMatcher.expectValue(EndpointGlowAlpha, glowOf(finishCell)))
+        compose.cellNode(startCell).assertContentDescriptionEquals("Start")
+        compose.cellNode(finishCell).assertContentDescriptionEquals("Finish")
+    }
+
+    @Test
+    fun valveGlowPulsesDuringTheCountdown() {
+        val clock = showBareField()
+        val atStart = glowOf(startCell)
+        clock.nowMs = 800
+        compose.waitForIdle()
+        val halfWay = glowOf(startCell)
+        assertTrue("valve glow changes over 800 ms: $atStart -> $halfWay", abs(halfWay - atStart) > 0.2f)
+        clock.nowMs = 1_600
+        compose.waitForIdle()
+        assertEquals(atStart, glowOf(startCell), 0.01f)
+    }
+
+    @Test
+    fun finishGlowPulsesUntilTheWin() {
+        val clock = showBareField()
+        val atStart = glowOf(finishCell)
+        clock.nowMs = 1_000
+        compose.waitForIdle()
+        assertTrue("finish glow changes over 1 s", abs(glowOf(finishCell) - atStart) > 0.2f)
+    }
+
+    @Test
+    fun valveGlowIsSteadyOnceTheLiquidFlows() {
+        show()
+        compose.runOnIdle { session.endCountdown() }
+        compose.waitForIdle()
+        assertEquals(EndpointGlow.STEADY, glowOf(startCell), 0.001f)
+        compose.runOnIdle { session.sendTick(400) }
+        compose.waitForIdle()
+        assertEquals(EndpointGlow.STEADY, glowOf(startCell), 0.001f)
+    }
+
+    @Test
+    fun glowsDoNotChangeWhilePaused() {
+        show()
+        compose.runOnIdle { session.send(GameCommand.Pause) }
+        compose.waitForIdle()
+        val valve = glowOf(startCell)
+        val finish = glowOf(finishCell)
+        // The engine drops ticks while paused, so game time stands still.
+        compose.runOnIdle { session.sendTick(800) }
+        compose.mainClock.advanceTimeBy(800)
+        compose.waitForIdle()
+        assertEquals(valve, glowOf(startCell), 0.001f)
+        assertEquals(finish, glowOf(finishCell), 0.001f)
+    }
+
+    @Test
+    fun glowsAreSteadyWithAnimationsOff() {
+        val clock = showBareField(reducedMotion = true)
+        for (t in listOf(0L, 400L, 800L, 1_000L)) {
+            clock.nowMs = t
+            compose.waitForIdle()
+            assertEquals("valve at $t", EndpointGlow.STEADY, glowOf(startCell), 0.001f)
+            assertEquals("finish at $t", EndpointGlow.STEADY, glowOf(finishCell), 0.001f)
+        }
+    }
+
+    @Test
+    fun startStubFillsWhileTheHeadIsInTheStartAndEmptiesOnRestart() {
+        show()
+        compose.runOnIdle {
+            assertTrue(session.placeSection(PipeSection.H, Position(1, 0)))
+            assertTrue(session.placeSection(PipeSection.H, Position(2, 0)))
+        }
+        compose.waitForIdle()
+        assertEquals(0f, startFilledOf(), 0.001f)
+
+        compose.runOnIdle { session.endCountdown() }
+        compose.waitForIdle()
+        assertEquals(0f, startFilledOf(), 0.02f)
+
+        // 0.8 cells per second: 625 ms is half the start.
+        compose.runOnIdle { session.sendTick(625) }
+        compose.waitForIdle()
+        val half = startFilledOf()
+        assertEquals(0.5f, half, 0.05f)
+
+        compose.runOnIdle { session.sendTick(312) }
+        compose.waitForIdle()
+        assertTrue("the stub keeps filling", startFilledOf() > half)
+
+        // On into the first H: the stub stays full.
+        compose.runOnIdle { session.sendTick(625) }
+        compose.waitForIdle()
+        assertEquals(1f, startFilledOf(), 0.001f)
+
+        compose.runOnIdle { session.send(GameCommand.Restart) }
+        compose.waitForIdle()
+        assertEquals(0f, startFilledOf(), 0.001f)
+    }
+
+    private fun glowOf(cell: Position): Float = compose.cellNode(cell).fetchSemanticsNode().config[EndpointGlowAlpha]
+
+    private fun startFilledOf(): Float = compose.cellNode(startCell).fetchSemanticsNode().config[StartFilled]
+
+    /** A game clock the bare field reads, moved by the test. */
+    private class TestClock {
+        var nowMs by mutableLongStateOf(0L)
+    }
+
+    /** The field alone, with the liquid still waiting, timed by a clock the test moves. */
+    private fun showBareField(reducedMotion: Boolean = false): TestClock {
+        val level = FieldTest.level()
+        val clock = TestClock()
+        compose.setContent {
+            LeakOutTheme {
+                Box(Modifier.size(320.dp, 320.dp)) {
+                    PlayingField(
+                        board = Board.from(level),
+                        state = rememberPlayingFieldState(level.grid, level.start.position),
+                        highlighted = null,
+                        enabled = false,
+                        modifier = Modifier.size(320.dp, 320.dp),
+                        nowMs = { clock.nowMs },
+                        flow = { FlowState.Waiting(level.flow.initialDelayMs) },
+                        reducedMotion = reducedMotion,
+                    )
+                }
+            }
+        }
+        compose.waitForIdle()
+        return clock
     }
 
     private fun show(level: Level = FieldTest.level()) {

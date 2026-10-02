@@ -50,6 +50,7 @@ import nl.hexmaster.leakout.audio.GameSound
 import nl.hexmaster.leakout.audio.SoundEffects
 import nl.hexmaster.leakout.core.engine.FlowState
 import nl.hexmaster.leakout.core.engine.GameCommand
+import nl.hexmaster.leakout.core.engine.LossReason
 import nl.hexmaster.leakout.core.engine.Outcome
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.PipeSection
@@ -174,6 +175,7 @@ fun GameScreen(
                 Row(Modifier.weight(1f).fillMaxWidth().padding(12.dp)) {
                     StackPanel(
                         stack = session.select { state.stack },
+                        visibleSize = currentLevel.stack.visibleSize,
                         dragState = dragState,
                         enabled = !isStopped && !fastForward && !replacing,
                         modifier = Modifier.width(
@@ -197,6 +199,7 @@ fun GameScreen(
                         nowMs = { session.state.clockMs },
                         leakAt = lost?.at,
                         leakSide = lost?.side,
+                        missed = session.select { missedMandatory },
                         lossAgeMs = { session.lossAgeMs },
                         head = session.select { (state.flow as? FlowState.Flowing)?.position },
                         filled = session.select { state.flow.used },
@@ -245,6 +248,7 @@ fun GameScreen(
             score = session.select { state.score },
             onRestart = { session.send(GameCommand.Restart) },
             onExit = onExit,
+            reason = session.select { (state.outcome as? Outcome.Lost)?.reason ?: LossReason.LEAK },
         )
     }
     if (showWinDialog) {

@@ -12,7 +12,9 @@ import nl.hexmaster.leakout.core.board.Cell
 import nl.hexmaster.leakout.core.engine.GameCommand
 import nl.hexmaster.leakout.core.engine.GameEngine
 import nl.hexmaster.leakout.core.engine.GameState
+import nl.hexmaster.leakout.core.engine.LossReason
 import nl.hexmaster.leakout.core.engine.Outcome
+import nl.hexmaster.leakout.core.flow.MandatoryProgress
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.history.LevelHistoryRepository
@@ -160,6 +162,17 @@ class GameSession(level: Level, private val engine: GameEngine = GameEngine()) {
 
     /** Game time since the leak, which drives the leak effect; 0 unless lost. */
     val lossAgeMs: Long get() = (state.outcome as? Outcome.Lost)?.let { state.clockMs - it.atMs } ?: 0L
+
+    /**
+     * The mandatory sections the liquid did not use, which pulse on the field, when the attempt was
+     * lost because one was missed; empty otherwise.
+     */
+    val missedMandatory: List<Position>
+        get() {
+            val lost = state.outcome as? Outcome.Lost
+            if (lost?.reason != LossReason.MANDATORY_MISSED) return emptyList()
+            return MandatoryProgress.unused(state.level.mandatory, state.flow.used).map { it.position }
+        }
 
     /** Whether the level lost dialog is shown: once the leak effect has run for [LeakTiming.EFFECT_MS]. */
     val showLostDialog: Boolean get() = state.outcome is Outcome.Lost && lossAgeMs >= LeakTiming.EFFECT_MS

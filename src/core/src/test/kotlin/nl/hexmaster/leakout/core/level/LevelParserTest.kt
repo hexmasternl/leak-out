@@ -1,5 +1,6 @@
 package nl.hexmaster.leakout.core.level
 
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -36,7 +37,7 @@ class LevelParserTest {
         assertEquals(5, level.stack.visibleSize)
         assertEquals(LevelDefaults.STACK_WEIGHTS, level.stack.weights)
         for (section in PipeSection.entries) {
-            assertEquals(if (section.mandatory) 7 else 0, level.stack.weightOf(section), "$section")
+            assertEquals(if (section.alwaysOnStack) 7 else 0, level.stack.weightOf(section), "$section")
         }
         assertEquals(true, level.rules.allowReplace)
         assertEquals(3_000, level.rules.replacePenaltyMs)
@@ -66,7 +67,7 @@ class LevelParserTest {
         val level = parsed(TestLevels.minimalJson())
         assertEquals(false, level.isAllowed(PipeSection.X))
         assertEquals(false, level.isAllowed(PipeSection.RES))
-        assertTrue(PipeSection.entries.filter { it.mandatory }.all(level::isAllowed))
+        assertTrue(PipeSection.entries.filter { it.alwaysOnStack }.all(level::isAllowed))
     }
 
     @Test
@@ -168,6 +169,63 @@ class LevelParserTest {
     fun `missing coordinate in a blocked cell is named with its index`() {
         val error = failed(TestLevels.minimalJson().replace("\"blocked\": []", """"blocked": [ { "x": 1, "y": 1 }, { "x": 2 } ]"""))
         assertEquals("blocked[1].y", error.field)
+    }
+
+    @Test
+    fun `level without a mandatory field has no mandatory sections`() {
+        assertEquals(emptyList(), parsed(TestLevels.minimalJson()).mandatory)
+    }
+
+    @Test
+    fun `mandatory sections are parsed in authored order`() {
+        val level = parsed(
+            TestLevels.minimalJson(
+                extra = """, "mandatory": [ { "x": 3, "y": 2, "section": "X" }, { "x": 1, "y": 1, "section": "RES" } ]""",
+            ),
+        )
+        assertEquals(
+            listOf(
+                MandatorySection(Position(3, 2), PipeSection.X),
+                MandatorySection(Position(1, 1), PipeSection.RES),
+            ),
+            level.mandatory,
+        )
+    }
+
+    @Test
+    fun `full example in the level format doc parses and validates`() {
+        val doc = File(System.getProperty("leakout.levelFormatDoc")).readText()
+        val example = Regex("```jsonc\\R(.*?)```", RegexOption.DOT_MATCHES_ALL).find(doc)?.groupValues?.get(1)
+            ?: error("no jsonc example in the level format doc")
+        val json = example.lines().joinToString("\n") { it.substringBefore("//") }
+        val level = parsed(json)
+        assertEquals(emptyList(), LevelValidator.validate(level).errors)
+        assertEquals(
+            listOf(MandatorySection(Position(3, 2), PipeSection.X), MandatorySection(Position(5, 5), PipeSection.RES)),
+            level.mandatory,
+        )
+    }
+
+    @Test
+    fun `missing section in a mandatory entry is named with its index`() {
+        val error = failed(TestLevels.minimalJson(extra = """, "mandatory": [ { "x": 3, "y": 2 } ]"""))
+        assertEquals("mandatory[0].section", error.field)
+    }
+
+    @Test
+    fun `unknown section id in a mandatory entry is named`() {
+        val error = failed(TestLevels.minimalJson(extra = """, "mandatory": [ { "x": 3, "y": 2, "section": "Z" } ]"""))
+        assertEquals("mandatory[0].section", error.field)
+        assertTrue("'Z'" in error.message)
+        assertTrue("RES" in error.message)
+    }
+
+    @Test
+    fun `unknown key in a mandatory entry is named`() {
+        val error = failed(
+            TestLevels.minimalJson(extra = """, "mandatory": [ { "x": 3, "y": 2, "section": "X", "fixed": true } ]"""),
+        )
+        assertEquals("mandatory[0].fixed", error.field)
     }
 
     @Test

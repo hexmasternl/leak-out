@@ -172,7 +172,8 @@ class GameEngineScreenTest {
         compose.onAllNodes(hasContentDescription("Placed", substring = true), useUnmergedTree = true).assertCountEquals(0)
         val after = compose.runOnIdle { session.state.stack }
         compose.onNodeWithContentDescription(nextDescription(after.next), useUnmergedTree = true).assertExists()
-        val previews = after.sections.dropLast(1)
+        // On a 360 dp tall screen the stack rail fully shows the bottom 5 of the 15 sections; only those are described.
+        val previews = after.sections.dropLast(1).takeLast(4)
         for (section in previews.distinct()) {
             compose.onAllNodes(hasContentDescription(label(section)), useUnmergedTree = true).assertCountEquals(previews.count { it == section })
         }

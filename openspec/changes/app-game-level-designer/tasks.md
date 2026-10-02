@@ -1,3 +1,5 @@
+Tracking issue: [#43 Level designer](https://github.com/hexmasternl/leak-out/issues/43).
+
 ## 1. Feature flag
 
 - [ ] 1.1 In `app/build.gradle.kts`, enable `buildFeatures.buildConfig` and add `buildConfigField("boolean", "LEVEL_DESIGNER", ...)`: `true` for `debug`, `false` for `release`

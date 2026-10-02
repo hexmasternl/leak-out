@@ -7,6 +7,7 @@ import nl.hexmaster.leakout.core.board.Cell
 import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.GridSize
 import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.PipeSection.H
 import nl.hexmaster.leakout.core.level.PipeSection.LB
@@ -35,7 +36,8 @@ class FlowStepRouteAgreementTest {
         start: Endpoint = Endpoint(p(0, 1), Side.RIGHT),
         finish: Endpoint = Endpoint(p(2, 3), Side.TOP),
         blocked: List<Position> = emptyList(),
-    ): Level = TestLevels.valid(grid = GridSize(5, 5), start = start, finish = finish, blocked = blocked)
+        mandatory: List<MandatorySection> = emptyList(),
+    ): Level = TestLevels.valid(grid = GridSize(5, 5), start = start, finish = finish, blocked = blocked, mandatory = mandatory)
 
     private val cases = listOf(
         Case("straight and corner", level(), listOf(p(1, 1) to H, p(2, 1) to LB, p(2, 2) to V)),
@@ -60,16 +62,38 @@ class FlowStepRouteAgreementTest {
             level(),
             listOf(p(1, 1) to X, p(2, 1) to LT, p(2, 0) to LB, p(1, 0) to RB, p(1, 2) to LT, p(0, 2) to RT),
         ),
+        Case(
+            "route skips a mandatory reservoir",
+            level(mandatory = listOf(MandatorySection(p(4, 4), RES))),
+            listOf(p(1, 1) to H, p(2, 1) to LB, p(2, 2) to V),
+        ),
+        Case(
+            "route passes a mandatory cross on one channel",
+            level(mandatory = listOf(MandatorySection(p(1, 1), X))),
+            listOf(p(2, 1) to LB, p(2, 2) to V),
+        ),
+        Case(
+            "route passes every mandatory channel",
+            level(
+                start = Endpoint(p(0, 2), Side.RIGHT),
+                finish = Endpoint(p(2, 4), Side.TOP),
+                mandatory = listOf(MandatorySection(p(1, 2), RES), MandatorySection(p(2, 2), X)),
+            ),
+            listOf(p(3, 2) to LT, p(3, 1) to LB, p(2, 1) to RB, p(2, 3) to V),
+        ),
     )
 
-    /** Walks the flow one step at a time, keeping the used channels, until it finishes or leaks. */
+    /**
+     * Walks the flow one step at a time, keeping the used channels, until it finishes or leaks. The
+     * finish only counts when every mandatory section is used, as in the flow simulation.
+     */
     private fun flowReachesFinish(board: Board, level: Level): Boolean {
         val used = mutableSetOf<ChannelUse>()
         var from = level.start.position
         var exit = level.start.openSide
         while (true) {
             when (val result = FlowStep.after(board, from, exit, used)) {
-                FlowStep.Result.Finish -> return true
+                FlowStep.Result.Finish -> return MandatoryProgress.unused(level.mandatory, used).isEmpty()
                 is FlowStep.Result.Leak -> return false
                 is FlowStep.Result.Enter -> {
                     val section = (board[result.next] as Cell.Pipe).section

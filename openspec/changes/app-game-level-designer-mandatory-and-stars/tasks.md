@@ -27,9 +27,9 @@
 - [x] 4.1 Add the two tool chips (strings `designer_tool_mandatory_cross` "Mandatory cross" and `designer_tool_mandatory_reservoir` "Mandatory reservoir"), on a second tool row; update `toolLabel`
 - [x] 4.2 Replace the star inputs with read-only values tagged `designer_star_one/two/three`; remove the unused star field strings and update the preview
 - [x] 4.3 Add `LevelDesignerScreenTest` cases: tapping a cell with the Mandatory cross tool places it, the star values update after blocking a cell and cannot be edited; add a `TestPlayScreenTest` case that a test play shows the mandatory section
-- [ ] 4.4 Run only the affected instrumented tests (`LevelDesignerScreenTest`, `TestPlayScreenTest`) on the emulator and make sure they pass
+- [x] 4.4 Run only the affected instrumented tests (`LevelDesignerScreenTest`, `TestPlayScreenTest`) on the emulator and make sure they pass
 
 ## 5. Wrap up
 
-- [ ] 5.1 Run `openspec validate app-game-level-designer-mandatory-and-stars --strict` and fix any issue
-- [ ] 5.2 Reference issue #65 in the pull request
+- [x] 5.1 Run `openspec validate app-game-level-designer-mandatory-and-stars --strict` and fix any issue
+- [x] 5.2 Reference issue #65 in the pull request

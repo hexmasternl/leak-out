@@ -852,10 +852,10 @@ private fun CheckeredFinishPreview() {
 
 /**
  * Popups as in the design-system gallery: "+10" over a filled straight and "+50" over an empty
- * tile, halfway through the hold, at the [cell] size.
+ * tile, halfway through the hold, at the [cell] size. Without [popups] the same tiles are drawn bare.
  */
 @Composable
-internal fun PopupPreviewStates(cell: Dp, modifier: Modifier = Modifier) {
+internal fun PopupPreviewStates(cell: Dp, modifier: Modifier = Modifier, popups: Boolean = true) {
     val grid = GridSize(2, 1)
     val straight = Position(0, 0)
     val board = Board(grid, mapOf(straight to Cell.Pipe(PipeSection.H)))
@@ -866,7 +866,7 @@ internal fun PopupPreviewStates(cell: Dp, modifier: Modifier = Modifier) {
         highlighted = null,
         enabled = false,
         modifier = modifier.size(cell * grid.columns, cell * grid.rows),
-        awards = listOf(Award(straight, 10, atMs = 0L), Award(Position(1, 0), 50, atMs = 0L)),
+        awards = if (popups) listOf(Award(straight, 10, atMs = 0L), Award(Position(1, 0), 50, atMs = 0L)) else emptyList(),
         nowMs = { PopupTiming.FADE_IN_MS + PopupTiming.HOLD_MS / 2 },
         filled = used,
         flow = { FlowState.Ended(used) },

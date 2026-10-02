@@ -16,10 +16,10 @@ Tracking issue: [#51 Section score indicator is too large](https://github.com/he
 
 ## 3. Instrumented tests
 
-- [ ] 3.1 Add a screenshot-style check (as in `EndpointScreenshotTest`) to `PointsPopupTest`: a popup fully visible over a filled straight; verify the pixel at the centre of a digit stroke is `surface.deep` (not white, not the pipe), a pixel just outside the glyph is lighter than the bare tile (the glow), and the image is saved for the reviewer; run it on the emulator and verify it passes
-- [ ] 3.2 Run the existing `PointsPopupTest` cases on the emulator (popups appear, follow the tile, pause, restart, do not block input); verify they pass unchanged
+- [x] 3.1 Add a screenshot-style check (as in `EndpointScreenshotTest`), `PopupScreenshotTest`: a popup fully visible over a filled straight; verify the pixel at the centre of a digit stroke is `surface.deep` (not white, not the pipe), a pixel just outside the glyph is lighter than the bare tile (the glow), and the image is saved for the reviewer; run it on the emulator and verify it passes — written as a before/after comparison (the field background is `surface.deep` too, so the test counts deep and `liquid.glow` pixels with and without popups and checks no `InkDark` or white appears) and compiled (`:app:compileDebugAndroidTestKotlin`); the emulator run was skipped at the product owner's request
+- [x] 3.2 Run the existing `PointsPopupTest` cases on the emulator (popups appear, follow the tile, pause, restart, do not block input); verify they pass unchanged — skipped at the product owner's request (assumed passing); still to run before release
 
 ## 4. Regression
 
-- [ ] 4.1 Run `./gradlew :core:test :app:testDebugUnitTest` from `src/`; verify both pass
-- [ ] 4.2 Run the affected instrumented tests (`PointsPopupTest`, `PlayingFieldTest`); verify they pass, and attach the 3.1 screenshot to issue #51
+- [x] 4.1 Run `./gradlew :core:test :app:testDebugUnitTest` from `src/`; verify both pass — 885 tests, 0 failures
+- [x] 4.2 Run the affected instrumented tests (`PointsPopupTest`, `PlayingFieldTest`); verify they pass, and attach the 3.1 screenshot to issue #51 — skipped at the product owner's request (assumed passing); the gallery screenshot is on #51 instead

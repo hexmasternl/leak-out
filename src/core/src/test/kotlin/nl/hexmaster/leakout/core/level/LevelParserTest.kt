@@ -36,7 +36,7 @@ class LevelParserTest {
         assertEquals(5, level.stack.visibleSize)
         assertEquals(LevelDefaults.STACK_WEIGHTS, level.stack.weights)
         for (section in PipeSection.entries) {
-            assertEquals(if (section.mandatory) 7 else 0, level.stack.weightOf(section), "$section")
+            assertEquals(if (section.alwaysOnStack) 7 else 0, level.stack.weightOf(section), "$section")
         }
         assertEquals(true, level.rules.allowReplace)
         assertEquals(3_000, level.rules.replacePenaltyMs)
@@ -66,7 +66,7 @@ class LevelParserTest {
         val level = parsed(TestLevels.minimalJson())
         assertEquals(false, level.isAllowed(PipeSection.X))
         assertEquals(false, level.isAllowed(PipeSection.RES))
-        assertTrue(PipeSection.entries.filter { it.mandatory }.all(level::isAllowed))
+        assertTrue(PipeSection.entries.filter { it.alwaysOnStack }.all(level::isAllowed))
     }
 
     @Test

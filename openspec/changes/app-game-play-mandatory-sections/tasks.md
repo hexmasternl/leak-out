@@ -2,7 +2,7 @@
 
 ## 1. Rename the existing "mandatory" stack flag
 
-- [ ] 1.1 Rename `PipeSection.mandatory` to `alwaysOnStack` in `core/level/PipeSection.kt`, `LevelValidator` and every test, and reword its KDoc and the weight error so they no longer say "mandatory". Verify that `./gradlew :core:test` passes unchanged.
+- [x] 1.1 Rename `PipeSection.mandatory` to `alwaysOnStack` in `core/level/PipeSection.kt`, `LevelValidator` and every test, and reword its KDoc and the weight error so they no longer say "mandatory". Verify that `./gradlew :core:test` passes unchanged.
 
 ## 2. Level format and validation
 

@@ -202,7 +202,7 @@ class LevelValidatorTest {
     }
 
     @Test
-    fun `mandatory section with zero weight is rejected`() {
+    fun `always-on-stack section with zero weight is rejected`() {
         assertOnlyError("stack.weights.LT", valid(stack = StackSettings(weights = TestLevels.weights(PipeSection.LT to 0))))
     }
 

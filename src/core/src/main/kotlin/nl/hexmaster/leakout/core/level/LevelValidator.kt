@@ -132,7 +132,7 @@ object LevelValidator {
             val field = "stack.weights.${section.name}"
             when {
                 weight < 0 -> error(field, "$field must be 0 or greater, but had $weight")
-                section.mandatory && weight < 1 ->
+                section.alwaysOnStack && weight < 1 ->
                     error(field, "$field must be at least 1: straight and corner sections are always on the stack")
             }
         }

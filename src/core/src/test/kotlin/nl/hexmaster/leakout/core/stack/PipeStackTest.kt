@@ -52,7 +52,7 @@ class PipeStackTest {
     fun `new stack is dealt by a fresh dealer`() {
         val stack = PipeStack.create(StackSettings(visibleSize = 5), Random(3))
         assertEquals(15, stack.dealer.draws)
-        for (section in PipeSection.entries.filter { it.mandatory }) {
+        for (section in PipeSection.entries.filter { it.alwaysOnStack }) {
             assertEquals(stack.sections.count { it == section }, stack.dealer.dealt.getValue(section), "$section")
         }
     }

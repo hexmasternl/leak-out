@@ -2,9 +2,9 @@ Tracking issue: [#43 Level designer](https://github.com/hexmasternl/leak-out/iss
 
 ## 1. Feature flag
 
-- [ ] 1.1 In `app/build.gradle.kts`, enable `buildFeatures.buildConfig` and add `buildConfigField("boolean", "LEVEL_DESIGNER", ...)`: `true` for `debug`, `false` for `release`
-- [ ] 1.2 Add `app/.../FeatureFlags.kt` exposing `levelDesigner` from `BuildConfig.LEVEL_DESIGNER`
-- [ ] 1.3 JVM test that the debug unit test variant sees `FeatureFlags.levelDesigner == true`; verify `assembleRelease` generates `LEVEL_DESIGNER = false` (test or build check reading the generated `BuildConfig`)
+- [x] 1.1 In `app/build.gradle.kts`, enable `buildFeatures.buildConfig` and add `buildConfigField("boolean", "LEVEL_DESIGNER", ...)`: `true` for `debug`, `false` for `release`
+- [x] 1.2 Add `app/.../FeatureFlags.kt` exposing `levelDesigner` from `BuildConfig.LEVEL_DESIGNER`
+- [x] 1.3 JVM test that the debug unit test variant sees `FeatureFlags.levelDesigner == true`; verify `assembleRelease` generates `LEVEL_DESIGNER = false` (test or build check reading the generated `BuildConfig`)
 
 ## 2. Level writer (core)
 

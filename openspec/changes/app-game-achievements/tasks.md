@@ -25,20 +25,20 @@
 
 ## 3. Local store (app)
 
-- [ ] 3.1 Add Room entities `AchievementStateEntity` (`achievement_state`), `PlayerStatsEntity` (`player_stats`) and `LevelLossStreakEntity` (`level_loss_streak`) and an `AchievementDao`
-- [ ] 3.2 Bump `LeakOutDatabase` version with a `Migration` that only creates the new tables; export the schema
-- [ ] 3.3 Migration test with `MigrationTestHelper`: history rows survive, new tables are empty
-- [ ] 3.4 Define `AchievementRepository` (`observeAll`, `stats`, transactional `apply`) with Room and in-memory implementations, storing by key
-- [ ] 3.5 Implement `AchievementTracker` with `onAttemptEnded(summary)`, `onAttemptAbandoned(placements)` and `reconcile()` (no summary), each running in one transaction
-- [ ] 3.6 Call `reconcile()` at app start and after every history change, so existing players receive progress achievements
-- [ ] 3.7 Confirm `LevelHistoryRepository.clearAll()` leaves the achievement tables alone
-- [ ] 3.8 JVM tests for the tracker with in-memory repositories: once per attempt, abandoned attempts counted once, backfill from history, reset keeps achievements
+- [x] 3.1 Add Room entities `AchievementStateEntity` (`achievement_state`), `PlayerStatsEntity` (`player_stats`) and `LevelLossStreakEntity` (`level_loss_streak`) and an `AchievementDao`
+- [x] 3.2 Bump `LeakOutDatabase` version with a `Migration` that only creates the new tables; export the schema
+- [x] 3.3 Migration test with `MigrationTestHelper`: history rows survive, new tables are empty
+- [x] 3.4 Define `AchievementRepository` (`observeAll`, `stats`, transactional `apply`) with Room and in-memory implementations, storing by key
+- [x] 3.5 Implement `AchievementTracker` with `onAttemptEnded(summary)`, `onAttemptAbandoned(placements)` and `reconcile()` (no summary), each running in one transaction
+- [x] 3.6 Call `reconcile()` at app start and after every history change, so existing players receive progress achievements
+- [x] 3.7 Confirm `LevelHistoryRepository.clearAll()` leaves the achievement tables alone
+- [x] 3.8 JVM tests for the tracker with in-memory repositories: once per attempt, abandoned attempts counted once, backfill from history, reset keeps achievements
 
 ## 4. Game session wiring (app)
 
-- [ ] 4.1 In `GameSession`, after `recordWin`, call `onAttemptEnded` once per attempt and expose `unlockedThisAttempt: List<Achievement>`; do the same on a loss
-- [ ] 4.2 Call `onAttemptAbandoned` on restart and exit of an unfinished attempt (pause dialog Restart, Exit, Back to menu)
-- [ ] 4.3 JVM tests: recompositions don't double count; restart from the pause dialog adds placements
+- [x] 4.1 In `GameSession`, after `recordWin`, call `onAttemptEnded` once per attempt and expose `unlockedThisAttempt: List<Achievement>`; do the same on a loss
+- [x] 4.2 Call `onAttemptAbandoned` on restart and exit of an unfinished attempt (pause dialog Restart, Exit, Back to menu)
+- [x] 4.3 JVM tests: recompositions don't double count; restart from the pause dialog adds placements
 
 ## 5. Result dialog rows (app)
 
@@ -49,14 +49,14 @@
 
 ## 6. Play Games integration (app)
 
-- [ ] 6.1 Add `com.google.android.gms:play-services-games-v2` (latest stable, pinned exactly) to `gradle/libs.versions.toml` and the app module
-- [ ] 6.2 Copy `openspec/changes/app-game-achievements/games-ids.xml` (the Play Console export: app id `201820010117`, resources already renamed to `achievement_<key>`) to `app/src/main/res/values/games-ids.xml`; add the `com.google.android.gms.games.APP_ID` manifest meta-data pointing at `@string/app_id`
-- [ ] 6.3 Add `LeakOutApplication` that initialises `PlayGamesSdk` only when the app id is a positive number (the shipped file has the real id; the `0` fallback is tested with an injected id)
-- [ ] 6.4 Implement `PlayGamesAuth` with `state: StateFlow<SignInState>` (`Unavailable`, `SignedOut`, `SigningIn`, `SignedIn(displayName)`), silent check at start and `signIn(activity)`
-- [ ] 6.5 Define `AchievementSync` with `PlayGamesAchievementSync` (`unlock`, `setSteps`, never `increment`) and `NoOpAchievementSync`
-- [ ] 6.6 Implement `AchievementSyncer` that pushes the full local state on `SignedIn` and on every local change while signed in; failures are logged and retried on the next trigger
-- [ ] 6.7 JVM tests with a recording fake sync: push on sign-in, push on new unlock, repeated push idempotent, failure leaves local data alone, unavailable makes no calls
-- [ ] 6.8 Instrumented test: every catalogue key has a non-empty `achievement_<key>` string resource, and no two keys share an id
+- [x] 6.1 Add `com.google.android.gms:play-services-games-v2` (latest stable, pinned exactly) to `gradle/libs.versions.toml` and the app module
+- [x] 6.2 Copy `openspec/changes/app-game-achievements/games-ids.xml` (the Play Console export: app id `201820010117`, resources already renamed to `achievement_<key>`) to `app/src/main/res/values/games-ids.xml`; add the `com.google.android.gms.games.APP_ID` manifest meta-data pointing at `@string/app_id`
+- [x] 6.3 Add `LeakOutApplication` that initialises `PlayGamesSdk` only when the app id is a positive number (the shipped file has the real id; the `0` fallback is tested with an injected id)
+- [x] 6.4 Implement `PlayGamesAuth` with `state: StateFlow<SignInState>` (`Unavailable`, `SignedOut`, `SigningIn`, `SignedIn(displayName)`), silent check at start and `signIn(activity)`
+- [x] 6.5 Define `AchievementSync` with `PlayGamesAchievementSync` (`unlock`, `setSteps`, never `increment`) and `NoOpAchievementSync`
+- [x] 6.6 Implement `AchievementSyncer` that pushes the full local state on `SignedIn` and on every local change while signed in; failures are logged and retried on the next trigger
+- [x] 6.7 JVM tests with a recording fake sync: push on sign-in, push on new unlock, repeated push idempotent, failure leaves local data alone, unavailable makes no calls
+- [x] 6.8 Instrumented test: every catalogue key has a non-empty `achievement_<key>` string resource, and no two keys share an id
 
 ## 7. Settings screen changes (app)
 
@@ -79,8 +79,8 @@
 ## 9. Icons
 
 - [x] 9.1 Review the proposed icons in `openspec/changes/app-game-achievements/icons/` (SVG sources, 512×512 PNGs, `preview.html` contact sheet) and adjust any that are rejected (all 25 approved and uploaded to the Play Console as they are)
-- [ ] 9.2 Copy the approved PNGs to `app/src/main/res/drawable-nodpi/achievement_<key>.png` plus a `achievement_hidden.png` for the hidden placeholder
-- [ ] 9.3 Map each `Achievement` to its drawable in `app` and test that every key has one
+- [x] 9.2 Copy the approved PNGs to `app/src/main/res/drawable-nodpi/achievement_<key>.png` plus a `achievement_hidden.png` for the hidden placeholder
+- [x] 9.3 Map each `Achievement` to its drawable in `app` and test that every key has one
 
 ## 10. Documentation
 

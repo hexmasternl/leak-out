@@ -37,5 +37,5 @@
 
 ## 7. Showcase level and integration
 
-- [ ] 7.1 Add the next free `level_NNN.json` with a mandatory cross and a mandatory reservoir (leave the existing levels untouched) and register it in the level library if the library config needs that. Verify that `BundledLevelsTest` and `LevelSolvabilityTest` pass for it.
+- [x] 7.1 Add the next free `level_NNN.json` with a mandatory cross and a mandatory reservoir (leave the existing levels untouched) and register it in the level library if the library config needs that. Verify that `BundledLevelsTest` and `LevelSolvabilityTest` pass for it.
 - [ ] 7.2 Play the showcase level on the emulator: the red tiles show, a drop on them is refused, skipping one loses with the missed-section message, and using both channels of the cross plus the reservoir wins. Run `openspec validate app-game-play-mandatory-sections --strict` and confirm it reports the change as valid.

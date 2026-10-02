@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change app-game-level-designer. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Feature flags are fixed per build type
 The app SHALL expose its feature flags from a single `FeatureFlags` source whose values are fixed at build time per build type. The flag `levelDesigner` SHALL be on in debug builds and off in release builds. A flag SHALL NOT be changeable at runtime.
 

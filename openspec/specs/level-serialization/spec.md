@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change app-game-level-designer. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Level is written as level-format JSON
 The system SHALL provide a `LevelWriter` in `core` that turns a `Level` into a JSON document in the level file format. The document SHALL contain every required field. It SHALL contain an optional field only when its value differs from the default in `LevelDefaults`, and SHALL leave out the `flow` optional fields, the `stack` object, `stack.weights` entries and the `rules` object when they hold only defaults. Blocked cells SHALL be written in the level's order. The output SHALL be pretty-printed with two-space indentation and end with a newline.
 

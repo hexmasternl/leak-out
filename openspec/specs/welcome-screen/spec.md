@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change app-welcome-screen. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Welcome screen is the launch screen
 The app SHALL display the welcome screen as the first screen after launch.
 

@@ -84,6 +84,9 @@ object DesignerTags {
     const val ROWS_VALUE = "designer_rows_value"
     const val ALLOW_REPLACE = "designer_allow_replace"
     const val NAME = "designer_name"
+    const val STAR_ONE = "designer_star_one"
+    const val STAR_TWO = "designer_star_two"
+    const val STAR_THREE = "designer_star_three"
     const val DISCARD_DIALOG = "designer_discard_dialog"
     const val DISCARD_CANCEL = "designer_discard_cancel"
     const val DISCARD_CONFIRM = "designer_discard_confirm"
@@ -229,14 +232,17 @@ private fun DesignerPanel(
         )
 
         Section(stringResource(R.string.designer_section_tools)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                DesignerTool.entries.forEach { tool ->
-                    Chip(
-                        label = stringResource(toolLabel(tool)),
-                        selected = state.tool == tool,
-                        onClick = { viewModel.selectTool(tool) },
-                        modifier = Modifier.weight(1f).testTag(DesignerTags.tool(tool)),
-                    )
+            // Start, Finish and Block on the first row, the two mandatory section tools on the second.
+            DesignerTool.entries.chunked(3).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    row.forEach { tool ->
+                        Chip(
+                            label = stringResource(toolLabel(tool)),
+                            selected = state.tool == tool,
+                            onClick = { viewModel.selectTool(tool) },
+                            modifier = Modifier.weight(1f).testTag(DesignerTags.tool(tool)),
+                        )
+                    }
                 }
             }
             Chip(
@@ -312,10 +318,12 @@ private fun DesignerPanel(
         }
 
         Section(stringResource(R.string.designer_section_stars)) {
+            Text(stringResource(R.string.designer_stars_calculated), style = LeakOutTextStyles.BodySm, color = LeakOutColors.TextSecondary)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                NumberInput(stringResource(R.string.designer_field_star_one), NumberField.StarOne, state, viewModel, Modifier.weight(1f))
-                NumberInput(stringResource(R.string.designer_field_star_two), NumberField.StarTwo, state, viewModel, Modifier.weight(1f))
-                NumberInput(stringResource(R.string.designer_field_star_three), NumberField.StarThree, state, viewModel, Modifier.weight(1f))
+                val stars = state.level.stars
+                StarValue(stringResource(R.string.designer_field_star_one), stars.one, DesignerTags.STAR_ONE, Modifier.weight(1f))
+                StarValue(stringResource(R.string.designer_field_star_two), stars.two, DesignerTags.STAR_TWO, Modifier.weight(1f))
+                StarValue(stringResource(R.string.designer_field_star_three), stars.three, DesignerTags.STAR_THREE, Modifier.weight(1f))
             }
         }
     }
@@ -327,6 +335,25 @@ private fun toolLabel(tool: DesignerTool): Int = when (tool) {
     DesignerTool.START -> R.string.designer_tool_start
     DesignerTool.FINISH -> R.string.designer_tool_finish
     DesignerTool.BLOCK -> R.string.designer_tool_block
+    DesignerTool.MANDATORY_CROSS -> R.string.designer_tool_mandatory_cross
+    DesignerTool.MANDATORY_RESERVOIR -> R.string.designer_tool_mandatory_reservoir
+}
+
+/** A calculated star threshold: its label over its value, which cannot be edited. */
+@Composable
+private fun StarValue(label: String, value: Int, tag: String, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(12.dp)
+    Column(
+        modifier = modifier
+            .heightIn(min = 48.dp)
+            .background(LeakOutColors.SurfaceOverlay, shape)
+            .border(1.dp, LeakOutColors.LineSubtle, shape)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(label, style = LeakOutTextStyles.BodySm, color = LeakOutColors.TextMuted)
+        Text(value.toString(), style = LeakOutTextStyles.NumericMd, color = LeakOutColors.TextPrimary, modifier = Modifier.testTag(tag))
+    }
 }
 
 /** The status line, and below it every validation error by field, or the solver's reason. */
@@ -565,7 +592,16 @@ private fun BlankDesignPreview() = DesignerPreview {}
 @Composable
 private fun InvalidDesignPreview() = DesignerPreview {
     setOpenSide(EndpointKind.START, Side.LEFT)
-    setNumber(NumberField.StarOne, "500")
+    setNumber(NumberField.InitialDelay, "-5")
+}
+
+@Preview(name = "Designer: mandatory sections", widthDp = 800, heightDp = 360)
+@Composable
+private fun MandatoryDesignPreview() = DesignerPreview {
+    selectTool(DesignerTool.MANDATORY_CROSS)
+    onCellTap(Position(3, 2))
+    selectTool(DesignerTool.MANDATORY_RESERVOIR)
+    onCellTap(Position(2, 1))
 }
 
 @Preview(name = "Designer: unsolvable", widthDp = 800, heightDp = 360)

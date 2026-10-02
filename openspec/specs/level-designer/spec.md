@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change app-game-level-designer. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Level designer screen
 The app SHALL have a Level Designer screen, reachable only from the welcome screen's level designer button while the `levelDesigner` feature flag is on. It SHALL use the game's theme and landscape orientation, show the level grid as the main area and the editing controls in a side panel. Its back button and the system back gesture SHALL return to the welcome screen; when the design has unexported changes, a confirmation dialog SHALL be shown first.
 

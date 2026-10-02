@@ -26,5 +26,5 @@ Tracking issue: [#35 Random tile stack population needs to be less random](https
 
 ## 5. Verify
 
-- [ ] 5.1 Run `./gradlew :core:test` and `./gradlew :app:testDebugUnitTest`; run only the instrumented tests that drive the stack or start a level (`:app:connectedDebugAndroidTest` filtered to the stack and game screen tests) and confirm they pass
+- [x] 5.1 Run `./gradlew :core:test` and `./gradlew :app:testDebugUnitTest`; run only the instrumented tests that drive the stack or start a level (`:app:connectedDebugAndroidTest` filtered to the stack and game screen tests) and confirm they pass (instrumented tests skipped at the user's request for this run)
 - [ ] 5.2 Play two bundled levels with a cross on the emulator and post a short note on #35 on how the stack feels

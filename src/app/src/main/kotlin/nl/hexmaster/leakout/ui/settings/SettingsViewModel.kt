@@ -59,6 +59,7 @@ class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
     private val historyRepository: LevelHistoryRepository,
     musicCredits: Playlist? = null,
+    private val onProgressReset: suspend () -> Unit = {},
 ) : ViewModel() {
     private val credits = musicCredits?.tracks.orEmpty()
     private val tipsJustReset = MutableStateFlow(false)
@@ -106,8 +107,14 @@ class SettingsViewModel(
         viewModelScope.launch { settingsRepository.setMusicVolume(volume) }
     }
 
-    /** Deletes the whole level history. The settings are kept on purpose. */
+    /**
+     * Deletes the whole level history, then calls [onProgressReset] (the achievements look at the
+     * history again; they are kept, so nothing is lost). The settings are kept on purpose.
+     */
     fun onResetConfirmed() {
-        viewModelScope.launch { historyRepository.clearAll() }
+        viewModelScope.launch {
+            historyRepository.clearAll()
+            onProgressReset()
+        }
     }
 }

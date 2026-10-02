@@ -4,6 +4,7 @@
     <!-- appCategory="game" exempts the app from Android 16's large-screen override that would
          otherwise ignore the landscape lock on tablets and foldables. -->
     <application
+        android:name=".LeakOutApplication"
         android:allowBackup="true"
         android:appCategory="game"
         android:icon="@mipmap/ic_launcher"

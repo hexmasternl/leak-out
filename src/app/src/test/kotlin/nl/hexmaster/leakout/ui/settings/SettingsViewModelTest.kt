@@ -9,6 +9,8 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import nl.hexmaster.leakout.achievements.AchievementTracker
+import nl.hexmaster.leakout.achievements.InMemoryAchievementRepository
 import nl.hexmaster.leakout.audio.Playlist
 import nl.hexmaster.leakout.audio.Track
 import nl.hexmaster.leakout.core.library.TileState
@@ -172,6 +174,25 @@ class SettingsViewModelTest {
         assertEquals(stored, settings.settings.first())
         assertEquals(stored, vm.uiState.value!!.settings)
         assertTrue(settings.writes.isEmpty())
+    }
+
+    @Test
+    fun `a reset keeps the achievements and looks at the emptied history again`() = runTest {
+        val history = InMemoryLevelHistoryRepository(twelveLevels)
+        val store = InMemoryAchievementRepository()
+        val tracker = AchievementTracker(store, history, backgroundScope)
+        tracker.reconcile()
+        val unlockedBefore = store.observeAll().first().filter { it.unlocked }
+        assertTrue(unlockedBefore.isNotEmpty())
+        var reconciled = false
+
+        SettingsViewModel(InMemorySettingsRepository(), history, onProgressReset = {
+            assertTrue("after the history is cleared", history.observeAll().first().isEmpty())
+            reconciled = tracker.reconcile().isEmpty()
+        }).onResetConfirmed()
+
+        assertTrue(reconciled)
+        assertEquals(unlockedBefore, store.observeAll().first().filter { it.unlocked })
     }
 
     @Test

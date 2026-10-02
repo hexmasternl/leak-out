@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import nl.hexmaster.leakout.R
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.stack.PipeStack
+import nl.hexmaster.leakout.ui.game.onboarding.LocalTipTargets
+import nl.hexmaster.leakout.ui.game.onboarding.TipTargets
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 
 object GameScreenTags {
@@ -57,9 +59,11 @@ fun StackPanel(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
+    val targets = LocalTipTargets.current
     BoxWithConstraints(
         modifier = modifier
             .testTag(GameScreenTags.STACK_PANEL)
+            .onGloballyPositioned { targets?.registerStackPanel(it, stack.size) }
             .fillMaxHeight()
             .background(LeakOutColors.SurfaceDeep.copy(alpha = 0.90f), RoundedCornerShape(24.dp))
             .border(1.dp, Color.White.copy(alpha = 0.16f), RoundedCornerShape(24.dp))
@@ -77,6 +81,8 @@ fun StackPanel(
                 val isNext = index == stack.sections.lastIndex
                 StackSlot(
                     section = section,
+                    index = index,
+                    targets = targets,
                     isNext = isNext,
                     draggable = isNext && enabled,
                     isEmpty = isNext && dragState.draggedSection == section && dragState.isDragActive,
@@ -93,6 +99,8 @@ fun StackPanel(
 @Composable
 private fun StackSlot(
     section: PipeSection,
+    index: Int,
+    targets: TipTargets?,
     isNext: Boolean,
     draggable: Boolean,
     isEmpty: Boolean,
@@ -111,7 +119,10 @@ private fun StackSlot(
     val slotModifier = modifier
         .size(size)
         .semantics { this.contentDescription = contentDescription }
-        .onGloballyPositioned { coordinates = it }
+        .onGloballyPositioned {
+            coordinates = it
+            targets?.registerSlot(index, it)
+        }
         .background(
             if (isNext) LeakOutColors.SecondaryBase.copy(alpha = 0.28f) else LeakOutColors.SurfaceCard.copy(alpha = 0.08f),
             RoundedCornerShape(12.dp),

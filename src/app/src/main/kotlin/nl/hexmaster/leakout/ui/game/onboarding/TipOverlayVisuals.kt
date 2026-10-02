@@ -31,6 +31,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
@@ -123,6 +126,8 @@ fun TipCallout(
     text: String,
     pointer: TipPointer?,
     modifier: Modifier = Modifier,
+    eyebrowDescription: String? = null,
+    textDescription: String? = null,
     buttons: @Composable RowScope.() -> Unit,
 ) {
     val shape = RoundedCornerShape(TipOverlayMetrics.CardRadius)
@@ -141,11 +146,21 @@ fun TipCallout(
             }
             .padding(TipOverlayMetrics.CardPadding),
     ) {
-        Text(eyebrow.uppercase(), style = LeakOutTextStyles.DisplayXs, color = eyebrowColor)
+        Text(
+            eyebrow.uppercase(),
+            style = LeakOutTextStyles.DisplayXs,
+            color = eyebrowColor,
+            modifier = eyebrowDescription?.let { Modifier.semantics { contentDescription = it } } ?: Modifier,
+        )
         Spacer(Modifier.height(4.dp))
-        Text(title, style = LeakOutTextStyles.DisplayMd, color = LeakOutColors.TextPrimary)
+        Text(title, style = LeakOutTextStyles.DisplayMd, color = LeakOutColors.TextPrimary, modifier = Modifier.semantics { heading() })
         Spacer(Modifier.height(8.dp))
-        Text(text, style = LeakOutTextStyles.BodyMd, color = LeakOutColors.TextSecondary)
+        Text(
+            text,
+            style = LeakOutTextStyles.BodyMd,
+            color = LeakOutColors.TextSecondary,
+            modifier = textDescription?.let { Modifier.semantics { contentDescription = it } } ?: Modifier,
+        )
         Spacer(Modifier.height(16.dp))
         Row(
             Modifier.fillMaxWidth(),

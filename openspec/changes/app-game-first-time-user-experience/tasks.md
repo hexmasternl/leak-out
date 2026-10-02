@@ -23,17 +23,17 @@ Tracking issue: [#36 First time user experience](https://github.com/hexmasternl/
 
 ## 4. Overlay and targets
 
-- [ ] 4.1 Add `TipTargets` and register the stack column, stack slots, and start, finish and mandatory cells from `StackPanel` and `PlayingField`, and derive `fullyVisibleSlots` from the slot rects and the panel's window-clipped bounds; verify an instrumented test that the registered start cell rect matches the start tile's bounds and that, on a screen too short for the whole stack, the cut-off top slots are not in `fullyVisibleSlots`
-- [ ] 4.2 Add `FieldViewport.revealCell` within the pan limits and restore the level-start view after the tour; verify instrumented tests for the finish step on a 16 × 12 level and the view after the tour
-- [ ] 4.3 Build the `TipOverlay` composable per the approved design (scrim cut-out, callout, buttons, step counter, drag hint, reduced motion) consuming all other input; verify instrumented tests that no drag, pinch or pan reaches the game while it is shown and that the static arrow shows with animations off
+- [x] 4.1 Add `TipTargets` and register the stack column, stack slots, and start, finish and mandatory cells from `StackPanel` and `PlayingField`, and derive `fullyVisibleSlots` from the slot rects and the panel's window-clipped bounds; verify an instrumented test that the registered start cell rect matches the start tile's bounds and that, on a screen too short for the whole stack, the cut-off top slots are not in `fullyVisibleSlots`
+- [x] 4.2 Add `FieldViewport.revealCell` within the pan limits and restore the level-start view after the tour; verify instrumented tests for the finish step on a 16 × 12 level and the view after the tour
+- [x] 4.3 Build the `TipOverlay` composable per the approved design (scrim cut-out, callout, buttons, step counter, drag hint, reduced motion) consuming all other input; verify instrumented tests that no drag, pinch or pan reaches the game while it is shown and that the static arrow shows with animations off
 
 ## 5. Game wiring
 
-- [ ] 5.1 Freeze via `Pause` for tips in `GameSession`, keep the pause dialog hidden for tip pauses, and resume after the last due tip; verify unit tests on `GameSession` and the instrumented "countdown stops during a tip" and "no pause dialog for a tip" scenarios
-- [ ] 5.2 Evaluate `dueTips` at level start and after each accepted placement in `GameScreen`, re-evaluate when `fullyVisibleSlots` changes, show tips in order and mark each seen on close; verify instrumented tests for the first level being level 4, the tour not shown again, restart, cross and reservoir tips appearing once, and on a short screen a cross drawn onto the cut-off top of the stack only showing its tip after the placement that brings it fully into view
-- [ ] 5.3 Implement Next / Skip tour / Let's go / Got it and Back behaviour; verify instrumented tests for finishing, skipping, Back skipping the tour, Back as Got it, and the liquid continuing where it froze
-- [ ] 5.4 Handle backgrounding during a tip (pause dialog over the tip, Resume keeps the tip and freeze); verify the instrumented "coming back to the app during a tip" scenario and that the existing pause tests still pass
-- [ ] 5.5 Add content descriptions and live-region announcements for tips; verify the instrumented screen reader scenario ("Step 1 of 5", buttons in order)
+- [x] 5.1 Freeze via `Pause` for tips in `GameSession`, keep the pause dialog hidden for tip pauses, and resume after the last due tip; verify unit tests on `GameSession` and the instrumented "countdown stops during a tip" and "no pause dialog for a tip" scenarios
+- [x] 5.2 Evaluate `dueTips` at level start and after each accepted placement in `GameScreen`, re-evaluate when `fullyVisibleSlots` changes, show tips in order and mark each seen on close; verify instrumented tests for the first level being level 4, the tour not shown again, restart, cross and reservoir tips appearing once, and on a short screen a cross drawn onto the cut-off top of the stack only showing its tip after the placement that brings it fully into view
+- [x] 5.3 Implement Next / Skip tour / Let's go / Got it and Back behaviour; verify instrumented tests for finishing, skipping, Back skipping the tour, Back as Got it, and the liquid continuing where it froze
+- [x] 5.4 Handle backgrounding during a tip (pause dialog over the tip, Resume keeps the tip and freeze); verify the instrumented "coming back to the app during a tip" scenario and that the existing pause tests still pass
+- [x] 5.5 Add content descriptions and live-region announcements for tips; verify the instrumented screen reader scenario ("Step 1 of 5", buttons in order)
 
 ## 6. Settings
 

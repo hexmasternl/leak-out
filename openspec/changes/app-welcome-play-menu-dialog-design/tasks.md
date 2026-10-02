@@ -4,7 +4,7 @@ Tracking issue: [#57 The game start dialog is not in the correct style](https://
 
 ## 1. Design system and shared panel
 
-- [ ] 1.1 Add a **Play menu** entry to `docs/design-system.md` §5.6 (scrim, title "Play" `display.lg`, brass Primary "Continue", glass Secondary "Select Level", Medium buttons, a tap on the scrim or Back closes it) and mention it in §7.2 dialog entry and §7.4 reduced motion; verify every token named exists in §2–§4
+- [x] 1.1 Add a **Play menu** entry to `docs/design-system.md` §5.6 (scrim, title "Play" `display.lg`, brass Primary "Continue", glass Secondary "Select Level", Medium buttons, a tap on the scrim or Back closes it) and mention it in §7.2 dialog entry and §7.4 reduced motion; verify every token named exists in §2–§4
 - [ ] 1.2 Move `ResultDialogPanel` (as `FloatingPanel`), the shared panel metrics, `ResultDialogEntry` (as `DialogEntry`) and `PanelScale` from `app/ui/game/ResultDialogLayout.kt` to `app/ui/components/FloatingPanel.kt`, and update the result and pause dialogs to use them; verify `./gradlew :app:testDebugUnitTest` passes (move any entry-selection tests along) and the result and pause dialog instrumented tests still pass
 
 ## 2. Play menu dialog

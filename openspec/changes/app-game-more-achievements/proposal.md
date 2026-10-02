@@ -1,0 +1,57 @@
+# Proposal
+
+Tracks GitHub issue [#64 Missing achievements](https://github.com/hexmasternl/leak-out/issues/64).
+
+## Why
+
+The 25 launch achievements (`app-game-achievements`) mostly reward clean, careful play. Issue #64 asks for more variety: higher tiers of achievements players already chase (The Long Way Round, Big Spender, Star Collector), achievements for route shapes (crosses in a row, long straights, long chains of corners), for efficient routes, and a few playful ones for failing in style or for impatience. They give players reasons to replay levels they have already finished.
+
+## What Changes
+
+- **11 new achievements** this change publishes, all reachable with the bundled levels, for 115 XP (catalogue total 595 → 710):
+
+  | Key | Name | Group | Condition | XP |
+  |---|---|---|---|---|
+  | `tips_addict` | Tips Addict | lifetime | the seen tips are reset on the settings screen | 5 |
+  | `long_way_round_2` | The Long Way Round II | skill | win after the liquid left 50 or more different placed tiles | 10 |
+  | `long_way_round_3` | The Long Way Round III | skill | the same with 100 or more tiles | 15 |
+  | `big_spender_2` | Big Spender II | skill | win with a final total of 1000 or more | 15 |
+  | `crossroad_master` | Crossroad Master | skill | the liquid runs through 3 cross sections in a row, each one connected directly to the next | 15 |
+  | `efficiency_master` | Efficiency Master | skill | win with no more sections on the board than the shortest possible route needs | 15 |
+  | `highway` | Highway | skill | win with a route that runs straight through 7 or more straight sections in a row | 10 |
+  | `snake` | Snake | skill | win with a route that has 12 or more corner sections in a row, no straight, cross or reservoir in between | 15 |
+  | `eraser` | Eraser | skill | replace 20 or more sections in one attempt | 5 |
+  | `dramatic_failure` | Dramatic Failure | hidden | lose after the liquid left more than 50 sections from the start | 5 |
+  | `on_your_nerves` | On Your Nerves | hidden | tap the tile of a running replacement 5 or more times before its new section lands | 5 |
+
+- **Existing achievements keep their values.** Play Games can't change a published achievement, so the issue's "Big Spender for 1000 instead of 500" becomes a second tier: Big Spender (500) stays, Big Spender II (1000) is added. The Long Way Round (30 tiles) likewise gets tiers II and III.
+- **Two requests are deferred**, because the growth rules only allow achievements that the bundled levels can reach:
+  - *Snail* (3 reservoirs in one level): no bundled level draws reservoirs (every level has `RES` weight 0). It is added to the growth guideline, to be published with the first level that can draw 3 reservoirs.
+  - *Star Collector* 100 / 250 / 500 / 1000 stars: the 25 bundled levels give at most 75 stars. These four tiers replace the planned Star Collector III / IV (150 / 400) in the growth guideline, each to be published once enough levels ship (34 / 84 / 167 / 334 levels).
+- **XP guideline rebalanced** in `docs/achievements.md`: with 290 XP left, pack achievements drop to 5 + 5 XP per pack, so packs 2-13, the levels-finished and Perfectionist tiers, the four Star Collector tiers and Snail still fit in the remaining budget.
+- **Engine attempt facts**: the game state also records, in flow order, every section the liquid left (so the route shape can be judged) and the most taps on the tile of one running replacement. Taps on the field during a replacement are still refused and still silent; the engine only counts them.
+- **The shortest route** of a level comes from the existing level solver and is part of the attempt summary, so Efficiency Master needs no extra level data.
+- **Tips resets** are counted in the lifetime player stats, so tapping "Show tips again" unlocks Tips Addict through the normal achievement pipeline (store, unlock feedback, Play Games sync).
+- **11 new icons** in the Deep Flow style, generated with `assets/achievements/generate-icons.mjs`, and the matching name and description strings.
+- **Play Console** (manual, by the owner): create the 11 achievements, export `games-ids.xml` again, smoke test, publish.
+
+## Capabilities
+
+### New Capabilities
+
+None.
+
+### Modified Capabilities
+
+These capabilities are introduced by `app-game-achievements`, which must be archived before this change is.
+
+- `game-achievements`: the catalogue grows from 25 to 36 achievements (710 XP), with the rules for the 11 new ones and their reachability proofs.
+- `game-engine`: the attempt facts also hold the liquid's path in flow order and the most taps on a running replacement's tile.
+- `achievement-persistence`: the player stats also count tips resets, and the database upgrade keeps existing achievement data.
+
+## Impact
+
+- `core/`: `Achievement` gets 11 entries at the end of the enum; `AchievementRules` the new conditions and thresholds; `AttemptSummary` the route-shape facts (longest cross chain, straight run and corner run, sections left), most replacement taps and the shortest route length; `PlayerStats` a tips-reset count. `GameState` and `GameEngine` record the flow path and replacement taps, with a new command for a tap during a replacement. Catalogue, rules, summary, engine and reachability tests grow.
+- `app/`: `GameSession` sends the replacement tap command; `AchievementTracker` gets an entry point for a tips reset, called from `SettingsViewModel`; `PlayerStatsEntity` gets a column with a Room migration; `AchievementResources`, strings and 11 PNG icons in `drawable-nodpi`; `res/values/games-ids.xml` after the Play Console export.
+- Docs: `docs/achievements.md` (new XP guideline, deferred Snail and Star Collector tiers), `docs/achievements-technical.md` and `docs/project-plan.md` section 2.11.
+- External: 11 new achievements in Play Games project `201820010117`. Publishing them makes them permanent.

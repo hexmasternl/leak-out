@@ -894,8 +894,8 @@ td:first-child{color:var(--text-1)}
       <div class="grid g4" id="pipeGallery"></div>
 
       <div class="panel" style="margin-top:24px">
-        <h3 style="margin-bottom:6px">Start valve and finish flag at 44 dp and 120 dp</h3>
-        <p class="small muted">Both endpoints sit on the plain empty-cell tile; only the brass wheel and the success ring carry colour. The flag's 4 × 3 squares must still read at the 44 dp minimum cell.</p>
+        <h3 style="margin-bottom:6px">Start valve and checkered finish at 44 dp and 120 dp</h3>
+        <p class="small muted">Both endpoints sit on the plain empty-cell tile; only the brass wheel and the success ring carry colour. The finish's 6 × 6 checker must still read at the 44 dp minimum cell.</p>
         <div class="endpoint-sizes" id="endpointSizes"></div>
       </div>
 
@@ -950,7 +950,7 @@ td:first-child{color:var(--text-1)}
               <tr><td>Board plate</td><td>Level 1 panel, radius xl, radial vignette so the centre reads brighter</td></tr>
               <tr><td>Cells</td><td>≥ 44dp, 4dp gap, radius sm. Empty cells are <code>surface.overlay</code> at 60% with a faint “+”</td></tr>
               <tr><td>Start valve</td><td>Brass wheel on a straight-pipe stub, pulsing while the countdown runs and steady once the liquid flows; chevron shows exit direction</td></tr>
-              <tr><td>Finish flag</td><td>Success ring with a checkered flag, pulsing until the liquid reaches it</td></tr>
+              <tr><td>Checkered finish</td><td>Success ring filled with a checker pattern, pulsing until the liquid reaches it</td></tr>
               <tr><td>Blocked</td><td><code>surface.abyss</code> with a subtle 45° hatch</td></tr>
               <tr><td>Rail</td><td>Next piece 8% larger with a 2dp brass ring and glow; pieces below fade 80 → 40%</td></tr>
             </table>
@@ -1098,26 +1098,17 @@ function endpointStub(dir, o){
     + `</g>`;
 }
 
-/* Finish flag: steel.100 pole at x = 40 from y = 36 to 65, and a 21 x 15 cloth of
-   4 x 3 squares whose rows follow one sine period of amplitude 1.2 (0.012 c). */
-function checkeredFlag(){
-  const x0 = 40, y0 = 36, w = 21, h = 15, cols = 4, rows = 3, amp = 1.2;
-  const wave = x => amp * Math.sin(2 * Math.PI * (x - x0) / w);
-  const edge = (xa, xb, y) => {
-    const pts = [];
-    for(let k=0; k<=4; k++){ const x = xa + (xb - xa) * k / 4; pts.push(`${x.toFixed(2)} ${(y + wave(x)).toFixed(2)}`); }
-    return pts;
-  };
+/* Checkered finish: the ring's inner disc (radius 21.5 = 0.215 c) filled with a
+   flat 6 x 6 checker aligned on the cell centre, top-left square light. */
+let checkerClipId = 0;
+function checkerDisc(){
+  const r = 21.5, n = 6, side = 2 * r / n, x0 = 50 - r, y0 = 50 - r;
+  const id = 'chk' + (checkerClipId++);
   let squares = '';
-  for(let r=0; r<rows; r++) for(let c=0; c<cols; c++){
-    const xa = x0 + c * w / cols, xb = xa + w / cols;
-    const top = edge(xa, xb, y0 + r * h / rows), bottom = edge(xb, xa, y0 + (r + 1) * h / rows);
-    squares += `<path d="M${top.join('L')}L${bottom.join('L')}Z" fill="${(r + c) % 2 === 0 ? '#F2F7FB' : '#22303F'}"/>`;
+  for(let row=0; row<n; row++) for(let col=0; col<n; col++){
+    squares += `<rect x="${(x0 + col * side).toFixed(3)}" y="${(y0 + row * side).toFixed(3)}" width="${side.toFixed(3)}" height="${side.toFixed(3)}" fill="${(row + col) % 2 === 0 ? '#F2F7FB' : '#22303F'}"/>`;
   }
-  const outline = `M${edge(x0, x0 + w, y0).join('L')}L${edge(x0 + w, x0, y0 + h).join('L')}Z`;
-  return squares
-    + `<path d="${outline}" fill="none" stroke="#22303F" stroke-width="1" stroke-linejoin="round"/>`
-    + `<path d="M40 36V65" stroke="#C9D6E2" stroke-width="3" stroke-linecap="round"/>`;
+  return `<clipPath id="${id}"><circle cx="50" cy="50" r="${r}"/></clipPath><g clip-path="url(#${id})" shape-rendering="crispEdges">${squares}</g>`;
 }
 
 function pipeSVG(type, o={}){
@@ -1168,9 +1159,8 @@ function pipeSVG(type, o={}){
     const dir = o.dir||'L';
     inner = endpointStub(dir, {})
       + `<g class="${o.pulse!==false?'drain-glow':''}">`
-      + `<circle cx="50" cy="50" r="24" fill="#122538"/>`
+      + checkerDisc()
       + `<circle cx="50" cy="50" r="24" fill="none" stroke="#3DDC97" stroke-width="5"/>`
-      + checkeredFlag()
       + `</g>`;
   }
   else if(type==='BLOCKED'){
@@ -1193,11 +1183,11 @@ const items = [
   ['X',{liquid:'anim', liquidV:true, delay:'d2'}, 'Cross', 'Two independent channels'],
   ['RES',{liquid:'anim', id:'g'}, 'Reservoir', 'Left ↔ Right · ×0.3 speed'],
   ['START',{dir:'R'}, 'Start valve', 'Exit direction shown by chevron'],
-  ['FINISH',{dir:'L'}, 'Finish flag', 'Must be entered through the open port'],
+  ['FINISH',{dir:'L'}, 'Checkered finish', 'Must be entered through the open port'],
   ['BLOCKED',{}, 'Blocked', 'Nothing can be placed'],
   ['EMPTY',{}, 'Empty', 'Tap to place the next piece'],
   ['JOIN',{first:['START',{dir:'R', liquid:true, progress:1}], second:['H',{liquid:true, progress:.6}]}, 'Start + straight', 'The stub is the straight’s own art'],
-  ['JOIN',{first:['H',{}], second:['FINISH',{dir:'L'}]}, 'Straight + finish flag', 'Flanges meet on the shared edge'],
+  ['JOIN',{first:['H',{}], second:['FINISH',{dir:'L'}]}, 'Straight + checkered finish', 'Flanges meet on the shared edge'],
 ];
 items.forEach(([t,o,name,ports])=>{
   const card = document.createElement('div'); card.className='pipecard';

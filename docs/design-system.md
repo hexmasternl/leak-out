@@ -86,7 +86,7 @@ Liquid is always rendered as a vertical gradient `liquid.300 → liquid.500 → 
 | `leak.500` | `#FF5A5F` | Leak splash, lose dialog title, destructive button |
 | `leak.700` | `#C9353B` | Destructive button lip, leak shadow |
 | `leak.tint` | `#FF5A5F` at 16 % | Locked-cell flash, error chip background |
-| `success.500` | `#3DDC97` | Finish ring and flag, win dialog title, complete tick |
+| `success.500` | `#3DDC97` | Finish ring and checker, win dialog title, complete tick |
 | `success.700` | `#1FA971` | Success button lip |
 | `success.tint` | `#3DDC97` at 16 % | Completed level tile wash |
 | `reservoir.300` | `#C7B5FF` | Reservoir liquid highlight |
@@ -418,7 +418,7 @@ The grid sits on a level 1 panel (`surface.base`, `radius.xl`, 12 dp padding). G
 | Pipe, filled | transparent | none | Pipe render with liquid |
 | Locked (tap on filled/flowing) | flash `leak.tint` 240 ms | – | Toast |
 | Blocked | `surface.abyss` | none | Diagonal hatch in `line.subtle`, `radius.sm` |
-| Start, Finish | as Empty, without the "+" | as Empty | Start valve or finish flag (6.4) drawn on the plain empty-cell tile. No colour wash: the colour lives only in the valve wheel and the finish ring |
+| Start, Finish | as Empty, without the "+" | as Empty | Start valve or checkered finish (6.4) drawn on the plain empty-cell tile. No colour wash: the colour lives only in the valve wheel and the finish ring |
 
 Cell size is computed from the available width; the minimum is 44 dp so tap targets stay accessible.
 
@@ -443,10 +443,10 @@ Every pipe section is drawn from the same layers, in this order. Sizes are relat
 | `LT` `LB` `RT` `RB` | edge → centre → edge with round join | The round join gives a natural elbow |
 | `X` | vertical drawn first, then horizontal on top | A 0.05 c `surface.deep` gap around the horizontal body creates a "bridge" so it reads as two channels. Each channel has its own liquid layer |
 | `RES` | left edge → right edge, plus a centred tank | Always a horizontal section (L↔R, two-way). No top or bottom ports. Tank: circle radius 0.3 c, fill `reservoir.700 → reservoir.500` gradient, rim `steel.300`. Liquid fills the tank bottom-up during progress 0.1–0.9. A small "slow" badge sits at the top-right of the cell |
-| Start valve | stub from centre to the exit port | See *Start valve and finish flag* below. Brass wheel radius 0.24 c with four spokes and a hub, a brass chevron on the stub pointing out of the exit port, brass glow pulsing on `motion.drift` while waiting |
-| Finish drain ("Finish flag") | stub from the entry port to centre | See *Start valve and finish flag* below. Ring radius 0.24 c stroke `success.500` with a checkered flag inside, success glow pulsing on `motion.pulse` until the win. Ring flashes solid on win |
+| Start valve | stub from centre to the exit port | See *Start valve and checkered finish* below. Brass wheel radius 0.24 c with four spokes and a hub, a brass chevron on the stub pointing out of the exit port, brass glow pulsing on `motion.drift` while waiting |
+| Finish drain ("Checkered finish") | stub from the entry port to centre | See *Start valve and checkered finish* below. Ring radius 0.24 c stroke `success.500` filled with a 6 × 6 checker, success glow pulsing on `motion.pulse` until the win. Ring flashes solid on win |
 
-#### Start valve and finish flag
+#### Start valve and checkered finish
 
 Both endpoints are drawn on the empty-cell tile (6.2) in this order: glow (7.2), stub, symbol. Sizes are in cell units *c* relative to the cell centre; *y* grows downwards.
 
@@ -463,17 +463,14 @@ Both endpoints are drawn on the empty-cell tile (6.2) in this order: glow (7.2),
 | Highlight | circle radius 0.05 c at (−0.08 c, −0.10 c) | `brass.100` at 45 % |
 | Chevron | round-capped stroke 0.04 c, two legs forming a "›" 0.16 c wide across the stub and 0.08 c deep, tip 0.32 c from the centre towards the exit port (between the wheel and the flange) | `brass.300` |
 
-**Finish ring and checkered flag** (success and steel only, no brass):
+**Finish ring and checker** (success and checker only, no brass, no flag or pole):
 
 | Part | Geometry | Colour |
 |------|----------|--------|
-| Disc | circle, radius 0.24 c | `surface.base` |
-| Ring | stroke 0.05 c centred on radius 0.24 c (inner radius 0.215 c) | `success.500` |
-| Pole | stroke 0.03 c, round caps, from (−0.10 c, −0.14 c) to (−0.10 c, +0.15 c) | `steel.100` |
-| Cloth | from the top of the pole, 0.21 c wide × 0.15 c high, 4 columns × 3 rows of squares; the top and bottom edges and the row lines follow one sine period of amplitude 0.012 c across the width, so the flag waves without animation | top-left square `text.primary` (Deep `#F2F7FB`, in both themes), alternating with `steel.900` |
-| Cloth outline | stroke 0.01 c around the cloth | `steel.900` |
+| Checker | the inner disc (radius 0.215 c) filled with a flat 6 × 6 grid of squares, each 0.43 c / 6 ≈ 0.072 c, spanning the inner diameter and aligned on the cell centre (the centre is a corner shared by four squares); clipped to the disc | the grid's top-left square `text.primary` (Deep `#F2F7FB`, in both themes), alternating with `steel.900` |
+| Ring | stroke 0.05 c centred on radius 0.24 c (inner radius 0.215 c), drawn over the checker so it covers the clipped edge squares | `success.500` |
 
-The flag (pole caps and cloth wave included) spans 0.225 c × 0.32 c, is centred in the ring within 0.005 c, and its farthest corner is 0.20 c from the centre, inside the ring's inner radius. At the 44 dp minimum cell a square is about 2.3 dp; the 4 × 3 cloth was checked at 44 dp in the gallery and reads, so no 3 × 2 fallback is used. The same geometry is the `flag-checkered` icon (8). Where the finish is named to people (the gallery, onboarding) it is the **finish flag**; in code and specs it remains the finish drain or `Cell.Finish`.
+At the 44 dp minimum cell a square is about 3.2 dp; the 6 × 6 checker was checked at 44 dp in the gallery and reads, so no 4 × 4 fallback is used. The same geometry is the `finish-checkered` icon (8). Where the finish is named to people (the gallery, onboarding) it is the **checkered finish**; in code and specs it remains the finish drain or `Cell.Finish`.
 
 ### 6.5 Liquid rendering
 
@@ -526,9 +523,9 @@ When the system "remove animations" setting is on: no springs (replace with 160 
 
 Rounded-stroke icons, 24 dp grid, 2 dp stroke, round caps and joins, drawn as `ImageVector`s. Colour follows `text.primary` unless specified.
 
-Required set: play, pause, restart, next, back, close, settings, sound-on, sound-off, music-on, music-off, lock, star (filled + outline), trophy, fast-forward (start flow now), hourglass (slow badge), wave (flow speed), drop (liquid), warning, info, check, flag-checkered (finish).
+Required set: play, pause, restart, next, back, close, settings, sound-on, sound-off, music-on, music-off, lock, star (filled + outline), trophy, fast-forward (start flow now), hourglass (slow badge), wave (flow speed), drop (liquid), warning, info, check, finish-checkered (finish).
 
-`flag-checkered` is the finish flag of 6.4 without the disc and ring, scaled so the flag fills the 24 dp grid (*c* = 68 dp: about 15 × 22 dp, centred). The pole is the regular 2 dp round-capped stroke; the cloth is the only filled shape in the set: its light squares use the icon colour, its dark squares stay transparent, and a 1 dp outline in the icon colour closes it.
+`finish-checkered` is the checkered finish of 6.4 on the 24 dp grid: a 2 dp ring of radius 9 dp in the icon colour around a disc filled with a 6 × 6 checker spanning the ring's inner diameter (squares of about 2.7 dp), clipped to the disc. It is the only filled icon in the set: the light squares use the icon colour and the dark squares stay transparent.
 
 ---
 

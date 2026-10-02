@@ -1,11 +1,11 @@
 ## MODIFIED Requirements
 
 ### Requirement: Field draws the level cells
-The field SHALL draw the grid, the start cell with its open side, the finish cell with its open side, every blocked cell and every placed section. Each kind of cell SHALL look different from the others. Placed sections SHALL be drawn with the same pipe art as the stack: the section's SVG asset with its glass overlay, scaled to the cell and following pan and zoom. The start SHALL be drawn as the start valve and the finish as the finish flag, as described in the design system, so the player can tell at a glance where the liquid comes from and where it has to go.
+The field SHALL draw the grid, the start cell with its open side, the finish cell with its open side, every blocked cell and every placed section. Each kind of cell SHALL look different from the others. Placed sections SHALL be drawn with the same pipe art as the stack: the section's SVG asset with its glass overlay, scaled to the cell and following pan and zoom. The start SHALL be drawn as the start valve and the finish as the checkered finish, as described in the design system, so the player can tell at a glance where the liquid comes from and where it has to go.
 
 #### Scenario: Level cells are drawn
 - **WHEN** a level with blocked cells starts
-- **THEN** the field shows the grid, the start valve and the finish flag with their openings, and the blocked cells, all different from empty cells
+- **THEN** the field shows the grid, the start valve and the checkered finish with their openings, and the blocked cells, all different from empty cells
 
 #### Scenario: Placed section is drawn
 - **WHEN** a section is placed on a cell
@@ -32,16 +32,16 @@ The start cell SHALL be drawn on the empty-cell tile, without a coloured tint, a
 - **WHEN** the player zooms in on the start
 - **THEN** the stub, wheel and chevron are drawn at the new cell size, keeping their proportions
 
-### Requirement: Finish flag
-The finish cell SHALL be drawn on the empty-cell tile, without a coloured tint, as a pipe stub and a finish ring with a checkered flag. The stub SHALL be the half of the straight section's pipe art between the open side and the centre of the cell, including the flange and the glass overlay. On top of the stub, centred in the cell, the field SHALL draw a dark disc with a ring in the success colour (radius 0.24 of the cell) and, inside it, a checkered flag: a light pole and a waving cloth of 4 × 3 squares alternating light and dark. The finish SHALL use no brass colour.
+### Requirement: Checkered finish
+The finish cell SHALL be drawn on the empty-cell tile, without a coloured tint, as a pipe stub and a finish ring filled with a checker pattern. The stub SHALL be the half of the straight section's pipe art between the open side and the centre of the cell, including the flange and the glass overlay. On top of the stub, centred in the cell, the field SHALL draw a ring in the success colour (radius 0.24 of the cell) whose whole inner disc is filled with a flat checker pattern of 6 × 6 squares alternating light and dark, clipped to the disc. The finish SHALL show no flag or pole, and SHALL use no brass colour.
 
-#### Scenario: Finish shows a checkered flag
+#### Scenario: Finish shows a checkered disc
 - **WHEN** a level starts whose finish opens to the left
-- **THEN** the finish cell shows a horizontal pipe stub from the left edge to the centre and, in the centre, a success-coloured ring holding a checkered flag
+- **THEN** the finish cell shows a horizontal pipe stub from the left edge to the centre and, in the centre, a success-coloured ring filled with a light and dark checker pattern
 
 #### Scenario: Start and finish are told apart
 - **WHEN** a level starts
-- **THEN** the start shows a brass valve wheel and the finish a success-coloured ring with a checkered flag, and neither shows the other's symbol
+- **THEN** the start shows a brass valve wheel and the finish a success-coloured ring filled with a checker pattern, and neither shows the other's symbol
 
 ### Requirement: Liquid leaves the start valve
 While the liquid head is in the start cell, the field SHALL draw the liquid in the start's stub, from the centre of the cell towards the open side, up to the head's progress, the same way the liquid is drawn in a section's channel. Once the head has left the start, the stub SHALL stay filled for the rest of the attempt. Before the liquid starts, the stub SHALL be dry. The finish's stub SHALL stay dry; reaching the finish is shown by the finish flash.

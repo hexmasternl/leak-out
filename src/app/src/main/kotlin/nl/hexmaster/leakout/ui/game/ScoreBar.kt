@@ -1,11 +1,20 @@
 package nl.hexmaster.leakout.ui.game
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -20,8 +29,19 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import nl.hexmaster.leakout.R
+import nl.hexmaster.leakout.core.level.StarBenchmarks
+import nl.hexmaster.leakout.ui.splash.rememberReducedMotion
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
 
@@ -110,4 +130,87 @@ private fun DrawScope.drawSparkle(center: Offset, frame: SparkleFrame) {
         val color = if (p.glow) LeakOutColors.LiquidGlow else LeakOutColors.Brass300
         drawCircle(color.copy(alpha = p.alpha), radius = dot, center = center + Offset(p.dx.dp.toPx(), p.dy.dp.toPx()))
     }
+}
+
+/** Test-only semantics: how full the score bar's fill is right now, 0..1. */
+val ScoreFill = SemanticsPropertyKey<Float>("ScoreFill")
+var SemanticsPropertyReceiver.scoreFill by ScoreFill
+
+/** Test-only semantics: the thresholds that have sparkled this attempt, in order. */
+val SparkledThresholds = SemanticsPropertyKey<List<HudModel.Threshold>>("SparkledThresholds")
+var SemanticsPropertyReceiver.sparkledThresholds by SparkledThresholds
+
+/** The score bar's fill animation: 600 ms ease-out, 160 ms under reduced motion (design system 7.2). */
+const val SCORE_FILL_MS = 600
+const val SCORE_FILL_REDUCED_MS = 160
+
+/**
+ * The score bar of the HUD: [score] over the level's `stars.three`, markers at `stars.one` and
+ * `stars.two`, and the actual score centred on it. The fill moves smoothly to a new score and is
+ * empty at once on a new [attempt]. Each threshold sparkles once per attempt, as the moving fill
+ * reaches it; under [reducedMotion] nothing sparkles. Read by a screen reader as one item:
+ * "Score 150, 1 of 3 stars".
+ */
+@Composable
+fun ScoreBar(
+    score: Int,
+    stars: StarBenchmarks,
+    attempt: Int,
+    modifier: Modifier = Modifier,
+    reducedMotion: Boolean = rememberReducedMotion(),
+) {
+    val locale = LocalConfiguration.current.locales[0]
+    val scoreText = HudFormat.score(score, locale)
+    val description = stringResource(R.string.hud_score_description, scoreText, stars.starsFor(score))
+    val target = HudModel.scoreFraction(score, stars)
+    // Keyed on the attempt: a new attempt starts with an empty bar without animating.
+    val fill = remember(attempt, stars) { Animatable(target) }
+    val sparkled = remember(attempt, stars) { mutableStateListOf<HudModel.Threshold>() }
+    val ages = remember(attempt, stars) { mutableStateMapOf<HudModel.Threshold, Long>() }
+
+    LaunchedEffect(fill, target) {
+        val duration = if (reducedMotion) SCORE_FILL_REDUCED_MS else SCORE_FILL_MS
+        fill.animateTo(target, tween(duration, easing = FastOutSlowInEasing))
+    }
+    LaunchedEffect(fill, reducedMotion) {
+        val scope = this
+        var previous = fill.value
+        snapshotFlow { fill.value }.collect { value ->
+            if (!reducedMotion) {
+                for (threshold in HudModel.thresholdsPassed(previous, value, stars)) {
+                    if (threshold in sparkled) continue
+                    sparkled += threshold
+                    ages[threshold] = 0L
+                    scope.launch {
+                        val start = withFrameMillis { it }
+                        while (true) {
+                            val age = withFrameMillis { it } - start
+                            if (age >= HudSparkle.DURATION_MS) break
+                            ages[threshold] = age
+                        }
+                        ages.remove(threshold)
+                    }
+                }
+            }
+            previous = value
+        }
+    }
+
+    val fraction = fill.value
+    val sparkles = ages.mapNotNull { (threshold, age) ->
+        sparkleFrame(age)?.let { ScoreBarSparkle(HudModel.position(threshold, stars), it) }
+    }
+    ScoreBarTrack(
+        fraction = fraction,
+        markers = HudModel.markerFractions(stars),
+        scoreText = scoreText,
+        sparkles = sparkles,
+        modifier = modifier
+            .testTag(HudTags.SCORE)
+            .clearAndSetSemantics {
+                contentDescription = description
+                scoreFill = fraction
+                sparkledThresholds = sparkled.toList()
+            },
+    )
 }

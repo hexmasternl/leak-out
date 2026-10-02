@@ -35,6 +35,9 @@ class LevelParserTest {
         assertEquals(0.0, level.flow.speedRampPerCell)
         assertEquals(5, level.stack.visibleSize)
         assertEquals(LevelDefaults.STACK_WEIGHTS, level.stack.weights)
+        for (section in PipeSection.entries) {
+            assertEquals(if (section.mandatory) 7 else 0, level.stack.weightOf(section), "$section")
+        }
         assertEquals(true, level.rules.allowReplace)
         assertEquals(3_000, level.rules.replacePenaltyMs)
         assertEquals(emptyList(), level.blocked)
@@ -51,8 +54,10 @@ class LevelParserTest {
 
     @Test
     fun `single stack weight is overridden and the rest keep their defaults`() {
-        val level = parsed(TestLevels.minimalJson(extra = """, "stack": { "weights": { "X": 1 } }"""))
-        assertEquals(TestLevels.weights(PipeSection.X to 1), level.stack.weights)
+        val level = parsed(TestLevels.minimalJson(extra = """, "stack": { "weights": { "X": 3 } }"""))
+        assertEquals(TestLevels.weights(PipeSection.X to 3), level.stack.weights)
+        assertEquals(7, level.stack.weightOf(PipeSection.H))
+        assertEquals(0, level.stack.weightOf(PipeSection.RES))
         assertEquals(LevelDefaults.VISIBLE_STACK_SIZE, level.stack.visibleSize)
     }
 

@@ -34,14 +34,14 @@ Tracking issue: [#43 Level designer](https://github.com/hexmasternl/leak-out/iss
 - [x] 5.2 Build the control panel sections: grid size steppers (disabled at 4 and 50), tool selector (Start, Finish, Block), open side controls for start and finish, Clear blocked, id and name, flow, stack weights and visible size, rules, stars, status with error list, and Test play / Export / Start from bundled level actions
 - [x] 5.3 Build `LevelDesignerScreen` (landscape, game theme, safe-area insets) with back handling and the discard-changes confirmation dialog
 - [x] 5.4 Add strings and test tags; Compose previews for a blank, an invalid and an unsolvable design
-- [ ] 5.5 Instrumented Compose tests: tap with Start tool moves the start, drag with Block tool blocks a row, steppers disabled at limits, invalid design disables Test play and Export and lists errors, back with changes shows the dialog
+- [x] 5.5 Instrumented Compose tests: tap with Start tool moves the start, drag with Block tool blocks a row, steppers disabled at limits, invalid design disables Test play and Export and lists errors, back with changes shows the dialog
 
 ## 6. Welcome screen entry and navigation (app)
 
-- [ ] 6.1 Add an optional `onOpenLevelDesigner: (() -> Unit)?` to `WelcomeScreen` and a 48dp corner icon button (tag `WelcomeScreenTags.LEVEL_DESIGNER`, content description "Level designer") composed only when it is non-null
-- [ ] 6.2 In `MainActivity`, add `Screen.Designer` and `Screen.TestPlay(level)`, an activity-scoped `LevelDesignerViewModel`, pass the callback only when `FeatureFlags.levelDesigner` is on, make opening the designer a no-op otherwise, and save the current screen so a recreated activity returns to the designer
-- [ ] 6.3 Test play renders `GameScreen` with `history = null` and `onNextLevel = null`, and its exit returns to `Screen.Designer` with the draft intact
-- [ ] 6.4 Instrumented tests: welcome button shown and emits once with a callback, absent without one, Play/Settings/Exit unchanged; welcome → designer → test play → exit returns to the same design; a test play win leaves the history empty
+- [x] 6.1 Add an optional `onOpenLevelDesigner: (() -> Unit)?` to `WelcomeScreen` and a 48dp corner icon button (tag `WelcomeScreenTags.LEVEL_DESIGNER`, content description "Level designer") composed only when it is non-null
+- [x] 6.2 In `MainActivity`, add `Screen.Designer` and `Screen.TestPlay(level)`, an activity-scoped `LevelDesignerViewModel`, pass the callback only when `FeatureFlags.levelDesigner` is on, make opening the designer a no-op otherwise, and save the current screen so a recreated activity returns to the designer
+- [x] 6.3 Test play renders `GameScreen` with `history = null` and `onNextLevel = null`, and its exit returns to `Screen.Designer` with the draft intact
+- [x] 6.4 Instrumented tests: welcome button shown and emits once with a callback, absent without one, Play/Settings/Exit unchanged; welcome → designer → test play → exit returns to the same design; a test play win leaves the history empty
 
 ## 7. Docs and verification
 

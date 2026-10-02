@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.assertIsDisplayed
@@ -30,6 +33,8 @@ import nl.hexmaster.leakout.core.level.DesignStatus
 import nl.hexmaster.leakout.core.level.EndpointKind
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.LevelDraft
+import nl.hexmaster.leakout.core.level.MandatorySection
+import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
@@ -115,6 +120,37 @@ class LevelDesignerScreenTest {
     }
 
     @Test
+    fun aTapWithTheMandatoryCrossToolPlacesACross() {
+        show()
+        clickTag(DesignerTags.tool(DesignerTool.MANDATORY_CROSS))
+        val target = centreOf(Position(3, 2))
+        compose.onNodeWithTag(DesignerTags.GRID).performTouchInput { click(target) }
+        compose.waitForIdle()
+        assertEquals(listOf(MandatorySection(Position(3, 2), PipeSection.X)), level.mandatory)
+        compose.onNodeWithTag(DesignerTags.STATUS).performScrollTo().assertTextEquals("Valid and solvable")
+    }
+
+    @Test
+    fun starValuesAreCalculatedAndCannotBeEdited() {
+        show()
+        compose.onNodeWithTag(DesignerTags.STAR_THREE).performScrollTo().assertTextEquals("330")
+        compose.onNodeWithTag(DesignerTags.STAR_TWO).assertTextEquals("250")
+        compose.onNodeWithTag(DesignerTags.STAR_ONE).assertTextEquals("200")
+        listOf(DesignerTags.STAR_ONE, DesignerTags.STAR_TWO, DesignerTags.STAR_THREE).forEach { tag ->
+            compose.onNodeWithTag(tag).assert(SemanticsMatcher.keyNotDefined(SemanticsActions.SetText))
+        }
+
+        clickTag(DesignerTags.tool(DesignerTool.BLOCK))
+        val target = centreOf(Position(3, 1))
+        compose.onNodeWithTag(DesignerTags.GRID).performTouchInput { click(target) }
+        compose.waitForIdle()
+        // 32 free cells: 320, 240 and 190.
+        compose.onNodeWithTag(DesignerTags.STAR_THREE).performScrollTo().assertTextEquals("320")
+        compose.onNodeWithTag(DesignerTags.STAR_TWO).assertTextEquals("240")
+        compose.onNodeWithTag(DesignerTags.STAR_ONE).assertTextEquals("190")
+    }
+
+    @Test
     fun columnSteppersAreDisabledAtTheLimits() {
         show()
         repeat(3) { clickTag(DesignerTags.COLUMNS_DOWN) }
@@ -132,7 +168,7 @@ class LevelDesignerScreenTest {
     fun anInvalidDesignDisablesTestPlayAndExportAndListsItsErrors() {
         show()
         clickTag(DesignerTags.side(EndpointKind.START, Side.LEFT))
-        compose.onNodeWithTag(DesignerTags.field(NumberField.StarOne)).performScrollTo().performTextReplacement("500")
+        compose.onNodeWithTag(DesignerTags.field(NumberField.InitialDelay)).performScrollTo().performTextReplacement("-5")
         compose.waitForIdle()
         assertTrue(viewModel.uiState.value.status is DesignStatus.Invalid)
         compose.onNodeWithTag(DesignerTags.STATUS).performScrollTo().assertTextEquals("Invalid: 2 problems")

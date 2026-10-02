@@ -16,5 +16,5 @@
   ],
   "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.165 },
   "stack": { "weights": { "X": 3, "RES": 0 } },
-  "stars": { "one": 180, "two": 300, "three": 440 }
+  "stars": { "one": 600, "two": 900, "three": 1200 }
 }

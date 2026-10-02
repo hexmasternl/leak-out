@@ -35,6 +35,19 @@ data class StarBenchmarks(val one: Int, val two: Int, val three: Int) {
         points >= one -> 1
         else -> 0
     }
+
+    companion object {
+        /**
+         * The thresholds the level designer gives a level with [freeCells] free cells: three stars
+         * for 10 points per free cell, two and one star for 75% and 60% of that, each rounded to the
+         * nearest 10 with halves rounded up.
+         */
+        fun forFreeCells(freeCells: Int): StarBenchmarks = StarBenchmarks(
+            one = (60 * freeCells + 50) / 100 * 10,
+            two = (75 * freeCells + 50) / 100 * 10,
+            three = 10 * freeCells,
+        )
+    }
 }
 
 /**
@@ -66,6 +79,16 @@ data class Level(
 
     /** The mandatory section on [position], or `null` when there is none. */
     fun mandatoryAt(position: Position): MandatorySection? = mandatory.firstOrNull { it.position == position }
+
+    /**
+     * The cells a pipe can go on: every cell of the grid except blocked cells, the start and the
+     * finish. Cells holding a mandatory section count as free.
+     */
+    val freeCells: Int
+        get() {
+            val taken = (blocked + start.position + finish.position).filter { it in grid }.toSet()
+            return grid.columns * grid.rows - taken.size
+        }
 
     /** A section is allowed on the stack when it has a positive weight. */
     fun isAllowed(section: PipeSection): Boolean = stack.weightOf(section) > 0

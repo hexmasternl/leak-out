@@ -168,6 +168,8 @@
     <string name="designer_tool_start">Start</string>
     <string name="designer_tool_finish">Finish</string>
     <string name="designer_tool_block">Block</string>
+    <string name="designer_tool_mandatory_cross">Mandatory cross</string>
+    <string name="designer_tool_mandatory_reservoir">Mandatory reservoir</string>
     <string name="designer_clear_blocked">Clear blocked</string>
     <string name="designer_section_grid">Grid</string>
     <string name="designer_columns">Columns</string>
@@ -191,6 +193,7 @@
     <string name="designer_field_allow_replace">Allow replace</string>
     <string name="designer_field_replace_penalty">Replace penalty (ms)</string>
     <string name="designer_section_stars">Stars</string>
+    <string name="designer_stars_calculated">10 points per free cell for three stars, 75% for two and 60% for one.</string>
     <string name="designer_field_star_one">One</string>
     <string name="designer_field_star_two">Two</string>
     <string name="designer_field_star_three">Three</string>

@@ -7,5 +7,5 @@
   "blocked": [],
   "flow": { "initialDelayMs": 30000, "cellsPerSecond": 0.13 },
   "stack": { "weights": { "X": 0, "RES": 0 } },
-  "stars": { "one": 110, "two": 180, "three": 270 }
+  "stars": { "one": 390, "two": 590, "three": 780 }
 }

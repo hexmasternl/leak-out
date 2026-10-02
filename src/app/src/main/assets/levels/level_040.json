@@ -1,0 +1,36 @@
+{
+  "id": 40,
+  "name": "Rush Hour",
+  "grid": { "columns": 14, "rows": 10 },
+  "start": { "x": 0, "y": 1, "openSide": "BOTTOM" },
+  "finish": { "x": 13, "y": 2, "openSide": "LEFT" },
+  "blocked": [
+    { "x": 3, "y": 0 },
+    { "x": 11, "y": 0 },
+    { "x": 5, "y": 1 },
+    { "x": 1, "y": 2 },
+    { "x": 3, "y": 2 },
+    { "x": 5, "y": 2 },
+    { "x": 12, "y": 3 },
+    { "x": 13, "y": 3 },
+    { "x": 2, "y": 4 },
+    { "x": 3, "y": 4 },
+    { "x": 10, "y": 4 },
+    { "x": 11, "y": 4 },
+    { "x": 5, "y": 5 },
+    { "x": 11, "y": 5 },
+    { "x": 9, "y": 6 },
+    { "x": 11, "y": 6 },
+    { "x": 2, "y": 8 },
+    { "x": 4, "y": 9 },
+    { "x": 9, "y": 9 },
+    { "x": 13, "y": 9 }
+  ],
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.33 },
+  "stack": { "weights": { "X": 6, "RES": 5 } },
+  "mandatory": [
+    { "x": 2, "y": 6, "section": "X" },
+    { "x": 6, "y": 4, "section": "RES" }
+  ],
+  "stars": { "one": 590, "two": 890, "three": 1180 }
+}

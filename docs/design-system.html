@@ -7,7 +7,7 @@
 <meta name="description" content="Deep Flow: the visual, motion and component system for the Leak Out pipe puzzle game.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Wendy+One&family=Varela+Round&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Wendy+One&family=Varela+Round&display=swap" rel="stylesheet">
 <style>
 /* ===================================================================
    TOKENS
@@ -309,6 +309,13 @@ section.block > header p{color:var(--text-2)}
 .joined .cell:last-child{border-radius:0 var(--r-sm) var(--r-sm) 0}
 .endpoint-sizes{display:flex; flex-wrap:wrap; gap:24px; align-items:flex-end}
 .endpoint-sizes .step{display:flex; flex-direction:column; align-items:center; gap:8px}
+/* Points popup (7.2): the board is always Deep, so the colours are the Deep values in both themes */
+.popup-sizes{display:flex; flex-wrap:wrap; gap:24px; align-items:flex-end}
+.popup-sizes .step{display:flex; flex-direction:column; align-items:center; gap:8px}
+.popup-sizes .cell{background:#21405C99; border:1px solid var(--line-subtle)}
+.popup{position:absolute; inset:0; display:grid; place-items:center; font-family:"Fredoka", var(--font-display); font-weight:700; line-height:1; pointer-events:none;
+  color:#0C1A2A; -webkit-text-stroke:2px #9DF3FF; paint-order:stroke fill; text-shadow:0 0 6px rgba(157,243,255,.7)}
+.popup.old{color:#FFFFFF; -webkit-text-stroke:3px #1E293B; paint-order:stroke fill; text-shadow:none}
 .cell.shake{animation:shake .24s linear; background:var(--leak-tint)}
 .cell.pop svg{animation:pop .32s var(--spring)}
 @keyframes shake{0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 50%{transform:translateX(3px)} 75%{transform:translateX(-3px)}}
@@ -902,6 +909,12 @@ td:first-child{color:var(--text-1)}
       </div>
 
       <div class="panel" style="margin-top:24px">
+        <h3 style="margin-bottom:6px">Points popup at 44 dp and 120 dp</h3>
+        <p class="small muted">Fredoka Bold at 0.4c: a solid <code>surface.deep</code> fill, a <code>liquid.glow</code> edge 1 dp wide (a 2 dp stroke under the fill, so the overlaps inside the glyphs stay hidden) and a 6 dp <code>liquid.glow</code> glow at 70 %. It fades in, holds and fades out over 1 s while rising a quarter of a tile. The last row is the slim version it replaces.</p>
+        <div class="popup-sizes" id="popupSizes"></div>
+      </div>
+
+      <div class="panel" style="margin-top:24px">
         <h3 style="margin-bottom:6px">Layer recipe</h3>
         <p class="small muted">Sizes are relative to cell size <em>c</em>. Body 0.36c · bore 0.25c · liquid 0.21c · flange 0.10c long. Round joins give the elbow for free.</p>
         <div class="layers" id="layerDemo"></div>
@@ -1216,6 +1229,21 @@ const es = document.getElementById('endpointSizes');
 [44, 120].forEach(size=>{
   [['START','R'],['START','B'],['FINISH','L'],['FINISH','T']].forEach(([t,dir])=>{
     es.insertAdjacentHTML('beforeend', `<div class="step"><div class="cell tile" style="width:${size}px; height:${size}px">${pipeSVG(t,{dir})}</div><span class="caption">${t==='START'?'Start':'Finish'} · ${dir} · ${size} dp</span></div>`);
+  });
+});
+
+/* Points popup over an empty tile, a filled corner and a filled cross, plus the slim version */
+const ps = document.getElementById('popupSizes');
+const popupSamples = [
+  ['EMPTY', {}, '+10', 'Empty'],
+  ['LB', {liquid:true, progress:1}, '+15', 'Corner'],
+  ['X', {liquidH:true, liquidV:true, progressH:1, progressV:1}, '+50', 'Cross'],
+];
+[[44,''], [120,''], [44,'old']].forEach(([size, variant])=>{
+  popupSamples.forEach(([t, o, text, name])=>{
+    const art = t==='EMPTY' ? '' : pipeSVG(t, o);
+    const label = `${name} · ${size} dp${variant ? ' · slim (before)' : ''}`;
+    ps.insertAdjacentHTML('beforeend', `<div class="step"><div class="cell" style="width:${size}px; height:${size}px">${art}<span class="popup ${variant}" style="font-size:${size*0.4}px">${text}</span></div><span class="caption">${label}</span></div>`);
   });
 });
 

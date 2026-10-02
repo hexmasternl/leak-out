@@ -36,7 +36,7 @@ class GameEngineTest {
         val state = engine.start(level)
         assertEquals(Board.from(level), state.board)
         assertTrue(state.board.pipes.isEmpty())
-        assertEquals(5, state.stack.size)
+        assertEquals(15, state.stack.size)
         assertEquals(FlowState.Waiting(12_000), state.flow)
         assertEquals(0, state.score)
         assertEquals(ScoreSheet(), state.sheet)
@@ -110,7 +110,7 @@ class GameEngineTest {
         val level = engineLevel(section = null)
         val first = engine.start(level)
         val restarted = engine.handle(first, Restart)
-        // Two draws of five from the default weights are almost never the same; with this seed they differ.
+        // Two draws of fifteen from the default weights are almost never the same; with this seed they differ.
         assertNotSame(first.stack, restarted.stack)
         assertTrue(first.stack != restarted.stack)
     }
@@ -129,11 +129,11 @@ class GameEngineTest {
     fun `the dealer counts every draw of the attempt across placements`() {
         val level = engineLevel(section = null)
         var state = engine.start(level)
-        assertEquals(5, state.stack.dealer.draws)
+        assertEquals(15, state.stack.dealer.draws)
 
         state = engine.send(state, Place(p(1, 1)), Place(p(2, 1)), Place(p(3, 1)))
 
-        assertEquals(8, state.stack.dealer.draws)
+        assertEquals(18, state.stack.dealer.draws)
         assertEquals(state.stack.sections.first(), state.stack.dealer.droughts.filterValues { it == 0 }.keys.single())
     }
 
@@ -153,11 +153,11 @@ class GameEngineTest {
         var state = engine.start(level)
         // Rows 0, 2 and 4 hold no start or finish, so all 12 placements land on empty tiles.
         repeat(12) { i -> state = engine.handle(state, Place(p(i % 5, listOf(0, 2, 4)[i / 5]))) }
-        assertEquals(17, state.stack.dealer.draws)
+        assertEquals(27, state.stack.dealer.draws)
 
         val restarted = engine.handle(state, Restart)
 
-        assertEquals(5, restarted.stack.dealer.draws)
+        assertEquals(15, restarted.stack.dealer.draws)
         assertEquals(restarted.stack.sections.toSet(), restarted.stack.dealer.dealt.filterValues { it > 0 }.keys)
     }
 

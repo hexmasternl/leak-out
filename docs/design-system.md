@@ -262,11 +262,14 @@ Screen reader: "Level 7", "Flow speed 8", "Flow starts in 7 seconds" (whole seco
 
 ### 5.4 Stack rail
 
-A vertical level 1 panel on the trailing edge of the board (portrait) or the trailing side of the screen (landscape). Width equals one cell plus 16 dp padding.
+A vertical level 1 panel (`surface.deep` at 90 %, 24 dp radius, `line.strong` edge, 8 dp padding) along the left edge of the game screen, in landscape, next to the board. Its width is the next slot plus 16 dp.
 
-- Holds `visibleSize` pieces, top to bottom. The **top piece** is the current one: it is 8 % larger, framed in a 2 dp `brass.500` ring with brass glow, and labelled "NEXT" in `label.md` above it.
-- Pieces below fade: opacity 100 %, 80 %, 65 %, 50 %, 40 %.
-- When a piece is placed, the remaining pieces slide up with `motion.settle` and a new piece fades in at the bottom.
+- The stack holds `visibleSize + 10` pieces, ordered top to bottom. The **bottom piece** is the next one: 1.25 × the preview size, framed in a 2 dp `brass.500` ring on `brass.500` at 28 %. It is the only piece that can be dragged. The preview pieces above it sit on `surface.raised` at 8 % with a 1 dp `line.strong` edge.
+- Slot sizes are chosen so that the bottom `visibleSize` slots fit the rail height (preview 20–40 dp, gap 2–6 dp); those slots are always fully visible, even with `visibleSize` 10 on a 360 dp tall screen. The ten extra pieces continue upwards at the preview size as far as the rail has room.
+- A piece that does not fit is **clipped at the top edge** of the rail: a partly fitting piece shows only its lower part, a piece above the edge is not drawn. The rail never scrolls. A taller screen shows more look-ahead at the same slot size.
+- When the board accepts a placement, the bottom slot empties and every piece **falls one slot down under gravity** with `motion.fall`: it accelerates, lands with one small bounce and rests. The pieces start from the bottom up, 24 ms apart, so the column collapses like a pile. The piece that becomes the next one grows to the next size and takes on the brass frame while it falls. A new piece falls in from above the top edge into the top slot. A placement during a fall makes every piece continue from where it is, never jumping back.
+- The next piece can be dragged while it is still falling; the drag empties its slot at once.
+- Only fully visible pieces are exposed to accessibility services; clipped pieces are hidden.
 
 ### 5.5 Level tile (level select)
 
@@ -489,15 +492,17 @@ At the 44 dp minimum cell a square is about 3.2 dp; the 6 × 6 checker was check
 |-------|----------|--------|-----|
 | `motion.instant` | 90 ms | linear | Press feedback, lip compression |
 | `motion.quick` | 160 ms | ease-out | Chip states, toast fade, scrim |
-| `motion.settle` | 240 ms | spring (stiffness medium, damping 0.75) | Stack slide, cell state change |
+| `motion.settle` | 240 ms | spring (stiffness medium, damping 0.75) | Cell state change |
 | `motion.pop` | 320 ms | spring (stiffness medium-low, damping 0.6) | Tile placement, dialog entry, win dialog star pop |
-| `motion.drift` | 1 600 ms | ease-in-out, loop | Start valve glow pulse, during the countdown only |
-| `motion.pulse` | 2 000 ms | ease-in-out, loop | Finish ring glow pulse until the win, current stack piece glow |
+| `motion.fall` | 120–260 ms + 120 ms | quadratic ease-in fall, then one bounce of at most 4 dp; 24 ms stagger per piece from the bottom up | Stack pieces dropping a slot |
+| `motion.drift` | 1 600 ms | ease-in-out, loop | Valve glow pulse |
+| `motion.pulse` | 2 000 ms | ease-in-out, loop | Finish ring pulse, current stack piece glow |
 | Liquid fill | continuous | linear | Driven by the simulation, never by an animator |
 
 ### 7.2 Specific animations
 
 - **Place tile**: scale 1.15 → 1 with `motion.pop`, 6 % overshoot, a 40 ms haptic tick at the start.
+- **Stack drop** (5.4): `motion.fall`. A piece falling a distance `d` follows `d · (t / T)²` with `T = sqrt(d / 8 dp) · 90 ms`, clamped to 120–260 ms (one slot takes about 200 ms), then rebounds `min(0.12 · d, 4 dp)` up and back over 120 ms (a half sine) and rests. Each piece above the bottom one starts 24 ms later, at most 8 steps, and the stagger is shortened where needed so that every one-slot drop rests within 400 ms of the placement.
 - **Replace tile**: old tile scales down to 0.7 and fades over `motion.quick`, new tile pops in.
 - **Locked tap**: cell shakes 3 dp left-right twice over 240 ms and flashes `leak.tint`.
 - **Countdown bar fade**: when the liquid starts, the countdown bar fades from 100 % to 0 % opacity over `motion.quick`. Only its alpha changes; its slot stays laid out.
@@ -515,7 +520,7 @@ Progress is a 0–1 value per segment from the engine. The renderer clips the li
 
 ### 7.4 Reduced motion
 
-When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %, the start valve and finish ring glows included), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). Liquid fill and the win tally are gameplay, so they are unaffected.
+When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). The stack pieces do not accelerate, bounce or stagger: they all slide to their new slot together over 160 ms ease-out, and the new top piece fades in in its slot over 160 ms. Liquid fill and the win tally are gameplay, so they are unaffected.
 
 ---
 

@@ -74,7 +74,7 @@ Liquid is always rendered as a vertical gradient `liquid.300 → liquid.500 → 
 |-------|-----|-------|
 | `brass.100` | `#FFE9B0` | Text/icon on dark brass, star highlight |
 | `brass.300` | `#FFCF5C` | Primary button top of gradient, active star |
-| `brass.500` | `#F5A623` | Primary button base, valve wheel, current stack piece frame |
+| `brass.500` | `#F5A623` | Primary button base, start valve wheel, current stack piece frame |
 | `brass.700` | `#C97A12` | Primary button lip (bottom edge), pressed state |
 | `brass.900` | `#7A4708` | Brass shadow, text on brass.100 |
 | `brass.tint` | `#F5A623` at 16 % | Warning chip background, brass focus ring |
@@ -86,7 +86,7 @@ Liquid is always rendered as a vertical gradient `liquid.300 → liquid.500 → 
 | `leak.500` | `#FF5A5F` | Leak splash, lose dialog title, destructive button |
 | `leak.700` | `#C9353B` | Destructive button lip, leak shadow |
 | `leak.tint` | `#FF5A5F` at 16 % | Locked-cell flash, error chip background |
-| `success.500` | `#3DDC97` | Finish drain ring, win dialog title, complete tick |
+| `success.500` | `#3DDC97` | Finish ring and checker, win dialog title, complete tick |
 | `success.700` | `#1FA971` | Success button lip |
 | `success.tint` | `#3DDC97` at 16 % | Completed level tile wash |
 | `reservoir.300` | `#C7B5FF` | Reservoir liquid highlight |
@@ -418,6 +418,7 @@ The grid sits on a level 1 panel (`surface.base`, `radius.xl`, 12 dp padding). G
 | Pipe, filled | transparent | none | Pipe render with liquid |
 | Locked (tap on filled/flowing) | flash `leak.tint` 240 ms | – | Toast |
 | Blocked | `surface.abyss` | none | Diagonal hatch in `line.subtle`, `radius.sm` |
+| Start, Finish | as Empty, without the "+" | as Empty | Start valve or checkered finish (6.4) drawn on the plain empty-cell tile. No colour wash: the colour lives only in the valve wheel and the finish ring |
 
 Cell size is computed from the available width; the minimum is 44 dp so tap targets stay accessible.
 
@@ -442,8 +443,34 @@ Every pipe section is drawn from the same layers, in this order. Sizes are relat
 | `LT` `LB` `RT` `RB` | edge → centre → edge with round join | The round join gives a natural elbow |
 | `X` | vertical drawn first, then horizontal on top | A 0.05 c `surface.deep` gap around the horizontal body creates a "bridge" so it reads as two channels. Each channel has its own liquid layer |
 | `RES` | left edge → right edge, plus a centred tank | Always a horizontal section (L↔R, two-way). No top or bottom ports. Tank: circle radius 0.3 c, fill `reservoir.700 → reservoir.500` gradient, rim `steel.300`. Liquid fills the tank bottom-up during progress 0.1–0.9. A small "slow" badge sits at the top-right of the cell |
-| Start valve | stub from centre to the exit port | Brass wheel: circle radius 0.24 c, `brass.500`, four spokes, brass glow pulsing on 1.6 s while waiting. An arrow chevron on the stub points in the exit direction |
-| Finish drain | stub from the entry port to centre | Ring radius 0.24 c stroke `success.500`, grate of three `steel.300` bars inside, success glow pulsing 2 s. Ring flashes solid on win |
+| Start valve | stub from centre to the exit port | See *Start valve and checkered finish* below. Brass wheel radius 0.24 c with four spokes and a hub, a brass chevron on the stub pointing out of the exit port, brass glow pulsing on `motion.drift` while waiting |
+| Finish drain ("Checkered finish") | stub from the entry port to centre | See *Start valve and checkered finish* below. Ring radius 0.24 c stroke `success.500` filled with a 6 × 6 checker, success glow pulsing on `motion.pulse` until the win. Ring flashes solid on win |
+
+#### Start valve and checkered finish
+
+Both endpoints are drawn on the empty-cell tile (6.2) in this order: glow (7.2), stub, symbol. Sizes are in cell units *c* relative to the cell centre; *y* grows downwards.
+
+**Stub.** The stub is the real pipe art of the straight section, not a separate drawing: the `H` asset for an open left or right side, the `V` asset for an open top or bottom side, clipped to the half of the cell between the centre and the open side. Body, shadow, bore, specular, flange and glass (6.3 layers 1–7) are therefore identical to a placed straight, and a section placed against the open side joins the stub exactly like two sections join. The symbol covers the cut end at the centre (radius 0.24 c is larger than half the 0.36 c body). The start's stub carries liquid (6.5); the finish's stub stays dry.
+
+**Start valve wheel** (brass only, no success or leak colour):
+
+| Part | Geometry | Colour |
+|------|----------|--------|
+| Wheel disc | circle, radius 0.24 c | radial gradient `brass.300` (centre) → `brass.500` (edge) |
+| Rim | stroke 0.03 c on the disc edge | `brass.700` |
+| Spokes | a cross of two strokes (four spokes), each from −0.20 c to +0.20 c through the centre, width 0.045 c, round caps | `brass.900` |
+| Hub | circle radius 0.08 c, edge stroke 0.02 c | `brass.700`, edge `brass.900` |
+| Highlight | circle radius 0.05 c at (−0.08 c, −0.10 c) | `brass.100` at 45 % |
+| Chevron | round-capped stroke 0.04 c, two legs forming a "›" 0.16 c wide across the stub and 0.08 c deep, tip 0.32 c from the centre towards the exit port (between the wheel and the flange) | `brass.300` |
+
+**Finish ring and checker** (success and checker only, no brass, no flag or pole):
+
+| Part | Geometry | Colour |
+|------|----------|--------|
+| Checker | the inner disc (radius 0.215 c) filled with a flat 6 × 6 grid of squares, each 0.43 c / 6 ≈ 0.072 c, spanning the inner diameter and aligned on the cell centre (the centre is a corner shared by four squares); clipped to the disc | the grid's top-left square `text.primary` (Deep `#F2F7FB`, in both themes), alternating with `steel.900` |
+| Ring | stroke 0.05 c centred on radius 0.24 c (inner radius 0.215 c), drawn over the checker so it covers the clipped edge squares | `success.500` |
+
+At the 44 dp minimum cell a square is about 3.2 dp; the 6 × 6 checker was checked at 44 dp in the gallery and reads, so no 4 × 4 fallback is used. The same geometry is the `finish-checkered` icon (8). Where the finish is named to people (the gallery, onboarding) it is the **checkered finish**; in code and specs it remains the finish drain or `Cell.Finish`.
 
 ### 6.5 Liquid rendering
 
@@ -464,8 +491,8 @@ Every pipe section is drawn from the same layers, in this order. Sizes are relat
 | `motion.quick` | 160 ms | ease-out | Chip states, toast fade, scrim |
 | `motion.settle` | 240 ms | spring (stiffness medium, damping 0.75) | Stack slide, cell state change |
 | `motion.pop` | 320 ms | spring (stiffness medium-low, damping 0.6) | Tile placement, dialog entry, win dialog star pop |
-| `motion.drift` | 1 600 ms | ease-in-out, loop | Valve glow pulse |
-| `motion.pulse` | 2 000 ms | ease-in-out, loop | Finish ring pulse, current stack piece glow |
+| `motion.drift` | 1 600 ms | ease-in-out, loop | Start valve glow pulse, during the countdown only |
+| `motion.pulse` | 2 000 ms | ease-in-out, loop | Finish ring glow pulse until the win, current stack piece glow |
 | Liquid fill | continuous | linear | Driven by the simulation, never by an animator |
 
 ### 7.2 Specific animations
@@ -476,6 +503,7 @@ Every pipe section is drawn from the same layers, in this order. Sizes are relat
 - **Countdown bar fade**: when the liquid starts, the countdown bar fades from 100 % to 0 % opacity over `motion.quick`. Only its alpha changes; its slot stays laid out.
 - **Score bar fill**: when the score changes, the fill grows from where it is to the new length over 600 ms ease-out (`FastOutSlowInEasing`). A change while it is still moving continues from the current length. A new attempt empties the fill at once, without animating. The number shows the new score at once.
 - **Threshold sparkle**: when the moving fill reaches `stars.one`, `stars.two` or `stars.three` (the end of the bar), a 600 ms procedural burst at that point: 6–8 `liquid.glow` and `brass.300` particles flying out 6–14 dp and fading, over a brief `brass.300` glow flash (radius 16 dp, fading out in the first 300 ms). Each threshold sparkles once per attempt; a jump past several thresholds sparkles each one as the fill passes it. Points beyond `stars.three` do not sparkle.
+- **Endpoint glows**: a soft circle behind the valve wheel and behind the finish ring, radius 0.24 c + 12 dp, radial gradient from the element's colour (`brass.500`, `success.500`) at the glow alpha to transparent. The alpha is `0.45 + 0.45 × (1 − cos(2π t / T)) / 2`, easing between 45 % and 90 %. The valve pulses with *T* = `motion.drift` (1 600 ms) while the countdown runs and settles at a static 60 % the moment the liquid flows. The finish ring pulses with *T* = `motion.pulse` (2 000 ms) until the level is won; then the finish flash takes over and the ring stays solid. Both follow game time, so they freeze on pause.
 - **Win**: finish ring flashes, board dims to 60 %, dialog pops in, stars stagger 80 ms each with a small brass particle burst.
 - **Leak**: droplet burst, board shakes 2 dp for 200 ms, then the dialog pops in after 500 ms so the player sees where it went wrong.
 - **Result dialog entry** (win and leak, 5.6): the scrim fades from 0 to its 72 % over `motion.quick` (160 ms ease-out) while the panel scales 0.92 → 1 with `motion.pop`. Closing is immediate.
@@ -487,7 +515,7 @@ Progress is a 0–1 value per segment from the engine. The renderer clips the li
 
 ### 7.4 Reduced motion
 
-When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). Liquid fill and the win tally are gameplay, so they are unaffected.
+When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %, the start valve and finish ring glows included), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). Liquid fill and the win tally are gameplay, so they are unaffected.
 
 ---
 
@@ -495,7 +523,9 @@ When the system "remove animations" setting is on: no springs (replace with 160 
 
 Rounded-stroke icons, 24 dp grid, 2 dp stroke, round caps and joins, drawn as `ImageVector`s. Colour follows `text.primary` unless specified.
 
-Required set: play, pause, restart, next, back, close, settings, sound-on, sound-off, music-on, music-off, lock, star (filled + outline), trophy, fast-forward (start flow now), hourglass (slow badge), wave (flow speed), drop (liquid), warning, info, check.
+Required set: play, pause, restart, next, back, close, settings, sound-on, sound-off, music-on, music-off, lock, star (filled + outline), trophy, fast-forward (start flow now), hourglass (slow badge), wave (flow speed), drop (liquid), warning, info, check, finish-checkered (finish).
+
+`finish-checkered` is the checkered finish of 6.4 on the 24 dp grid: a 2 dp ring of radius 9 dp in the icon colour around a disc filled with a 6 × 6 checker spanning the ring's inner diameter (squares of about 2.7 dp), clipped to the disc. It is the only filled icon in the set: the light squares use the icon colour and the dark squares stay transparent.
 
 ---
 

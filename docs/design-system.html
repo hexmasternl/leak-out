@@ -301,6 +301,13 @@ section.block > header p{color:var(--text-2)}
 .cell.empty::after{content:"+"; position:absolute; inset:0; display:grid; place-items:center; color:var(--text-3); opacity:.4; font-size:20px; font-family:var(--font-display)}
 .cell.target{background:var(--liquid-tint); border-color:var(--line-strong)}
 .cell.blocked{background:var(--abyss)}
+.cell.tile{background:color-mix(in srgb, var(--overlay) 60%, transparent); border:1px solid var(--line-subtle)}
+.joined{display:flex}
+.joined .cell{border-radius:0}
+.joined .cell:first-child{border-radius:var(--r-sm) 0 0 var(--r-sm)}
+.joined .cell:last-child{border-radius:0 var(--r-sm) var(--r-sm) 0}
+.endpoint-sizes{display:flex; flex-wrap:wrap; gap:24px; align-items:flex-end}
+.endpoint-sizes .step{display:flex; flex-direction:column; align-items:center; gap:8px}
 .cell.shake{animation:shake .24s linear; background:var(--leak-tint)}
 .cell.pop svg{animation:pop .32s var(--spring)}
 @keyframes shake{0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 50%{transform:translateX(3px)} 75%{transform:translateX(-3px)}}
@@ -442,6 +449,9 @@ td:first-child{color:var(--text-1)}
     </linearGradient>
     <radialGradient id="tankGrad" cx=".35" cy=".3" r=".85">
       <stop offset="0" stop-color="#C7B5FF"/><stop offset=".5" stop-color="#A78BFA"/><stop offset="1" stop-color="#6A4BD6"/>
+    </radialGradient>
+    <radialGradient id="valveGrad" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#FFCF5C"/><stop offset="1" stop-color="#F5A623"/>
     </radialGradient>
     <radialGradient id="brassGrad" cx=".35" cy=".3" r=".85">
       <stop offset="0" stop-color="#FFE9B0"/><stop offset=".45" stop-color="#F5A623"/><stop offset="1" stop-color="#C97A12"/>
@@ -884,6 +894,12 @@ td:first-child{color:var(--text-1)}
       <div class="grid g4" id="pipeGallery"></div>
 
       <div class="panel" style="margin-top:24px">
+        <h3 style="margin-bottom:6px">Start valve and checkered finish at 44 dp and 120 dp</h3>
+        <p class="small muted">Both endpoints sit on the plain empty-cell tile; only the brass wheel and the success ring carry colour. The finish's 6 × 6 checker must still read at the 44 dp minimum cell.</p>
+        <div class="endpoint-sizes" id="endpointSizes"></div>
+      </div>
+
+      <div class="panel" style="margin-top:24px">
         <h3 style="margin-bottom:6px">Layer recipe</h3>
         <p class="small muted">Sizes are relative to cell size <em>c</em>. Body 0.36c · bore 0.25c · liquid 0.21c · flange 0.10c long. Round joins give the elbow for free.</p>
         <div class="layers" id="layerDemo"></div>
@@ -933,8 +949,8 @@ td:first-child{color:var(--text-1)}
             <table>
               <tr><td>Board plate</td><td>Level 1 panel, radius xl, radial vignette so the centre reads brighter</td></tr>
               <tr><td>Cells</td><td>≥ 44dp, 4dp gap, radius sm. Empty cells are <code>surface.overlay</code> at 60% with a faint “+”</td></tr>
-              <tr><td>Start valve</td><td>Brass wheel, pulsing while the countdown runs, chevron shows exit direction</td></tr>
-              <tr><td>Finish drain</td><td>Success ring with a grate, pulsing until hit</td></tr>
+              <tr><td>Start valve</td><td>Brass wheel on a straight-pipe stub, pulsing while the countdown runs and steady once the liquid flows; chevron shows exit direction</td></tr>
+              <tr><td>Checkered finish</td><td>Success ring filled with a checker pattern, pulsing until the liquid reaches it</td></tr>
               <tr><td>Blocked</td><td><code>surface.abyss</code> with a subtle 45° hatch</td></tr>
               <tr><td>Rail</td><td>Next piece 8% larger with a 2dp brass ring and glow; pieces below fade 80 → 40%</td></tr>
             </table>
@@ -1064,6 +1080,37 @@ function layers(path, grad, o){
   return s;
 }
 
+/* Start and finish stubs: the straight H or V layers, clipped to the half of the
+   cell between the centre and the open side, so they join a placed straight. */
+let stubClipId = 0;
+function endpointStub(dir, o){
+  const horizontal = dir==='L' || dir==='R';
+  const half = {L:[0,0,50,100], R:[50,0,50,100], T:[0,0,100,50], B:[0,50,100,50]}[dir];
+  const id = 'stub' + (stubClipId++);
+  // The liquid enters at the centre: the full channel runs from the side opposite
+  // the open side, so filling it to 0.5 + p/2 shows p of the visible half.
+  const path = {R:'M0 50H100', L:'M100 50H0', B:'M50 0V100', T:'M50 100V0'}[dir];
+  const progress = o.liquid ? 0.5 + (o.progress ?? 1) / 2 : null;
+  return `<clipPath id="${id}"><rect x="${half[0]}" y="${half[1]}" width="${half[2]}" height="${half[3]}"/></clipPath>`
+    + `<g clip-path="url(#${id})">`
+    + layers(path, horizontal ? 'H' : 'V', {liquid:o.liquid ? true : null, progress})
+    + (horizontal ? ['L','R'] : ['T','B']).map(flange).join('')
+    + `</g>`;
+}
+
+/* Checkered finish: the ring's inner disc (radius 21.5 = 0.215 c) filled with a
+   flat 6 x 6 checker aligned on the cell centre, top-left square light. */
+let checkerClipId = 0;
+function checkerDisc(){
+  const r = 21.5, n = 6, side = 2 * r / n, x0 = 50 - r, y0 = 50 - r;
+  const id = 'chk' + (checkerClipId++);
+  let squares = '';
+  for(let row=0; row<n; row++) for(let col=0; col<n; col++){
+    squares += `<rect x="${(x0 + col * side).toFixed(3)}" y="${(y0 + row * side).toFixed(3)}" width="${side.toFixed(3)}" height="${side.toFixed(3)}" fill="${(row + col) % 2 === 0 ? '#F2F7FB' : '#22303F'}"/>`;
+  }
+  return `<clipPath id="${id}"><circle cx="50" cy="50" r="${r}"/></clipPath><g clip-path="url(#${id})" shape-rendering="crispEdges">${squares}</g>`;
+}
+
 function pipeSVG(type, o={}){
   let inner = '';
   if(SECTIONS[type]){
@@ -1097,28 +1144,23 @@ function pipeSVG(type, o={}){
   }
   else if(type==='START'){
     const dir = o.dir||'R';
-    const stub = {R:'M50 50H100', L:'M50 50H0', T:'M50 50V0', B:'M50 50V100'}[dir];
-    const g = (dir==='L'||dir==='R') ? 'H' : 'V';
     const chev = {R:'M74 42l8 8-8 8', L:'M26 42l-8 8 8 8', T:'M42 26l8-8 8 8', B:'M42 74l8 8 8-8'}[dir];
-    inner = layers(stub, g, {liquid:o.liquid, progress:o.progress}) + flange(dir)
-      + `<path d="${chev}" fill="none" stroke="#FFCF5C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`
+    inner = endpointStub(dir, o)
       + `<g class="${o.pulse!==false?'valve-glow':''}">`
-      + `<circle cx="50" cy="50" r="26" fill="url(#brassGrad)"/>`
-      + `<circle cx="50" cy="50" r="26" fill="none" stroke="#C97A12" stroke-width="3"/>`
+      + `<circle cx="50" cy="50" r="24" fill="url(#valveGrad)"/>`
+      + `<circle cx="50" cy="50" r="24" fill="none" stroke="#C97A12" stroke-width="3"/>`
       + `<g stroke="#7A4708" stroke-width="4.5" stroke-linecap="round"><path d="M50 30v40M30 50h40"/></g>`
       + `<circle cx="50" cy="50" r="8" fill="#C97A12" stroke="#7A4708" stroke-width="2"/>`
-      + `<circle cx="42" cy="40" r="4" fill="rgba(255,255,255,.45)"/>`
-      + `</g>`;
+      + `<circle cx="42" cy="40" r="5" fill="#FFE9B0" opacity=".45"/>`
+      + `</g>`
+      + `<path d="${chev}" fill="none" stroke="#FFCF5C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
   }
   else if(type==='FINISH'){
     const dir = o.dir||'L';
-    const stub = {L:'M0 50H50', R:'M100 50H50', T:'M50 0V50', B:'M50 100V50'}[dir];
-    const g = (dir==='L'||dir==='R') ? 'H' : 'V';
-    inner = layers(stub, g, {liquid:o.liquid, progress:o.progress}) + flange(dir)
+    inner = endpointStub(dir, {})
       + `<g class="${o.pulse!==false?'drain-glow':''}">`
-      + `<circle cx="50" cy="50" r="26" fill="#122538"/>`
-      + `<circle cx="50" cy="50" r="26" fill="none" stroke="#3DDC97" stroke-width="5"/>`
-      + `<g fill="#8FA3B8"><rect x="38" y="36" width="5" height="28" rx="2"/><rect x="47.5" y="36" width="5" height="28" rx="2"/><rect x="57" y="36" width="5" height="28" rx="2"/></g>`
+      + checkerDisc()
+      + `<circle cx="50" cy="50" r="24" fill="none" stroke="#3DDC97" stroke-width="5"/>`
       + `</g>`;
   }
   else if(type==='BLOCKED'){
@@ -1141,17 +1183,37 @@ const items = [
   ['X',{liquid:'anim', liquidV:true, delay:'d2'}, 'Cross', 'Two independent channels'],
   ['RES',{liquid:'anim', id:'g'}, 'Reservoir', 'Left ↔ Right · ×0.3 speed'],
   ['START',{dir:'R'}, 'Start valve', 'Exit direction shown by chevron'],
-  ['FINISH',{dir:'L'}, 'Finish drain', 'Must be entered through the open port'],
+  ['FINISH',{dir:'L'}, 'Checkered finish', 'Must be entered through the open port'],
   ['BLOCKED',{}, 'Blocked', 'Nothing can be placed'],
   ['EMPTY',{}, 'Empty', 'Tap to place the next piece'],
+  ['JOIN',{first:['START',{dir:'R', liquid:true, progress:1}], second:['H',{liquid:true, progress:.6}]}, 'Start + straight', 'The stub is the straight’s own art'],
+  ['JOIN',{first:['H',{}], second:['FINISH',{dir:'L'}]}, 'Straight + checkered finish', 'Flanges meet on the shared edge'],
 ];
 items.forEach(([t,o,name,ports])=>{
   const card = document.createElement('div'); card.className='pipecard';
-  const cell = document.createElement('div'); cell.className='cell' + (t==='EMPTY'?' empty':'') + (t==='BLOCKED'?' blocked':'');
-  if(t!=='EMPTY') cell.innerHTML = pipeSVG(t,o);
-  card.appendChild(cell);
+  if(t==='JOIN'){
+    const pair = document.createElement('div'); pair.className='joined';
+    [o.first, o.second].forEach(([pt,po])=>{
+      const c = document.createElement('div'); c.className='cell' + (pt==='START'||pt==='FINISH'?' tile':'');
+      c.innerHTML = pipeSVG(pt,po); pair.appendChild(c);
+    });
+    card.style.gridColumn = 'span 2';
+    card.appendChild(pair);
+  } else {
+    const cell = document.createElement('div'); cell.className='cell' + (t==='EMPTY'?' empty':'') + (t==='BLOCKED'?' blocked':'') + (t==='START'||t==='FINISH'?' tile':'');
+    if(t!=='EMPTY') cell.innerHTML = pipeSVG(t,o);
+    card.appendChild(cell);
+  }
   card.insertAdjacentHTML('beforeend', `<div class="name">${name}</div><div class="ports">${ports}</div>`);
   gallery.appendChild(card);
+});
+
+/* Endpoints at the minimum and a large cell size, every open side */
+const es = document.getElementById('endpointSizes');
+[44, 120].forEach(size=>{
+  [['START','R'],['START','B'],['FINISH','L'],['FINISH','T']].forEach(([t,dir])=>{
+    es.insertAdjacentHTML('beforeend', `<div class="step"><div class="cell tile" style="width:${size}px; height:${size}px">${pipeSVG(t,{dir})}</div><span class="caption">${t==='START'?'Start':'Finish'} · ${dir} · ${size} dp</span></div>`);
+  });
 });
 
 /* Layer recipe steps */

@@ -8,13 +8,17 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,11 +30,14 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -53,7 +60,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
@@ -76,8 +85,10 @@ import nl.hexmaster.leakout.ui.pipes.LiquidScratch
 import nl.hexmaster.leakout.ui.pipes.PipeArtLibrary
 import nl.hexmaster.leakout.ui.pipes.drawPipe
 import nl.hexmaster.leakout.ui.pipes.rememberPipeArtLibrary
+import nl.hexmaster.leakout.ui.splash.rememberReducedMotion
 import nl.hexmaster.leakout.ui.theme.Fredoka
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
+import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 
 /** Semantics flag on a field cell: true while the dragged section can be dropped on it. */
 val FieldCellHighlighted = SemanticsPropertyKey<Boolean>("FieldCellHighlighted")
@@ -109,6 +120,17 @@ var SemanticsPropertyReceiver.pipeSection by FieldPipeSection
 /** Semantics flag on the finish cell while the level is won and its success ring is drawn. A test hook only. */
 val FinishFlash = SemanticsPropertyKey<Boolean>("FinishFlash")
 var SemanticsPropertyReceiver.finishFlash by FinishFlash
+
+/**
+ * Semantics on the start and finish cells: the alpha of the glow behind the valve wheel or the
+ * finish ring, rounded to two decimals. A test hook only.
+ */
+val EndpointGlowAlpha = SemanticsPropertyKey<Float>("EndpointGlowAlpha")
+var SemanticsPropertyReceiver.endpointGlow by EndpointGlowAlpha
+
+/** Semantics on the start cell: how far the liquid has filled its stub, 0 to 1, rounded to two decimals. A test hook only. */
+val StartFilled = SemanticsPropertyKey<Float>("StartFilled")
+var SemanticsPropertyReceiver.startFilled by StartFilled
 
 /** Semantics flag on the field cell of a running replacement. A test hook only. */
 val ReplacingCell = SemanticsPropertyKey<Boolean>("ReplacingCell")
@@ -179,6 +201,12 @@ fun rememberPlayingFieldState(grid: GridSize, start: Position): PlayingFieldStat
  * While a [replacement] runs, its old section breaks apart on the tile and then a busy ring fills
  * up until the new section lands; the section that landed last, [landing], pops in. Both are timed
  * by [nowMs].
+ *
+ * The start is drawn as the start valve and the finish as the checkered finish (design system
+ * 6.4): a stub of the straight's pipe art under the brass wheel, or under the success ring filled
+ * with a checker. The liquid comes out of the valve into its stub. The valve glow pulses until the
+ * liquid flows and the finish glow until the win, timed by [nowMs]; with [reducedMotion] both are
+ * steady.
  */
 @Composable
 fun PlayingField(
@@ -198,6 +226,7 @@ fun PlayingField(
     winAgeMs: (() -> Long)? = null,
     replacement: Replacement? = null,
     landing: Landing? = null,
+    reducedMotion: Boolean = rememberReducedMotion(),
     onTap: (Position) -> Unit = {},
 ) {
     val density = LocalDensity.current
@@ -206,6 +235,16 @@ fun PlayingField(
     val textMeasurer = rememberTextMeasurer()
     val pipes = rememberPipeArtLibrary()
     val scratch = remember { LiquidScratch() }
+    val won = winAgeMs != null
+    val currentNowMs by rememberUpdatedState(nowMs)
+    val currentFlow by rememberUpdatedState(flow)
+    val currentWon by rememberUpdatedState(won)
+    val currentReducedMotion by rememberUpdatedState(reducedMotion)
+    // Rounded, so the cell semantics only recompose when the value they report changes.
+    val valveGlow = remember {
+        derivedStateOf { EndpointGlow.valve(currentNowMs(), currentFlow().isFlowing(), currentReducedMotion).rounded() }
+    }
+    val finishGlow = remember { derivedStateOf { EndpointGlow.finish(currentNowMs(), currentWon, currentReducedMotion).rounded() } }
     Box(
         modifier = modifier
             .testTag(GameScreenTags.FIELD)
@@ -224,14 +263,23 @@ fun PlayingField(
             val used = liquid?.used.orEmpty()
             val now = nowMs()
             val pop = landing?.let { landingPopScale(now - it.atMs) }
+            val glows = EndpointGlows(
+                valve = EndpointGlow.valve(now, liquid.isFlowing(), reducedMotion),
+                finish = EndpointGlow.finish(now, won, reducedMotion),
+                reachPx = EndpointGeometry.GLOW_REACH_DP.dp.toPx(),
+            )
             for (position in cells) {
                 val cell = board[position]
-                val fills = if (cell is Cell.Pipe) FieldLiquid.fills(position, cell.section, used, flowing) else emptyMap()
+                val fills = when (cell) {
+                    is Cell.Pipe -> FieldLiquid.fills(position, cell.section, used, flowing)
+                    is Cell.Start -> FieldLiquid.startFills(position, cell.openSide, used, flowing)
+                    else -> emptyMap()
+                }
                 val rect = viewport.cellRect(position)
                 if (pop != null && cell is Cell.Pipe && position == landing?.at) {
-                    scale(pop, pivot = rect.center) { drawCell(cell, rect, pipes, scratch, fills) }
+                    scale(pop, pivot = rect.center) { drawCell(cell, rect, pipes, scratch, fills, glows) }
                 } else {
-                    drawCell(cell, rect, pipes, scratch, fills)
+                    drawCell(cell, rect, pipes, scratch, fills, glows)
                 }
             }
             replacement?.let { drawReplacement(it, viewport.cellRect(it.at), replacementFrame(it, now), pipes, scratch) }
@@ -244,8 +292,11 @@ fun PlayingField(
             drawPopups(awards, now, viewport, textMeasurer)
         }
         CellSemantics(
-            board, viewport, highlighted, awards, leakAt?.let { at -> leakSide?.let { at to it } }, head, filled, winAgeMs != null,
+            board, viewport, highlighted, awards, leakAt?.let { at -> leakSide?.let { at to it } }, head, filled, won,
             replacing = replacement?.at,
+            valveGlow = valveGlow,
+            finishGlow = finishGlow,
+            flow = { currentFlow() },
         )
     }
 }
@@ -265,6 +316,9 @@ private fun CellSemantics(
     filled: Set<ChannelUse>,
     won: Boolean,
     replacing: Position?,
+    valveGlow: State<Float>,
+    finishGlow: State<Float>,
+    flow: () -> FlowState?,
 ) {
     val density = LocalDensity.current
     val cellDp = with(density) { viewport.cellPx.toDp() }
@@ -281,25 +335,72 @@ private fun CellSemantics(
         val flashing = won && board[position] is Cell.Finish
         val section = (board[position] as? Cell.Pipe)?.section
         val isReplacing = position == replacing
-        Box(
-            Modifier
-                .offset { IntOffset(rect.left.roundToInt(), rect.top.roundToInt()) }
-                .size(cellDp)
-                .testTag(GameScreenTags.cell(position.x, position.y))
-                .semantics {
-                    contentDescription = description
-                    fieldCellHighlighted = isHighlighted
-                    pointsPopupText = texts
-                    if (leakSide != null) this.leakAt = leakSide
-                    liquidHead = isHead
-                    filledChannels = channels
-                    if (flashing) finishFlash = true
-                    if (section != null) pipeSection = section
-                    if (isReplacing) replacingCell = true
-                },
+        val glow = when (board[position]) {
+            is Cell.Start -> valveGlow
+            is Cell.Finish -> finishGlow
+            else -> null
+        }
+        val startFilled = if (board[position] is Cell.Start) {
+            remember(position) {
+                derivedStateOf { flow().let { FieldLiquid.startProgress(position, it?.used.orEmpty(), it as? FlowState.Flowing).rounded() } }
+            }
+        } else {
+            null
+        }
+        CellNode(
+            position, rect, cellDp, description, isHighlighted, texts, leakSide, isHead, channels, flashing, section, isReplacing,
+            glow, startFilled,
         )
     }
 }
+
+/**
+ * The invisible semantics node of one cell. Its own composable, so the endpoint values ([glow] and
+ * [startFilled]), which change while the liquid flows, recompose this node only.
+ */
+@Composable
+private fun CellNode(
+    position: Position,
+    rect: Rect,
+    cellDp: Dp,
+    description: String,
+    isHighlighted: Boolean,
+    texts: List<String>,
+    leakSide: Side?,
+    isHead: Boolean,
+    channels: Set<Channel>,
+    flashing: Boolean,
+    section: PipeSection?,
+    isReplacing: Boolean,
+    glow: State<Float>?,
+    startFilled: State<Float>?,
+) {
+    val glowAlpha = glow?.value
+    val filledFraction = startFilled?.value
+    Box(
+        Modifier
+            .offset { IntOffset(rect.left.roundToInt(), rect.top.roundToInt()) }
+            .size(cellDp)
+            .testTag(GameScreenTags.cell(position.x, position.y))
+            .semantics {
+                contentDescription = description
+                fieldCellHighlighted = isHighlighted
+                pointsPopupText = texts
+                if (leakSide != null) this.leakAt = leakSide
+                liquidHead = isHead
+                filledChannels = channels
+                if (flashing) finishFlash = true
+                if (section != null) pipeSection = section
+                if (isReplacing) replacingCell = true
+                if (glowAlpha != null) endpointGlow = glowAlpha
+                if (filledFraction != null) this.startFilled = filledFraction
+            },
+    )
+}
+
+private fun FlowState?.isFlowing(): Boolean = this != null && this !is FlowState.Waiting
+
+private fun Float.rounded(): Float = (this * 100f).roundToInt() / 100f
 
 private fun Cell.describe(): String = when (this) {
     Cell.Empty -> "Empty"
@@ -358,6 +459,7 @@ private fun DrawScope.drawCell(
     pipes: PipeArtLibrary,
     scratch: LiquidScratch,
     fills: Map<String, ChannelFill>,
+    glows: EndpointGlows,
 ) {
     val inset = rect.deflate(rect.width * 0.04f)
     val corner = CornerRadius(rect.width * 0.14f)
@@ -370,8 +472,18 @@ private fun DrawScope.drawCell(
             drawLine(LeakOutColors.Steel500, a.topLeft, a.bottomRight, rect.width * 0.06f, StrokeCap.Round)
             drawLine(LeakOutColors.Steel500, a.bottomLeft, a.topRight, rect.width * 0.06f, StrokeCap.Round)
         }
-        is Cell.Start -> drawEndpoint(inset, cell.openSide, LeakOutColors.Brass500)
-        is Cell.Finish -> drawEndpoint(inset, cell.openSide, LeakOutColors.SuccessGreen)
+        is Cell.Start -> {
+            drawRoundRect(LeakOutColors.SurfaceCard.copy(alpha = 0.06f), inset.topLeft, inset.size, corner)
+            drawEndpointGlow(rect, LeakOutColors.Brass500, glows.valve, glows.reachPx)
+            drawStub(rect, cell.openSide, pipes, scratch, fills)
+            drawValveWheel(rect, cell.openSide)
+        }
+        is Cell.Finish -> {
+            drawRoundRect(LeakOutColors.SurfaceCard.copy(alpha = 0.06f), inset.topLeft, inset.size, corner)
+            drawEndpointGlow(rect, LeakOutColors.Success500, glows.finish, glows.reachPx)
+            drawStub(rect, cell.openSide, pipes, scratch, emptyMap())
+            drawCheckeredFinish(rect)
+        }
         is Cell.Pipe -> {
             drawRoundRect(LeakOutColors.SurfaceCard.copy(alpha = 0.06f), inset.topLeft, inset.size, corner)
             // Clipped to the cell so no stroke cap or shadow reaches the neighbour; channels end on the edge.
@@ -382,19 +494,91 @@ private fun DrawScope.drawCell(
     }
 }
 
-/** A start or finish: a coloured disc with a stub out of its open side. */
-private fun DrawScope.drawEndpoint(rect: Rect, openSide: Side, color: Color) {
-    drawRoundRect(color.copy(alpha = 0.18f), rect.topLeft, rect.size, CornerRadius(rect.width * 0.14f))
-    val center = rect.center
-    val edge = when (openSide) {
-        Side.LEFT -> Offset(rect.left, center.y)
-        Side.RIGHT -> Offset(rect.right, center.y)
-        Side.TOP -> Offset(center.x, rect.top)
-        Side.BOTTOM -> Offset(center.x, rect.bottom)
+/** The glow alphas of this frame, and how far past the wheel or ring the glow reaches, in pixels. */
+private class EndpointGlows(val valve: Float, val finish: Float, val reachPx: Float)
+
+/**
+ * The stub of a start or finish: the straight's pipe art (`H` for a left or right open side, `V`
+ * otherwise) clipped to the half of the cell between the centre and [openSide], with [fills].
+ * Identical to a placed straight, so a section against the open side joins it like two sections.
+ */
+private fun DrawScope.drawStub(
+    rect: Rect,
+    openSide: Side,
+    pipes: PipeArtLibrary,
+    scratch: LiquidScratch,
+    fills: Map<String, ChannelFill>,
+) {
+    val section = if (openSide == Side.LEFT || openSide == Side.RIGHT) PipeSection.H else PipeSection.V
+    val c = rect.center
+    val half = when (openSide) {
+        Side.LEFT -> Rect(rect.left, rect.top, c.x, rect.bottom)
+        Side.RIGHT -> Rect(c.x, rect.top, rect.right, rect.bottom)
+        Side.TOP -> Rect(rect.left, rect.top, rect.right, c.y)
+        Side.BOTTOM -> Rect(rect.left, c.y, rect.right, rect.bottom)
     }
-    drawLine(LeakOutColors.Steel300, center, edge, rect.width * 0.22f, StrokeCap.Butt)
-    drawCircle(color, radius = rect.width * 0.26f, center = center)
-    drawCircle(LeakOutColors.Steel900, radius = rect.width * 0.10f, center = center)
+    clipRect(half.left, half.top, half.right, half.bottom) { drawPipe(pipes.prepared(section), rect, fills, scratch) }
+}
+
+/** A soft circle of [color] at [alpha] behind the wheel or ring, fading out [reachPx] past it. */
+private fun DrawScope.drawEndpointGlow(rect: Rect, color: Color, alpha: Float, reachPx: Float) {
+    if (alpha <= 0f) return
+    val inner = rect.width * EndpointGeometry.WHEEL_RADIUS
+    val radius = inner + reachPx
+    drawCircle(
+        Brush.radialGradient(
+            0f to color.copy(alpha = alpha),
+            inner / radius to color.copy(alpha = alpha),
+            1f to color.copy(alpha = 0f),
+            center = rect.center,
+            radius = radius,
+        ),
+        radius = radius,
+        center = rect.center,
+    )
+}
+
+/** The start valve's brass wheel with its spokes, hub and highlight, and the chevron towards [openSide]. */
+private fun DrawScope.drawValveWheel(rect: Rect, openSide: Side) {
+    val c = rect.center
+    val cell = rect.width
+    fun at(p: CellPoint) = Offset(c.x + p.x * cell, c.y + p.y * cell)
+    val g = EndpointGeometry
+    val wheel = cell * g.WHEEL_RADIUS
+    drawCircle(Brush.radialGradient(listOf(LeakOutColors.Brass300, LeakOutColors.Brass500), center = c, radius = wheel), wheel, c)
+    drawCircle(LeakOutColors.Brass700, wheel - cell * g.RIM_WIDTH / 2f, c, style = Stroke(cell * g.RIM_WIDTH))
+    val reach = cell * g.SPOKE_REACH
+    drawLine(LeakOutColors.Brass900, Offset(c.x, c.y - reach), Offset(c.x, c.y + reach), cell * g.SPOKE_WIDTH, StrokeCap.Round)
+    drawLine(LeakOutColors.Brass900, Offset(c.x - reach, c.y), Offset(c.x + reach, c.y), cell * g.SPOKE_WIDTH, StrokeCap.Round)
+    drawCircle(LeakOutColors.Brass700, cell * g.HUB_RADIUS, c)
+    drawCircle(LeakOutColors.Brass900, cell * (g.HUB_RADIUS - g.HUB_EDGE / 2f), c, style = Stroke(cell * g.HUB_EDGE))
+    drawCircle(LeakOutColors.Brass100.copy(alpha = g.HIGHLIGHT_ALPHA), cell * g.HIGHLIGHT_RADIUS, at(g.HIGHLIGHT_CENTER))
+    val chevron = g.chevron(openSide)
+    val path = Path().apply {
+        moveTo(at(chevron.legA).x, at(chevron.legA).y)
+        lineTo(at(chevron.tip).x, at(chevron.tip).y)
+        lineTo(at(chevron.legB).x, at(chevron.legB).y)
+    }
+    drawPath(path, LeakOutColors.Brass300, style = Stroke(cell * g.CHEVRON_WIDTH, cap = StrokeCap.Round, join = StrokeJoin.Round))
+}
+
+/** The finish: the ring's inner disc filled with the light and dark checker, under the success ring. */
+private fun DrawScope.drawCheckeredFinish(rect: Rect) {
+    val c = rect.center
+    val cell = rect.width
+    val g = EndpointGeometry
+    val inner = cell * g.RING_INNER_RADIUS
+    val disc = Path().apply { addOval(Rect(c, inner)) }
+    clipPath(disc) {
+        for (square in g.checker) {
+            drawRect(
+                if (square.light) LeakOutColors.TextPrimary else LeakOutColors.Steel900,
+                topLeft = Offset(c.x + square.left * cell, c.y + square.top * cell),
+                size = Size(square.size * cell, square.size * cell),
+            )
+        }
+    }
+    drawCircle(LeakOutColors.Success500, cell * g.RING_RADIUS, c, style = Stroke(cell * g.RING_WIDTH))
 }
 
 private fun DrawScope.drawHighlight(rect: Rect) {
@@ -533,9 +717,9 @@ private fun DrawScope.drawFinishRing(rect: Rect, frame: FinishFlashFrame) {
     scale(frame.ringScale, pivot = rect.center) {
         val inset = rect.deflate(cell * 0.06f)
         val corner = CornerRadius(cell * 0.16f)
-        drawRoundRect(LeakOutColors.SuccessGreen.copy(alpha = 0.25f * frame.ringAlpha), inset.topLeft, inset.size, corner)
+        drawRoundRect(LeakOutColors.Success500.copy(alpha = 0.25f * frame.ringAlpha), inset.topLeft, inset.size, corner)
         drawRoundRect(
-            LeakOutColors.SuccessGreen.copy(alpha = frame.ringAlpha),
+            LeakOutColors.Success500.copy(alpha = frame.ringAlpha),
             inset.topLeft,
             inset.size,
             corner,
@@ -572,3 +756,45 @@ private const val POPUP_TEXT_FRACTION = 0.4f
 private val POPUP_OUTLINE = 3.dp
 
 private val FieldShape = RoundedCornerShape(24.dp)
+
+/**
+ * A start or finish opening to [side] with a placed straight against that side, as in the
+ * design-system gallery ("Start + straight", "Straight + checkered finish").
+ */
+@Composable
+private fun EndpointPairPreview(endpoint: Cell, side: Side) {
+    val horizontal = side == Side.LEFT || side == Side.RIGHT
+    val grid = if (horizontal) GridSize(2, 1) else GridSize(1, 2)
+    val at = Position(if (side == Side.LEFT) 1 else 0, if (side == Side.TOP) 1 else 0)
+    val pipe = Position(at.x + side.dx, at.y + side.dy)
+    val board = Board(grid, mapOf(at to endpoint, pipe to Cell.Pipe(if (horizontal) PipeSection.H else PipeSection.V)))
+    val cell = FieldLayout.MIN_CELL
+    PlayingField(
+        board = board,
+        state = rememberPlayingFieldState(grid, at),
+        highlighted = null,
+        enabled = false,
+        modifier = Modifier.size(cell * grid.columns, cell * grid.rows),
+        reducedMotion = true,
+    )
+}
+
+/** The start valve or the checkered finish ([start]) for every open side, each next to a placed straight. */
+@Composable
+internal fun EndpointPreviewStates(start: Boolean, modifier: Modifier = Modifier) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        for (side in Side.entries) EndpointPairPreview(if (start) Cell.Start(side) else Cell.Finish(side), side)
+    }
+}
+
+@Preview(name = "Start valve, all open sides", widthDp = 280, heightDp = 120, backgroundColor = 0xFF0C1A2A, showBackground = true)
+@Composable
+private fun StartValvePreview() {
+    LeakOutTheme { EndpointPreviewStates(start = true) }
+}
+
+@Preview(name = "Checkered finish, all open sides", widthDp = 280, heightDp = 120, backgroundColor = 0xFF0C1A2A, showBackground = true)
+@Composable
+private fun CheckeredFinishPreview() {
+    LeakOutTheme { EndpointPreviewStates(start = false) }
+}

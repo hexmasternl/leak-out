@@ -8,7 +8,7 @@ Tracking issue: [#44 Start and end position re-design](https://github.com/hexmas
 - [x] 1.2 Add the endpoint cells to §6.2 (drawn on the empty-cell tile, no colour wash); add the glow lifecycle to §7.1/§7.2 (valve pulses on `motion.drift` during the countdown and settles at 60 % once the liquid flows; finish ring pulses on `motion.pulse` until the win, then the finish flash and a solid ring) and the steady 60 % glows to §7.4; verify the durations match design decision 6
 - [x] 1.3 Add `finish-checkered` to the §8 required icon set with the ring and checker geometry at 24 dp; update the `brass.500` and `success.500` usage text in §2.4/§2.5 ("Finish ring and checker" instead of "Finish drain ring")
 - [x] 1.4 Update `pipeSVG` `START` and `FINISH` in `docs/design-system.html`: stub drawn as the clipped `H`/`V` layers, checker pattern instead of the grate, gallery caption "Checkered finish"; add a start and a finish joined to a placed `H` to the gallery; verify the page renders in a browser at 44 dp and 120 dp cells and the checker reads at 44 dp (else switch to 4 × 4 squares and record it)
-- [ ] 1.5 Attach screenshots of the new gallery cards to issue #44 and get the product owner's approval there; verify approval is noted on the issue before starting group 2
+- [x] 1.5 Attach screenshots of the new gallery cards to issue #44 and get the product owner's approval there; verify approval is noted on the issue before starting group 2
 
 ## 2. Geometry and glows
 

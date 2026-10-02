@@ -11,8 +11,8 @@ Tracking issue: [#36 First time user experience](https://github.com/hexmasternl/
 
 ## 2. Seen tips storage
 
-- [ ] 2.1 Add `TipId` with stable keys and `seenTips`, `markTipSeen` and `resetTips` to `SettingsRepository`, `InMemorySettingsRepository` and `DataStoreSettingsRepository` (string set key, unknown keys ignored); verify unit tests for first launch, mark seen, mark twice, reset, unknown key, and that reset leaves settings alone pass with `./gradlew :app:testDebugUnitTest`
-- [ ] 2.2 Verify that clearing the level history leaves the seen tips unchanged and that resetting tips leaves the history unchanged with an instrumented repository test
+- [x] 2.1 Add `TipId` with stable keys and `seenTips`, `markTipSeen` and `resetTips` to `SettingsRepository`, `InMemorySettingsRepository` and `DataStoreSettingsRepository` (string set key, unknown keys ignored); verify unit tests for first launch, mark seen, mark twice, reset, unknown key, and that reset leaves settings alone pass with `./gradlew :app:testDebugUnitTest`
+- [x] 2.2 Verify that clearing the level history leaves the seen tips unchanged and that resetting tips leaves the history unchanged with an instrumented repository test
 
 ## 3. Pure tip scheduling
 

@@ -16,6 +16,7 @@ import nl.hexmaster.leakout.history.LevelHistory
 import nl.hexmaster.leakout.settings.InMemorySettingsRepository
 import nl.hexmaster.leakout.settings.Settings
 import nl.hexmaster.leakout.settings.SettingsRepository
+import nl.hexmaster.leakout.settings.TipId
 import nl.hexmaster.leakout.ui.levels.LevelCatalog
 import nl.hexmaster.leakout.ui.levels.LevelLibraryViewModel
 import nl.hexmaster.leakout.ui.levels.asHistoryReader
@@ -35,6 +36,9 @@ private class SlowSettings : SettingsRepository {
     override suspend fun setMusicEnabled(enabled: Boolean) = Unit
     override suspend fun setMusicVolume(volume: Float) = Unit
     override suspend fun setVibrationEnabled(enabled: Boolean) = Unit
+    override val seenTips = MutableSharedFlow<Set<TipId>>(replay = 1)
+    override suspend fun markTipSeen(tip: TipId) = Unit
+    override suspend fun resetTips() = Unit
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

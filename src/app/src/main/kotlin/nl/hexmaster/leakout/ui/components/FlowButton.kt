@@ -9,6 +9,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -107,7 +108,8 @@ object FlowButtonMetrics {
 /**
  * Deep Flow button (design-system.md 5.1, 4.4). The footprint never changes when pressed: the face
  * moves down 2 dp into the lip, which shrinks from 4 dp to 2 dp over 90 ms. Disabled: the glass
- * fill, a muted label, no lip, no glow, 60 % opacity, and taps are ignored.
+ * fill, a muted label, no lip, no glow, 60 % opacity, and taps are ignored. A [trailing] text, such
+ * as a count, puts the label at the start and the trailing text at the end.
  */
 @Composable
 fun FlowButton(
@@ -118,6 +120,7 @@ fun FlowButton(
     size: FlowButtonSize = FlowButtonSize.Large,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
+    trailing: String? = null,
 ) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val pressed = source.collectIsPressedAsState().value && enabled
@@ -199,14 +202,28 @@ fun FlowButton(
                 .padding(horizontal = FlowButtonMetrics.HorizontalPadding),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = text,
-                style = LeakOutTextStyles.DisplaySm,
-                color = label,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            if (trailing == null) {
+                Text(
+                    text = text,
+                    style = LeakOutTextStyles.DisplaySm,
+                    color = label,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            } else {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = text,
+                        style = LeakOutTextStyles.DisplaySm,
+                        color = label,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(text = trailing, style = LeakOutTextStyles.NumericMd, color = label, maxLines = 1)
+                }
+            }
         }
     }
 }

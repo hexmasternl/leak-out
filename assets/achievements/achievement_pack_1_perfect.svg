@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<defs>
+  <radialGradient id="bg" cx="50%" cy="45%" r="70%">
+    <stop offset="0" stop-color="#122538"/><stop offset="0.7" stop-color="#0C1A2A"/><stop offset="1" stop-color="#07111C"/>
+  </radialGradient>
+  <linearGradient id="disc" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#19324A"/><stop offset="1" stop-color="#122538"/>
+  </linearGradient>
+  <linearGradient id="brass" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#FFCF5C"/><stop offset="1" stop-color="#F5A623"/>
+  </linearGradient>
+  <linearGradient id="liquid" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#5EE7FF"/><stop offset="0.5" stop-color="#19C6F2"/><stop offset="1" stop-color="#0A8DC2"/>
+  </linearGradient>
+  <linearGradient id="res" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#A78BFA"/><stop offset="1" stop-color="#7C5CE6"/>
+  </linearGradient>
+  <filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+  <filter id="blurS" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity="0.5"/>
+  </filter>
+</defs>
+<rect width="512" height="512" fill="url(#bg)"/>
+<circle cx="256" cy="256" r="196" fill="url(#disc)" filter="url(#shadow)"/>
+<g opacity="0.5" filter="url(#blur)"><circle cx="256" cy="256" r="196" fill="none" stroke="#19C6F2" stroke-width="14"/></g><circle cx="256" cy="256" r="196" fill="none" stroke="#19C6F2" stroke-width="14"/>
+<circle cx="256" cy="256" r="186" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="2"/>
+<path d="M 108 200 A 160 160 0 0 1 404 200" fill="none" stroke="#FFFFFF" stroke-opacity="0.10" stroke-width="3" stroke-linecap="round"/>
+<path d="M 166 150 L 346 150 L 334 252 A 78 78 0 0 1 178 252 Z" fill="url(#brass)" stroke="#C97A12" stroke-width="6" stroke-linejoin="round"/><path d="M 186 196 L 326 196 L 320 252 A 64 64 0 0 1 192 252 Z" fill="url(#liquid)"/><path d="M 186 196 Q 221 186 256 196 T 326 196" fill="none" stroke="#9DF3FF" stroke-width="5"/><path d="M 166 170 C 116 170 116 236 186 244" fill="none" stroke="#F5A623" stroke-width="14" stroke-linecap="round"/><path d="M 346 170 C 396 170 396 236 326 244" fill="none" stroke="#F5A623" stroke-width="14" stroke-linecap="round"/><rect x="236" y="322" width="40" height="22" fill="#C97A12"/><rect x="186" y="342" width="140" height="48" rx="12" fill="url(#brass)" stroke="#C97A12" stroke-width="5"/><rect x="252" y="355" width="8" height="24" rx="4" fill="#7A4708"/><path d="M 196.0,96.0 L 202.2,109.5 L 216.9,111.2 L 206.0,121.3 L 208.9,135.8 L 196.0,128.6 L 183.1,135.8 L 186.0,121.3 L 175.1,111.2 L 189.8,109.5 Z" fill="#F5A623" opacity="0.45" filter="url(#blurS)"/><path d="M 196.0,96.0 L 202.2,109.5 L 216.9,111.2 L 206.0,121.3 L 208.9,135.8 L 196.0,128.6 L 183.1,135.8 L 186.0,121.3 L 175.1,111.2 L 189.8,109.5 Z" fill="url(#brass)" stroke="#C97A12" stroke-width="3" stroke-linejoin="round"/><path d="M 196.0,104.1 L 199.4,111.5 L 207.5,112.5 L 201.5,118.0 L 203.1,126.0 L 196.0,122.0 L 188.9,126.0 L 190.5,118.0 L 184.5,112.5 L 192.6,111.5 Z" fill="#FFE9B0" opacity="0.35"/><path d="M 256.0,72.0 L 263.3,87.9 L 280.7,90.0 L 267.9,101.9 L 271.3,119.0 L 256.0,110.5 L 240.7,119.0 L 244.1,101.9 L 231.3,90.0 L 248.7,87.9 Z" fill="#F5A623" opacity="0.45" filter="url(#blurS)"/><path d="M 256.0,72.0 L 263.3,87.9 L 280.7,90.0 L 267.9,101.9 L 271.3,119.0 L 256.0,110.5 L 240.7,119.0 L 244.1,101.9 L 231.3,90.0 L 248.7,87.9 Z" fill="url(#brass)" stroke="#C97A12" stroke-width="3" stroke-linejoin="round"/><path d="M 256.0,81.6 L 260.0,90.4 L 269.6,91.5 L 262.5,98.0 L 264.4,107.5 L 256.0,102.8 L 247.6,107.5 L 249.5,98.0 L 242.4,91.5 L 252.0,90.4 Z" fill="#FFE9B0" opacity="0.35"/><path d="M 316.0,96.0 L 322.2,109.5 L 336.9,111.2 L 326.0,121.3 L 328.9,135.8 L 316.0,128.6 L 303.1,135.8 L 306.0,121.3 L 295.1,111.2 L 309.8,109.5 Z" fill="#F5A623" opacity="0.45" filter="url(#blurS)"/><path d="M 316.0,96.0 L 322.2,109.5 L 336.9,111.2 L 326.0,121.3 L 328.9,135.8 L 316.0,128.6 L 303.1,135.8 L 306.0,121.3 L 295.1,111.2 L 309.8,109.5 Z" fill="url(#brass)" stroke="#C97A12" stroke-width="3" stroke-linejoin="round"/><path d="M 316.0,104.1 L 319.4,111.5 L 327.5,112.5 L 321.5,118.0 L 323.1,126.0 L 316.0,122.0 L 308.9,126.0 L 310.5,118.0 L 304.5,112.5 L 312.6,111.5 Z" fill="#FFE9B0" opacity="0.35"/>
+</svg>

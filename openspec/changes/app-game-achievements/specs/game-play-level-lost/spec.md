@@ -1,11 +1,15 @@
 ## MODIFIED Requirements
 
 ### Requirement: Level lost dialog appears after the leak
-One second after the level is lost, the system SHALL show the level lost dialog: a modal dialog above the dimmed game screen. The dialog SHALL show a title that clearly says the level is lost ("Leaked!"), a short message ("The pipe is leaking. Level lost."), the score of the attempt, and two buttons: **Restart** and **Exit**. The dialog SHALL NOT show a Resume button. When the loss unlocked achievements, the dialog SHALL also show an "Achievement unlocked" row below the score with the names of the unlocked achievements: at most two names, followed by "+N more" when there are more.
+One second after the level is lost, the system SHALL show the level lost dialog: a modal dialog above the dimmed game screen. The dialog SHALL show the level number, a title that clearly says the level is lost ("Leaked!"), a short message, the score of the attempt, and two buttons: **Restart** and **Exit**. The message SHALL be "The pipe is leaking. Level lost." after a leak, and "The liquid missed a mandatory section. Level lost." when a mandatory section was missed. The dialog SHALL NOT show a Resume button. When the loss unlocked achievements, the dialog SHALL also show an "Achievement unlocked" row below the score with the names of the unlocked achievements: at most two names, followed by "+N more" when there are more.
 
 #### Scenario: Dialog content
-- **WHEN** the level is lost with a score of 85 and 1 second has passed
-- **THEN** the level lost dialog shows "Leaked!", the message that the level is lost, a score of 85, and the buttons Restart and Exit
+- **WHEN** level 7 is lost by a leak with a score of 85 and 1 second has passed
+- **THEN** the level lost dialog shows "Level 7", "Leaked!", the message "The pipe is leaking. Level lost.", a score of 85, and the buttons Restart and Exit
+
+#### Scenario: Dialog after a missed mandatory section
+- **WHEN** the level is lost because a mandatory section was missed and 1 second has passed
+- **THEN** the level lost dialog shows "Leaked!" and the message "The liquid missed a mandatory section. Level lost."
 
 #### Scenario: Dialog waits for the leak effect
 - **WHEN** the level has been lost for less than 1 second

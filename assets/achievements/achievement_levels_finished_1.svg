@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<defs>
+  <radialGradient id="bg" cx="50%" cy="45%" r="70%">
+    <stop offset="0" stop-color="#122538"/><stop offset="0.7" stop-color="#0C1A2A"/><stop offset="1" stop-color="#07111C"/>
+  </radialGradient>
+  <linearGradient id="disc" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#19324A"/><stop offset="1" stop-color="#122538"/>
+  </linearGradient>
+  <linearGradient id="brass" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#FFCF5C"/><stop offset="1" stop-color="#F5A623"/>
+  </linearGradient>
+  <linearGradient id="liquid" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#5EE7FF"/><stop offset="0.5" stop-color="#19C6F2"/><stop offset="1" stop-color="#0A8DC2"/>
+  </linearGradient>
+  <linearGradient id="res" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#A78BFA"/><stop offset="1" stop-color="#7C5CE6"/>
+  </linearGradient>
+  <filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+  <filter id="blurS" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity="0.5"/>
+  </filter>
+</defs>
+<rect width="512" height="512" fill="url(#bg)"/>
+<circle cx="256" cy="256" r="196" fill="url(#disc)" filter="url(#shadow)"/>
+<g opacity="0.5" filter="url(#blur)"><circle cx="256" cy="256" r="196" fill="none" stroke="#8FA3B8" stroke-width="14"/></g><circle cx="256" cy="256" r="196" fill="none" stroke="#8FA3B8" stroke-width="14"/>
+<circle cx="256" cy="256" r="186" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="2"/>
+<path d="M 108 200 A 160 160 0 0 1 404 200" fill="none" stroke="#FFFFFF" stroke-opacity="0.10" stroke-width="3" stroke-linecap="round"/>
+<rect x="206" y="112" width="100" height="270" rx="50" fill="#22303F" stroke="#8FA3B8" stroke-width="10"/><clipPath id="tube"><rect x="216" y="122" width="80" height="250" rx="40"/></clipPath><g clip-path="url(#tube)"><rect x="200" y="272" width="120" height="250" fill="url(#liquid)"/><path d="M 200 272 Q 230 262 256 272 T 320 272" fill="none" stroke="#9DF3FF" stroke-width="6"/></g><line x1="316" y1="184.5" x2="340" y2="184.5" stroke="#FFCF5C" stroke-width="6" stroke-linecap="round"/><line x1="316" y1="247" x2="340" y2="247" stroke="#FFCF5C" stroke-width="6" stroke-linecap="round"/><line x1="316" y1="309.5" x2="340" y2="309.5" stroke="#FFCF5C" stroke-width="6" stroke-linecap="round"/><circle cx="240" cy="330" r="7" fill="#9DF3FF" opacity="0.8"/><circle cx="268" cy="350" r="5" fill="#9DF3FF" opacity="0.7"/>
+</svg>

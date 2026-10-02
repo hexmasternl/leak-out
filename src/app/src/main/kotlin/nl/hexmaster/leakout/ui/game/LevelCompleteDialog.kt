@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import nl.hexmaster.leakout.R
+import nl.hexmaster.leakout.core.achievements.Achievement
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.score.FinalScore
 import nl.hexmaster.leakout.ui.components.FlowButton
@@ -37,6 +38,7 @@ object LevelCompleteTags {
     const val RESTART = "win_restart"
     const val EXIT = "win_exit"
     const val NEW_BEST = "win_new_best"
+    const val ACHIEVEMENTS = "win_achievements"
     const val LAYOUT_PREFIX = "win"
     const val LAYOUT_REGULAR = "win_layout_regular"
     const val LAYOUT_COMPACT = "win_layout_compact"
@@ -51,8 +53,9 @@ private typealias Tagger = Modifier.(String) -> Modifier
  * Level, Restart and Exit. The buttons are there from the start and enabled once the tally is done;
  * Next Level only when [hasNextLevel]. A tap outside does nothing; Back does nothing during the
  * tally and works as Exit after it. When the win beat the stored highscore ([newBest]), "New best!"
- * takes the place of the message once the tally is done. The dialog uses the Regular layout when it
- * fits the window height and the Compact one otherwise.
+ * takes the place of the message once the tally is done. The achievements the win [unlocked] pop in
+ * under the score row once the tally is done; the buttons never wait for them. The dialog uses the
+ * Regular layout when it fits the window height and the Compact one otherwise.
  */
 @Composable
 fun LevelCompleteDialog(
@@ -64,6 +67,7 @@ fun LevelCompleteDialog(
     onRestart: () -> Unit,
     onExit: () -> Unit,
     newBest: Boolean = false,
+    unlocked: List<Achievement> = emptyList(),
 ) {
     val paneName = stringResource(R.string.win_pane_title)
     ResultDialogWindow(
@@ -71,17 +75,19 @@ fun LevelCompleteDialog(
         dismissOnBackPress = frame.buttonsEnabled,
         panelModifier = Modifier.testTag(LevelCompleteTags.DIALOG).semantics { paneTitle = paneName },
         layoutTagPrefix = LevelCompleteTags.LAYOUT_PREFIX,
-        measureRegular = { LevelCompleteMeasured(level, score, frame, newBest) },
+        measureRegular = { LevelCompleteMeasured(level, score, frame, newBest, unlocked) },
+        // The tracker can answer after the dialog opened; the row's height then counts too.
+        measureKey = unlocked.isNotEmpty(),
     ) { layout ->
-        LevelCompleteContent(layout, level, score, frame, hasNextLevel, onNextLevel, onRestart, onExit, newBest)
+        LevelCompleteContent(layout, level, score, frame, hasNextLevel, onNextLevel, onRestart, onExit, newBest, unlocked)
     }
 }
 
 /** The Regular content with the final values, so the chosen layout does not change during the tally. */
 @Composable
-private fun LevelCompleteMeasured(level: Int, score: FinalScore, frame: WinFrame, newBest: Boolean) {
+private fun LevelCompleteMeasured(level: Int, score: FinalScore, frame: WinFrame, newBest: Boolean, unlocked: List<Achievement>) {
     val finalFrame = frame.copy(penaltyShown = score.penalty, totalShown = score.total, buttonsEnabled = true)
-    LevelCompleteContent(ResultDialogLayout.Regular, level, score, finalFrame, true, {}, {}, {}, newBest, measuring = true)
+    LevelCompleteContent(ResultDialogLayout.Regular, level, score, finalFrame, true, {}, {}, {}, newBest, unlocked, measuring = true)
 }
 
 @Composable
@@ -95,10 +101,13 @@ private fun LevelCompleteContent(
     onRestart: () -> Unit,
     onExit: () -> Unit,
     newBest: Boolean,
+    unlocked: List<Achievement>,
     measuring: Boolean = false,
 ) {
     val tag: Tagger = { if (measuring) this else testTag(it) }
     val showNewBest = newBest && frame.buttonsEnabled
+    // Once the tally is done, so it never competes with the counting.
+    val showUnlocked = unlocked.isNotEmpty() && frame.buttonsEnabled
     when (layout) {
         ResultDialogLayout.Regular -> RegularColumn {
             WinEyebrow(level)
@@ -111,6 +120,10 @@ private fun LevelCompleteContent(
             WinStars(lit = frame.starsLit, scales = frame.starScales, modifier = Modifier.tag(LevelCompleteTags.STARS), tagStars = !measuring)
             Spacer(Modifier.height(16.dp))
             WinScoreRow(score, frame, tag)
+            if (showUnlocked) {
+                Spacer(Modifier.height(12.dp))
+                AchievementUnlockedRow(unlocked, Modifier.tag(LevelCompleteTags.ACHIEVEMENTS), animate = !measuring)
+            }
             Spacer(Modifier.height(24.dp))
             WinButtons(FlowButtonSize.Large, frame, hasNextLevel, onNextLevel, onRestart, onExit, tag)
         }
@@ -127,6 +140,10 @@ private fun LevelCompleteContent(
                 WinStars(lit = frame.starsLit, scales = frame.starScales, modifier = Modifier.tag(LevelCompleteTags.STARS), size = 32.dp, tagStars = !measuring)
                 Spacer(Modifier.height(12.dp))
                 WinScoreRow(score, frame, tag)
+                if (showUnlocked) {
+                    Spacer(Modifier.height(8.dp))
+                    AchievementUnlockedRow(unlocked, Modifier.tag(LevelCompleteTags.ACHIEVEMENTS), animate = !measuring)
+                }
             },
             buttons = { WinButtons(FlowButtonSize.Medium, frame, hasNextLevel, onNextLevel, onRestart, onExit, tag) },
         )
@@ -239,13 +256,23 @@ private val PreviewScore = FinalScore(earned = 120, unusedSections = List(4) { P
 
 /** The dialog's frame and panel without the dialog window, so previews can render them. */
 @Composable
-private fun LevelCompletePreview(frame: WinFrame, newBest: Boolean = false) {
+private fun LevelCompletePreview(frame: WinFrame, newBest: Boolean = false, unlocked: List<Achievement> = emptyList()) {
     LeakOutTheme {
-        ResultDialogFrame(measureRegular = { LevelCompleteMeasured(7, PreviewScore, frame, newBest) }) { layout ->
-            ResultDialogPanel(layout) { LevelCompleteContent(layout, 7, PreviewScore, frame, true, {}, {}, {}, newBest) }
+        ResultDialogFrame(measureRegular = { LevelCompleteMeasured(7, PreviewScore, frame, newBest, unlocked) }, measureKey = unlocked.isNotEmpty()) { layout ->
+            ResultDialogPanel(layout) { LevelCompleteContent(layout, 7, PreviewScore, frame, true, {}, {}, {}, newBest, unlocked) }
         }
     }
 }
+
+private val PreviewUnlocked = listOf(Achievement.ZERO_WASTE, Achievement.MEASURE_TWICE, Achievement.STEADY_HANDS, Achievement.PERSONAL_BEST)
+
+@Preview(name = "Level complete, achievements, 640 × 360 (Compact)", widthDp = 640, heightDp = 360, showBackground = true, backgroundColor = 0xFF0C1A2A)
+@Composable
+private fun LevelCompleteAchievementsCompactPreview() = LevelCompletePreview(doneFrame(), unlocked = PreviewUnlocked)
+
+@Preview(name = "Level complete, achievements, 1280 × 800 (Regular)", widthDp = 1280, heightDp = 800, showBackground = true, backgroundColor = 0xFF0C1A2A)
+@Composable
+private fun LevelCompleteAchievementsRegularPreview() = LevelCompletePreview(doneFrame(), unlocked = PreviewUnlocked)
 
 private fun doneFrame() = winFrame(WinTally.totalDurationMs(PreviewScore, 2), PreviewScore, stars = 2)
 

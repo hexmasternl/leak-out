@@ -4,6 +4,7 @@
     <!-- appCategory="game" exempts the app from Android 16's large-screen override that would
          otherwise ignore the landscape lock on tablets and foldables. -->
     <application
+        android:name=".LeakOutApplication"
         android:allowBackup="true"
         android:appCategory="game"
         android:icon="@mipmap/ic_launcher"
@@ -11,6 +12,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.LeakOut">
+
+        <!-- Play Games Services v2. The id is the Play Console export in res/values/games-ids.xml;
+             LeakOutApplication only starts the SDK when it is a positive number. -->
+        <meta-data
+            android:name="com.google.android.gms.games.APP_ID"
+            android:value="@string/app_id" />
 
         <!-- sensorLandscape is applied before the first frame (no portrait flash) and still lets
              the sensor flip between both landscape sides. -->

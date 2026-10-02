@@ -7,6 +7,7 @@ import nl.hexmaster.leakout.core.board.Placement
 import nl.hexmaster.leakout.core.board.PlacementCheck
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.core.level.exitFor
 import nl.hexmaster.leakout.core.route.Route
 import nl.hexmaster.leakout.core.route.RouteTracer
 import nl.hexmaster.leakout.core.score.ScoreSheet
@@ -39,12 +40,17 @@ class GameEngine(private val random: Random = Random.Default) {
         outcome = Outcome.Playing,
         finalScore = null,
         sectionsRemoved = 0,
+        placements = 0,
+        replacements = 0,
+        everPaused = false,
+        routeCompletedBeforeFlow = false,
+        photoFinish = false,
     )
 
     fun handle(state: GameState, command: GameCommand): GameState = when (command) {
         is GameCommand.Start -> start(command.level, state)
         GameCommand.Restart -> start(state.level, state)
-        GameCommand.Pause -> if (state.outcome is Outcome.Playing && !state.paused) state.copy(paused = true) else state
+        GameCommand.Pause -> if (state.outcome is Outcome.Playing && !state.paused) state.copy(paused = true, everPaused = true) else state
         GameCommand.Resume -> if (state.paused) state.copy(paused = false) else state
         GameCommand.FastForward ->
             if (state.routeComplete && !state.isStopped && !state.fastForward && state.replacement == null) {
@@ -78,26 +84,46 @@ class GameEngine(private val random: Random = Random.Default) {
         val check = placement(state, at)
         if (!check.accepted) return state
         val incoming = state.stack.next
-        val stack = state.stack.afterPlacement(random)
+        val replacing = check == PlacementCheck.Replace
+        val counted = state.copy(
+            stack = state.stack.afterPlacement(random),
+            placements = state.placements + 1,
+            replacements = state.replacements + if (replacing) 1 else 0,
+        )
         val penaltyMs = state.level.rules.replacePenaltyMs
-        if (check == PlacementCheck.Replace && penaltyMs > 0) {
+        if (replacing && penaltyMs > 0) {
             val removed = (state.board[at] as Cell.Pipe).section
             val landsAtMs = state.clockMs + penaltyMs
-            val board = state.board.with(at, Cell.Empty)
-            return state.copy(
-                board = board,
-                stack = stack,
+            return withBoard(counted, state.board.with(at, Cell.Empty), at).copy(
                 replaceLockUntilMs = landsAtMs,
                 replacement = Replacement(at, removed, incoming, state.clockMs, landsAtMs),
-                routeComplete = RouteTracer.trace(board, state.level) is Route.Complete,
             )
         }
-        val board = state.board.with(at, Cell.Pipe(incoming))
+        return withBoard(counted, state.board.with(at, Cell.Pipe(incoming)), at)
+    }
+
+    /**
+     * [state] with [board], changed on the tile [at], and the route checked again. When the change
+     * completes the route, the attempt facts about that moment are recorded: before the flow, or a
+     * photo finish on the tile the liquid head is about to enter.
+     */
+    private fun withBoard(state: GameState, board: Board, at: Position): GameState {
+        val complete = RouteTracer.trace(board, state.level) is Route.Complete
+        val completedNow = complete && !state.routeComplete
         return state.copy(
             board = board,
-            stack = stack,
-            routeComplete = RouteTracer.trace(board, state.level) is Route.Complete,
+            routeComplete = complete,
+            routeCompletedBeforeFlow = state.routeCompletedBeforeFlow || (completedNow && state.flow is FlowState.Waiting),
+            photoFinish = state.photoFinish || (completedNow && headExitsInto(state, at)),
         )
+    }
+
+    /** Whether the liquid head is flowing and its current channel leaves its tile towards [at]. */
+    private fun headExitsInto(state: GameState, at: Position): Boolean {
+        val flow = state.flow as? FlowState.Flowing ?: return false
+        // The start holds no section; the liquid leaves it through its open side.
+        val exit = (state.board[flow.position] as? Cell.Pipe)?.section?.exitFor(flow.entry) ?: state.level.start.openSide
+        return flow.position.neighbour(exit) == at
     }
 
     /**
@@ -132,11 +158,7 @@ class GameEngine(private val random: Random = Random.Default) {
         val replacement = state.replacement ?: return state
         if (state.outcome !is Outcome.Playing || state.board[replacement.at] != Cell.Empty) return state.copy(replacement = null)
         val board = state.board.with(replacement.at, Cell.Pipe(replacement.incoming))
-        return state.copy(
-            board = board,
-            replacement = null,
-            routeComplete = RouteTracer.trace(board, state.level) is Route.Complete,
-        )
+        return withBoard(state.copy(replacement = null), board, replacement.at)
     }
 
     /**

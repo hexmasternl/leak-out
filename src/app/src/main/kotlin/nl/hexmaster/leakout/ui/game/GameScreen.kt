@@ -46,6 +46,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import kotlin.math.roundToInt
 import kotlin.random.Random
 import kotlinx.coroutines.launch
+import nl.hexmaster.leakout.achievements.AchievementTracker
 import nl.hexmaster.leakout.audio.GameSound
 import nl.hexmaster.leakout.audio.SoundEffects
 import nl.hexmaster.leakout.core.engine.FlowState
@@ -78,6 +79,8 @@ import nl.hexmaster.leakout.ui.theme.LeakOutColors
  * [WinTiming.FINISH_EFFECT_MS] and then shows the level complete dialog; its Next level button calls
  * [onNextLevel] and stays disabled when that is null (the last level). The win is recorded in
  * [history] as soon as it happens, and the dialog shows when it set a new best; a leak is never recorded.
+ * Every ended attempt goes to [achievements] once (a win after it is recorded), and a restart or exit
+ * of an unfinished attempt hands it its placements; without it no achievements are tracked (test play).
  *
  * Every view shows only what it reads from the [GameSession]'s state, and every action is a
  * command to the engine. [session] owns the running level; tests pass their own to drive it.
@@ -93,6 +96,7 @@ fun GameScreen(
     session: GameSession = remember(level, random) { GameSession(level, random) },
     soundEffects: SoundEffects? = null,
     tips: SettingsRepository? = null,
+    achievements: AchievementTracker? = null,
 ) {
     // The display stays on for the whole game screen, its dialogs included.
     KeepScreenOn()
@@ -123,10 +127,13 @@ fun GameScreen(
     ReplacementLandingSound(session, soundEffects)
     OncePerAttemptSound(session, showWinDialog, attempt, GameSound.LevelComplete, soundEffects)
     OncePerAttemptSound(session, showLostDialog, attempt, GameSound.LevelFailed, soundEffects)
-    // Keyed on the attempt: every won attempt is offered to the history, which keeps the best.
+    // Keyed on the attempt: every won attempt is offered to the history, which keeps the best, and
+    // then every ended attempt to the achievements; the session makes both happen once per attempt.
     val won = outcome is Outcome.Won
-    LaunchedEffect(session, history, attempt, won) {
+    val ended = outcome !is Outcome.Playing
+    LaunchedEffect(session, history, achievements, attempt, ended) {
         if (won && history != null) session.recordWin(history)
+        if (ended && achievements != null) session.recordAchievements(achievements)
     }
     // A replacement takes no input: a drag a second finger still holds goes back to its slot.
     LaunchedEffect(session, isStopped, replacing) {
@@ -241,17 +248,21 @@ fun GameScreen(
     if (showPauseDialog) {
         PauseDialog(
             onResume = { session.resumeByUser() },
-            onRestart = { session.send(GameCommand.Restart) },
-            onExit = onExit,
+            onRestart = { session.restart(achievements) },
+            onExit = {
+                session.abandonAttempt(achievements)
+                onExit()
+            },
         )
     }
     if (showLostDialog) {
         LevelLostDialog(
             level = currentLevel.id,
             score = session.select { state.score },
-            onRestart = { session.send(GameCommand.Restart) },
+            onRestart = { session.restart(achievements) },
             onExit = onExit,
             reason = session.select { (state.outcome as? Outcome.Lost)?.reason ?: LossReason.LEAK },
+            unlocked = session.select { unlockedThisAttempt },
         )
     }
     if (showWinDialog) {
@@ -264,9 +275,10 @@ fun GameScreen(
                 frame = frame,
                 hasNextLevel = onNextLevel != null,
                 onNextLevel = { onNextLevel?.invoke() },
-                onRestart = { session.send(GameCommand.Restart) },
+                onRestart = { session.restart(achievements) },
                 onExit = onExit,
                 newBest = session.select { recordResult is RecordResult.NewHighscore },
+                unlocked = session.select { unlockedThisAttempt },
             )
         }
     }

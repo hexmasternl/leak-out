@@ -2,7 +2,7 @@
 
 The engine (`core/engine`) is pure and immutable. One `GameState` describes an attempt, and `GameSession` in `app` drives it and records a win through `LevelHistoryRepository.recordWin`, which returns a `RecordResult` (`FirstCompletion`, `NewHighscore`, `NoImprovement`). The level history keeps one row per finished level (best score and its stars, 0-3) and deliberately records nothing about losses. Settings live in DataStore; history lives in Room (`LeakOutDatabase`). The settings screen (`app-settings-page`) has Audio, Feel, Progress and About panels, and its About panel currently promises "no account, data stays on the device".
 
-The app has no Google Play dependencies. The app does not exist in the Play Console yet. Play Games Services (PGS) v2 needs a Play Console app, a PGS project linked to OAuth credentials for each signing key, and the achievements defined in the console. Their generated ids go in `games-ids.xml`.
+The app has no Google Play dependencies. The app is in the Play Console (closed testing), and the owner has set up the PGS project (app id `201820010117`) with the 25 launch achievements. The export is in this change as `games-ids.xml`. Play Games Services (PGS) v2 needs a Play Console app, a PGS project linked to OAuth credentials for each signing key, and the achievements defined in the console. Their generated ids go in `games-ids.xml`.
 
 There are 24 bundled levels on grids from 8×6 to 16×12, which fill library page 1. More levels will follow in packs of 24, up to 300 or more. Crosses can be drawn from level 12 on, so cross achievements are possible from level 12.
 
@@ -152,8 +152,8 @@ The existing `LeakOutDatabase` gets new tables in a version bump with a Room `Mi
 - `PlayGamesSdk.initialize(context)` runs in a new `LeakOutApplication.onCreate`. `GamesSignInClient.isAuthenticated()` runs at start: this is the silent sign-in.
 - `PlayGamesAuth` exposes `state: StateFlow<SignInState>` (`Unavailable`, `SignedOut`, `SigningIn`, `SignedIn(displayName)`) and `signIn(activity)`, which calls `GamesSignInClient.signIn()`.
 - The syncer pushes the full state whenever the state becomes `SignedIn` and whenever the local store changes while signed in. Incremental achievements use `setSteps`, unlocked standard ones use `unlock`, and an unlocked incremental one gets `setSteps(total)`. These are idempotent, so there is no "already sent" bookkeeping, and an offline or failed push is simply retried on the next trigger. `increment` is never used, because a retried increment would count twice.
-- **Not configured**: the PGS app id in `games-ids.xml` ships as the placeholder `0` until the console project exists. When the id is not a positive number, the SDK is not initialized, the state is `Unavailable` and the no-op sync is used. Debug and CI builds work without the console.
-- The ids come from `games-ids.xml` (`R.string.achievement_<key>`). A test checks that every catalogue key has a string resource.
+- **Not configured**: `games-ids.xml` ships with the real app id. When the id is not a positive number (the placeholder `0` used in tests), the SDK is not initialized, the state is `Unavailable` and the no-op sync is used. A build whose signing key has no PGS credential, such as a debug build on a machine without a registered debug SHA-1, still starts the SDK, fails the silent sign-in and shows `SignedOut`. Debug and CI builds keep working.
+- The ids come from `games-ids.xml` (`R.string.achievement_<key>`). The Console names its resources after the achievement *names*, so five were renamed to their keys in the export: `getting_the_hang_of_it` → `levels_finished_1`, `star_collector_i` → `star_collector_1`, `star_collector_ii` → `star_collector_2`, `perfectionist_i` → `perfectionist_1` and `the_long_way_round` → `long_way_round`. A test checks that every catalogue key has a string resource.
 
 *Alternative:* Play Games as the only store (rejected: nothing works for players who decline sign-in, and the emulator tests would need a real account).
 
@@ -201,7 +201,7 @@ The style follows Deep Flow:
 ## Risks / Trade-offs
 
 - [The Play Console setup is outside the repo and blocks real PGS testing] → Every part except the sync is tested with the no-op and fake syncs. The tasks end with a manual setup checklist and a manual smoke test on a device with a tester account.
-- [The PGS ids are only known after the console setup] → `games-ids.xml` ships with placeholders and the `Unavailable` fallback. Replacing the file is the only change needed once the console exists.
+- [The PGS ids are only known after the console setup] → Resolved: the console setup is done and its export is `games-ids.xml` in this change. The `Unavailable` fallback stays for a missing or placeholder id.
 - [The XP budget runs out before the content does] → The 1a guideline spends exactly the held-back 405 XP over 12 packs and 6 tiers. Beyond pack 13 (more than 312 levels), pack achievements only fit if XP is freed in the guideline before it is spent, for example 5 + 5 XP per pack from pack 8 on. Whether Play Games accepts 0-XP achievements is still to be checked during the console setup. The budget is rechecked in every catalogue change.
 - [Achievements nobody can earn] → A `core` test plays a scripted solution with `LevelSolver` on a suitable bundled level for each skill and hidden achievement. It proves Crossroads King (level 12 or later), Long Way Round and Wall to Wall can be reached.
 - [Steady Hands fails because of an automatic pause the player didn't intend] → Accepted, and stated in the achievement's description ("Win a level without pausing or leaving the game").
@@ -212,9 +212,10 @@ The style follows Deep Flow:
 
 ## Migration Plan
 
-1. Ship with placeholder `games-ids.xml`. Achievements work locally, and existing players get progress achievements at first start.
-2. The owner creates the Play Console app, the PGS project and the 25 achievements from `icons/` and the catalogue table. The owner adds testers and registers the debug, upload and app signing SHA-1s.
-3. Export `games-ids.xml` from the console into `app/src/main/res/values/`. On next sign-in the syncer pushes all local achievements.
+1. Done: the owner created the PGS project and the 25 achievements from `icons/` and the catalogue table, added testers and registered the signing SHA-1s, following `docs/achievements-setup.md`.
+2. Done: `games-ids.xml` is exported into this change, with five resources renamed to their keys.
+3. Ship with that file in `app/src/main/res/values/`. Achievements work locally whether or not the player signs in, existing players get progress achievements at first start, and on sign-in the syncer pushes all local achievements.
+4. After the smoke test (task 11.3), the owner publishes the Play Games configuration. That makes the 25 achievements permanent.
 
 Rollback: removing the PGS dependency leaves the local achievements working.
 

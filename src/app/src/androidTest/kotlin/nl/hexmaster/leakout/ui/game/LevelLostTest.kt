@@ -36,8 +36,15 @@ import androidx.test.espresso.action.Tap
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.compose.ui.test.onAllNodesWithTag
 import kotlin.random.Random
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import nl.hexmaster.leakout.achievements.AchievementTracker
+import nl.hexmaster.leakout.achievements.InMemoryAchievementRepository
+import nl.hexmaster.leakout.core.achievements.Achievement
 import nl.hexmaster.leakout.core.engine.Outcome
+import nl.hexmaster.leakout.history.InMemoryLevelHistoryRepository
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
@@ -314,12 +321,38 @@ class LevelLostTest {
         compose.onNodeWithText("The liquid missed a mandatory section. Level lost.").assertDoesNotExist()
     }
 
+    // 5.2
+    @Test
+    fun theFirstLossShowsWetFeetInTheDialog() {
+        val tracker = AchievementTracker(InMemoryAchievementRepository(), InMemoryLevelHistoryRepository(), CoroutineScope(Dispatchers.Main))
+        show(achievements = tracker)
+        lose(score = 85)
+        tick(1_000)
+
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag(LevelLostTags.ACHIEVEMENTS).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag(LevelLostTags.ACHIEVEMENTS)
+            .assertIsDisplayed()
+            .assert(hasText("Wet Feet"))
+            .assertContentDescriptionEquals("Achievement unlocked: Wet Feet")
+        compose.runOnIdle { assertEquals(listOf(Achievement.WET_FEET), session.unlockedThisAttempt) }
+    }
+
+    // 5.2
+    @Test
+    fun aLossThatUnlocksNothingHasNoAchievementRow() {
+        show()
+        lose(score = 85)
+        tick(1_000)
+        compose.onNodeWithTag(LevelLostTags.DIALOG).assertIsDisplayed()
+        compose.onNodeWithTag(LevelLostTags.ACHIEVEMENTS).assertDoesNotExist()
+    }
+
     private fun tick(ms: Long) {
         compose.runOnIdle { session.sendTick(ms) }
         compose.waitForIdle()
     }
 
-    private fun show(level: Level = FieldTest.level()) {
+    private fun show(level: Level = FieldTest.level(), achievements: AchievementTracker? = null) {
         session = GameSession(level, Random(7))
         compose.setContent {
             LeakOutTheme {
@@ -327,7 +360,7 @@ class LevelLostTest {
                 // The test activity shows the system bars; the game hides them, so measure a bare 360 dp screen.
                 Box(Modifier.size(800.dp, 360.dp).consumeWindowInsets(WindowInsets.safeDrawing)) {
                     if (inGame) {
-                        GameScreen(level = level, onExit = { inGame = false }, session = session)
+                        GameScreen(level = level, onExit = { inGame = false }, session = session, achievements = achievements)
                     } else {
                         WelcomeScreen(
                             resolveNextLevel = { NextLevelResolver.resolve(totalLevels = 1, stars = emptyMap()) },

@@ -20,6 +20,10 @@ lifecycle = "2.9.4"
 room = "2.8.5"
 datastore = "1.2.1"
 
+# Google Play
+# Play Games Services v2: sign-in and achievement sync.
+playServicesGamesV2 = "22.1.0"
+
 # Kotlin libraries
 kotlinxSerialization = "1.11.0"
 # Matches the kotlinx-coroutines-core that Compose and lifecycle already pull in.
@@ -56,6 +60,9 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
+# Google Play
+play-services-games-v2 = { group = "com.google.android.gms", name = "play-services-games-v2", version.ref = "playServicesGamesV2" }
 
 # Kotlin
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }

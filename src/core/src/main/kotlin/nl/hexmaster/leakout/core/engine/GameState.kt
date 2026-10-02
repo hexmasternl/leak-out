@@ -39,6 +39,19 @@ data class GameState(
     val finalScore: FinalScore?,
     /** How many of [FinalScore.unusedSections] have been taken off the board, in order, by [GameCommand.RemoveUnused]. */
     val sectionsRemoved: Int,
+    /** Accepted [GameCommand.Place] commands this attempt, replacements included. */
+    val placements: Int,
+    /** Accepted [GameCommand.Place] commands that replaced a section. */
+    val replacements: Int,
+    /** Set by an accepted [GameCommand.Pause], including the automatic one when the app leaves the screen. */
+    val everPaused: Boolean,
+    /** Set when a placement completed the route while the flow was still [FlowState.Waiting]. */
+    val routeCompletedBeforeFlow: Boolean,
+    /**
+     * Set when a placement completed the route while the liquid was flowing, on the tile the head's
+     * current channel exits into: the very tile it would otherwise have leaked into.
+     */
+    val photoFinish: Boolean,
 ) {
     val score: Int get() = sheet.total
 

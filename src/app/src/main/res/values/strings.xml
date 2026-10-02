@@ -106,7 +106,7 @@
     <string name="settings_progress_none">No levels finished yet</string>
     <string name="settings_reset_progress">Reset progress</string>
     <string name="settings_reset_title">Reset progress?</string>
-    <string name="settings_reset_body">All finished levels, highscores and stars are deleted. This cannot be undone.</string>
+    <string name="settings_reset_body">All finished levels, highscores and stars are deleted. Achievements are kept. This cannot be undone.</string>
     <string name="settings_reset_cancel">Cancel</string>
     <string name="settings_reset_confirm">Reset</string>
     <string name="settings_show_tips_again">Show tips again</string>
@@ -114,7 +114,7 @@
     <string name="settings_about">About</string>
     <string name="settings_about_version">Version %1$s (%2$d)</string>
     <string name="settings_about_maker">Made by HexMaster</string>
-    <string name="settings_about_privacy">No account. Your data stays on this device.</string>
+    <string name="settings_about_privacy">No account needed. If you sign in to Google Play Games, your achievements are shared with Google Play.</string>
     <string name="settings_about_music">Music</string>
     <!-- Tips (design-system.md 5.9) -->
     <string name="tip_step_counter">%1$d / %2$d</string>
@@ -199,4 +199,88 @@
     <string name="designer_discard_body">This design has changes that were not exported. They are lost when you leave.</string>
     <string name="designer_discard_cancel">Keep editing</string>
     <string name="designer_discard_confirm">Discard</string>
+
+    <!-- Achievements: names and descriptions match the Play Console entries exactly. The Play
+         Games ids are the achievement_<key> strings in games-ids.xml. -->
+    <string name="achievement_name_first_leak_fixed">First Leak Fixed</string>
+    <string name="achievement_desc_first_leak_fixed">Finish level 1.</string>
+    <string name="achievement_name_levels_finished_1">Getting the Hang of It</string>
+    <string name="achievement_desc_levels_finished_1">Finish 10 levels.</string>
+    <string name="achievement_name_star_collector_1">Star Collector I</string>
+    <string name="achievement_desc_star_collector_1">Collect 25 stars.</string>
+    <string name="achievement_name_star_collector_2">Star Collector II</string>
+    <string name="achievement_desc_star_collector_2">Collect 60 stars.</string>
+    <string name="achievement_name_perfectionist_1">Perfectionist I</string>
+    <string name="achievement_desc_perfectionist_1">Get 3 stars on 10 levels.</string>
+    <string name="achievement_name_pack_1_complete">Pack 1 Complete</string>
+    <string name="achievement_desc_pack_1_complete">Finish every level on page 1.</string>
+    <string name="achievement_name_pack_1_perfect">Pack 1 Perfect</string>
+    <string name="achievement_desc_pack_1_perfect">Get 3 stars on every level on page 1.</string>
+    <string name="achievement_name_zero_waste">Zero Waste</string>
+    <string name="achievement_desc_zero_waste">Win a level with no unused sections.</string>
+    <string name="achievement_name_double_cross">Double Cross</string>
+    <string name="achievement_desc_double_cross">Send the liquid through both channels of a cross.</string>
+    <string name="achievement_name_crossroads_king">Crossroads King</string>
+    <string name="achievement_desc_crossroads_king">Send the liquid through both channels of 3 crosses in one attempt.</string>
+    <string name="achievement_name_ahead_of_the_flow">Ahead of the Flow</string>
+    <string name="achievement_desc_ahead_of_the_flow">Complete the route before the liquid starts flowing.</string>
+    <string name="achievement_name_full_throttle">Full Throttle</string>
+    <string name="achievement_desc_full_throttle">Win a level with fast forward on.</string>
+    <string name="achievement_name_measure_twice">Measure Twice</string>
+    <string name="achievement_desc_measure_twice">Win a level without replacing a section.</string>
+    <string name="achievement_name_steady_hands">Steady Hands</string>
+    <string name="achievement_desc_steady_hands">Win a level without pausing or leaving the game.</string>
+    <string name="achievement_name_long_way_round">The Long Way Round</string>
+    <string name="achievement_desc_long_way_round">Win with the liquid flowing through 30 or more sections.</string>
+    <string name="achievement_name_big_spender">Big Spender</string>
+    <string name="achievement_desc_big_spender">Win a level with a score of 500 or more.</string>
+    <string name="achievement_name_apprentice">Apprentice</string>
+    <string name="achievement_desc_apprentice">Place 100 sections.</string>
+    <string name="achievement_name_journeyman">Journeyman</string>
+    <string name="achievement_desc_journeyman">Place 1,000 sections.</string>
+    <string name="achievement_name_guildmaster">Guildmaster</string>
+    <string name="achievement_desc_guildmaster">Place 5,000 sections.</string>
+    <string name="achievement_name_never_give_up">Never Give Up</string>
+    <string name="achievement_desc_never_give_up">Win a level after losing it 3 times in a row.</string>
+    <string name="achievement_name_personal_best">Personal Best</string>
+    <string name="achievement_desc_personal_best">Beat your own highscore on a level.</string>
+    <string name="achievement_name_wet_feet">Wet Feet</string>
+    <string name="achievement_desc_wet_feet">Lose a level for the first time.</string>
+    <string name="achievement_name_instant_flood">Instant Flood</string>
+    <string name="achievement_desc_instant_flood">Lose before the liquid reaches any section you placed.</string>
+    <string name="achievement_name_wall_to_wall">Wall to Wall</string>
+    <string name="achievement_desc_wall_to_wall">Win with every free cell filled.</string>
+    <string name="achievement_name_photo_finish">Photo Finish</string>
+    <string name="achievement_desc_photo_finish">Complete the route on the very tile the liquid was about to enter.</string>
+
+    <!-- Play Games panel on the settings screen (design.md decision 7) -->
+    <string name="settings_play_games">Play Games</string>
+    <string name="settings_play_games_signed_in">Signed in as %1$s</string>
+    <string name="settings_play_games_signed_in_anonymous">Signed in</string>
+    <string name="settings_play_games_signed_out">Not signed in</string>
+    <string name="settings_play_games_signing_in">Signing in…</string>
+    <string name="settings_play_games_unavailable">Play Games is not available</string>
+    <string name="settings_play_games_sign_in">Sign in</string>
+    <string name="settings_achievements">Achievements</string>
+    <string name="settings_achievements_count">%1$d / %2$d</string>
+    <string name="settings_achievements_description">Achievements, %1$d of %2$d unlocked</string>
+
+    <!-- Achievement row in the result dialogs (design.md decision 9) -->
+    <string name="achievement_unlocked">Achievement unlocked</string>
+    <string name="achievement_unlocked_more">+%1$d more</string>
+    <string name="achievement_unlocked_description">Achievement unlocked: %1$s</string>
+
+    <!-- Achievements screen (design.md decision 8) -->
+    <string name="achievements_title">Achievements</string>
+    <string name="achievements_back">Back to settings</string>
+    <string name="achievements_count">%1$d / %2$d</string>
+    <string name="achievements_count_description">%1$d of %2$d achievements unlocked</string>
+    <string name="achievements_play_games">Play Games</string>
+    <string name="achievements_progress">%1$d / %2$d</string>
+    <string name="achievements_progress_description">%1$d of %2$d</string>
+    <string name="achievements_unlocked_on">Unlocked %1$s</string>
+    <string name="achievements_state_unlocked">unlocked</string>
+    <string name="achievements_state_locked">locked</string>
+    <string name="achievements_hidden_name">Hidden achievement</string>
+    <string name="achievements_hidden_description">Keep playing to find out.</string>
 </resources>

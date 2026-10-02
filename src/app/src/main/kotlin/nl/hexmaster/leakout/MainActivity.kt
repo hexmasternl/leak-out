@@ -38,8 +38,6 @@ import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.library.NextLevel
 import nl.hexmaster.leakout.core.library.NextLevelResolver
 import nl.hexmaster.leakout.history.LevelHistoryRepository
-import nl.hexmaster.leakout.history.data.LeakOutDatabase
-import nl.hexmaster.leakout.history.data.RoomLevelHistoryRepository
 import nl.hexmaster.leakout.settings.DataStoreSettingsRepository
 import nl.hexmaster.leakout.settings.SettingsRepository
 import nl.hexmaster.leakout.ui.designer.AndroidLevelExporter
@@ -87,7 +85,7 @@ class MainActivity : ComponentActivity() {
     private val levels by lazy { BundledLevels(assets) }
 
     // The player's finished levels, kept on the device across restarts.
-    private val history: LevelHistoryRepository by lazy { RoomLevelHistoryRepository(LeakOutDatabase.get(this)) }
+    private val history: LevelHistoryRepository by lazy { appContainer.history }
     private val library: LevelLibraryViewModel by viewModels {
         viewModelFactory { initializer { LevelLibraryViewModel(history.asHistoryReader(), levels) } }
     }
@@ -95,7 +93,9 @@ class MainActivity : ComponentActivity() {
     // The player's preferences, on the app's one shared settings DataStore (Context.settingsDataStore).
     private val settings: SettingsRepository by lazy { DataStoreSettingsRepository.create(this) }
     private val settingsViewModel: SettingsViewModel by viewModels {
-        viewModelFactory { initializer { SettingsViewModel(settings, history, musicPlaylist) } }
+        viewModelFactory {
+            initializer { SettingsViewModel(settings, history, musicPlaylist, onProgressReset = appContainer.tracker::reconcile) }
+        }
     }
 
     // The bundled playlist, which is also the music credits on the About panel; null when unreadable.
@@ -180,6 +180,7 @@ class MainActivity : ComponentActivity() {
                                 onExit = { screen = Screen.Welcome },
                                 onNextLevel = next?.let { { screen = Screen.Game(it) } },
                                 history = history,
+                                achievements = appContainer.tracker,
                                 soundEffects = soundEffectsViewModel.soundEffects,
                                 tips = settings,
                             )

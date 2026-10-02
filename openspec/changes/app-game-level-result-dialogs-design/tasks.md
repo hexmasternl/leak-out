@@ -18,9 +18,9 @@ Tracking issue: [#40 Win and loss dialogs design](https://github.com/hexmasternl
 
 ## 3. Shared layout
 
-- [ ] 3.1 Add `ResultDialogLayout.choose(availableHeightPx, regularHeightPx)` returning Regular or Compact in `app/ui/game/ResultDialogLayout.kt`; verify JVM unit tests: fits exactly → Regular, 1 px over → Compact, 360 dp window with 440 dp content → Compact, 800 dp window → Regular
-- [ ] 3.2 Add the shared `ResultDialogPanel` (level 3 shadow, `radius.lg`, `surface.base`, `line.highlight` top edge, no outline), the scrim (`surface.scrim`, platform dim off), the `SubcomposeLayout` that measures the Regular content with final values once per window size and font scale, and the Compact two-column scaffold with a scrolling info column; verify an instrumented test that the info column scrolls while the buttons column is fully displayed when the content is forced taller than the window
-- [ ] 3.3 Add the entry motion (scrim 160 ms fade, panel 0.92 → 1 `motion.pop`; reduced motion: 160 ms fade, no scale); verify a JVM test of the motion spec selection and an instrumented test with the clock paused that the panel starts at scale 0.92 and ends at 1
+- [x] 3.1 Add `ResultDialogLayout.choose(availableHeightPx, regularHeightPx)` returning Regular or Compact in `app/ui/game/ResultDialogLayout.kt`; verify JVM unit tests: fits exactly → Regular, 1 px over → Compact, 360 dp window with 440 dp content → Compact, 800 dp window → Regular
+- [x] 3.2 Add the shared `ResultDialogPanel` (level 3 shadow, `radius.lg`, `surface.base`, `line.highlight` top edge, no outline), the scrim (`surface.scrim`, platform dim off), the `SubcomposeLayout` that measures the Regular content with final values once per window size and font scale, and the Compact two-column scaffold with a scrolling info column; verify an instrumented test that the info column scrolls while the buttons column is fully displayed when the content is forced taller than the window
+- [x] 3.3 Add the entry motion (scrim 160 ms fade, panel 0.92 → 1 `motion.pop`; reduced motion: 160 ms fade, no scale); verify a JVM test of the motion spec selection and an instrumented test with the clock paused that the panel starts at scale 0.92 and ends at 1
 
 ## 4. Level complete dialog
 

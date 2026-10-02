@@ -8,8 +8,8 @@ Tracking issue: [#40 Win and loss dialogs design](https://github.com/hexmasternl
 - [x] 1.2 Add the **Regular** and **Compact** panel layouts to §5.6 (widths, paddings, button sizes, which elements shrink or drop in Compact, the 200 dp button column and divider, the measuring rule and the scrolling fallback) with a small ASCII sketch of each; verify the stated heights fit: Compact ≤ 328 dp on 640 × 360 dp
 - [x] 1.3 Add the dialog entry, leak splash and their reduced-motion variants to §7.2 and §7.4; update §5.1's "Use" column so Success, glass, Primary and Tertiary name the result dialog buttons; verify durations match design decision 6
 - [x] 1.4 Update the dialog mock-ups in `docs/design-system.html` (score row labels, button names, a Compact variant for both dialogs); verify the page renders in a browser with no layout break
-- [ ] 1.5 Build static Compose `@Preview` mock-ups of both dialogs in both layouts (640 × 360 dp and 1280 × 800 dp, plus the win dialog at 130 % font) and attach screenshots to issue #40; verify the previews render in Android Studio
-- [ ] 1.6 Get the product owner's approval of the design on issue #40 and record any requested changes back into the design system and spec; verify approval is noted on the issue before starting group 2
+- [x] 1.5 Build static Compose `@Preview` mock-ups of both dialogs in both layouts (640 × 360 dp and 1280 × 800 dp, plus the win dialog at 130 % font) and attach screenshots to issue #40; verify the previews render in Android Studio
+- [x] 1.6 Get the product owner's approval of the design on issue #40 and record any requested changes back into the design system and spec; verify approval is noted on the issue before starting group 2
 
 ## 2. Buttons and tokens
 

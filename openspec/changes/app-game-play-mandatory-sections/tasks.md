@@ -30,10 +30,10 @@
 
 ## 6. App rendering, dialog and accessibility
 
-- [ ] 6.1 Draw mandatory pipes in `PlayingField.drawCell` on a `LeakTint` tile with a `leak.500` edge (add a `LeakOutColors.Leak500` token if it is missing) under the normal pipe art. Add the "Mandatory section" tile state to `docs/design-system.md`. Cover in `PlayingFieldTest` that a mandatory tile is drawn and keeps its tint when filled.
-- [ ] 6.2 Describe mandatory cells in `CellSemantics` as "Mandatory <section>, used" or "Mandatory <section>, not used yet", using `MandatoryProgress` on the current flow's channels. Cover in `PlayingFieldTest` that a one-channel cross reads "not used yet".
-- [ ] 6.3 On a `MANDATORY_MISSED` loss, show the leak spurt at the finish's open side and pulse every unused mandatory tile in `leak.500` for 1 second. Show the "The liquid missed a mandatory section. Level lost." message in the level lost dialog. Cover in `LevelLostTest` both dialog messages and that the dialog waits 1 second.
-- [ ] 6.4 Run `./gradlew :app:testDebugUnitTest`, then only the affected instrumented tests (`PlayingFieldTest`, `LevelLostTest`, `GameScreenTest`) with `./gradlew :app:connectedDebugAndroidTest` on the emulator, and confirm they pass.
+- [x] 6.1 Draw mandatory pipes in `PlayingField.drawCell` on a `LeakTint` tile with a `leak.500` edge (add a `LeakOutColors.Leak500` token if it is missing) under the normal pipe art. Add the "Mandatory section" tile state to `docs/design-system.md`. Cover in `PlayingFieldTest` that a mandatory tile is drawn and keeps its tint when filled.
+- [x] 6.2 Describe mandatory cells in `CellSemantics` as "Mandatory <section>, used" or "Mandatory <section>, not used yet", using `MandatoryProgress` on the current flow's channels. Cover in `PlayingFieldTest` that a one-channel cross reads "not used yet".
+- [x] 6.3 On a `MANDATORY_MISSED` loss, show the leak spurt at the finish's open side and pulse every unused mandatory tile in `leak.500` for 1 second. Show the "The liquid missed a mandatory section. Level lost." message in the level lost dialog. Cover in `LevelLostTest` both dialog messages and that the dialog waits 1 second.
+- [x] 6.4 Run `./gradlew :app:testDebugUnitTest`, then only the affected instrumented tests (`PlayingFieldTest`, `LevelLostTest`, `GameScreenTest`) with `./gradlew :app:connectedDebugAndroidTest` on the emulator, and confirm they pass.
 
 ## 7. Showcase level and integration
 

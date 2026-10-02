@@ -779,22 +779,22 @@ private fun EndpointPairPreview(endpoint: Cell, side: Side) {
     )
 }
 
+/** The start valve or the checkered finish ([start]) for every open side, each next to a placed straight. */
+@Composable
+internal fun EndpointPreviewStates(start: Boolean, modifier: Modifier = Modifier) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        for (side in Side.entries) EndpointPairPreview(if (start) Cell.Start(side) else Cell.Finish(side), side)
+    }
+}
+
 @Preview(name = "Start valve, all open sides", widthDp = 280, heightDp = 120, backgroundColor = 0xFF0C1A2A, showBackground = true)
 @Composable
 private fun StartValvePreview() {
-    LeakOutTheme {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            for (side in Side.entries) EndpointPairPreview(Cell.Start(side), side)
-        }
-    }
+    LeakOutTheme { EndpointPreviewStates(start = true) }
 }
 
 @Preview(name = "Checkered finish, all open sides", widthDp = 280, heightDp = 120, backgroundColor = 0xFF0C1A2A, showBackground = true)
 @Composable
 private fun CheckeredFinishPreview() {
-    LeakOutTheme {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            for (side in Side.entries) EndpointPairPreview(Cell.Finish(side), side)
-        }
-    }
+    LeakOutTheme { EndpointPreviewStates(start = false) }
 }

@@ -24,10 +24,10 @@ Tracking issue: [#44 Start and end position re-design](https://github.com/hexmas
 
 ## 4. Instrumented tests
 
-- [ ] 4.1 Add `PlayingFieldTest` cases: start and finish still found by "Start" / "Finish"; during the countdown the valve glow changes over 800 ms of game time; after the countdown it is 0.6; while paused it does not change; with animations off both glows are 0.6; `startFilled` grows while the head is in the start and is 1 after it leaves and 0 after a restart; verify they pass on the emulator
-- [ ] 4.2 Add a screenshot-style check (as in `HudScreenshotTest`) of a start opening right next to a placed `H` and a finish opening left, so a reviewer can compare with the gallery; verify it passes
+- [x] 4.1 Add `PlayingFieldTest` cases: start and finish still found by "Start" / "Finish"; during the countdown the valve glow changes over 800 ms of game time; after the countdown it is 0.6; while paused it does not change; with animations off both glows are 0.6; `startFilled` grows while the head is in the start and is 1 after it leaves and 0 after a restart; verify they pass on the emulator — written and compiled (`:app:compileDebugAndroidTestKotlin`); the emulator run was skipped at the product owner's request
+- [x] 4.2 Add a screenshot-style check (as in `HudScreenshotTest`) of a start opening right next to a placed `H` and a finish opening left, so a reviewer can compare with the gallery; verify it passes — written and compiled (`:app:compileDebugAndroidTestKotlin`); the emulator run was skipped at the product owner's request
 
 ## 5. Regression
 
-- [ ] 5.1 Run `./gradlew :core:test :app:testDebugUnitTest` from `src/`; verify both pass
-- [ ] 5.2 Run the affected instrumented tests on the emulator (`PlayingFieldTest`, `GameEngineScreenTest`, `LevelCompleteTest`, `FastForwardTest` and the new screenshot test); verify they pass
+- [x] 5.1 Run `./gradlew :core:test :app:testDebugUnitTest` from `src/`; verify both pass
+- [x] 5.2 Run the affected instrumented tests on the emulator (`PlayingFieldTest`, `GameEngineScreenTest`, `LevelCompleteTest`, `FastForwardTest` and the new screenshot test); verify they pass — skipped at the product owner's request; still to run before release

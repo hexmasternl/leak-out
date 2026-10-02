@@ -100,7 +100,11 @@ class FlowButtonMetricsTest {
 
     @Test
     fun `new colour tokens have the design system values`() {
+        assertEquals(argb(0xFFFF5A5F), LeakOutColors.Leak500.toArgb())
         assertEquals(argb(0xFFC9353B), LeakOutColors.Leak700.toArgb())
+        // line.highlight: white at 22 %
+        assertEquals(argb(0xFFFFFF), LeakOutColors.LineHighlight.toArgb().and(0xFFFFFF))
+        assertEquals(0.22f, LeakOutColors.LineHighlight.alpha, 0.01f)
         assertEquals(argb(0xFF1FA971), LeakOutColors.Success700.toArgb())
         assertEquals(argb(0xFF2A1A03), LeakOutColors.TextOnBrass.toArgb())
         assertEquals(argb(0xFFFFFFFF), LeakOutColors.TextOnStatus.toArgb())

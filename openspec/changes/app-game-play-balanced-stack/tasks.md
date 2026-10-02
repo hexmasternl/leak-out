@@ -4,8 +4,8 @@ Tracking issue: [#35 Random tile stack population needs to be less random](https
 
 ## 1. Level model
 
-- [ ] 1.1 In `core/.../level/LevelDefaults.kt` set the `H`, `V`, `LT`, `LB`, `RT`, `RB` weights to 7 and add `STEERING_STRENGTH` 1.0 and `DROUGHT_FACTOR` 2.5, each with KDoc
-- [ ] 1.2 Tests in `LevelParserTest` and `LevelModelTest` for the new defaults and the `X` 3 override; run `./gradlew :core:test`
+- [x] 1.1 In `core/.../level/LevelDefaults.kt` set the `H`, `V`, `LT`, `LB`, `RT`, `RB` weights to 7 and add `STEERING_STRENGTH` 1.0 and `DROUGHT_FACTOR` 2.5, each with KDoc
+- [x] 1.2 Tests in `LevelParserTest` and `LevelModelTest` for the new defaults and the `X` 3 override; run `./gradlew :core:test`
 
 ## 2. Dealer
 

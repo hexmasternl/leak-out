@@ -4,12 +4,12 @@
 
 ## 1. Engine attempt facts (core)
 
-- [ ] 1.1 Add `placements`, `replacements`, `everPaused`, `routeCompletedBeforeFlow` and `photoFinish` to `GameState`, all reset by `GameEngine.start` (so also by `Restart`)
-- [ ] 1.2 Count accepted placements and replacements in `GameEngine.place`; leave refused commands unchanged
-- [ ] 1.3 Set `everPaused` on an accepted `Pause`; `Resume` keeps it
-- [ ] 1.4 Set `routeCompletedBeforeFlow` when a placement completes the route while the flow is `Waiting`
-- [ ] 1.5 Set `photoFinish` when a placement completes the route while `Flowing` on the tile the head's channel exits into
-- [ ] 1.6 Unit tests for every scenario of the `game-engine` delta spec (placements, refused placement, pause, countdown completion, photo finish and its negative, restart clears)
+- [x] 1.1 Add `placements`, `replacements`, `everPaused`, `routeCompletedBeforeFlow` and `photoFinish` to `GameState`, all reset by `GameEngine.start` (so also by `Restart`)
+- [x] 1.2 Count accepted placements and replacements in `GameEngine.place`; leave refused commands unchanged
+- [x] 1.3 Set `everPaused` on an accepted `Pause`; `Resume` keeps it
+- [x] 1.4 Set `routeCompletedBeforeFlow` when a placement completes the route while the flow is `Waiting`
+- [x] 1.5 Set `photoFinish` when a placement completes the route while `Flowing` on the tile the head's channel exits into
+- [x] 1.6 Unit tests for every scenario of the `game-engine` delta spec (placements, refused placement, pause, countdown completion, photo finish and its negative, restart clears)
 
 ## 2. Achievement catalogue and rules (core)
 

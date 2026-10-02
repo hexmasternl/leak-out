@@ -30,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import nl.hexmaster.leakout.R
+import nl.hexmaster.leakout.achievements.playgames.SignInState
 import nl.hexmaster.leakout.settings.Settings
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
@@ -70,7 +71,9 @@ fun musicCreditTag(index: Int) = "settings_music_credit_$index"
 /**
  * The settings screen bound to [viewModel]. The back button and system Back leave through [onBack].
  * Releasing the sound volume slider while sound is on plays a preview through [onSoundPreview];
- * dragging the music volume slider sends each value to [onMusicVolumePreview].
+ * dragging the music volume slider sends each value to [onMusicVolumePreview]. Sign in starts the
+ * Play Games sign-in through [onSignIn]; Achievements opens the achievements screen through
+ * [onOpenAchievements].
  */
 @Composable
 fun SettingsScreen(
@@ -80,6 +83,8 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     onSoundPreview: (Float) -> Unit = {},
     onMusicVolumePreview: (Float) -> Unit = {},
+    onSignIn: () -> Unit = {},
+    onOpenAchievements: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     SettingsContent(
@@ -96,12 +101,14 @@ fun SettingsScreen(
         onMusicEnabledChange = viewModel::onMusicEnabledChange,
         onMusicVolumeChange = viewModel::onMusicVolumeChange,
         onMusicVolumePreview = onMusicVolumePreview,
+        onSignIn = onSignIn,
+        onOpenAchievements = onOpenAchievements,
     )
 }
 
 /**
  * Stateless settings screen apart from whether the reset dialog is open: a top bar with the back
- * button and title, then Audio and Feel on the left and Progress and About on the right. Each
+ * button and title, then Audio and Feel on the left and Play Games, Progress and About on the right. Each
  * column scrolls on its own, so small screens and large fonts never push a control out of reach.
  * The panels appear once [state] has been read; until then only the top bar shows.
  */
@@ -121,6 +128,8 @@ fun SettingsContent(
     onMusicEnabledChange: (Boolean) -> Unit = {},
     onMusicVolumeChange: (Float) -> Unit = {},
     onMusicVolumePreview: (Float) -> Unit = {},
+    onSignIn: () -> Unit = {},
+    onOpenAchievements: () -> Unit = {},
 ) {
     var dialogOpen by rememberSaveable { mutableStateOf(initialDialogOpen) }
     // The dialog is its own window and takes Back first, so this only leaves when it is closed.
@@ -167,6 +176,7 @@ fun SettingsContent(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(SettingsMetrics.Gutter),
             ) {
+                PlayGamesPanel(state = state.playGames, onSignIn = onSignIn, onOpenAchievements = onOpenAchievements)
                 ProgressPanel(
                     progress = state.progress,
                     onResetProgress = { dialogOpen = true },
@@ -208,7 +218,11 @@ private fun TopBar(onBack: () -> Unit) {
 
 private val PreviewAppInfo = AppInfo(versionName = "0.1.0", versionCode = 1)
 
-private val PreviewProgress = SettingsUiState(Settings(musicEnabled = false), ProgressSummary(12, 31))
+private val PreviewProgress = SettingsUiState(
+    Settings(musicEnabled = false),
+    ProgressSummary(12, 31),
+    playGames = PlayGamesUiState(SignInState.SignedOut, unlocked = 9, total = 25),
+)
 
 @Preview(name = "Settings: with progress 800x360", widthDp = 800, heightDp = 360)
 @Composable

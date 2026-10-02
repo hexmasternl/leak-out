@@ -9,10 +9,13 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import nl.hexmaster.leakout.achievements.AchievementProgress
 import nl.hexmaster.leakout.achievements.AchievementTracker
 import nl.hexmaster.leakout.achievements.InMemoryAchievementRepository
+import nl.hexmaster.leakout.achievements.playgames.SignInState
 import nl.hexmaster.leakout.audio.Playlist
 import nl.hexmaster.leakout.audio.Track
+import nl.hexmaster.leakout.core.achievements.Achievement
 import nl.hexmaster.leakout.core.library.TileState
 import nl.hexmaster.leakout.history.InMemoryLevelHistoryRepository
 import nl.hexmaster.leakout.history.LevelHistory
@@ -230,5 +233,43 @@ class SettingsViewModelTest {
         // The settings and the progress are left alone.
         assertFalse(vm.uiState.value!!.settings.vibrationEnabled)
         assertEquals(ProgressSummary(12, 31), vm.uiState.value!!.progress)
+    }
+
+    @Test
+    fun `without Play Games the panel is unavailable and counts the whole catalogue`() {
+        val state = SettingsViewModel(InMemorySettingsRepository(), InMemoryLevelHistoryRepository()).uiState.value!!
+        assertEquals(PlayGamesUiState(SignInState.Unavailable, unlocked = 0, total = Achievement.entries.size), state.playGames)
+    }
+
+    @Test
+    fun `the panel counts the unlocked achievements out of the catalogue`() {
+        val unlocked = Achievement.entries.take(12).map { AchievementProgress(it, unlockedAtMs = 1L) }
+        val vm = SettingsViewModel(
+            InMemorySettingsRepository(),
+            InMemoryLevelHistoryRepository(),
+            achievements = InMemoryAchievementRepository(initial = unlocked),
+        )
+        assertEquals(12, vm.uiState.value!!.playGames.unlocked)
+        assertEquals(25, vm.uiState.value!!.playGames.total)
+    }
+
+    @Test
+    fun `the panel follows the sign-in state`() {
+        val signIn = MutableStateFlow<SignInState>(SignInState.SignedOut)
+        val vm = SettingsViewModel(InMemorySettingsRepository(), InMemoryLevelHistoryRepository(), signIn = signIn)
+        assertEquals(SignInState.SignedOut, vm.uiState.value!!.playGames.signIn)
+        signIn.value = SignInState.SigningIn
+        assertEquals(SignInState.SigningIn, vm.uiState.value!!.playGames.signIn)
+        signIn.value = SignInState.SignedIn("Eduard")
+        assertEquals(SignInState.SignedIn("Eduard"), vm.uiState.value!!.playGames.signIn)
+    }
+
+    @Test
+    fun `a new unlock raises the count`() = runTest {
+        val store = InMemoryAchievementRepository()
+        val vm = SettingsViewModel(InMemorySettingsRepository(), InMemoryLevelHistoryRepository(listOf(LevelHistory(1, 100, 3))), achievements = store)
+        assertEquals(0, vm.uiState.value!!.playGames.unlocked)
+        AchievementTracker(store, InMemoryLevelHistoryRepository(listOf(LevelHistory(1, 100, 3))), backgroundScope).reconcile()
+        assertEquals(1, vm.uiState.value!!.playGames.unlocked)
     }
 }

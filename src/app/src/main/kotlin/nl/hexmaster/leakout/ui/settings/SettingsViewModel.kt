@@ -9,6 +9,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import nl.hexmaster.leakout.achievements.AchievementProgress
+import nl.hexmaster.leakout.achievements.AchievementRepository
+import nl.hexmaster.leakout.achievements.InMemoryAchievementRepository
+import nl.hexmaster.leakout.achievements.playgames.SignInState
 import nl.hexmaster.leakout.audio.Playlist
 import nl.hexmaster.leakout.audio.Track
 import nl.hexmaster.leakout.history.LevelHistory
@@ -32,15 +36,29 @@ data class ProgressSummary(val levelsFinished: Int, val starsEarned: Int) {
 }
 
 /**
+ * What the Play Games panel shows: the sign-in state and how many of the [total] catalogue
+ * achievements are [unlocked], from the local store whatever the sign-in state.
+ */
+data class PlayGamesUiState(val signIn: SignInState, val unlocked: Int, val total: Int) {
+    companion object {
+        val Unavailable = PlayGamesUiState(SignInState.Unavailable, 0, 0)
+
+        fun of(signIn: SignInState, achievements: List<AchievementProgress>): PlayGamesUiState =
+            PlayGamesUiState(signIn, achievements.count { it.unlocked }, achievements.size)
+    }
+}
+
+/**
  * What the settings screen shows: the stored settings, the progress summary and the background
  * tracks to credit on the About panel, in playlist order (empty when the credits cannot be read).
- * [tips] drives the Show tips again button.
+ * [tips] drives the Show tips again button; [playGames] the Play Games panel.
  */
 data class SettingsUiState(
     val settings: Settings,
     val progress: ProgressSummary,
     val musicCredits: List<Track> = emptyList(),
     val tips: TipsState = TipsState.None,
+    val playGames: PlayGamesUiState = PlayGamesUiState.Unavailable,
 )
 
 /** Whether any tip has been seen (there is something to show again), and whether this screen just reset them. */
@@ -53,16 +71,21 @@ data class TipsState(val anySeen: Boolean, val justReset: Boolean = false) {
 /**
  * Combines the stored settings and the level history into [uiState], which is null until both have
  * been read once so the panels never flash the defaults over the real values. [musicCredits] is the
- * bundled playlist, or null when it could not be read.
+ * bundled playlist, or null when it could not be read. The Play Games panel follows [signIn] and
+ * counts the unlocked [achievements].
  */
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
     private val historyRepository: LevelHistoryRepository,
     musicCredits: Playlist? = null,
     private val onProgressReset: suspend () -> Unit = {},
+    achievements: AchievementRepository = InMemoryAchievementRepository(),
+    signIn: StateFlow<SignInState> = MutableStateFlow(SignInState.Unavailable),
 ) : ViewModel() {
     private val credits = musicCredits?.tracks.orEmpty()
     private val tipsJustReset = MutableStateFlow(false)
+
+    private val playGames = combine(signIn, achievements.observeAll(), PlayGamesUiState::of)
 
     val uiState: StateFlow<SettingsUiState?> =
         combine(
@@ -70,8 +93,9 @@ class SettingsViewModel(
             historyRepository.observeAll().map(ProgressSummary::of),
             settingsRepository.seenTips,
             tipsJustReset,
-        ) { settings, progress, seenTips, justReset ->
-            SettingsUiState(settings, progress, credits, TipsState(seenTips.isNotEmpty(), justReset && seenTips.isEmpty()))
+            playGames,
+        ) { settings, progress, seenTips, justReset, playGames ->
+            SettingsUiState(settings, progress, credits, TipsState(seenTips.isNotEmpty(), justReset && seenTips.isEmpty()), playGames)
         }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     /** Makes every tip show again; the level history and the settings are left alone. */

@@ -116,10 +116,10 @@ class SettingsScreenTest {
     fun panelsAndTitlesAreShown() {
         showScreen()
         compose.onNodeWithTag(SettingsTags.TITLE).assertIsDisplayed().assertTextEquals("SETTINGS")
-        for (tag in listOf(SettingsTags.AUDIO_PANEL, SettingsTags.FEEL_PANEL, SettingsTags.PROGRESS_PANEL, SettingsTags.ABOUT_PANEL)) {
+        for (tag in listOf(SettingsTags.AUDIO_PANEL, SettingsTags.FEEL_PANEL, PlayGamesPanelTags.PANEL, SettingsTags.PROGRESS_PANEL, SettingsTags.ABOUT_PANEL)) {
             compose.onNodeWithTag(tag).performScrollTo().assertIsDisplayed()
         }
-        for (title in listOf("AUDIO", "FEEL", "PROGRESS", "ABOUT")) {
+        for (title in listOf("AUDIO", "FEEL", "PLAY GAMES", "PROGRESS", "ABOUT")) {
             compose.onNodeWithText(title).performScrollTo().assertIsDisplayed()
         }
     }
@@ -240,7 +240,7 @@ class SettingsScreenTest {
         compose.onNodeWithTag(SettingsTags.MUSIC_CREDITS).assertDoesNotExist()
         compose.onNodeWithTag(musicCreditTag(0)).assertDoesNotExist()
         compose.onNodeWithTag(SettingsTags.ABOUT_VERSION).performScrollTo().assertIsDisplayed().assertTextEquals("Version 0.1.0 (1)")
-        compose.onNodeWithText("No account. Your data stays on this device.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("No account needed. If you sign in to Google Play Games, your achievements are shared with Google Play.").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -284,7 +284,7 @@ class SettingsScreenTest {
         compose.onNodeWithTag(SettingsTags.RESET_PROGRESS).performScrollTo().performClick()
         compose.onNodeWithTag(SettingsTags.RESET_DIALOG).assertIsDisplayed()
         compose.onNodeWithText("Reset progress?").assertIsDisplayed()
-        compose.onNodeWithText("All finished levels, highscores and stars are deleted. This cannot be undone.").assertIsDisplayed()
+        compose.onNodeWithText("All finished levels, highscores and stars are deleted. Achievements are kept. This cannot be undone.").assertIsDisplayed()
         compose.onNodeWithTag(SettingsTags.RESET_CANCEL).assertIsDisplayed()
         compose.onNodeWithTag(SettingsTags.RESET_CONFIRM).assertIsDisplayed()
         compose.runOnIdle { assertEquals(twelveLevels, runBlocking { history.observeAllNow() }) }
@@ -361,7 +361,7 @@ class SettingsScreenTest {
         compose.onNodeWithTag(SettingsTags.ABOUT_VERSION).performScrollTo().assertIsDisplayed().assertTextEquals("Version 0.1.0 (1)")
         compose.onNodeWithText("Leak Out").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Made by HexMaster").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("No account. Your data stays on this device.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("No account needed. If you sign in to Google Play Games, your achievements are shared with Google Play.").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -384,7 +384,7 @@ class SettingsScreenTest {
         compose.onNodeWithTag(SettingsTags.BACK).assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
         listOf(
             SettingsTags.SOUND_SWITCH, SettingsTags.SOUND_VOLUME, SettingsTags.MUSIC_SWITCH,
-            SettingsTags.MUSIC_VOLUME, SettingsTags.VIBRATION_SWITCH, SettingsTags.RESET_PROGRESS,
+            SettingsTags.MUSIC_VOLUME, SettingsTags.VIBRATION_SWITCH, SettingsTags.RESET_PROGRESS, PlayGamesPanelTags.ACHIEVEMENTS,
         ).forEach { tag -> compose.onNodeWithTag(tag).performScrollTo().assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp) }
     }
 

@@ -14,7 +14,7 @@ import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.StackSettings
 
 class DealerTest {
-    private val standard = PipeSection.entries.filter { it.mandatory }
+    private val standard = PipeSection.entries.filter { it.alwaysOnStack }
 
     @Test
     fun `first draw follows the weights within one percentage point`() {
@@ -129,8 +129,8 @@ class DealerTest {
         val weights = standard.associateWith { 7 } + (PipeSection.X to 1) + (PipeSection.RES to 1)
         val dealer = Dealer(
             weights = weights,
-            dealt = weights.mapValues { (s, _) -> if (s.mandatory) 200 / 6 + (if (s == PipeSection.H) 2 else 0) else 0 },
-            droughts = weights.mapValues { (s, _) -> if (s.mandatory) 1 else 200 },
+            dealt = weights.mapValues { (s, _) -> if (s.alwaysOnStack) 200 / 6 + (if (s == PipeSection.H) 2 else 0) else 0 },
+            droughts = weights.mapValues { (s, _) -> if (s.alwaysOnStack) 1 else 200 },
         )
 
         assertNull(dealer.droughtLimit(PipeSection.X))

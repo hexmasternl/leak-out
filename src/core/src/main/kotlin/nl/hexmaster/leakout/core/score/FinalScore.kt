@@ -5,7 +5,7 @@ import nl.hexmaster.leakout.core.level.Position
 
 /**
  * The score of a won attempt: the [earned] points of the flow, the placed sections the liquid never
- * entered ([unusedSections], in row-major order) and the [total] after their penalty, never below 0.
+ * entered ([unusedSections], in row-major order; mandatory sections are never among them) and the [total] after their penalty, never below 0.
  * The stars come from the level's thresholds applied to [total], the same rule the HUD uses.
  */
 data class FinalScore(val earned: Int, val unusedSections: List<Position>, val total: Int) {
@@ -20,7 +20,7 @@ data class FinalScore(val earned: Int, val unusedSections: List<Position>, val t
          */
         fun of(earned: Int, board: Board): FinalScore {
             val unused = board.pipes
-                .filterValues { !it.liquidEntered }
+                .filterValues { !it.liquidEntered && !it.mandatory }
                 .keys
                 .sortedWith(compareBy(Position::y, Position::x))
             val penalty = unused.size * Points.UNUSED_SECTION_PENALTY

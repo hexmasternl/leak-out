@@ -1,5 +1,8 @@
 package nl.hexmaster.leakout.ui.game
 
+import kotlin.math.PI
+import kotlin.math.cos
+
 /**
  * One frame of the leak spurt, in tile fractions: the droplets fan out over [length] from the
  * middle of the leaking side, [spread] wide, drawn at [alpha].
@@ -26,4 +29,16 @@ fun leakFrame(ageMs: Long): LeakFrame {
         spread = MIN_SPREAD + (MAX_SPREAD - MIN_SPREAD) * eased,
         alpha = 1f - 0.25f * t,
     )
+}
+
+private const val MISSED_PULSES = 2
+
+/**
+ * The alpha of the `leak.500` pulse on a missed mandatory section [ageMs] after the loss: it eases
+ * between 0 and 1 [MISSED_PULSES] times during [LeakTiming.EFFECT_MS], and is 0 outside it.
+ */
+fun missedPulseAlpha(ageMs: Long): Float {
+    if (ageMs < 0L || ageMs >= LeakTiming.EFFECT_MS) return 0f
+    val t = ageMs.toFloat() / LeakTiming.EFFECT_MS
+    return (1f - cos(2f * PI.toFloat() * MISSED_PULSES * t)) / 2f
 }

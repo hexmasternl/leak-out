@@ -26,6 +26,7 @@ object Placement {
             Cell.Empty -> PlacementCheck.Place
             Cell.Blocked, is Cell.Start, is Cell.Finish -> PlacementCheck.Rejected(PlacementCheck.Reason.FIXED)
             is Cell.Pipe -> when {
+                cell.mandatory -> PlacementCheck.Rejected(PlacementCheck.Reason.FIXED)
                 cell.liquidEntered -> PlacementCheck.Rejected(PlacementCheck.Reason.FILLED)
                 !rules.allowReplace -> PlacementCheck.Rejected(PlacementCheck.Reason.REPLACE_NOT_ALLOWED)
                 else -> PlacementCheck.Replace

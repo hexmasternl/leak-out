@@ -33,14 +33,26 @@ object FieldLiquid {
     }
 
     /**
-     * How far the liquid has run out of the start at [position], 0..1: 0 while the countdown runs,
-     * the head's progress while it crosses the start, and 1 once it has left. The start has no pipe
-     * art, so without this the liquid stays invisible for a whole cell after the countdown ends.
+     * How far the liquid has come out of the start valve at [start], 0 to 1: dry before the flow,
+     * the head's progress while it is in the start, and full once it has left (the start's channel
+     * is then in [used]).
      */
-    fun startFill(position: Position, used: Set<ChannelUse>, head: FlowState.Flowing?): Float = when {
-        ChannelUse(position, Channel.SINGLE) in used -> 1f
-        head != null && head.position == position -> head.progress.toFloat().coerceIn(0f, 1f)
+    fun startProgress(start: Position, used: Set<ChannelUse>, head: FlowState.Flowing?): Float = when {
+        ChannelUse(start, Channel.SINGLE) in used -> 1f
+        head != null && head.position == start -> head.progress.toFloat().coerceIn(0f, 1f)
         else -> 0f
+    }
+
+    /**
+     * The liquid of the start's stub, drawn on the straight's channel clipped to the half between
+     * the centre and [openSide]. The liquid enters at the centre, so the whole channel is filled from
+     * the side opposite the open side to half way plus half the start progress; the clip hides the
+     * first half.
+     */
+    fun startFills(start: Position, openSide: Side, used: Set<ChannelUse>, head: FlowState.Flowing?): Map<String, ChannelFill> {
+        val progress = startProgress(start, used, head)
+        if (progress <= 0f) return emptyMap()
+        return mapOf(channelId(Channel.SINGLE) to ChannelFill(0.5f + progress / 2f, openSide.opposite()))
     }
 
     /** A full channel shows the same from either side; this picks one it can be entered from. */

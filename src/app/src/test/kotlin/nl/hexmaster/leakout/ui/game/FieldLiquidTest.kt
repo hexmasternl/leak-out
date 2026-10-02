@@ -59,21 +59,50 @@ class FieldLiquidTest {
         }
     }
 
+    // The start valve's stub: `at` is the start, opening to the right, so the head enters from the left.
+
     @Test
-    fun `the start is dry while the countdown runs`() {
-        assertEquals(0f, FieldLiquid.startFill(at, emptySet(), null))
+    fun `the start stub is dry while waiting for the liquid`() {
+        assertEquals(0f, FieldLiquid.startProgress(at, emptySet(), null))
+        assertTrue(FieldLiquid.startFills(at, Side.RIGHT, emptySet(), null).isEmpty())
     }
 
     @Test
-    fun `the start fills with the head's progress once the flow starts`() {
-        assertEquals(0f, FieldLiquid.startFill(at, emptySet(), head(Channel.SINGLE, Side.LEFT, 0.0)))
-        assertEquals(0.4f, FieldLiquid.startFill(at, emptySet(), head(Channel.SINGLE, Side.LEFT, 0.4)), 1e-6f)
+    fun `half the start stub is filled at head progress 0_5 in the start`() {
+        val inStart = head(Channel.SINGLE, Side.LEFT, 0.5)
+        assertEquals(0.5f, FieldLiquid.startProgress(at, emptySet(), inStart))
+        // The channel runs from the far side; the visible half starts at 0.5, so a quarter more is half the stub.
+        assertEquals(mapOf("channel-main" to ChannelFill(0.75f, Side.LEFT)), FieldLiquid.startFills(at, Side.RIGHT, emptySet(), inStart))
     }
 
     @Test
-    fun `the start stays full once the head has left it`() {
-        val next = head(Channel.SINGLE, Side.LEFT, 0.1, Position(3, 3))
-        assertEquals(1f, FieldLiquid.startFill(at, setOf(ChannelUse(at, Channel.SINGLE)), next))
-        assertEquals(0f, FieldLiquid.startFill(at, emptySet(), next))
+    fun `the start stub fills towards the open side whichever side it is`() {
+        for (side in Side.entries) {
+            val fill = FieldLiquid.startFills(at, side, emptySet(), head(Channel.SINGLE, side.opposite(), 0.2)).getValue("channel-main")
+            assertEquals(side.opposite(), fill.entry)
+            assertEquals(0.6f, fill.progress, 1e-6f)
+        }
+    }
+
+    @Test
+    fun `the start stub is full once the head has left`() {
+        val used = setOf(ChannelUse(at, Channel.SINGLE))
+        val next = head(Channel.SINGLE, Side.LEFT, 0.3, Position(3, 3))
+        assertEquals(1f, FieldLiquid.startProgress(at, used, next))
+        assertEquals(ChannelFill.full(Side.LEFT), FieldLiquid.startFills(at, Side.RIGHT, used, next)["channel-main"])
+        assertEquals(1f, FieldLiquid.startProgress(at, used, null))
+    }
+
+    @Test
+    fun `a head elsewhere does not fill the start stub`() {
+        assertEquals(0f, FieldLiquid.startProgress(at, emptySet(), head(Channel.SINGLE, Side.LEFT, 0.7, Position(0, 0))))
+    }
+
+    @Test
+    fun `the start stub is dry again after a restart`() {
+        // A restart begins a new attempt: the flow is waiting again and nothing is used.
+        val restarted: FlowState = FlowState.Waiting(3_000)
+        assertEquals(0f, FieldLiquid.startProgress(at, restarted.used, restarted as? FlowState.Flowing))
+        assertTrue(FieldLiquid.startFills(at, Side.RIGHT, restarted.used, null).isEmpty())
     }
 }

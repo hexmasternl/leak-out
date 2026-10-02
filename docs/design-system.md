@@ -475,7 +475,7 @@ Every pipe section is drawn from the same layers, in this order. Sizes are relat
 ### 7.2 Specific animations
 
 - **Place tile**: scale 1.15 → 1 with `motion.pop`, 6 % overshoot, a 40 ms haptic tick at the start.
-- **Stack drop** (5.4): `motion.fall`. A piece falling a distance `d` follows `d · (t / T)²` with `T = sqrt(d / 8 dp) · 90 ms`, clamped to 120–260 ms (one slot takes about 200 ms), then rebounds `min(0.12 · d, 4 dp)` up and back over 120 ms (a half sine) and rests. Each piece above the bottom one starts 24 ms later, at most 8 steps. A one-slot drop rests within 400 ms of the placement.
+- **Stack drop** (5.4): `motion.fall`. A piece falling a distance `d` follows `d · (t / T)²` with `T = sqrt(d / 8 dp) · 90 ms`, clamped to 120–260 ms (one slot takes about 200 ms), then rebounds `min(0.12 · d, 4 dp)` up and back over 120 ms (a half sine) and rests. Each piece above the bottom one starts 24 ms later, at most 8 steps, and the stagger is shortened where needed so that every one-slot drop rests within 400 ms of the placement.
 - **Replace tile**: old tile scales down to 0.7 and fades over `motion.quick`, new tile pops in.
 - **Locked tap**: cell shakes 3 dp left-right twice over 240 ms and flashes `leak.tint`.
 - **Countdown bar fade**: when the liquid starts, the countdown bar fades from 100 % to 0 % opacity over `motion.quick`. Only its alpha changes; its slot stays laid out.

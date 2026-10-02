@@ -6,14 +6,14 @@ Tracking issue: [#38 HUD enhancements](https://github.com/hexmasternl/leak-out/i
 
 - [x] 1.1 Rewrite `docs/design-system.md` §5.3 HUD bar for the new panel, level, flow speed number, countdown bar and score bar (sizes, colours, tokens, warning colours, marker lines, score legibility), replacing the outdated countdown ring; verify every token named exists in §2–§4
 - [x] 1.2 Add the countdown fade, score fill and threshold sparkle to §7.2 and their reduced-motion variants to §7.4; verify durations match the spec (600 ms fill, 600 ms sparkle, `motion.quick` fade, 160 ms reduced)
-- [ ] 1.3 Build a static Compose `@Preview` mock-up of the proposed HUD (waiting with countdown, mid-score, full bar past three stars) and attach screenshots to issue #38; verify the preview renders in Android Studio
-- [ ] 1.4 Get the product owner's approval of the design on issue #38 and record any requested changes back into the design system and spec; verify approval is noted on the issue before starting group 2
+- [x] 1.3 Build a static Compose `@Preview` mock-up of the proposed HUD (waiting with countdown, mid-score, full bar past three stars) and attach screenshots to issue #38; verify the preview renders in Android Studio
+- [x] 1.4 Get the product owner's approval of the design on issue #38 and record any requested changes back into the design system and spec; verify approval is noted on the issue before starting group 2
 
 ## 2. Pure HUD model
 
-- [ ] 2.1 Add `HudModel.speedNumber` with half-up rounding via `BigDecimal` and change `HudFormat.speed` to return the whole number; verify unit tests for 0.2→2, 0.8→8, 0.82→8, 0.85→9, 1.25→13 pass with `./gradlew :app:testDebugUnitTest`
-- [ ] 2.2 Add `countdownFraction`, `countdownWarning` and `countdownSeconds`; verify unit tests for 10,000/4,000→0.4, delay 0, 8,000→Calm, 5,000→Brass, 2,000 and 1,500→Red, 6,200→7 s pass
-- [ ] 2.3 Add `scoreFraction`, `markerFractions` and `thresholdsPassed`; verify unit tests for 175/350→0.5, 500/350→1.0, markers 2/7 and 4/7, 90→100 passes one, 190→360 passes two then three, 360→400 passes none
+- [x] 2.1 Add `HudModel.speedNumber` with half-up rounding via `BigDecimal` and change `HudFormat.speed` to return the whole number; verify unit tests for 0.2→2, 0.8→8, 0.82→8, 0.85→9, 1.25→13 pass with `./gradlew :app:testDebugUnitTest`
+- [x] 2.2 Add `countdownFraction`, `countdownWarning` and `countdownSeconds`; verify unit tests for 10,000/4,000→0.4, delay 0, 8,000→Calm, 5,000→Brass, 2,000 and 1,500→Red, 6,200→7 s pass
+- [x] 2.3 Add `scoreFraction`, `markerFractions` and `thresholdsPassed`; verify unit tests for 175/350→0.5, 500/350→1.0, markers 2/7 and 4/7, 90→100 passes one, 190→360 passes two then three, 360→400 passes none
 
 ## 3. HUD components
 

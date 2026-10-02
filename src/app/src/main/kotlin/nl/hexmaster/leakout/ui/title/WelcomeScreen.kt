@@ -1,5 +1,8 @@
 package nl.hexmaster.leakout.ui.title
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -11,7 +14,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,7 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlin.coroutines.cancellation.CancellationException
@@ -35,6 +45,7 @@ import nl.hexmaster.leakout.core.library.NextLevel
 import nl.hexmaster.leakout.core.library.NextLevelResolver
 import nl.hexmaster.leakout.ui.components.CartoonButton
 import nl.hexmaster.leakout.ui.components.CartoonButtonVariant
+import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 
@@ -45,6 +56,7 @@ object WelcomeScreenTags {
     const val PLAY = "welcome_play"
     const val SETTINGS = "welcome_settings"
     const val EXIT = "welcome_exit"
+    const val LEVEL_DESIGNER = "welcome_level_designer"
 }
 
 /**
@@ -52,6 +64,9 @@ object WelcomeScreenTags {
  * Play opens the [PlayMenuDialog]; a choice there reads [resolveNextLevel] once, closes the dialog
  * and then starts a level through [onStartLevel] or opens the library on a page through
  * [onOpenLevelLibrary]. The host decides what Settings and Exit do.
+ *
+ * When [onOpenLevelDesigner] is not null (the level designer feature flag is on), a small level
+ * designer button sits in the top-right corner; without it the button is not composed at all.
  *
  * @param resolveNextLevel a fresh snapshot of the next level to be played. When it throws, the
  *   dialog stays open and nothing is navigated to.
@@ -64,6 +79,7 @@ fun WelcomeScreen(
     onSettings: () -> Unit,
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenLevelDesigner: (() -> Unit)? = null,
 ) {
     var showPlayMenu by rememberSaveable { mutableStateOf(false) }
     // One choice at a time: a second tap while the history is read is ignored.
@@ -166,6 +182,39 @@ fun WelcomeScreen(
                 }
             }
         }
+        // A developer tool, out of the way of the Play / Settings / Exit layout.
+        if (onOpenLevelDesigner != null) {
+            LevelDesignerButton(
+                onClick = onOpenLevelDesigner,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(horizontal = horizontalInset, vertical = verticalInset)
+                    .padding(8.dp),
+            )
+        }
+    }
+}
+
+/** The 48 dp round glass button that opens the level designer (design system 5.1). */
+@Composable
+private fun LevelDesignerButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val description = stringResource(R.string.welcome_level_designer)
+    Box(
+        modifier = modifier
+            .testTag(WelcomeScreenTags.LEVEL_DESIGNER)
+            .size(48.dp)
+            .background(LeakOutColors.SurfaceOverlay.copy(alpha = 0.8f), CircleShape)
+            .border(1.dp, LeakOutColors.LineStrong, CircleShape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_designer),
+            contentDescription = null,
+            tint = LeakOutColors.TextPrimary,
+            modifier = Modifier.size(24.dp),
+        )
     }
 }
 

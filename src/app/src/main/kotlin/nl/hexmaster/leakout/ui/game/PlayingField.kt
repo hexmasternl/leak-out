@@ -586,6 +586,13 @@ private fun DrawScope.drawCell(
     }
 }
 
+/**
+ * [cell] as the field draws it before the liquid starts: no liquid and no endpoint glow. The level
+ * designer draws its grid with it, so a design looks like the game.
+ */
+internal fun DrawScope.drawStillCell(cell: Cell, rect: Rect, pipes: PipeArtLibrary, scratch: LiquidScratch) =
+    drawCell(cell, rect, pipes, scratch, emptyMap(), EndpointGlows(valve = 0f, finish = 0f, reachPx = 0f))
+
 /** The glow alphas of this frame, and how far past the wheel or ring the glow reaches, in pixels. */
 private class EndpointGlows(val valve: Float, val finish: Float, val reachPx: Float)
 

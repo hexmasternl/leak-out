@@ -1,0 +1,260 @@
+package nl.hexmaster.leakout.ui.designer
+
+import androidx.lifecycle.SavedStateHandle
+import nl.hexmaster.leakout.core.level.DesignStatus
+import nl.hexmaster.leakout.core.level.EndpointKind
+import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.core.level.LevelDraft
+import nl.hexmaster.leakout.core.level.LevelParser
+import nl.hexmaster.leakout.core.level.LevelWriter
+import nl.hexmaster.leakout.core.level.ParseResult
+import nl.hexmaster.leakout.core.level.PipeSection
+import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.core.level.Side
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+private class FakeLevels(private val levels: List<Level>) : DesignerLevels {
+    override fun levelCount() = levels.size
+    override fun load(id: Int) = levels.firstOrNull { it.id == id }
+}
+
+private class RecordingExporter : LevelExporter {
+    val exports = mutableListOf<Pair<String, String>>()
+    override fun export(fileName: String, json: String) {
+        exports += fileName to json
+    }
+}
+
+class LevelDesignerViewModelTest {
+    private val bundled = (1..4).map { id ->
+        LevelDraft.new(id).withName("Level $id").paintBlocked(listOf(Position(3, id % 5)), blocked = true).level
+    }
+    private val exporter = RecordingExporter()
+
+    private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) =
+        LevelDesignerViewModel(FakeLevels(bundled), exporter, saved)
+
+    private val LevelDesignerViewModel.state get() = uiState.value
+
+    /** Blocks the column in front of the finish, which leaves the level valid but unsolvable. */
+    private fun LevelDesignerViewModel.wallOffFinish() {
+        selectTool(DesignerTool.BLOCK)
+        onDragStart(Position(4, 0))
+        (1..4).forEach { onDrag(Position(4, it)) }
+        onDragEnd()
+    }
+
+    @Test
+    fun `opens on a blank design with id one past the bundled levels`() {
+        val state = viewModel().state
+        assertEquals(LevelDraft.new(5), state.draft)
+        assertFalse(state.dirty)
+        assertEquals(DesignerTool.START, state.tool)
+        assertTrue(state.status is DesignStatus.Solvable)
+        assertTrue(state.canPlay)
+    }
+
+    @Test
+    fun `copy from a bundled level loads all its fields`() {
+        val vm = viewModel()
+        vm.copyFrom(2)
+        assertEquals(bundled[1], vm.state.level)
+        assertFalse(vm.state.dirty)
+    }
+
+    @Test
+    fun `copy from an unknown level changes nothing`() {
+        val vm = viewModel()
+        vm.copyFrom(99)
+        assertEquals(LevelDraft.new(5), vm.state.draft)
+    }
+
+    @Test
+    fun `edits mark the design dirty`() {
+        val vm = viewModel()
+        vm.changeColumns(+3)
+        assertEquals(10, vm.state.level.grid.columns)
+        assertTrue(vm.state.dirty)
+    }
+
+    @Test
+    fun `selecting a tool does not mark the design dirty`() {
+        val vm = viewModel()
+        vm.selectTool(DesignerTool.BLOCK)
+        assertFalse(vm.state.dirty)
+    }
+
+    @Test
+    fun `a tap with the start tool moves the start`() {
+        val vm = viewModel()
+        vm.onCellTap(Position(2, 3))
+        assertEquals(Position(2, 3), vm.state.level.start.position)
+    }
+
+    @Test
+    fun `a tap with the finish tool on the start changes nothing`() {
+        val vm = viewModel()
+        vm.selectTool(DesignerTool.FINISH)
+        vm.onCellTap(Position(0, 2))
+        assertEquals(Position(6, 2), vm.state.level.finish.position)
+        assertFalse(vm.state.dirty)
+    }
+
+    @Test
+    fun `a block drag paints every cell to the opposite of the first one`() {
+        val vm = viewModel()
+        vm.selectTool(DesignerTool.BLOCK)
+        vm.onCellTap(Position(3, 1))
+        vm.onDragStart(Position(1, 1))
+        listOf(2, 3, 4).forEach { vm.onDrag(Position(it, 1)) }
+        vm.onDragEnd()
+        assertEquals(setOf(Position(1, 1), Position(2, 1), Position(3, 1), Position(4, 1)), vm.state.level.blocked.toSet())
+
+        vm.onDragStart(Position(2, 1))
+        vm.onDrag(Position(3, 1))
+        vm.onDragEnd()
+        assertEquals(listOf(Position(1, 1), Position(4, 1)), vm.state.level.blocked)
+    }
+
+    @Test
+    fun `steppers stop at the grid limits`() {
+        val vm = viewModel()
+        repeat(5) { vm.changeColumns(-1) }
+        assertEquals(4, vm.state.level.grid.columns)
+        assertFalse(vm.state.canShrinkColumns)
+        assertTrue(vm.state.canGrowColumns)
+        repeat(60) { vm.changeRows(+1) }
+        assertEquals(50, vm.state.level.grid.rows)
+        assertFalse(vm.state.canGrowRows)
+    }
+
+    @Test
+    fun `a number updates the draft`() {
+        val vm = viewModel()
+        vm.setNumber(NumberField.CellsPerSecond, "0.8")
+        vm.setNumber(NumberField.Weight(PipeSection.X), "1")
+        assertEquals(0.8, vm.state.level.flow.cellsPerSecond, 0.0)
+        assertEquals(1, vm.state.level.stack.weightOf(PipeSection.X))
+        assertFalse(vm.state.isInvalid(NumberField.CellsPerSecond))
+        assertTrue(vm.state.dirty)
+    }
+
+    @Test
+    fun `text that is not a number is marked invalid and keeps the draft`() {
+        val vm = viewModel()
+        vm.setNumber(NumberField.InitialDelay, "abc")
+        assertEquals(20_000L, vm.state.level.flow.initialDelayMs)
+        assertTrue(vm.state.isInvalid(NumberField.InitialDelay))
+        assertEquals("abc", vm.state.text(NumberField.InitialDelay))
+        assertFalse(vm.state.dirty)
+
+        vm.setNumber(NumberField.InitialDelay, "5000")
+        assertFalse(vm.state.isInvalid(NumberField.InitialDelay))
+        assertEquals(5_000L, vm.state.level.flow.initialDelayMs)
+    }
+
+    @Test
+    fun `untouched fields show the draft's values`() {
+        val state = viewModel().state
+        assertEquals("5", state.text(NumberField.Id))
+        assertEquals("0.4", state.text(NumberField.CellsPerSecond))
+        assertEquals("7", state.text(NumberField.Weight(PipeSection.H)))
+        assertEquals("120", state.text(NumberField.StarThree))
+    }
+
+    @Test
+    fun `name, open side and rules are edited`() {
+        val vm = viewModel()
+        vm.setName("Drain")
+        vm.setOpenSide(EndpointKind.FINISH, Side.TOP)
+        vm.setAllowReplace(false)
+        vm.setNumber(NumberField.ReplacePenalty, "200")
+        val level = vm.state.level
+        assertEquals("Drain", level.name)
+        assertEquals(Side.TOP, level.finish.openSide)
+        assertFalse(level.rules.allowReplace)
+        assertEquals(200L, level.rules.replacePenaltyMs)
+    }
+
+    @Test
+    fun `export hands the writer's output to the exporter and clears dirty`() {
+        val vm = viewModel()
+        vm.setName("Drain")
+        assertTrue(vm.export())
+        assertEquals(listOf("level_005.json" to LevelWriter.write(vm.state.level)), exporter.exports)
+        assertFalse(vm.state.dirty)
+        val parsed = (LevelParser.parse(exporter.exports.single().second) as ParseResult.Success).level
+        assertEquals(vm.state.level, parsed)
+    }
+
+    @Test
+    fun `export and test play are refused for an invalid design`() {
+        val vm = viewModel()
+        vm.setOpenSide(EndpointKind.START, Side.LEFT)
+        assertTrue(vm.state.status is DesignStatus.Invalid)
+        assertFalse(vm.state.canPlay)
+        assertFalse(vm.export())
+        assertNull(vm.testPlayLevel())
+        assertTrue(exporter.exports.isEmpty())
+        assertTrue(vm.state.dirty)
+    }
+
+    @Test
+    fun `export and test play are refused for an unsolvable design`() {
+        val vm = viewModel()
+        vm.wallOffFinish()
+        assertTrue(vm.state.status is DesignStatus.Unsolvable)
+        assertFalse(vm.export())
+        assertNull(vm.testPlayLevel())
+    }
+
+    @Test
+    fun `test play returns the designed level when it is solvable`() {
+        val vm = viewModel()
+        vm.changeColumns(+1)
+        assertEquals(vm.state.level, vm.testPlayLevel())
+    }
+
+    @Test
+    fun `new blank replaces the design and clears dirty`() {
+        val vm = viewModel()
+        vm.copyFrom(3)
+        vm.changeRows(+1)
+        vm.setNumber(NumberField.StarOne, "x")
+        vm.newBlank()
+        assertEquals(LevelDraft.new(5), vm.state.draft)
+        assertFalse(vm.state.dirty)
+        assertFalse(vm.state.isInvalid(NumberField.StarOne))
+    }
+
+    @Test
+    fun `state is restored from the saved state handle`() {
+        val saved = SavedStateHandle()
+        val first = viewModel(saved)
+        first.copyFrom(2)
+        first.selectTool(DesignerTool.BLOCK)
+        first.onCellTap(Position(5, 4))
+        val restored = viewModel(saved).state
+        assertEquals(first.state.level, restored.level)
+        assertEquals(DesignerTool.BLOCK, restored.tool)
+        assertTrue(restored.dirty)
+    }
+
+    @Test
+    fun `an invalid draft is restored too`() {
+        val saved = SavedStateHandle()
+        val first = viewModel(saved)
+        first.setOpenSide(EndpointKind.START, Side.LEFT)
+        assertEquals(first.state.level, viewModel(saved).state.level)
+    }
+
+    @Test
+    fun `file name is padded to three digits`() {
+        assertEquals("level_005.json", LevelDesignerViewModel.fileName(5))
+        assertEquals("level_123.json", LevelDesignerViewModel.fileName(123))
+    }
+}

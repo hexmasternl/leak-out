@@ -46,7 +46,12 @@ android {
     }
 
     buildTypes {
+        // Feature flags, fixed per build type and read through FeatureFlags (see openspec/specs/feature-flags).
+        debug {
+            buildConfigField("boolean", "LEVEL_DESIGNER", "true")
+        }
         release {
+            buildConfigField("boolean", "LEVEL_DESIGNER", "false")
             signingConfigs.findByName("upload")?.let { signingConfig = it }
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -71,6 +76,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -98,6 +104,8 @@ dependencies {
     implementation(libs.androidx.core)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    // SavedStateHandle: the level designer keeps its draft across process death.
+    implementation(libs.androidx.lifecycle.viewmodel.savedstate)
 
     // Reads the background music credits (assets/music/audio_credits.json).
     implementation(libs.kotlinx.serialization.json)
@@ -125,3 +133,11 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 
+
+// AGP only creates unit tests for the debug build type by default. The release variant gets them
+// too, so FeatureFlagsReleaseTest can check the release build's flags (:app:testReleaseUnitTest).
+androidComponents {
+    beforeVariants(selector().withBuildType("release")) { variant ->
+        variant.hostTests[com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE]?.enable = true
+    }
+}

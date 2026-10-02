@@ -4,8 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -115,7 +114,7 @@ private fun DrawScope.drawRing(hole: RoundRect, glowAlpha: Float) {
 
 /**
  * The callout card of 5.9: a level 3 `surface.base` panel, max 296 dp wide, with the [eyebrow]
- * (step counter or "TIP"), [title], [text] and the [buttons] row, and an optional [pointer]
+ * (step counter or "TIP"), [title], [text] and the [buttons] stacked and right-aligned, and an optional [pointer]
  * towards the target drawn just outside the card edge.
  */
 @Composable
@@ -128,7 +127,7 @@ fun TipCallout(
     modifier: Modifier = Modifier,
     eyebrowDescription: String? = null,
     textDescription: String? = null,
-    buttons: @Composable RowScope.() -> Unit,
+    buttons: @Composable ColumnScope.() -> Unit,
 ) {
     val shape = RoundedCornerShape(TipOverlayMetrics.CardRadius)
     val shadow = Color.Black.copy(alpha = 0.6f)
@@ -162,10 +161,10 @@ fun TipCallout(
             modifier = textDescription?.let { Modifier.semantics { contentDescription = it } } ?: Modifier,
         )
         Spacer(Modifier.height(16.dp))
-        Row(
+        Column(
             Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(TipOverlayMetrics.ButtonSpacing, androidx.compose.ui.Alignment.End),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            verticalArrangement = Arrangement.spacedBy(TipOverlayMetrics.ButtonSpacing),
+            horizontalAlignment = androidx.compose.ui.Alignment.End,
             content = buttons,
         )
     }

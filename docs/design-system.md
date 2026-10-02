@@ -422,15 +422,15 @@ The one-time guided tips on the game screen (spec `game-play-onboarding`): the i
 | Step counter | `display.xs` `liquid.300` | "1 / 5"; intro tour only. Single tips show an eyebrow instead: "TIP" in `display.xs` `brass.300` |
 | Title | `display.md` `text.primary` | At most about four words (3.2) |
 | Text | `body.md` `text.secondary` | Two or three lines at 296 dp; `body.md` rather than `body.lg` so the card fits a 360 dp tall screen at 130 % font |
-| Buttons | one row, 16 dp below the text, right-aligned, `space.3` (12 dp) apart | See below |
+| Buttons | stacked, 16 dp below the text, right-aligned, `space.3` (12 dp) apart | See below |
 
-| Tip | Buttons (left → right) |
+| Tip | Buttons (top → bottom) |
 |-----|------------------------|
-| Intro steps 1–4 | tertiary "Skip tour", primary small "Next" |
+| Intro steps 1–4 | primary small "Next" at full card width, tertiary "Skip tour" at full card width below it |
 | Intro step 5 | primary small "Let's go" |
 | Cross, reservoir, mandatory | primary small "Got it" |
 
-Primary small is 40 dp face + 4 dp lip = 48 dp and the tertiary is 48 dp, so the row is 48 dp. Card height at 100 % font: 32 padding + 17 counter + 4 + 25 title + 8 + 72 text (three lines) + 16 + 48 buttons ≈ 222 dp, which fits in 360 − 2 × 16 dp.
+The bright brass "Next" sits on its own line so it is never squeezed by "Skip tour" and clearly reads as the way to the next tip. Primary small is 40 dp face + 4 dp lip = 48 dp and the tertiary is 48 dp. Card height at 100 % font on intro steps 1–4: 32 padding + 17 counter + 4 + 25 title + 8 + 72 text (three lines) + 16 + 48 + 12 + 48 buttons ≈ 282 dp, which fits in 360 − 2 × 16 dp.
 
 **Placement** (pure, JVM-tested): given the window size, the 16 dp screen gutter and the spotlight rect,
 

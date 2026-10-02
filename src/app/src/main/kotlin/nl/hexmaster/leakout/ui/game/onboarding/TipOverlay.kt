@@ -16,6 +16,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -193,8 +194,9 @@ private fun Callout(content: TipContent, pointer: TipPointer?, onNext: () -> Uni
     ) {
         val last = step == null || step == INTRO_STEPS - 1
         if (!last) {
-            FlowButton(stringResource(R.string.tip_skip_tour), onClick = onSkip, variant = FlowButtonVariant.Tertiary, modifier = Modifier.testTag(TipOverlayTags.SKIP))
-            FlowButton(stringResource(R.string.tip_next), onClick = onNext, size = FlowButtonSize.Small, modifier = Modifier.testTag(TipOverlayTags.NEXT))
+            // Next on top and full width so it reads as the way on; Skip tour below it.
+            FlowButton(stringResource(R.string.tip_next), onClick = onNext, size = FlowButtonSize.Small, modifier = Modifier.fillMaxWidth().testTag(TipOverlayTags.NEXT))
+            FlowButton(stringResource(R.string.tip_skip_tour), onClick = onSkip, variant = FlowButtonVariant.Tertiary, modifier = Modifier.fillMaxWidth().testTag(TipOverlayTags.SKIP))
         } else {
             val label = if (step == null) R.string.tip_got_it else R.string.tip_lets_go
             FlowButton(stringResource(label), onClick = onDone, size = FlowButtonSize.Small, modifier = Modifier.testTag(TipOverlayTags.DONE))

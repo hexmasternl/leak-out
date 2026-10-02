@@ -7,6 +7,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.unit.width
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
@@ -14,6 +16,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.settings.TipId
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -45,5 +48,27 @@ class TipOverlayTest {
         compose.mainClock.advanceTimeBy(1_000)
         compose.onNodeWithTag(TipOverlayTags.HINT_ARROW).assertIsDisplayed()
         compose.onNodeWithTag(TipOverlayTags.HINT_GHOST).assertIsDisplayed()
+    }
+
+    @Test
+    fun aTourStepShowsAFullWidthNextAboveSkipTour() {
+        compose.setContent {
+            LeakOutTheme {
+                Box(Modifier.size(640.dp, 360.dp)) {
+                    TipOverlay(
+                        content = TipContent(TipId.Intro, 0, "The Start", "The liquid comes out here.", "start valve"),
+                        spotlights = listOf(Rect(Offset(40f, 40f), Size(60f, 60f))),
+                        hint = null,
+                        onNext = {}, onSkip = {}, onDone = {},
+                        reducedMotion = true,
+                    )
+                }
+            }
+        }
+        val next = compose.onNodeWithTag(TipOverlayTags.NEXT).assertIsDisplayed().getBoundsInRoot()
+        val skip = compose.onNodeWithTag(TipOverlayTags.SKIP).assertIsDisplayed().getBoundsInRoot()
+        assertTrue("Next is above Skip tour", next.bottom <= skip.top)
+        assertTrue("Next is at least as wide as Skip tour", next.width >= skip.width)
+        assertTrue("Next has a real width", next.width > 100.dp)
     }
 }

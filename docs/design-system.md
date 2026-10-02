@@ -419,6 +419,7 @@ The grid sits on a level 1 panel (`surface.base`, `radius.xl`, 12 dp padding). G
 | Empty, valid target (finger down) | `liquid.tint` | `line.strong` | Ghost of the top stack piece at 50 % |
 | Pipe, dry | transparent | none | Pipe render (6.3) |
 | Pipe, filled | transparent | none | Pipe render with liquid |
+| Mandatory section | `leak.tint` | 1 dp `leak.500` | Pre-placed by the level, never removable. The usual pipe render (6.3) on top; the tint stays while and after the liquid runs through it |
 | Locked (tap on filled/flowing) | flash `leak.tint` 240 ms | – | Toast |
 | Blocked | `surface.abyss` | none | Diagonal hatch in `line.subtle`, `radius.sm` |
 | Start, Finish | as Empty, without the "+" | as Empty | Start valve or checkered finish (6.4) drawn on the plain empty-cell tile. No colour wash: the colour lives only in the valve wheel and the finish ring |
@@ -511,6 +512,7 @@ At the 44 dp minimum cell a square is about 3.2 dp; the 6 × 6 checker was check
 - **Endpoint glows**: a soft circle behind the valve wheel and behind the finish ring, radius 0.24 c + 12 dp, radial gradient from the element's colour (`brass.500`, `success.500`) at the glow alpha to transparent. The alpha is `0.45 + 0.45 × (1 − cos(2π t / T)) / 2`, easing between 45 % and 90 %. The valve pulses with *T* = `motion.drift` (1 600 ms) while the countdown runs and settles at a static 60 % the moment the liquid flows. The finish ring pulses with *T* = `motion.pulse` (2 000 ms) until the level is won; then the finish flash takes over and the ring stays solid. Both follow game time, so they freeze on pause.
 - **Win**: finish ring flashes, board dims to 60 %, dialog pops in, stars stagger 80 ms each with a small brass particle burst.
 - **Leak**: droplet burst, board shakes 2 dp for 200 ms, then the dialog pops in after 500 ms so the player sees where it went wrong.
+- **Missed mandatory section**: when the liquid reaches the finish with a mandatory section unused, the leak spurt comes out of the finish's open side, and every unused mandatory tile pulses twice in `leak.500` during the 1 s before the dialog: a fill at up to 35 % and a 3 dp edge, alpha `(1 − cos(4π t / 1 s)) / 2`. Game time, so it freezes on pause.
 - **Result dialog entry** (win and leak, 5.6): the scrim fades from 0 to its 72 % over `motion.quick` (160 ms ease-out) while the panel scales 0.92 → 1 with `motion.pop`. Closing is immediate.
 - **Leak splash** (leak dialog, 5.6): when the dialog opens, 6 droplets in `liquid.500` with `liquid.glow` highlights fly out of a `leak.500` centre blob towards the edge of the splash box over 600 ms ease-out, once, and rest there. It does not loop.
 

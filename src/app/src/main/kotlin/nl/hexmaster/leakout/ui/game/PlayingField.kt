@@ -76,7 +76,9 @@ import nl.hexmaster.leakout.core.engine.FlowState
 import nl.hexmaster.leakout.core.engine.Replacement
 import nl.hexmaster.leakout.core.flow.Channel
 import nl.hexmaster.leakout.core.flow.ChannelUse
+import nl.hexmaster.leakout.core.flow.MandatoryProgress
 import nl.hexmaster.leakout.core.level.GridSize
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
@@ -136,6 +138,14 @@ var SemanticsPropertyReceiver.startFilled by StartFilled
 val ReplacingCell = SemanticsPropertyKey<Boolean>("ReplacingCell")
 var SemanticsPropertyReceiver.replacingCell by ReplacingCell
 
+/** Semantics flag on a field cell with a mandatory section, drawn on the red-tinted tile. A test hook only. */
+val MandatoryTile = SemanticsPropertyKey<Boolean>("MandatoryTile")
+var SemanticsPropertyReceiver.mandatoryTile by MandatoryTile
+
+/** Semantics flag on a mandatory section the liquid missed, which pulses after the loss. A test hook only. */
+val MissedMandatory = SemanticsPropertyKey<Boolean>("MissedMandatory")
+var SemanticsPropertyReceiver.missedMandatory by MissedMandatory
+
 /**
  * The screen state of the playing field: the viewport and where the field sits on the screen.
  * Created again for every attempt, so a restart goes back to the starting view.
@@ -184,9 +194,11 @@ fun rememberPlayingFieldState(grid: GridSize, start: Position): PlayingFieldStat
  * without recomposing the grid.
  *
  * When the pipe has leaked at [leakAt] through [leakSide], liquid spurts out of that side, timed by
- * [lossAgeMs] (read only while drawing), above the pipes and below the popups.
+ * [lossAgeMs] (read only while drawing), above the pipes and below the popups. When the liquid
+ * missed a mandatory section, the [missed] mandatory sections pulse in `leak.500` during that time.
  *
  * Placed sections are drawn with their pipe art and glass overlay (`drawPipe`), like the stack.
+ * Mandatory sections get the same art on a `leak.tint` tile edged in `leak.500`.
  *
  * The liquid is drawn inside the pipes from [flow] (read only while drawing, so the flowing head
  * redraws the canvas every frame without recomposing the grid): full in every channel it has run
@@ -220,6 +232,7 @@ fun PlayingField(
     leakAt: Position? = null,
     leakSide: Side? = null,
     lossAgeMs: () -> Long = { 0L },
+    missed: List<Position> = emptyList(),
     head: Position? = null,
     filled: Set<ChannelUse> = emptySet(),
     flow: () -> FlowState? = { null },
@@ -284,7 +297,12 @@ fun PlayingField(
             }
             replacement?.let { drawReplacement(it, viewport.cellRect(it.at), replacementFrame(it, now), pipes, scratch) }
             highlighted?.let { drawHighlight(viewport.cellRect(it)) }
-            if (leakAt != null && leakSide != null) drawLeak(viewport.cellRect(leakAt), leakSide, leakFrame(lossAgeMs()))
+            if (leakAt != null && leakSide != null) {
+                val ageMs = lossAgeMs()
+                val pulse = missedPulseAlpha(ageMs)
+                if (pulse > 0f) for (position in missed) drawMissedPulse(viewport.cellRect(position), pulse)
+                drawLeak(viewport.cellRect(leakAt), leakSide, leakFrame(ageMs))
+            }
             if (winAgeMs != null) {
                 val frame = finishFlashFrame(winAgeMs())
                 for (position in cells) if (board[position] is Cell.Finish) drawFinishRing(viewport.cellRect(position), frame)
@@ -294,6 +312,7 @@ fun PlayingField(
         CellSemantics(
             board, viewport, highlighted, awards, leakAt?.let { at -> leakSide?.let { at to it } }, head, filled, won,
             replacing = replacement?.at,
+            missed = missed.toSet(),
             valveGlow = valveGlow,
             finishGlow = finishGlow,
             flow = { currentFlow() },
@@ -316,6 +335,7 @@ private fun CellSemantics(
     filled: Set<ChannelUse>,
     won: Boolean,
     replacing: Position?,
+    missed: Set<Position>,
     valveGlow: State<Float>,
     finishGlow: State<Float>,
     flow: () -> FlowState?,
@@ -326,7 +346,8 @@ private fun CellSemantics(
     val filledByCell = filled.groupBy({ it.position }, { it.channel })
     for (position in viewport.visibleCells()) {
         val rect = viewport.cellRect(position)
-        val description = board[position].describe()
+        val description = board[position].describe(position, filled)
+        val mandatory = (board[position] as? Cell.Pipe)?.mandatory == true
         val isHighlighted = position == highlighted
         val texts = popupTexts[position].orEmpty()
         val leakSide = leak?.takeIf { it.first == position }?.second
@@ -349,7 +370,7 @@ private fun CellSemantics(
         }
         CellNode(
             position, rect, cellDp, description, isHighlighted, texts, leakSide, isHead, channels, flashing, section, isReplacing,
-            glow, startFilled,
+            glow, startFilled, mandatory, isMissed = position in missed,
         )
     }
 }
@@ -374,6 +395,8 @@ private fun CellNode(
     isReplacing: Boolean,
     glow: State<Float>?,
     startFilled: State<Float>?,
+    mandatory: Boolean,
+    isMissed: Boolean,
 ) {
     val glowAlpha = glow?.value
     val filledFraction = startFilled?.value
@@ -394,6 +417,8 @@ private fun CellNode(
                 if (isReplacing) replacingCell = true
                 if (glowAlpha != null) endpointGlow = glowAlpha
                 if (filledFraction != null) this.startFilled = filledFraction
+                if (mandatory) mandatoryTile = true
+                if (isMissed) missedMandatory = true
             },
     )
 }
@@ -402,12 +427,20 @@ private fun FlowState?.isFlowing(): Boolean = this != null && this !is FlowState
 
 private fun Float.rounded(): Float = (this * 100f).roundToInt() / 100f
 
-private fun Cell.describe(): String = when (this) {
+/** The content description of a cell at [position]; a mandatory section says whether [filled] uses it. */
+private fun Cell.describe(position: Position, filled: Set<ChannelUse>): String = when (this) {
     Cell.Empty -> "Empty"
     Cell.Blocked -> "Blocked"
     is Cell.Start -> "Start"
     is Cell.Finish -> "Finish"
-    is Cell.Pipe -> if (liquidEntered) "Placed ${section.name}, filled" else "Placed ${section.name}"
+    is Cell.Pipe -> when {
+        mandatory -> {
+            val used = MandatoryProgress.isUsed(MandatorySection(position, section), filled)
+            "Mandatory ${section.name}, ${if (used) "used" else "not used yet"}"
+        }
+        liquidEntered -> "Placed ${section.name}, filled"
+        else -> "Placed ${section.name}"
+    }
 }
 
 /**
@@ -485,7 +518,14 @@ private fun DrawScope.drawCell(
             drawCheckeredFinish(rect)
         }
         is Cell.Pipe -> {
-            drawRoundRect(LeakOutColors.SurfaceCard.copy(alpha = 0.06f), inset.topLeft, inset.size, corner)
+            if (cell.mandatory) {
+                drawRoundRect(LeakOutColors.LeakTint, inset.topLeft, inset.size, corner)
+                val edge = 1.dp.toPx()
+                val edged = inset.deflate(edge / 2f)
+                drawRoundRect(LeakOutColors.Leak500, edged.topLeft, edged.size, corner, style = Stroke(edge))
+            } else {
+                drawRoundRect(LeakOutColors.SurfaceCard.copy(alpha = 0.06f), inset.topLeft, inset.size, corner)
+            }
             // Clipped to the cell so no stroke cap or shadow reaches the neighbour; channels end on the edge.
             clipRect(rect.left, rect.top, rect.right, rect.bottom) {
                 drawPipe(pipes.prepared(cell.section), rect, fills, scratch)
@@ -619,6 +659,16 @@ private fun DrawScope.drawLeak(rect: Rect, side: Side, frame: LeakFrame) {
 }
 
 private const val LEAK_ROWS = 3
+
+/** The pulse on a missed mandatory section: a `leak.500` fill and a 3 dp edge over the tile, at [alpha]. */
+private fun DrawScope.drawMissedPulse(rect: Rect, alpha: Float) {
+    val inset = rect.deflate(rect.width * 0.04f)
+    val corner = CornerRadius(rect.width * 0.14f)
+    val edge = 3.dp.toPx()
+    drawRoundRect(LeakOutColors.Leak500.copy(alpha = 0.35f * alpha), inset.topLeft, inset.size, corner)
+    val edged = inset.deflate(edge / 2f)
+    drawRoundRect(LeakOutColors.Leak500.copy(alpha = alpha), edged.topLeft, edged.size, corner, style = Stroke(edge))
+}
 
 /**
  * The replacement on the tile [rect]. While breaking, the old section shakes and cracks along its

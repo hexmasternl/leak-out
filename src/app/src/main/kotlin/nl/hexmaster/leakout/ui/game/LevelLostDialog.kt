@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import nl.hexmaster.leakout.R
+import nl.hexmaster.leakout.core.engine.LossReason
 import nl.hexmaster.leakout.ui.components.FlowButton
 import nl.hexmaster.leakout.ui.components.FlowButtonSize
 import nl.hexmaster.leakout.ui.components.FlowButtonVariant
@@ -41,21 +42,27 @@ object LevelLostTags {
 
 /**
  * Modal level lost dialog (design-system.md 5.6): the [level] number, the splash, "Leaked!", the
- * message, the [score] of the attempt, then Restart and Exit. Back works as Exit; a tap outside does
- * nothing. There is no Resume. The dialog uses the Regular layout when it fits the window height and
- * the Compact one otherwise.
+ * message for the [reason], the [score] of the attempt, then Restart and Exit. Back works as Exit; a
+ * tap outside does nothing. There is no Resume. The dialog uses the Regular layout when it fits the
+ * window height and the Compact one otherwise.
  */
 @Composable
-fun LevelLostDialog(level: Int, score: Int, onRestart: () -> Unit, onExit: () -> Unit) {
+fun LevelLostDialog(
+    level: Int,
+    score: Int,
+    onRestart: () -> Unit,
+    onExit: () -> Unit,
+    reason: LossReason = LossReason.LEAK,
+) {
     val paneName = stringResource(R.string.lost_pane_title)
     ResultDialogWindow(
         onDismissRequest = onExit,
         dismissOnBackPress = true,
         panelModifier = Modifier.testTag(LevelLostTags.DIALOG).semantics { paneTitle = paneName },
         layoutTagPrefix = LevelLostTags.LAYOUT_PREFIX,
-        measureRegular = { LevelLostContent(ResultDialogLayout.Regular, level, score, {}, {}, measuring = true) },
+        measureRegular = { LevelLostContent(ResultDialogLayout.Regular, level, score, reason, {}, {}, measuring = true) },
     ) { layout ->
-        LevelLostContent(layout, level, score, onRestart, onExit)
+        LevelLostContent(layout, level, score, reason, onRestart, onExit)
     }
 }
 
@@ -64,6 +71,7 @@ private fun LevelLostContent(
     layout: ResultDialogLayout,
     level: Int,
     score: Int,
+    reason: LossReason,
     onRestart: () -> Unit,
     onExit: () -> Unit,
     measuring: Boolean = false,
@@ -78,7 +86,7 @@ private fun LevelLostContent(
             Spacer(Modifier.height(12.dp))
             LostHeadline(LeakOutTextStyles.DisplayXl)
             Spacer(Modifier.height(8.dp))
-            LostMessage(LeakOutTextStyles.BodyMd)
+            LostMessage(reason, LeakOutTextStyles.BodyMd)
             Spacer(Modifier.height(16.dp))
             LostScore(score, Modifier.tag(LevelLostTags.SCORE))
             Spacer(Modifier.height(24.dp))
@@ -93,7 +101,7 @@ private fun LevelLostContent(
                     LostHeadline(LeakOutTextStyles.DisplayLg)
                 }
                 Spacer(Modifier.height(8.dp))
-                LostMessage(LeakOutTextStyles.BodySm)
+                LostMessage(reason, LeakOutTextStyles.BodySm)
                 Spacer(Modifier.height(12.dp))
                 LostScore(score, Modifier.tag(LevelLostTags.SCORE))
             },
@@ -117,8 +125,12 @@ private fun LostHeadline(style: TextStyle) {
 }
 
 @Composable
-private fun LostMessage(style: TextStyle) {
-    Text(stringResource(R.string.lost_message), style = style, color = LeakOutColors.TextSecondary, textAlign = TextAlign.Center)
+private fun LostMessage(reason: LossReason, style: TextStyle) {
+    val message = when (reason) {
+        LossReason.LEAK -> R.string.lost_message
+        LossReason.MANDATORY_MISSED -> R.string.lost_message_mandatory
+    }
+    Text(stringResource(message), style = style, color = LeakOutColors.TextSecondary, textAlign = TextAlign.Center)
 }
 
 /** One centred Score column, read as "Score 85". */
@@ -159,8 +171,8 @@ private fun ColumnScope.LostButtons(size: FlowButtonSize, onRestart: () -> Unit,
 @Composable
 private fun LevelLostPreview() {
     LeakOutTheme {
-        ResultDialogFrame(measureRegular = { LevelLostContent(ResultDialogLayout.Regular, 7, 85, {}, {}, measuring = true) }) { layout ->
-            ResultDialogPanel(layout) { LevelLostContent(layout, 7, 85, {}, {}) }
+        ResultDialogFrame(measureRegular = { LevelLostContent(ResultDialogLayout.Regular, 7, 85, LossReason.LEAK, {}, {}, measuring = true) }) { layout ->
+            ResultDialogPanel(layout) { LevelLostContent(layout, 7, 85, LossReason.LEAK, {}, {}) }
         }
     }
 }

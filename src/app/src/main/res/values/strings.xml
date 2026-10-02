@@ -43,6 +43,7 @@
     <!-- Level lost dialog -->
     <string name="lost_title">Leaked!</string>
     <string name="lost_message">The pipe is leaking. Level lost.</string>
+    <string name="lost_message_mandatory">The liquid missed a mandatory section. Level lost.</string>
     <string name="lost_score_label">Score</string>
     <string name="lost_score">Score %1$s</string>
     <string name="lost_restart">Restart</string>

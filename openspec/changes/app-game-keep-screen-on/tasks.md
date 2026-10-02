@@ -4,8 +4,8 @@ Tracking issue: [#52 When in game (the game screen is open) always on](https://g
 
 ## 1. Keep the screen on
 
-- [ ] 1.1 Add `KeepScreenOn()` in `app/.../ui/components/KeepScreenOn.kt`: a `DisposableEffect` on `LocalView.current` that sets `keepScreenOn = true` and resets it to `false` on dispose, with KDoc on its scope (design decision 1); verify `./gradlew :app:testDebugUnitTest` compiles and passes
-- [ ] 1.2 Call `KeepScreenOn()` at the top of `GameScreen` so it covers the whole screen and its dialogs (design decisions 2 and 3); verify the manifest gains no permission and no other screen calls it (`grep -rn KeepScreenOn app/src/main`)
+- [x] 1.1 Add `KeepScreenOn()` in `app/.../ui/components/KeepScreenOn.kt`: a `DisposableEffect` on `LocalView.current` that sets `keepScreenOn = true` and resets it to `false` on dispose, with KDoc on its scope (design decision 1); verify `./gradlew :app:testDebugUnitTest` compiles and passes
+- [x] 1.2 Call `KeepScreenOn()` at the top of `GameScreen` so it covers the whole screen and its dialogs (design decisions 2 and 3); verify the manifest gains no permission and no other screen calls it (`grep -rn KeepScreenOn app/src/main`)
 
 ## 2. Instrumented tests
 

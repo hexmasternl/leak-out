@@ -16,10 +16,10 @@ Tracking issue: [#36 First time user experience](https://github.com/hexmasternl/
 
 ## 3. Pure tip scheduling
 
-- [ ] 3.1 Add `TipScheduler.dueTips` with the fixed order and the level-start / after-placement triggers; verify unit tests for first level (any id), tour seen, `X` in starting stack, `X` drawn later, `RES`, everything due at once, nothing due while not playing
-- [ ] 3.4 Make the cross and reservoir tips depend on `fullyVisibleSlots` and add `tipSlot`; verify unit tests for an `X` / `RES` in a cut-off slot (not due), the same section after it moves into a visible slot (due, that slot highlighted), a starting stack with the section only in cut-off slots, and the lowest visible slot chosen when several match
-- [ ] 3.2 Add `TipText.percent` and `TipScheduler.hintCell`; verify unit tests for 0.3→30 %, 0.25→25 %, 0.333→33 % and the hint cell next to the start exit, skipping blocked cells
-- [ ] 3.3 Add callout placement (side with most room, kept on screen); verify unit tests for targets at the left stack, a centre cell and a bottom-right cell on a 640 × 360 dp screen
+- [x] 3.1 Add `TipScheduler.dueTips` with the fixed order and the level-start / after-placement triggers; verify unit tests for first level (any id), tour seen, `X` in starting stack, `X` drawn later, `RES`, everything due at once, nothing due while not playing
+- [x] 3.4 Make the cross and reservoir tips depend on `fullyVisibleSlots` and add `tipSlot`; verify unit tests for an `X` / `RES` in a cut-off slot (not due), the same section after it moves into a visible slot (due, that slot highlighted), a starting stack with the section only in cut-off slots, and the lowest visible slot chosen when several match
+- [x] 3.2 Add `TipText.percent` and `TipScheduler.hintCell`; verify unit tests for 0.3→30 %, 0.25→25 %, 0.333→33 % and the hint cell next to the start exit, skipping blocked cells
+- [x] 3.3 Add callout placement (side with most room, kept on screen); verify unit tests for targets at the left stack, a centre cell and a bottom-right cell on a 640 × 360 dp screen
 
 ## 4. Overlay and targets
 

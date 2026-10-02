@@ -436,7 +436,7 @@ Primary small is 40 dp face + 4 dp lip = 48 dp and the tertiary is 48 dp, so the
 3. Along that side, centre the card on the target's centre, then shift it so it stays inside the gutter.
 4. If no side fits the card, put it in the screen half away from the target's centre, inside the gutter, without a pointer.
 
-The stack column sits on the left of the screen, so stack tips open to the right; a centre cell has room on either side and opens right; a bottom-right cell opens left or above.
+The stack column sits on the left of the screen, so stack tips open to the right; a bottom-right cell opens to the left. On a 640 × 360 dp screen the field sits right of the stack, so a cell in the centre of the field (about x 342–392 dp) has room on its left only and opens to the left; on larger screens it opens to the right.
 
 **Drag hint** (intro step 4): a ghost of the next section at 50 % opacity, the size of a field cell, travels from the centre of the next stack slot to the centre of the hint cell (the nearest empty, non-blocked cell to the start's exit). While the ghost is on the cell, the cell shows the "valid target" look of 6.2 (`liquid.tint` fill, `line.strong` border). Both the next slot and the hint cell are spotlighted.
 

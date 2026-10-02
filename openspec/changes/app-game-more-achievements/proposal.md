@@ -16,11 +16,11 @@ The 25 launch achievements (`app-game-achievements`) mostly reward clean, carefu
   | `long_way_round_2` | The Long Way Round II | skill | win after the liquid left 50 or more different placed tiles | 10 |
   | `long_way_round_3` | The Long Way Round III | skill | the same with 100 or more tiles | 15 |
   | `big_spender_2` | Big Spender II | skill | win with a final total of 1000 or more | 15 |
-  | `crossroad_master` | Crossroad Master | skill | the liquid runs through 3 cross sections in a row, each one connected directly to the next | 15 |
+  | `crossroad_master` | Crossroad Master | skill | win with the liquid running through 3 cross sections in a row, each one connected directly to the next | 15 |
   | `efficiency_master` | Efficiency Master | skill | win with no more sections on the board than the shortest possible route needs | 15 |
   | `highway` | Highway | skill | win with a route that runs straight through 7 or more straight sections in a row | 10 |
   | `snake` | Snake | skill | win with a route that has 12 or more corner sections in a row, no straight, cross or reservoir in between | 15 |
-  | `eraser` | Eraser | skill | replace 20 or more sections in one attempt | 5 |
+  | `eraser` | Eraser | skill | win after replacing 20 or more sections in that attempt | 5 |
   | `dramatic_failure` | Dramatic Failure | hidden | lose after the liquid left more than 50 sections from the start | 5 |
   | `on_your_nerves` | On Your Nerves | hidden | tap the tile of a running replacement 5 or more times before its new section lands | 5 |
 

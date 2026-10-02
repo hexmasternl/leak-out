@@ -44,7 +44,7 @@ Bundled content (25 levels, grids up to 16 × 12, cross weight 6 from level 18, 
 *Alternative:* unlock it directly in the tracker. Rejected: that skips the pure rules and their tests, and `reconcile` couldn't recover a lost unlock.
 
 ### 5. Thresholds as constants beside the existing ones
-`LONG_WAY_ROUND_2_TILES = 50`, `LONG_WAY_ROUND_3_TILES = 100`, `BIG_SPENDER_2_TOTAL = 1000`, `CROSSROAD_MASTER_CHAIN = 3`, `HIGHWAY_RUN = 7`, `SNAKE_RUN = 12`, `ERASER_REPLACEMENTS = 20`, `DRAMATIC_FAILURE_SECTIONS = 50` (strictly more), `ON_YOUR_NERVES_TAPS = 5`. Crossroad Master and Eraser also count on a loss, like Double Cross. Eraser is a skill achievement in the catalogue but is decided on any ended attempt. Abandoned attempts have no summary, so they never count.
+`LONG_WAY_ROUND_2_TILES = 50`, `LONG_WAY_ROUND_3_TILES = 100`, `BIG_SPENDER_2_TOTAL = 1000`, `CROSSROAD_MASTER_CHAIN = 3`, `HIGHWAY_RUN = 7`, `SNAKE_RUN = 12`, `ERASER_REPLACEMENTS = 20`, `DRAMATIC_FAILURE_SECTIONS = 50` (strictly more), `ON_YOUR_NERVES_TAPS = 5`. Crossroad Master and Eraser need a win, unlike Double Cross, which also counts on a loss. Abandoned attempts have no summary, so they never count.
 
 ### 6. Catalogue order and the XP guideline
 The new entries go at the end of the enum in the table order of the spec, and are added to the `published` list in `AchievementCatalogueTest` (its total becomes 710). `docs/achievements.md` gets the rebalanced guideline for the 290 XP left: packs 2-13 at 5 + 5 (120), levels finished 50 / 100 / 250 at 15 / 20 / 25 (60), Perfectionist II 15, Star Collector III-VI at 100 / 250 / 500 / 1000 stars for 10 / 15 / 20 / 25 (70), Snail 10. That is 275, leaving 15 spare. Star Collector III-VI replace the earlier III / IV (150 / 400) plan.

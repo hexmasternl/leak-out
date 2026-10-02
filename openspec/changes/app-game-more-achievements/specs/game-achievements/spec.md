@@ -83,18 +83,22 @@ The Long Way Round II and III SHALL unlock on a win where the liquid left at lea
 
 ### Requirement: Route shape achievements
 Route shape achievements SHALL be decided from the sections the liquid left, in the order it left them; a cross left twice SHALL appear twice in that order. Their rules SHALL be:
-- Crossroad Master: the liquid left 3 or more cross sections one directly after the other. It SHALL also count on a loss.
+- Crossroad Master: a win in which the liquid left 3 or more cross sections one directly after the other.
 - Highway: a win in which the liquid left 7 or more straight sections of the same direction one directly after the other.
 - Snake: a win in which the liquid left 12 or more corner sections one directly after the other.
 
 Mandatory sections SHALL count like placed sections.
 
 #### Scenario: Three crosses in a row
-- **WHEN** the liquid leaves a straight, then 3 crosses one after the other, and then leaks
+- **WHEN** a level is won and the liquid left a straight, then 3 crosses one after the other
 - **THEN** Crossroad Master is newly unlocked
 
+#### Scenario: Three crosses in a row and a leak
+- **WHEN** the liquid leaves 3 crosses one after the other and then leaks
+- **THEN** Crossroad Master is not unlocked
+
 #### Scenario: A straight between crosses
-- **WHEN** the liquid leaves 2 crosses, a straight and another cross
+- **WHEN** a level is won and the liquid left 2 crosses, a straight and another cross
 - **THEN** Crossroad Master is not unlocked
 
 #### Scenario: Highway of seven
@@ -129,11 +133,15 @@ Efficiency Master SHALL unlock on a win when the number of sections on the board
 - **THEN** Efficiency Master is newly unlocked
 
 ### Requirement: Eraser
-Eraser SHALL unlock when an attempt ends, won or lost, with 20 or more replacements.
+Eraser SHALL unlock on a win with 20 or more replacements in that attempt.
+
+#### Scenario: Twenty replacements and a win
+- **WHEN** an attempt with 20 replacements is won
+- **THEN** Eraser is newly unlocked
 
 #### Scenario: Twenty replacements and a leak
 - **WHEN** an attempt with 20 replacements is lost
-- **THEN** Eraser is newly unlocked
+- **THEN** Eraser is not unlocked
 
 #### Scenario: Nineteen replacements
 - **WHEN** an attempt with 19 replacements is won

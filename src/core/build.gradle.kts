@@ -21,8 +21,13 @@ dependencies {
 // there is only one copy of every level.
 val bundledLevelsDir: File = rootProject.file("app/src/main/assets/levels")
 
+// The level format doc. A test parses its full example so that the doc cannot drift from the parser.
+val levelFormatDoc: File = rootProject.file("../docs/level-format.md")
+
 tasks.test {
     useJUnitPlatform()
     systemProperty("leakout.levelsDir", bundledLevelsDir.absolutePath)
     inputs.files(fileTree(bundledLevelsDir)).withPropertyName("bundledLevels")
+    systemProperty("leakout.levelFormatDoc", levelFormatDoc.absolutePath)
+    inputs.file(levelFormatDoc).withPropertyName("levelFormatDoc")
 }

@@ -13,6 +13,12 @@ val appVersionCode: Int = providers.gradleProperty("versionCode").orNull?.let { 
         ?: throw GradleException("versionCode must be a positive integer, but was '$value'.")
 } ?: 1
 
+// CI passes -PversionName=<x.y.z> computed by GitVersion (see docs/deployment.md#versioning).
+val appVersionName: String = providers.gradleProperty("versionName").orNull?.let { value ->
+    value.takeIf { it.matches(Regex("""\d+\.\d+\.\d+""")) }
+        ?: throw GradleException("versionName must look like <major>.<minor>.<patch>, but was '$value'.")
+} ?: "0.1.0"
+
 // Release signing with the Play upload key, configured only when CI provides it (see docs/deployment.md).
 // Without LEAKOUT_UPLOAD_STORE_FILE the release build stays unsigned, so no keystore is needed locally.
 val uploadStoreFile: String? = providers.environmentVariable("LEAKOUT_UPLOAD_STORE_FILE").orNull
@@ -29,7 +35,7 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = appVersionCode
-        versionName = "0.1.0"
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -46,7 +52,12 @@ android {
     }
 
     buildTypes {
+        // Feature flags, fixed per build type and read through FeatureFlags (see openspec/specs/feature-flags).
+        debug {
+            buildConfigField("boolean", "LEVEL_DESIGNER", "true")
+        }
         release {
+            buildConfigField("boolean", "LEVEL_DESIGNER", "false")
             signingConfigs.findByName("upload")?.let { signingConfig = it }
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -71,6 +82,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -98,6 +110,8 @@ dependencies {
     implementation(libs.androidx.core)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    // SavedStateHandle: the level designer keeps its draft across process death.
+    implementation(libs.androidx.lifecycle.viewmodel.savedstate)
 
     // Reads the background music credits (assets/music/audio_credits.json).
     implementation(libs.kotlinx.serialization.json)
@@ -125,3 +139,11 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 
+
+// AGP only creates unit tests for the debug build type by default. The release variant gets them
+// too, so FeatureFlagsReleaseTest can check the release build's flags (:app:testReleaseUnitTest).
+androidComponents {
+    beforeVariants(selector().withBuildType("release")) { variant ->
+        variant.hostTests[com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE]?.enable = true
+    }
+}

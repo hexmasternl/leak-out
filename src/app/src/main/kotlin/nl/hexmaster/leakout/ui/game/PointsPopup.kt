@@ -2,7 +2,10 @@ package nl.hexmaster.leakout.ui.game
 
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import nl.hexmaster.leakout.core.engine.Award
+import nl.hexmaster.leakout.ui.theme.LeakOutColors
 
 /**
  * How long a points popup (one [Award]) fades in, holds and fades out, in game milliseconds. The
@@ -50,4 +53,22 @@ fun popupFrame(ageMs: Long): PopupFrame? {
 /** The text of a points popup. */
 object PointsFormat {
     fun text(points: Int): String = "+$points"
+}
+
+/**
+ * How a points popup is drawn (design system 7.2): a soft [glow] halo under an opaque, light
+ * [fill]. There is no outline or dark edge. The board is always Deep, so these are the Deep tokens
+ * in both themes.
+ */
+object PopupStyle {
+    /** The text size, relative to the cell size. */
+    const val TEXT_FRACTION = 0.33f
+
+    val fill: Color = LeakOutColors.TextPrimary
+    val glow: Color = LeakOutColors.LiquidGlow
+    val glowRadius = 6.dp
+    const val GLOW_ALPHA = 0.7f
+
+    /** The glow colour for a popup at [alpha], so the halo fades with the popup. */
+    fun glowColor(alpha: Float): Color = glow.copy(alpha = GLOW_ALPHA * alpha.coerceIn(0f, 1f))
 }

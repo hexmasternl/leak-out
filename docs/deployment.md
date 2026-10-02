@@ -14,6 +14,7 @@ You only do this setup once. After that, releasing is merging `development` into
 - [6. Create the GitHub environment and secrets](#6-create-the-github-environment-and-secrets)
 - [7. Set the repository variables](#7-set-the-repository-variables)
 - [8. Run the workflow](#8-run-the-workflow)
+- [Versioning](#versioning)
 - [Troubleshooting](#troubleshooting)
 - [Maintenance](#maintenance)
 - [Reference: every secret and variable](#reference-every-secret-and-variable)
@@ -26,11 +27,11 @@ On each run it:
 
 1. checks that all five secrets are set (and stops with the names of any that are missing);
 2. runs the JVM unit tests (`:core:test`, `:app:testDebugUnitTest`) and stops if any fail;
-3. works out the **version code**: the workflow's run number plus `VERSION_CODE_OFFSET`;
+3. works out the **version** with GitVersion (`versionName` `x.y.z`) and the **version code** from it (see [Versioning](#versioning));
 4. decodes the upload keystore and builds `app-release.aab` signed with the **upload key**;
 5. checks that the bundle really is signed;
 6. keeps the bundle as a workflow artifact for 14 days;
-7. uploads it to the Play Console track in `PLAY_TRACK` (default: internal testing);
+7. uploads it to the Play Console track in `PLAY_TRACK` (default: internal testing), then tags the commit `v<x.y.z>`;
 8. deletes the decoded keystore, whether the run succeeded or not.
 
 Three keys and accounts are involved. It helps to keep them apart:
@@ -239,20 +240,18 @@ Now delete the local copies of the base64 text and the JSON key file. The keysto
 
 ## 7. Set the repository variables
 
-These three settings are not secret. They are **repository variables**: **Settings → Secrets and variables → Actions → Variables tab → New repository variable**. Each one has a default, so you only need to set those you want to change.
+These two settings are not secret. They are **repository variables**: **Settings → Secrets and variables → Actions → Variables tab → New repository variable**. Each one has a default, so you only need to set those you want to change.
 
 | Variable | Default when not set | When to change it |
 | --- | --- | --- |
 | `PLAY_TRACK` | `internal` | Set it to the name of a closed testing track to release there instead (see [step 3](#3-add-testers)). |
 | `PLAY_RELEASE_STATUS` | `completed` | Set it to `draft` while the app has never had a release rolled out (a *draft app*). Remove it, or set `completed`, once the first rollout is done. With `draft`, each upload waits in the Console until you roll it out by hand. |
-| `VERSION_CODE_OFFSET` | `1` | Must be a whole number. Raise it so that *run number + offset* is above the highest version code already uploaded. With the first manual upload at version code 1 the default is fine: the first run is run 1, giving version code 2. |
 
 With the GitHub CLI:
 
 ```sh
 gh variable set PLAY_TRACK --body internal
 gh variable set PLAY_RELEASE_STATUS --body draft       # only while the app is a draft app
-gh variable set VERSION_CODE_OFFSET --body 1
 ```
 
 ## 8. Run the workflow
@@ -262,12 +261,42 @@ The deployment starts on its own when `development` is merged into `main`. To ru
 A successful run:
 
 - shows every step green, including *Verify bundle signature*, *Upload to Google Play* and *Remove upload keystore*;
-- has a **summary** with the version code (run number + offset), the track, the release status and the commit;
-- has an artifact `leak-out-<version code>` with the uploaded `.aab`, kept for 14 days.
+- has a **summary** with the version, the version code, the track, the release status and the commit;
+- has an artifact `leak-out-<version>-<version code>` with the uploaded `.aab`, kept for 14 days.
 
-In the Play Console, the release appears under **Test and release → Testing → Internal testing → Releases**, named after its version (for example `2 (0.1.0)`). Testers who opted in get the update through the Play Store, usually within minutes.
+In the Play Console, the release appears under **Test and release → Testing → Internal testing → Releases**, named after its version (for example `1001 (0.1.1)`). Testers who opted in get the update through the Play Store, usually within minutes.
 
-`versionName` (the version testers see, `0.1.0`) is not changed by the workflow. Bump it by hand in `src/app/build.gradle.kts` when you want a new label.
+## Versioning
+
+The workflow sets both versions of every release; nothing is bumped by hand.
+
+| | What it is | Where it comes from |
+| --- | --- | --- |
+| `versionName` | The version testers see: `<major>.<minor>.<patch>`, for example `0.2.1` | [GitVersion](https://gitversion.net) 6 (`MajorMinorPatch`), configured in [`GitVersion.yml`](../GitVersion.yml) |
+| `versionCode` | The number Google Play orders releases by; every upload must be higher than all earlier ones | `major × 1 000 000 + minor × 1 000 + patch`, so `0.2.1` → `2001` and `1.0.0` → `1000000` |
+| Git tag | `v<major>.<minor>.<patch>` on the released commit | Pushed by the workflow after a successful upload |
+
+GitVersion uses the GitHub Flow workflow: on `main` it starts from the newest `v*` tag and increments the **patch** (the very first release, with no tag yet, is `next-version` from `GitVersion.yml`: `0.1.0`). Because each release is tagged, each merge into `main` gives the next patch:
+
+| Merge into `main` | Version | Version code |
+| --- | --- | --- |
+| first release | `0.1.0` | `1000` |
+| a fix | `0.1.1` | `1001` |
+| a feature with `+semver: minor` in a commit message or the PR title | `0.2.0` | `2000` |
+| another fix | `0.2.1` | `2001` |
+| a breaking change with `+semver: major` | `1.0.0` | `1000000` |
+
+To bump the minor or major version, put `+semver: minor` or `+semver: major` in any commit message that reaches `main` (a squash-merge PR title counts). You can also raise `next-version` in `GitVersion.yml`; it only takes effect when it is above the newest tag. `+semver: none` (or `skip`) keeps the version, which makes the run fail, so don't use it for a release.
+
+**Why the version code always increases.** The formula keeps the order of the versions as long as minor and patch stay at or below 999 and major at or below 2099 (the largest code, `2099999999`, is just under Play's limit of `2100000000`). GitVersion only moves forward from the newest tag, and before building, [`scripts/compute-release-version.sh`](../scripts/compute-release-version.sh) refuses a version that doesn't fit the formula, is below the newest release tag, or whose tag already sits on a different commit. So the run fails before uploading rather than sending Play a code that is too low. Its tests: `bash scripts/compute-release-version.test.sh`.
+
+Rules that keep this working:
+
+- Don't delete or move `v*` tags, and don't create them by hand: the workflow owns them.
+- A release tag is only pushed after the upload succeeds. A failed run leaves no tag, so the next run gets the same version again.
+- Re-running a run that already uploaded gets the same version and code, and Play rejects it as already used. Merge a new commit instead.
+
+Local builds keep `versionName` `0.1.0` and `versionCode` `1` unless you pass `-PversionName=<x.y.z>` and `-PversionCode=<n>`.
 
 ## Troubleshooting
 
@@ -287,7 +316,11 @@ Nothing was uploaded. Fix the test on a feature branch, merge it through `develo
 
 ### Version code … has already been used
 
-Every upload needs a version code higher than every earlier one, on any track. This happens when a bundle was uploaded by hand with a higher code, when the workflow file was renamed or recreated (which restarts the run number), or when a run that already uploaded is re-run. Look up the highest version code in **Test and release → Latest releases and bundles** (or *App bundle explorer*), set `VERSION_CODE_OFFSET` so that the next run number plus the offset is above it, and run again.
+Every upload needs a version code higher than every earlier one, on any track. This happens when a run that already uploaded is re-run, or when a bundle was uploaded by hand with a higher code. Look up the highest version code in **Test and release → Latest releases and bundles** (or *App bundle explorer*). For a re-run, merge a new commit into `main` instead. For a higher code from elsewhere, bump the version past it with `+semver: minor` or `+semver: major` (see [Versioning](#versioning)), then merge.
+
+### Version … is below the newest release / does not fit the version code / Tag … already exists on another commit
+
+The *Compute version* step refused the version before anything was built. A `v*` tag was probably added, moved or deleted by hand. Restore the tags so that the newest one is the last release, or bump the version with `+semver: minor` (see [Versioning](#versioning)). When minor or patch would pass 999, bump the next part up.
 
 ### Only releases with status draft may be created on draft app
 
@@ -347,9 +380,9 @@ Your app is safe, because Google holds the app signing key, but you need a new u
 
 Set `PLAY_TRACK` to `internal`, `alpha` (the default closed track), `beta` (open testing) or the name of a custom closed track. Production is deliberately not a target: the service account has no permission for it. Promote builds to production by hand in the Console.
 
-### Raise the version-code offset
+### Jump the version code
 
-If version codes ever collide, raise `VERSION_CODE_OFFSET` (see [Version code … has already been used](#version-code--has-already-been-used)). Version codes only need to increase, so gaps are harmless.
+If version codes ever collide, bump the version (see [Version code … has already been used](#version-code--has-already-been-used)). Version codes only need to increase, so gaps are harmless.
 
 ### Moving to Workload Identity Federation
 
@@ -380,7 +413,6 @@ Repository variables:
 | --- | --- | --- |
 | `PLAY_TRACK` | `internal` | The Play track to upload to |
 | `PLAY_RELEASE_STATUS` | `completed` | The release status (`draft` for a draft app) |
-| `VERSION_CODE_OFFSET` | `1` | Added to the run number to give the version code |
 
 Gradle inputs (set by the workflow, or by you for a local signed build):
 
@@ -391,3 +423,4 @@ Gradle inputs (set by the workflow, or by you for a local signed build):
 | `LEAKOUT_UPLOAD_KEY_ALIAS` | environment variable | Key alias |
 | `LEAKOUT_UPLOAD_KEY_PASSWORD` | environment variable | Key password |
 | `versionCode` | Gradle property (`-PversionCode=<n>`) | Overrides the version code; must be a positive whole number |
+| `versionName` | Gradle property (`-PversionName=<x.y.z>`) | Overrides the version name (default `0.1.0`); must be `<major>.<minor>.<patch>` |

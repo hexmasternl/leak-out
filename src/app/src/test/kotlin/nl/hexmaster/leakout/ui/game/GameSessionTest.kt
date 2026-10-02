@@ -10,11 +10,13 @@ import nl.hexmaster.leakout.core.engine.GameCommand.Restart
 import nl.hexmaster.leakout.core.engine.GameCommand.Resume
 import nl.hexmaster.leakout.core.engine.GameCommand.Tick
 import nl.hexmaster.leakout.core.engine.GameEngine
+import nl.hexmaster.leakout.core.engine.LossReason
 import nl.hexmaster.leakout.core.engine.Outcome
 import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.FlowSettings
 import nl.hexmaster.leakout.core.level.GridSize
 import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.PlacementRules
 import nl.hexmaster.leakout.core.level.Position
@@ -58,6 +60,43 @@ class GameSessionTest {
             Position(2, 3) to PipeSection.RT,
         )
         for ((at, section) in route) if (at != skip) assertTrue(placeSection(section, at))
+    }
+
+    private fun GameSession.runToEnd() {
+        var guard = 0
+        while (state.outcome is Outcome.Playing) {
+            check(++guard < 10_000) { "the flow did not end" }
+            send(Tick(100))
+        }
+    }
+
+    @Test
+    fun `missed mandatory sections are listed after a mandatory miss`() {
+        val session = GameSession(level.copy(mandatory = listOf(MandatorySection(Position(1, 2), PipeSection.RES))), Random(42))
+        assertEquals(emptyList<Position>(), session.missedMandatory)
+        session.buildRoute()
+        session.runToEnd()
+        val lost = session.state.outcome as Outcome.Lost
+        assertEquals(LossReason.MANDATORY_MISSED, lost.reason)
+        assertEquals(Position(3, 3) to Side.LEFT, lost.at to lost.side)
+        assertEquals(listOf(Position(1, 2)), session.missedMandatory)
+        assertFalse(session.showLostDialog)
+    }
+
+    @Test
+    fun `no missed mandatory sections after a win or an ordinary leak`() {
+        // A mandatory reservoir takes the place of the route's first straight.
+        val won = GameSession(level.copy(mandatory = listOf(MandatorySection(Position(1, 0), PipeSection.RES))), Random(42))
+        won.buildRoute(skip = Position(1, 0))
+        won.runToEnd()
+        assertTrue(won.state.outcome is Outcome.Won)
+        assertEquals(emptyList<Position>(), won.missedMandatory)
+
+        val leaked = GameSession(level.copy(mandatory = listOf(MandatorySection(Position(1, 2), PipeSection.RES))), Random(42))
+        leaked.buildRoute(skip = Position(2, 2))
+        leaked.runToEnd()
+        assertEquals(LossReason.LEAK, (leaked.state.outcome as Outcome.Lost).reason)
+        assertEquals(emptyList<Position>(), leaked.missedMandatory)
     }
 
     @Test

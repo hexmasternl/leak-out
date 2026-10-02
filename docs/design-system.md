@@ -74,7 +74,7 @@ Liquid is always rendered as a vertical gradient `liquid.300 → liquid.500 → 
 |-------|-----|-------|
 | `brass.100` | `#FFE9B0` | Text/icon on dark brass, star highlight |
 | `brass.300` | `#FFCF5C` | Primary button top of gradient, active star |
-| `brass.500` | `#F5A623` | Primary button base, valve wheel, current stack piece frame |
+| `brass.500` | `#F5A623` | Primary button base, start valve wheel, current stack piece frame |
 | `brass.700` | `#C97A12` | Primary button lip (bottom edge), pressed state |
 | `brass.900` | `#7A4708` | Brass shadow, text on brass.100 |
 | `brass.tint` | `#F5A623` at 16 % | Warning chip background, brass focus ring |
@@ -86,7 +86,7 @@ Liquid is always rendered as a vertical gradient `liquid.300 → liquid.500 → 
 | `leak.500` | `#FF5A5F` | Leak splash, lose dialog title, destructive button |
 | `leak.700` | `#C9353B` | Destructive button lip, leak shadow |
 | `leak.tint` | `#FF5A5F` at 16 % | Locked-cell flash, error chip background |
-| `success.500` | `#3DDC97` | Finish drain ring, win dialog title, complete tick |
+| `success.500` | `#3DDC97` | Finish ring and checker, win dialog title, complete tick |
 | `success.700` | `#1FA971` | Success button lip |
 | `success.tint` | `#3DDC97` at 16 % | Completed level tile wash |
 | `reservoir.300` | `#C7B5FF` | Reservoir liquid highlight |
@@ -194,7 +194,7 @@ A 4 dp base grid. Named steps: `space.1 = 4`, `space.2 = 8`, `space.3 = 12`, `sp
 | 0 | Flat | none | Text, inline chips |
 | 1 | Panel | 1 dp `line.highlight` on top edge · shadow `0 4 12` black 35 % | HUD bar, board plate, stack rail |
 | 2 | Raised | level 1 + 1 dp `line.subtle` border · shadow `0 8 24` black 45 % | Cards, level tiles, buttons at rest |
-| 3 | Floating | shadow `0 24 64` black 60 % · scrim behind | Dialogs, pause sheet |
+| 3 | Floating | shadow `0 24 64` black 60 % · scrim behind | Dialogs, pause dialog |
 | G | Glow | `0 0 24` in the element's colour at 45 % | Flowing liquid, primary button, current stack piece, finish ring |
 
 Glows are additive to a level, never a replacement. A raised primary button is level 2 + G in brass.
@@ -262,11 +262,14 @@ Screen reader: "Level 7", "Flow speed 8", "Flow starts in 7 seconds" (whole seco
 
 ### 5.4 Stack rail
 
-A vertical level 1 panel on the trailing edge of the board (portrait) or the trailing side of the screen (landscape). Width equals one cell plus 16 dp padding.
+A vertical level 1 panel (`surface.deep` at 90 %, 24 dp radius, `line.strong` edge, 8 dp padding) along the left edge of the game screen, in landscape, next to the board. Its width is the next slot plus 16 dp.
 
-- Holds `visibleSize` pieces, top to bottom. The **top piece** is the current one: it is 8 % larger, framed in a 2 dp `brass.500` ring with brass glow, and labelled "NEXT" in `label.md` above it.
-- Pieces below fade: opacity 100 %, 80 %, 65 %, 50 %, 40 %.
-- When a piece is placed, the remaining pieces slide up with `motion.settle` and a new piece fades in at the bottom.
+- The stack holds `visibleSize + 10` pieces, ordered top to bottom. The **bottom piece** is the next one: 1.25 × the preview size, framed in a 2 dp `brass.500` ring on `brass.500` at 28 %. It is the only piece that can be dragged. The preview pieces above it sit on `surface.raised` at 8 % with a 1 dp `line.strong` edge.
+- Slot sizes are chosen so that the bottom `visibleSize` slots fit the rail height (preview 20–40 dp, gap 2–6 dp); those slots are always fully visible, even with `visibleSize` 10 on a 360 dp tall screen. The ten extra pieces continue upwards at the preview size as far as the rail has room.
+- A piece that does not fit is **clipped at the top edge** of the rail: a partly fitting piece shows only its lower part, a piece above the edge is not drawn. The rail never scrolls. A taller screen shows more look-ahead at the same slot size.
+- When the board accepts a placement, the bottom slot empties and every piece **falls one slot down under gravity** with `motion.fall`: it accelerates, lands with one small bounce and rests. The pieces start from the bottom up, 24 ms apart, so the column collapses like a pile. The piece that becomes the next one grows to the next size and takes on the brass frame while it falls. A new piece falls in from above the top edge into the top slot. A placement during a fall makes every piece continue from where it is, never jumping back.
+- The next piece can be dragged while it is still falling; the drag empties its slot at once.
+- Only fully visible pieces are exposed to accessibility services; clipped pieces are hidden.
 
 ### 5.5 Level tile (level select)
 
@@ -283,7 +286,8 @@ A vertical level 1 panel on the trailing edge of the board (portrait) or the tra
 Level 3 floating panel, `radius.lg`, `surface.base`, 1 dp `line.highlight` top edge, no outline, 24 dp padding, max width 360 dp, centred over `surface.scrim` with a 16 dp gutter to the window edge. Entry: scale 0.92 → 1 with `motion.pop`; scrim fades in over `motion.quick` (see 7.2 and 7.4).
 
 - **Win** and **Leak**: the result dialogs, specified below.
-- **Pause**: title "Paused" `display.lg`; glass "Resume" as primary emphasis, glass "Restart", destructive "Quit to Levels".
+- **Pause**: the panel sits on an **opaque backdrop** instead of the scrim: a diagonal linear gradient from `surface.abyss` (top left) to `surface.deep` (bottom right) covering the whole screen, system bar and cutout areas included, so nothing of the frozen board, stack or HUD can be studied while paused. The backdrop fades in over `motion.quick` and disappears at once when the dialog closes; a tap on it does nothing. Title "Paused" in Title Case, `display.lg`, `text.primary`. Medium buttons (48 dp face + 4 dp lip) 12 dp apart, so the panel fits a 360 dp high screen: brass Primary "Resume" (the one main action), glass Secondary "Restart", a 1 dp `line.subtle` separator, Destructive "Exit" (back to the main menu). Back works as Resume.
+- **Play menu**: the choice shown after Play on the welcome screen, over the see-through `surface.scrim` (drawn by the dialog, platform dim off). Title "Play" in Title Case, `display.lg`, `text.primary`. Medium buttons (48 dp face + 4 dp lip), full panel width, 12 dp apart: brass Primary "Continue" (the one main action) and glass Secondary "Select Level". A tap on the scrim outside the panel or Back closes it without navigating; a tap inside the panel does nothing.
 
 #### Result dialogs: Win and Leak
 
@@ -400,6 +404,63 @@ Bottom-anchored, 48 dp tall, `surface.raised`, `radius.pill`, `body.sm`. Slides 
 
 56 dp, label `body.md`, trailing switch. Switch track `radius.pill`: off `surface.overlay`, on `liquid.500` with a `liquid.glow` thumb.
 
+### 5.9 Tip overlay
+
+The one-time guided tips on the game screen (spec `game-play-onboarding`): the intro tour on the first level played, and single tips for the cross, the reservoir and mandatory sections. Unlike a dialog (5.6), a tip points at the real element it explains, so it is drawn over the whole game screen instead of centred.
+
+**Layers** (bottom to top, all inside the game screen, above the HUD, stack and field, below the pause dialog):
+
+1. **Scrim** – `surface.scrim` (`#07111C` at 72 %) over the whole screen, with a **spotlight** cut out around every target. The overlay consumes all pointer input outside its buttons, so nothing can be dragged, pinched or panned underneath, and taps on the scrim do nothing.
+2. **Spotlight** – a cut-out per target: the target's on-screen bounds grown by `space.2` (8 dp) on every side, corners `radius.md` (16 dp). A stack slot, a field cell and the whole stack column are each one rectangle; the mandatory tip has one cut-out per mandatory cell. Inside the cut-out the game is seen undimmed.
+3. **Glow ring** – around each cut-out a 2 dp `liquid.glow` stroke with a `G` glow in `liquid.glow` at 45 % (blur 24 dp). It pulses between 45 % and 70 % on `motion.pulse`.
+4. **Callout card** – a level 3 floating panel (shadow `0 24 64` black 60 %), `surface.base`, `radius.lg`, 1 dp `line.highlight` top edge, 16 dp (`space.4`) padding, max width 296 dp, so it fits beside the stack and a centre cell on a 640 × 360 dp screen.
+5. **Pointer** – a 16 × 8 dp triangle in `surface.base` on the card edge facing the target, centred on the target's centre and kept at least `radius.lg` from the card's corners. No pointer when no side has room (see Placement, last rule).
+
+**Callout content**, top to bottom:
+
+| Element | Style | Notes |
+|---------|-------|-------|
+| Step counter | `display.xs` `liquid.300` | "1 / 5"; intro tour only. Single tips show an eyebrow instead: "TIP" in `display.xs` `brass.300` |
+| Title | `display.md` `text.primary` | At most about four words (3.2) |
+| Text | `body.md` `text.secondary` | Two or three lines at 296 dp; `body.md` rather than `body.lg` so the card fits a 360 dp tall screen at 130 % font |
+| Buttons | stacked, 16 dp below the text, right-aligned, `space.3` (12 dp) apart | See below |
+
+| Tip | Buttons (top → bottom) |
+|-----|------------------------|
+| Intro steps 1–4 | primary small "Next" at full card width, tertiary "Skip tour" at full card width below it |
+| Intro step 5 | primary small "Let's go" |
+| Cross, reservoir, mandatory | primary small "Got it" |
+
+The bright brass "Next" sits on its own line so it is never squeezed by "Skip tour" and clearly reads as the way to the next tip. Primary small is 40 dp face + 4 dp lip = 48 dp and the tertiary is 48 dp. Card height at 100 % font on intro steps 1–4: 32 padding + 17 counter + 4 + 25 title + 8 + 72 text (three lines) + 16 + 48 + 12 + 48 buttons ≈ 282 dp, which fits in 360 − 2 × 16 dp.
+
+**Placement** (pure, JVM-tested): given the window size, the 16 dp screen gutter and the spotlight rect,
+
+1. Measure the free space to the right of, left of, below and above the spotlight, minus a 12 dp (`space.3`) gap to the spotlight.
+2. Take the side with the most room that fits the card; ties go right, left, below, above in that order.
+3. Along that side, centre the card on the target's centre, then shift it so it stays inside the gutter.
+4. If no side fits the card, put it in the screen half away from the target's centre, inside the gutter, without a pointer.
+
+The stack column sits on the left of the screen, so stack tips open to the right; a bottom-right cell opens to the left. On a 640 × 360 dp screen the field sits right of the stack, so a cell in the centre of the field (about x 342–392 dp) has room on its left only and opens to the left; on larger screens it opens to the right.
+
+**Drag hint** (intro step 4): a ghost of the next section at 50 % opacity, the size of a field cell, travels from the centre of the next stack slot to the centre of the hint cell (the nearest empty, non-blocked cell to the start's exit). While the ghost is on the cell, the cell shows the "valid target" look of 6.2 (`liquid.tint` fill, `line.strong` border). Both the next slot and the hint cell are spotlighted.
+
+**Off-screen targets**: when a field target (the finish on a large level, a mandatory cell) is outside the visible field, the field pans just far enough to show it, within the existing pan limits, before the spotlight moves there. When the tour ends, the field returns to the view the level starts with.
+
+**Texts** (English strings resource; the reservoir percentage is the level's `flow.reservoirSpeedFactor` × 100, rounded half up, shown here for 0.3):
+
+| Tip | Target | Title | Text |
+|-----|--------|-------|------|
+| Intro 1 / 5 | start tile | The Start | The liquid comes out of this valve when the countdown runs out. |
+| Intro 2 / 5 | finish tile | The Finish | Lead the liquid into this drain to complete the level. |
+| Intro 3 / 5 | stack column | Your Stack | These are the sections you get, in order. The next one to place is at the bottom. |
+| Intro 4 / 5 | next slot + hint cell | Placing Sections | Drag the next section from the stack onto an empty cell. Build a pipe from the start to the finish. |
+| Intro 5 / 5 | the field | Zoom and Pan | Pinch to zoom in or out, and drag the field to move around a larger level. |
+| Cross | the `X` slot in the stack | Cross Section | A cross has two separate channels and the liquid goes straight through. The first pass scores 10 points, a second pass through the other channel 50. Each channel can be used only once. |
+| Reservoir | the `RES` slot in the stack | Reservoir | A reservoir only connects left and right. While it fills, the liquid flows at 30 % speed, which buys you time. It scores 25 points. |
+| Mandatory | every mandatory cell | Mandatory Sections | These sections are already placed and can't be removed or replaced. The liquid must pass through every channel of each of them before it reaches the finish, or the level is lost. |
+
+**Screen reader**: when a tip appears it is announced as a polite live region: the title, the text, the target ("Highlighted: start valve") and, in the tour, "Step 1 of 5". The card is one pane (`paneTitle` = the title) and its buttons follow the text in reading order. The scrim and the game under it are hidden from accessibility while the tip is shown.
+
 ---
 
 ## 6. Game board
@@ -416,8 +477,10 @@ The grid sits on a level 1 panel (`surface.base`, `radius.xl`, 12 dp padding). G
 | Empty, valid target (finger down) | `liquid.tint` | `line.strong` | Ghost of the top stack piece at 50 % |
 | Pipe, dry | transparent | none | Pipe render (6.3) |
 | Pipe, filled | transparent | none | Pipe render with liquid |
+| Mandatory section | `leak.tint` | 1 dp `leak.500` | Pre-placed by the level, never removable. The usual pipe render (6.3) on top; the tint stays while and after the liquid runs through it |
 | Locked (tap on filled/flowing) | flash `leak.tint` 240 ms | – | Toast |
 | Blocked | `surface.abyss` | none | Diagonal hatch in `line.subtle`, `radius.sm` |
+| Start, Finish | as Empty, without the "+" | as Empty | Start valve or checkered finish (6.4) drawn on the plain empty-cell tile. No colour wash: the colour lives only in the valve wheel and the finish ring |
 
 Cell size is computed from the available width; the minimum is 44 dp so tap targets stay accessible.
 
@@ -442,8 +505,34 @@ Every pipe section is drawn from the same layers, in this order. Sizes are relat
 | `LT` `LB` `RT` `RB` | edge → centre → edge with round join | The round join gives a natural elbow |
 | `X` | vertical drawn first, then horizontal on top | A 0.05 c `surface.deep` gap around the horizontal body creates a "bridge" so it reads as two channels. Each channel has its own liquid layer |
 | `RES` | left edge → right edge, plus a centred tank | Always a horizontal section (L↔R, two-way). No top or bottom ports. Tank: circle radius 0.3 c, fill `reservoir.700 → reservoir.500` gradient, rim `steel.300`. Liquid fills the tank bottom-up during progress 0.1–0.9. A small "slow" badge sits at the top-right of the cell |
-| Start valve | stub from centre to the exit port | Brass wheel: circle radius 0.24 c, `brass.500`, four spokes, brass glow pulsing on 1.6 s while waiting. An arrow chevron on the stub points in the exit direction |
-| Finish drain | stub from the entry port to centre | Ring radius 0.24 c stroke `success.500`, grate of three `steel.300` bars inside, success glow pulsing 2 s. Ring flashes solid on win |
+| Start valve | stub from centre to the exit port | See *Start valve and checkered finish* below. Brass wheel radius 0.24 c with four spokes and a hub, a brass chevron on the stub pointing out of the exit port, brass glow pulsing on `motion.drift` while waiting |
+| Finish drain ("Checkered finish") | stub from the entry port to centre | See *Start valve and checkered finish* below. Ring radius 0.24 c stroke `success.500` filled with a 6 × 6 checker, success glow pulsing on `motion.pulse` until the win. Ring flashes solid on win |
+
+#### Start valve and checkered finish
+
+Both endpoints are drawn on the empty-cell tile (6.2) in this order: glow (7.2), stub, symbol. Sizes are in cell units *c* relative to the cell centre; *y* grows downwards.
+
+**Stub.** The stub is the real pipe art of the straight section, not a separate drawing: the `H` asset for an open left or right side, the `V` asset for an open top or bottom side, clipped to the half of the cell between the centre and the open side. Body, shadow, bore, specular, flange and glass (6.3 layers 1–7) are therefore identical to a placed straight, and a section placed against the open side joins the stub exactly like two sections join. The symbol covers the cut end at the centre (radius 0.24 c is larger than half the 0.36 c body). The start's stub carries liquid (6.5); the finish's stub stays dry.
+
+**Start valve wheel** (brass only, no success or leak colour):
+
+| Part | Geometry | Colour |
+|------|----------|--------|
+| Wheel disc | circle, radius 0.24 c | radial gradient `brass.300` (centre) → `brass.500` (edge) |
+| Rim | stroke 0.03 c on the disc edge | `brass.700` |
+| Spokes | a cross of two strokes (four spokes), each from −0.20 c to +0.20 c through the centre, width 0.045 c, round caps | `brass.900` |
+| Hub | circle radius 0.08 c, edge stroke 0.02 c | `brass.700`, edge `brass.900` |
+| Highlight | circle radius 0.05 c at (−0.08 c, −0.10 c) | `brass.100` at 45 % |
+| Chevron | round-capped stroke 0.04 c, two legs forming a "›" 0.16 c wide across the stub and 0.08 c deep, tip 0.32 c from the centre towards the exit port (between the wheel and the flange) | `brass.300` |
+
+**Finish ring and checker** (success and checker only, no brass, no flag or pole):
+
+| Part | Geometry | Colour |
+|------|----------|--------|
+| Checker | the inner disc (radius 0.215 c) filled with a flat 6 × 6 grid of squares, each 0.43 c / 6 ≈ 0.072 c, spanning the inner diameter and aligned on the cell centre (the centre is a corner shared by four squares); clipped to the disc | the grid's top-left square `text.primary` (Deep `#F2F7FB`, in both themes), alternating with `steel.900` |
+| Ring | stroke 0.05 c centred on radius 0.24 c (inner radius 0.215 c), drawn over the checker so it covers the clipped edge squares | `success.500` |
+
+At the 44 dp minimum cell a square is about 3.2 dp; the 6 × 6 checker was checked at 44 dp in the gallery and reads, so no 4 × 4 fallback is used. The same geometry is the `finish-checkered` icon (8). Where the finish is named to people (the gallery, onboarding) it is the **checkered finish**; in code and specs it remains the finish drain or `Cell.Finish`.
 
 ### 6.5 Liquid rendering
 
@@ -462,8 +551,9 @@ Every pipe section is drawn from the same layers, in this order. Sizes are relat
 |-------|----------|--------|-----|
 | `motion.instant` | 90 ms | linear | Press feedback, lip compression |
 | `motion.quick` | 160 ms | ease-out | Chip states, toast fade, scrim |
-| `motion.settle` | 240 ms | spring (stiffness medium, damping 0.75) | Stack slide, cell state change |
+| `motion.settle` | 240 ms | spring (stiffness medium, damping 0.75) | Cell state change |
 | `motion.pop` | 320 ms | spring (stiffness medium-low, damping 0.6) | Tile placement, dialog entry, win dialog star pop |
+| `motion.fall` | 120–260 ms + 120 ms | quadratic ease-in fall, then one bounce of at most 4 dp; 24 ms stagger per piece from the bottom up | Stack pieces dropping a slot |
 | `motion.drift` | 1 600 ms | ease-in-out, loop | Valve glow pulse |
 | `motion.pulse` | 2 000 ms | ease-in-out, loop | Finish ring pulse, current stack piece glow |
 | Liquid fill | continuous | linear | Driven by the simulation, never by an animator |
@@ -471,15 +561,22 @@ Every pipe section is drawn from the same layers, in this order. Sizes are relat
 ### 7.2 Specific animations
 
 - **Place tile**: scale 1.15 → 1 with `motion.pop`, 6 % overshoot, a 40 ms haptic tick at the start.
+- **Stack drop** (5.4): `motion.fall`. A piece falling a distance `d` follows `d · (t / T)²` with `T = sqrt(d / 8 dp) · 90 ms`, clamped to 120–260 ms (one slot takes about 200 ms), then rebounds `min(0.12 · d, 4 dp)` up and back over 120 ms (a half sine) and rests. Each piece above the bottom one starts 24 ms later, at most 8 steps, and the stagger is shortened where needed so that every one-slot drop rests within 400 ms of the placement.
 - **Replace tile**: old tile scales down to 0.7 and fades over `motion.quick`, new tile pops in.
 - **Locked tap**: cell shakes 3 dp left-right twice over 240 ms and flashes `leak.tint`.
 - **Countdown bar fade**: when the liquid starts, the countdown bar fades from 100 % to 0 % opacity over `motion.quick`. Only its alpha changes; its slot stays laid out.
 - **Score bar fill**: when the score changes, the fill grows from where it is to the new length over 600 ms ease-out (`FastOutSlowInEasing`). A change while it is still moving continues from the current length. A new attempt empties the fill at once, without animating. The number shows the new score at once.
 - **Threshold sparkle**: when the moving fill reaches `stars.one`, `stars.two` or `stars.three` (the end of the bar), a 600 ms procedural burst at that point: 6–8 `liquid.glow` and `brass.300` particles flying out 6–14 dp and fading, over a brief `brass.300` glow flash (radius 16 dp, fading out in the first 300 ms). Each threshold sparkles once per attempt; a jump past several thresholds sparkles each one as the fill passes it. Points beyond `stars.three` do not sparkle.
+- **Points popup**: when a section scores, its points ("+10", "+15", "+25", "+50") appear centred on its tile, above the section and the liquid. Text: Fredoka Bold at 0.33 c (the slim popup used 0.4 c, which read as too large). It is drawn in this order: a `liquid.glow` glow (blur 6 dp at 70 %), then the glyphs filled solid with `text.primary` on top. The fill is opaque, so the pipe and liquid never show through the digits. There is no outline or border of any kind: no dark ink outline, no `surface.deep` fill and no stroke. Timing: fade in over 150 ms (`FastOutSlowInEasing`) while growing from 80 % to 100 %, hold 500 ms, fade out over 350 ms (`FastOutLinearInEasing`), rising 0.25 c over the full 1 000 ms. Glow and fill both take the popup's alpha. Each award has its own popup. Game time, so it freezes on pause. The board is always drawn in the Deep palette, so the popup uses the Deep `text.primary` value in both themes.
+- **Endpoint glows**: a soft circle behind the valve wheel and behind the finish ring, radius 0.24 c + 12 dp, radial gradient from the element's colour (`brass.500`, `success.500`) at the glow alpha to transparent. The alpha is `0.45 + 0.45 × (1 − cos(2π t / T)) / 2`, easing between 45 % and 90 %. The valve pulses with *T* = `motion.drift` (1 600 ms) while the countdown runs and settles at a static 60 % the moment the liquid flows. The finish ring pulses with *T* = `motion.pulse` (2 000 ms) until the level is won; then the finish flash takes over and the ring stays solid. Both follow game time, so they freeze on pause.
 - **Win**: finish ring flashes, board dims to 60 %, dialog pops in, stars stagger 80 ms each with a small brass particle burst.
 - **Leak**: droplet burst, board shakes 2 dp for 200 ms, then the dialog pops in after 500 ms so the player sees where it went wrong.
-- **Result dialog entry** (win and leak, 5.6): the scrim fades from 0 to its 72 % over `motion.quick` (160 ms ease-out) while the panel scales 0.92 → 1 with `motion.pop`. Closing is immediate.
+- **Missed mandatory section**: when the liquid reaches the finish with a mandatory section unused, the leak spurt comes out of the finish's open side, and every unused mandatory tile pulses twice in `leak.500` during the 1 s before the dialog: a fill at up to 35 % and a 3 dp edge, alpha `(1 − cos(4π t / 1 s)) / 2`. Game time, so it freezes on pause.
+- **Dialog entry** (win, leak and play menu, 5.6): the scrim fades from 0 to its 72 % over `motion.quick` (160 ms ease-out) while the panel scales 0.92 → 1 with `motion.pop`. Closing is immediate.
 - **Leak splash** (leak dialog, 5.6): when the dialog opens, 6 droplets in `liquid.500` with `liquid.glow` highlights fly out of a `leak.500` centre blob towards the edge of the splash box over 600 ms ease-out, once, and rest there. It does not loop.
+- **Tip entry** (5.9): the scrim with its spotlight fades from 0 to 72 % over `motion.quick` while the callout card scales 0.92 → 1 with `motion.pop`, as a dialog does. The glow ring fades in with the scrim, then pulses on `motion.pulse`. Closing the last tip fades the scrim and card out over `motion.quick`.
+- **Tip step change** (5.9): the spotlight cut-out and glow ring move and resize from the old target to the new one with `motion.settle`; the card moves to its new place with `motion.settle` while its content cross-fades over `motion.quick`. When the field has to pan to show the target, the pan runs first with `motion.settle`, then the spotlight moves.
+- **Drag hint** (5.9, intro step 4): one loop takes `motion.pulse` (2 000 ms): the ghost fades in on the next slot over `motion.quick`, travels to the hint cell over 1 200 ms ease-in-out, rests there 400 ms with the cell in its valid target look, fades out over `motion.quick`, and the loop restarts. It runs while the step is shown.
 
 ### 7.3 Liquid progress
 
@@ -487,7 +584,7 @@ Progress is a 0–1 value per segment from the engine. The renderer clips the li
 
 ### 7.4 Reduced motion
 
-When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). Liquid fill and the win tally are gameplay, so they are unaffected.
+When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs and the play menu fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). The pause backdrop appears at full opacity at once and the pause panel fades in over 160 ms without the scale. The stack pieces do not accelerate, bounce or stagger: they all slide to their new slot together over 160 ms ease-out, and the new top piece fades in in its slot over 160 ms. Liquid fill and the win tally are gameplay, so they are unaffected.
 
 ---
 
@@ -495,7 +592,9 @@ When the system "remove animations" setting is on: no springs (replace with 160 
 
 Rounded-stroke icons, 24 dp grid, 2 dp stroke, round caps and joins, drawn as `ImageVector`s. Colour follows `text.primary` unless specified.
 
-Required set: play, pause, restart, next, back, close, settings, sound-on, sound-off, music-on, music-off, lock, star (filled + outline), trophy, fast-forward (start flow now), hourglass (slow badge), wave (flow speed), drop (liquid), warning, info, check.
+Required set: play, pause, restart, next, back, close, settings, sound-on, sound-off, music-on, music-off, lock, star (filled + outline), trophy, fast-forward (start flow now), hourglass (slow badge), wave (flow speed), drop (liquid), warning, info, check, finish-checkered (finish).
+
+`finish-checkered` is the checkered finish of 6.4 on the 24 dp grid: a 2 dp ring of radius 9 dp in the icon colour around a disc filled with a 6 × 6 checker spanning the ring's inner diameter (squares of about 2.7 dp), clipped to the disc. It is the only filled icon in the set: the light squares use the icon colour and the dark squares stay transparent.
 
 ---
 
@@ -574,3 +673,4 @@ fun LeakOutTheme(daylight: Boolean = false, content: @Composable () -> Unit)
 | Reservoir | Purple liquid | Violet **tank**, liquid stays aqua |
 | Themes | Light only | Deep (default) and Daylight |
 | Pipe art | Flat rectangles | Five-layer procedural stroke recipe with bore, specular and flanges |
+| Points popup | White fill under a 3 dp `InkDark` outline | `text.primary` fill and a soft `liquid.glow` glow, no border |

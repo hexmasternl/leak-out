@@ -18,6 +18,10 @@ object LevelValidator {
     const val MAX_CELLS_PER_SECOND: Double = 10.0
     const val MIN_VISIBLE_STACK_SIZE: Int = 1
     const val MAX_VISIBLE_STACK_SIZE: Int = 10
+    const val MAX_MANDATORY_SECTIONS: Int = 6
+
+    /** The sections a level may list as mandatory. */
+    val MANDATORY_KINDS: Set<PipeSection> = setOf(PipeSection.X, PipeSection.RES)
 
     fun validate(level: Level): ValidationResult {
         val errors = mutableListOf<ValidationError>()
@@ -25,6 +29,7 @@ object LevelValidator {
         errors.checkGrid(level.grid)
         errors.checkEndpoints(level)
         errors.checkBlocked(level)
+        errors.checkMandatory(level)
         errors.checkFlow(level.flow)
         errors.checkStack(level.stack)
         errors.checkRules(level.rules)
@@ -108,6 +113,27 @@ object LevelValidator {
         }
     }
 
+    // A mandatory section ignores its stack weight: it is placed by the level, not drawn.
+    private fun MutableList<ValidationError>.checkMandatory(level: Level) {
+        if (level.mandatory.size > MAX_MANDATORY_SECTIONS) {
+            error("mandatory", "A level can have at most $MAX_MANDATORY_SECTIONS mandatory sections, but had ${level.mandatory.size}")
+        }
+        val firstIndex = mutableMapOf<Position, Int>()
+        level.mandatory.forEachIndexed { index, (cell, section) ->
+            val field = "mandatory[$index]"
+            if (section !in MANDATORY_KINDS) {
+                error("$field.section", "Mandatory section $section at $cell is not allowed: only X and RES can be mandatory")
+            }
+            when {
+                cell !in level.grid -> error(field, "Mandatory section at $cell lies outside the ${level.grid} grid")
+                level.isBlocked(cell) -> error(field, "Mandatory section at $cell is on a blocked cell")
+                cell == level.start.position || cell == level.finish.position ->
+                    error(field, "Mandatory section at $cell is on the start or finish; the start and finish cannot hold a section")
+            }
+            firstIndex.putIfAbsent(cell, index)?.let { error(field, "Mandatory section at $cell duplicates mandatory[$it]") }
+        }
+    }
+
     private fun MutableList<ValidationError>.checkFlow(flow: FlowSettings) {
         if (flow.initialDelayMs < 0) {
             error("flow.initialDelayMs", "flow.initialDelayMs must be 0 or greater, but had ${flow.initialDelayMs}")
@@ -132,7 +158,7 @@ object LevelValidator {
             val field = "stack.weights.${section.name}"
             when {
                 weight < 0 -> error(field, "$field must be 0 or greater, but had $weight")
-                section.mandatory && weight < 1 ->
+                section.alwaysOnStack && weight < 1 ->
                     error(field, "$field must be at least 1: straight and corner sections are always on the stack")
             }
         }

@@ -35,4 +35,16 @@ class LeakEffectTest {
         assertEquals(LeakPuddle, leakFrame(1_001))
         assertEquals(LeakPuddle, leakFrame(60_000))
     }
+
+    @Test
+    fun `the missed section pulse peaks twice and is off outside the effect`() {
+        assertEquals(0f, missedPulseAlpha(0), 1e-6f)
+        assertEquals(1f, missedPulseAlpha(250), 1e-6f)
+        assertEquals(0f, missedPulseAlpha(500), 1e-6f)
+        assertEquals(1f, missedPulseAlpha(750), 1e-6f)
+        assertEquals(0f, missedPulseAlpha(-1), 0f)
+        assertEquals(0f, missedPulseAlpha(LeakTiming.EFFECT_MS), 0f)
+        assertEquals(0f, missedPulseAlpha(60_000), 0f)
+        for (ms in 0L until LeakTiming.EFFECT_MS step 10) assertTrue(missedPulseAlpha(ms) in 0f..1f)
+    }
 }

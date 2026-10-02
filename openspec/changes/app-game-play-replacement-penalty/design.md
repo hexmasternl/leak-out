@@ -8,7 +8,7 @@ This change turns the replacement into a timed sequence: destroy, wait, land. Th
 
 **Goals:**
 - Model the replacement sequence in `core` as game state, so its timing, its interaction with the flow, pause and restart, and its effect on the route are unit tested without Android.
-- Keep "how long" configurable per level through the existing `rules.replacePenaltyMs`, with a default of 3000.
+- Keep "how long" configurable per level through the existing `rules.replacePenaltyMs`, with a default of 1500.
 - Block all placement input during the sequence, give it a clear animation, and play a sound at the start and at the landing.
 
 **Non-Goals:**
@@ -82,19 +82,20 @@ The pause button and the system back button are unchanged.
 ### 7. App: animation driven by the game clock
 
 The animation progress is `(clockMs - startedAtMs) / (landsAtMs - startedAtMs)`, which freezes on pause for free.
-- **Break phase**, the first `min(600 ms, 40 %)` of the sequence: the `removed` section is drawn with the existing pipe-drawing code and then split into 4–6 fragments. They drift outward, rotate and fade, with an ease-out curve. The fragments are procedural and seeded by the tile position, so they look the same every frame and in screenshot tests.
-- **Busy phase**, until landing: a thin ring on the tile that fills clockwise, in the design-system accent colour, plus a faint tile tint. It tells the player the wait is temporary.
+- **Break phase**, 600 ms: the `removed` section is drawn with the existing pipe-drawing code, shakes and cracks, and then splits into its four quarters, which fly outward and rotate with an ease-out curve. The fragments are procedural and seeded by the tile position, so they look the same every frame and in screenshot tests.
+- **Hold phase**, 400 ms: the fragments lie still where they flew to, fully visible.
+- **Fade phase**, 500 ms: the fragments fade out, and then the new section lands. The three phases add up to the default 1500 ms; a level with another `replacePenaltyMs` scales them in the same proportions. There is no progress indicator.
 - **Landing**: when the section is written to the board, the normal cell drawing takes over with a short scale-in pop (about 150 ms, game clock), keyed on the tile and the landing time.
 
-Colours and durations come from `docs/design-system.md`. The break duration constant lives in the app, because it is presentation. The total length comes from the level.
+Colours and durations come from `docs/design-system.md`. The phase durations live in the app, because it is presentation. The total length comes from the level.
 
-### 8. Default 3000 ms in `LevelDefaults`
+### 8. Default 1500 ms in `LevelDefaults`
 
-`LevelDefaults.REPLACE_PENALTY_MS = 3000`. No bundled level sets `replacePenaltyMs` explicitly, so every level picks up the new default. Levels can still set any value of 0 or more. The docs (`level-format.md`, `project-plan.md`) are updated with it.
+`LevelDefaults.REPLACE_PENALTY_MS = 1500`, the length of the three animation phases together. No bundled level sets `replacePenaltyMs` explicitly, so every level picks up the new default. Levels can still set any value of 0 or more. The docs (`level-format.md`, `project-plan.md`) are updated with it.
 
 ## Risks / Trade-offs
 
-- [3 s with the liquid flowing may feel harsh on fast levels and could make the liquid leak at the tile] → This is intended: it is the penalty. Levels can lower `replacePenaltyMs`, and the busy ring makes the cost visible. It can be tuned after playtesting.
+- [1.5 s with the liquid flowing may feel harsh on fast levels and could make the liquid leak at the tile] → This is intended: it is the penalty. Levels can lower `replacePenaltyMs`, and the break animation makes the cost visible. It can be tuned after playtesting.
 - [Splitting the tick adds a branch to the hottest code path] → It only runs when a replacement lands, which happens at most once per sequence. The tests run the same scenario with 1 ms ticks and one long tick and compare the results.
 - [The landing sound is derived by diffing states and could double-fire after recomposition] → The diff runs inside `GameSession.send`, which runs once per command, not in composition. A unit test checks that one sequence gives exactly one landing event.
 - [Existing tests assume an instant swap or a 500 ms default] → Update `GameEngineTest`, `PlacementTest`, `LevelParserTest`, `GameSessionPlaceTest`, `HeadlessPlayTest` and `PlayingFieldTest` along with the change. Tests that don't test replacing keep explicit penalties where they rely on them.
@@ -105,4 +106,4 @@ This is a gameplay-only change with no persisted data. Level history and scores 
 
 ## Open Questions
 
-- Should the stack visibly show the "in flight" section during the sequence, for example a ghost on the tile? It is left out for now. The busy ring is enough feedback. It can be revisited after playtesting.
+- Should the stack visibly show the "in flight" section during the sequence, for example a ghost on the tile? It is left out for now. The break animation is enough feedback. It can be revisited after playtesting.

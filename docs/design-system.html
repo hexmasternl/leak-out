@@ -7,7 +7,7 @@
 <meta name="description" content="Deep Flow: the visual, motion and component system for the Leak Out pipe puzzle game.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Wendy+One&family=Varela+Round&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Wendy+One&family=Varela+Round&display=swap" rel="stylesheet">
 <style>
 /* ===================================================================
    TOKENS
@@ -271,6 +271,7 @@ section.block > header p{color:var(--text-2)}
 .rail .piece{width:56px; height:56px; border-radius:var(--r-sm); background:var(--overlay); transition:all .24s var(--spring); position:relative}
 .rail .piece svg{width:100%; height:100%; display:block}
 .rail .piece.top{width:62px; height:62px; box-shadow:0 0 0 2px var(--brass-500), var(--glow-brass); animation:pulseGlow 2s ease-in-out infinite}
+#railDemo .piece{opacity:1; flex-shrink:0}
 .rail .piece:nth-child(3){opacity:.8} .rail .piece:nth-child(4){opacity:.65} .rail .piece:nth-child(5){opacity:.5} .rail .piece:nth-child(6){opacity:.4}
 @keyframes pulseGlow{0%,100%{box-shadow:0 0 0 2px var(--brass-500), 0 0 18px rgba(245,166,35,.35)} 50%{box-shadow:0 0 0 2px var(--brass-500), 0 0 30px rgba(245,166,35,.6)}}
 
@@ -301,6 +302,20 @@ section.block > header p{color:var(--text-2)}
 .cell.empty::after{content:"+"; position:absolute; inset:0; display:grid; place-items:center; color:var(--text-3); opacity:.4; font-size:20px; font-family:var(--font-display)}
 .cell.target{background:var(--liquid-tint); border-color:var(--line-strong)}
 .cell.blocked{background:var(--abyss)}
+.cell.tile{background:color-mix(in srgb, var(--overlay) 60%, transparent); border:1px solid var(--line-subtle)}
+.joined{display:flex}
+.joined .cell{border-radius:0}
+.joined .cell:first-child{border-radius:var(--r-sm) 0 0 var(--r-sm)}
+.joined .cell:last-child{border-radius:0 var(--r-sm) var(--r-sm) 0}
+.endpoint-sizes{display:flex; flex-wrap:wrap; gap:24px; align-items:flex-end}
+.endpoint-sizes .step{display:flex; flex-direction:column; align-items:center; gap:8px}
+/* Points popup (7.2): the board is always Deep, so the colours are the Deep values in both themes */
+.popup-sizes{display:flex; flex-wrap:wrap; gap:24px; align-items:flex-end}
+.popup-sizes .step{display:flex; flex-direction:column; align-items:center; gap:8px}
+.popup-sizes .cell{background:#21405C99; border:1px solid var(--line-subtle)}
+.popup{position:absolute; inset:0; display:grid; place-items:center; font-family:"Fredoka", var(--font-display); font-weight:700; line-height:1; pointer-events:none;
+  color:#0C1A2A; -webkit-text-stroke:2px #9DF3FF; paint-order:stroke fill; text-shadow:0 0 6px rgba(157,243,255,.7)}
+.popup.old{color:#FFFFFF; -webkit-text-stroke:3px #1E293B; paint-order:stroke fill; text-shadow:none}
 .cell.shake{animation:shake .24s linear; background:var(--leak-tint)}
 .cell.pop svg{animation:pop .32s var(--spring)}
 @keyframes shake{0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 50%{transform:translateX(3px)} 75%{transform:translateX(-3px)}}
@@ -442,6 +457,9 @@ td:first-child{color:var(--text-1)}
     </linearGradient>
     <radialGradient id="tankGrad" cx=".35" cy=".3" r=".85">
       <stop offset="0" stop-color="#C7B5FF"/><stop offset=".5" stop-color="#A78BFA"/><stop offset="1" stop-color="#6A4BD6"/>
+    </radialGradient>
+    <radialGradient id="valveGrad" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#FFCF5C"/><stop offset="1" stop-color="#F5A623"/>
     </radialGradient>
     <radialGradient id="brassGrad" cx=".35" cy=".3" r=".85">
       <stop offset="0" stop-color="#FFE9B0"/><stop offset=".45" stop-color="#F5A623"/><stop offset="1" stop-color="#C97A12"/>
@@ -742,13 +760,14 @@ td:first-child{color:var(--text-1)}
         <div>
           <div class="grid" style="grid-template-columns:auto 1fr; gap:20px; align-items:start">
             <div>
-              <div class="rail" id="railDemo">
-                <div class="l-md">Next</div>
-                <div class="piece top" data-type="LT"></div>
-                <div class="piece" data-type="H"></div>
-                <div class="piece" data-type="RB"></div>
-                <div class="piece" data-type="X"></div>
+              <div class="rail" id="railDemo" style="height:330px; overflow:hidden; justify-content:flex-end">
+                <div class="piece" data-type="V"></div>
                 <div class="piece" data-type="RES"></div>
+                <div class="piece" data-type="X"></div>
+                <div class="piece" data-type="RB"></div>
+                <div class="piece" data-type="H"></div>
+                <div class="piece top" data-type="LT"></div>
+                <div class="l-md">Next</div>
               </div>
               <p class="caption" style="margin-top:10px; text-align:center">Stack rail</p>
             </div>
@@ -814,14 +833,14 @@ td:first-child{color:var(--text-1)}
             </div>
           </div>
         </div>
-        <div class="scrimbox">
+        <div class="scrimbox" style="background:linear-gradient(to bottom right, var(--abyss), var(--deep))">
           <div class="floating dialog">
             <h2>Paused</h2>
-            <p>Level 7 · 240 points so far</p>
             <div class="actions">
-              <button class="btn btn-glass">Resume</button>
+              <button class="btn btn-primary md">Resume</button>
               <button class="btn btn-glass md">Restart</button>
-              <button class="btn btn-danger md">Quit to Levels</button>
+              <hr style="border:0; border-top:1px solid var(--line-subtle); margin:0; width:100%">
+              <button class="btn btn-danger md">Exit</button>
             </div>
           </div>
         </div>
@@ -884,6 +903,18 @@ td:first-child{color:var(--text-1)}
       <div class="grid g4" id="pipeGallery"></div>
 
       <div class="panel" style="margin-top:24px">
+        <h3 style="margin-bottom:6px">Start valve and checkered finish at 44 dp and 120 dp</h3>
+        <p class="small muted">Both endpoints sit on the plain empty-cell tile; only the brass wheel and the success ring carry colour. The finish's 6 × 6 checker must still read at the 44 dp minimum cell.</p>
+        <div class="endpoint-sizes" id="endpointSizes"></div>
+      </div>
+
+      <div class="panel" style="margin-top:24px">
+        <h3 style="margin-bottom:6px">Points popup at 44 dp and 120 dp</h3>
+        <p class="small muted">Fredoka Bold at 0.33c: a solid <code>surface.deep</code> fill, a <code>liquid.glow</code> edge 1 dp wide (a 2 dp stroke under the fill, so the overlaps inside the glyphs stay hidden) and a 6 dp <code>liquid.glow</code> glow at 70 %. It fades in, holds and fades out over 1 s while rising a quarter of a tile. The last row is the slim version it replaces.</p>
+        <div class="popup-sizes" id="popupSizes"></div>
+      </div>
+
+      <div class="panel" style="margin-top:24px">
         <h3 style="margin-bottom:6px">Layer recipe</h3>
         <p class="small muted">Sizes are relative to cell size <em>c</em>. Body 0.36c · bore 0.25c · liquid 0.21c · flange 0.10c long. Round joins give the elbow for free.</p>
         <div class="layers" id="layerDemo"></div>
@@ -933,8 +964,8 @@ td:first-child{color:var(--text-1)}
             <table>
               <tr><td>Board plate</td><td>Level 1 panel, radius xl, radial vignette so the centre reads brighter</td></tr>
               <tr><td>Cells</td><td>≥ 44dp, 4dp gap, radius sm. Empty cells are <code>surface.overlay</code> at 60% with a faint “+”</td></tr>
-              <tr><td>Start valve</td><td>Brass wheel, pulsing while the countdown runs, chevron shows exit direction</td></tr>
-              <tr><td>Finish drain</td><td>Success ring with a grate, pulsing until hit</td></tr>
+              <tr><td>Start valve</td><td>Brass wheel on a straight-pipe stub, pulsing while the countdown runs and steady once the liquid flows; chevron shows exit direction</td></tr>
+              <tr><td>Checkered finish</td><td>Success ring filled with a checker pattern, pulsing until the liquid reaches it</td></tr>
               <tr><td>Blocked</td><td><code>surface.abyss</code> with a subtle 45° hatch</td></tr>
               <tr><td>Rail</td><td>Next piece 8% larger with a 2dp brass ring and glow; pieces below fade 80 → 40%</td></tr>
             </table>
@@ -960,8 +991,9 @@ td:first-child{color:var(--text-1)}
             <tr><th>Token</th><th>Duration</th><th>Easing</th><th>Use</th></tr>
             <tr><td>motion.instant</td><td>90ms</td><td>linear</td><td>Press feedback, lip</td></tr>
             <tr><td>motion.quick</td><td>160ms</td><td>ease-out</td><td>Chips, toast, scrim</td></tr>
-            <tr><td>motion.settle</td><td>240ms</td><td>spring · damping 0.75</td><td>Rail slide, cell state</td></tr>
+            <tr><td>motion.settle</td><td>240ms</td><td>spring · damping 0.75</td><td>Cell state</td></tr>
             <tr><td>motion.pop</td><td>320ms</td><td>spring · damping 0.6</td><td>Tile placement, dialog, stars</td></tr>
+            <tr><td>motion.fall</td><td>120–260ms + 120ms</td><td>quadratic ease-in · 4dp bounce · 24ms stagger</td><td>Stack drop</td></tr>
             <tr><td>motion.drift</td><td>1600ms loop</td><td>ease-in-out</td><td>Valve glow</td></tr>
             <tr><td>motion.pulse</td><td>2000ms loop</td><td>ease-in-out</td><td>Finish ring, next piece</td></tr>
             <tr><td>Liquid fill</td><td>continuous</td><td>linear</td><td>Engine-driven</td></tr>
@@ -983,7 +1015,7 @@ td:first-child{color:var(--text-1)}
               <button class="btn btn-glass sm" style="margin-top:10px" onclick="demoFlow()">Flow</button>
             </div>
           </div>
-          <p class="caption" style="margin-top:16px">Reduced motion: springs become 160ms ease-out, pulses freeze at 60%, no shake, no droplet burst. Liquid fill is gameplay and is never reduced.</p>
+          <p class="caption" style="margin-top:16px">Reduced motion: springs become 160ms ease-out, pulses freeze at 60%, no shake, no droplet burst, stack pieces slide together over 160ms ease-out and the new top piece fades in. Liquid fill is gameplay and is never reduced.</p>
         </div>
       </div>
     </section>
@@ -1064,6 +1096,37 @@ function layers(path, grad, o){
   return s;
 }
 
+/* Start and finish stubs: the straight H or V layers, clipped to the half of the
+   cell between the centre and the open side, so they join a placed straight. */
+let stubClipId = 0;
+function endpointStub(dir, o){
+  const horizontal = dir==='L' || dir==='R';
+  const half = {L:[0,0,50,100], R:[50,0,50,100], T:[0,0,100,50], B:[0,50,100,50]}[dir];
+  const id = 'stub' + (stubClipId++);
+  // The liquid enters at the centre: the full channel runs from the side opposite
+  // the open side, so filling it to 0.5 + p/2 shows p of the visible half.
+  const path = {R:'M0 50H100', L:'M100 50H0', B:'M50 0V100', T:'M50 100V0'}[dir];
+  const progress = o.liquid ? 0.5 + (o.progress ?? 1) / 2 : null;
+  return `<clipPath id="${id}"><rect x="${half[0]}" y="${half[1]}" width="${half[2]}" height="${half[3]}"/></clipPath>`
+    + `<g clip-path="url(#${id})">`
+    + layers(path, horizontal ? 'H' : 'V', {liquid:o.liquid ? true : null, progress})
+    + (horizontal ? ['L','R'] : ['T','B']).map(flange).join('')
+    + `</g>`;
+}
+
+/* Checkered finish: the ring's inner disc (radius 21.5 = 0.215 c) filled with a
+   flat 6 x 6 checker aligned on the cell centre, top-left square light. */
+let checkerClipId = 0;
+function checkerDisc(){
+  const r = 21.5, n = 6, side = 2 * r / n, x0 = 50 - r, y0 = 50 - r;
+  const id = 'chk' + (checkerClipId++);
+  let squares = '';
+  for(let row=0; row<n; row++) for(let col=0; col<n; col++){
+    squares += `<rect x="${(x0 + col * side).toFixed(3)}" y="${(y0 + row * side).toFixed(3)}" width="${side.toFixed(3)}" height="${side.toFixed(3)}" fill="${(row + col) % 2 === 0 ? '#F2F7FB' : '#22303F'}"/>`;
+  }
+  return `<clipPath id="${id}"><circle cx="50" cy="50" r="${r}"/></clipPath><g clip-path="url(#${id})" shape-rendering="crispEdges">${squares}</g>`;
+}
+
 function pipeSVG(type, o={}){
   let inner = '';
   if(SECTIONS[type]){
@@ -1097,28 +1160,23 @@ function pipeSVG(type, o={}){
   }
   else if(type==='START'){
     const dir = o.dir||'R';
-    const stub = {R:'M50 50H100', L:'M50 50H0', T:'M50 50V0', B:'M50 50V100'}[dir];
-    const g = (dir==='L'||dir==='R') ? 'H' : 'V';
     const chev = {R:'M74 42l8 8-8 8', L:'M26 42l-8 8 8 8', T:'M42 26l8-8 8 8', B:'M42 74l8 8 8-8'}[dir];
-    inner = layers(stub, g, {liquid:o.liquid, progress:o.progress}) + flange(dir)
-      + `<path d="${chev}" fill="none" stroke="#FFCF5C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`
+    inner = endpointStub(dir, o)
       + `<g class="${o.pulse!==false?'valve-glow':''}">`
-      + `<circle cx="50" cy="50" r="26" fill="url(#brassGrad)"/>`
-      + `<circle cx="50" cy="50" r="26" fill="none" stroke="#C97A12" stroke-width="3"/>`
+      + `<circle cx="50" cy="50" r="24" fill="url(#valveGrad)"/>`
+      + `<circle cx="50" cy="50" r="24" fill="none" stroke="#C97A12" stroke-width="3"/>`
       + `<g stroke="#7A4708" stroke-width="4.5" stroke-linecap="round"><path d="M50 30v40M30 50h40"/></g>`
       + `<circle cx="50" cy="50" r="8" fill="#C97A12" stroke="#7A4708" stroke-width="2"/>`
-      + `<circle cx="42" cy="40" r="4" fill="rgba(255,255,255,.45)"/>`
-      + `</g>`;
+      + `<circle cx="42" cy="40" r="5" fill="#FFE9B0" opacity=".45"/>`
+      + `</g>`
+      + `<path d="${chev}" fill="none" stroke="#FFCF5C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
   }
   else if(type==='FINISH'){
     const dir = o.dir||'L';
-    const stub = {L:'M0 50H50', R:'M100 50H50', T:'M50 0V50', B:'M50 100V50'}[dir];
-    const g = (dir==='L'||dir==='R') ? 'H' : 'V';
-    inner = layers(stub, g, {liquid:o.liquid, progress:o.progress}) + flange(dir)
+    inner = endpointStub(dir, {})
       + `<g class="${o.pulse!==false?'drain-glow':''}">`
-      + `<circle cx="50" cy="50" r="26" fill="#122538"/>`
-      + `<circle cx="50" cy="50" r="26" fill="none" stroke="#3DDC97" stroke-width="5"/>`
-      + `<g fill="#8FA3B8"><rect x="38" y="36" width="5" height="28" rx="2"/><rect x="47.5" y="36" width="5" height="28" rx="2"/><rect x="57" y="36" width="5" height="28" rx="2"/></g>`
+      + checkerDisc()
+      + `<circle cx="50" cy="50" r="24" fill="none" stroke="#3DDC97" stroke-width="5"/>`
       + `</g>`;
   }
   else if(type==='BLOCKED'){
@@ -1141,17 +1199,52 @@ const items = [
   ['X',{liquid:'anim', liquidV:true, delay:'d2'}, 'Cross', 'Two independent channels'],
   ['RES',{liquid:'anim', id:'g'}, 'Reservoir', 'Left ↔ Right · ×0.3 speed'],
   ['START',{dir:'R'}, 'Start valve', 'Exit direction shown by chevron'],
-  ['FINISH',{dir:'L'}, 'Finish drain', 'Must be entered through the open port'],
+  ['FINISH',{dir:'L'}, 'Checkered finish', 'Must be entered through the open port'],
   ['BLOCKED',{}, 'Blocked', 'Nothing can be placed'],
   ['EMPTY',{}, 'Empty', 'Tap to place the next piece'],
+  ['JOIN',{first:['START',{dir:'R', liquid:true, progress:1}], second:['H',{liquid:true, progress:.6}]}, 'Start + straight', 'The stub is the straight’s own art'],
+  ['JOIN',{first:['H',{}], second:['FINISH',{dir:'L'}]}, 'Straight + checkered finish', 'Flanges meet on the shared edge'],
 ];
 items.forEach(([t,o,name,ports])=>{
   const card = document.createElement('div'); card.className='pipecard';
-  const cell = document.createElement('div'); cell.className='cell' + (t==='EMPTY'?' empty':'') + (t==='BLOCKED'?' blocked':'');
-  if(t!=='EMPTY') cell.innerHTML = pipeSVG(t,o);
-  card.appendChild(cell);
+  if(t==='JOIN'){
+    const pair = document.createElement('div'); pair.className='joined';
+    [o.first, o.second].forEach(([pt,po])=>{
+      const c = document.createElement('div'); c.className='cell' + (pt==='START'||pt==='FINISH'?' tile':'');
+      c.innerHTML = pipeSVG(pt,po); pair.appendChild(c);
+    });
+    card.style.gridColumn = 'span 2';
+    card.appendChild(pair);
+  } else {
+    const cell = document.createElement('div'); cell.className='cell' + (t==='EMPTY'?' empty':'') + (t==='BLOCKED'?' blocked':'') + (t==='START'||t==='FINISH'?' tile':'');
+    if(t!=='EMPTY') cell.innerHTML = pipeSVG(t,o);
+    card.appendChild(cell);
+  }
   card.insertAdjacentHTML('beforeend', `<div class="name">${name}</div><div class="ports">${ports}</div>`);
   gallery.appendChild(card);
+});
+
+/* Endpoints at the minimum and a large cell size, every open side */
+const es = document.getElementById('endpointSizes');
+[44, 120].forEach(size=>{
+  [['START','R'],['START','B'],['FINISH','L'],['FINISH','T']].forEach(([t,dir])=>{
+    es.insertAdjacentHTML('beforeend', `<div class="step"><div class="cell tile" style="width:${size}px; height:${size}px">${pipeSVG(t,{dir})}</div><span class="caption">${t==='START'?'Start':'Finish'} · ${dir} · ${size} dp</span></div>`);
+  });
+});
+
+/* Points popup over an empty tile, a filled corner and a filled cross, plus the slim version */
+const ps = document.getElementById('popupSizes');
+const popupSamples = [
+  ['EMPTY', {}, '+10', 'Empty'],
+  ['LB', {liquid:true, progress:1}, '+15', 'Corner'],
+  ['X', {liquidH:true, liquidV:true, progressH:1, progressV:1}, '+50', 'Cross'],
+];
+[[44,''], [120,''], [44,'old']].forEach(([size, variant])=>{
+  popupSamples.forEach(([t, o, text, name])=>{
+    const art = t==='EMPTY' ? '' : pipeSVG(t, o);
+    const label = `${name} · ${size} dp${variant ? ' · slim (before)' : ''}`;
+    ps.insertAdjacentHTML('beforeend', `<div class="step"><div class="cell" style="width:${size}px; height:${size}px">${art}<span class="popup ${variant}" style="font-size:${size*(variant ? 0.4 : 0.33)}px">${text}</span></div><span class="caption">${label}</span></div>`);
+  });
 });
 
 /* Layer recipe steps */

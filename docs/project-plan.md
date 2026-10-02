@@ -80,7 +80,7 @@ Rules that follow from this:
 
 - Dragging the next section onto an **Empty** cell places it there. Tap-to-place is not supported.
 - While dragging, the cell under the dragged section is highlighted when the drop would be accepted there. Cells that refuse the section are not highlighted. The highlight and the drop use the same rule (`Placement.check` in `core.board`), so they always agree.
-- Dropping on a cell that holds an **unfilled** pipe **replaces** it, if the level allows replacing (`allowReplace`, default `true`). Replacing takes time: the old section breaks apart at once (the `section_destroy` sound) and the tile stays empty until the new section lands after `replacePenaltyMs` (default 3000 ms) of game time, with the `section_placement` sound. Meanwhile the player cannot place, drag or fast forward, and liquid that reaches the empty tile leaks there. This makes replacing a deliberate choice rather than a reflex. Replacing itself is the classic Pipe Mania rule and keeps the stack from becoming a dead end.
+- Dropping on a cell that holds an **unfilled** pipe **replaces** it, if the level allows replacing (`allowReplace`, default `true`). Replacing takes time: the old section breaks apart at once (the `section_destroy` sound) and the tile stays empty until the new section lands after `replacePenaltyMs` (default 1500 ms: the old section breaks for 600 ms, the pieces lie still for 400 ms and fade out over 500 ms) of game time, with the `section_placement` sound. Meanwhile the player cannot place, drag or fast forward, and liquid that reaches the empty tile leaks there. This makes replacing a deliberate choice rather than a reflex. Replacing itself is the classic Pipe Mania rule and keeps the stack from becoming a dead end.
 - Cells that are Start, Finish, Blocked, or contain a pipe that is filled or currently being filled cannot be changed.
 - There is no discard action; the only way to get rid of an unwanted section is to place it somewhere.
 
@@ -131,7 +131,7 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 
 1. **Title** – play, level select, settings (sound on/off).
 2. **Level select** – grid of level tiles.
-3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Once the route is complete, a round fast forward / slow button sits in the bottom right corner, 16 dp from the edges. Back and going to the background also pause the game.
+3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Once the route is complete, a round fast forward / slow button sits in the bottom right corner, 16 dp from the edges. Back and going to the background also pause the game. While the game screen is open (playing, paused, the end effects and the result dialogs) the display stays on through `keepScreenOn` on the Compose host view, without a wake lock; the main menu, level library and settings follow the normal screen timeout.
 4. **Pause dialog** – opened from the cog wheel: Resume, Restart, a separator and Exit to the main menu (welcome screen). Tapping outside does nothing; Back works as Resume.
 5. **Level complete / failed overlay** – level complete (the level complete dialog, see 1.9): "Level complete!", the stars, pipe points, unused pipes and total, and Next level, Restart and Exit to the main menu. Level failed (the level lost dialog, see 1.9): "Leaked!", the score, Restart and Exit to the main menu.
 6. **Settings** – opened from the welcome screen's Settings button; Back returns to the welcome screen. Two columns: Audio (sound effects and music switches with volume sliders; the sound effects controls work and releasing their slider plays a preview; the music controls work too, and the music follows the slider while it is dragged) and Feel (vibration) on the left, Progress (finished levels and stars, and Reset progress with a confirm dialog) and About (name, version, maker, privacy line, and a Music section crediting every background track as title and artist, read from `assets/music/audio_credits.json`) on the right.
@@ -354,7 +354,7 @@ JSON, one file per level, parsed with `kotlinx.serialization`:
     "visibleSize": 5,
     "weights": { "H": 3, "V": 3, "LT": 2, "LB": 2, "RT": 2, "RB": 2, "X": 1, "RES": 1 }
   },
-  "rules": { "allowReplace": true, "replacePenaltyMs": 3000 },
+  "rules": { "allowReplace": true, "replacePenaltyMs": 1500 },
   "stars": { "two": 200, "three": 350 }
 }
 ```
@@ -528,7 +528,7 @@ Decisions assumed in this plan that you may want to change. All are data or smal
 | # | Question | Assumed answer |
 |---|----------|----------------|
 | 1 | Reservoir port layout | Decided: horizontal only (L↔R), a slow straight with a tank |
-| 2 | Can an unfilled placed pipe be replaced? | Yes, as a 3 s replacement (break, wait, land), configurable per level |
+| 2 | Can an unfilled placed pipe be replaced? | Yes, as a 1.5 s replacement (break, hold, fade, land), configurable per level |
 | 3 | Can the player start the flow early? | Yes, for a time bonus |
 | 4 | Grid size | 7 × 9 default, per-level override |
 | 5 | Can start/finish sit in the middle of the grid? | Yes, level designer's choice |

@@ -9,7 +9,7 @@ object LevelDefaults {
     const val SPEED_RAMP_PER_CELL: Double = 0.0
     const val VISIBLE_STACK_SIZE: Int = 5
     const val ALLOW_REPLACE: Boolean = true
-    const val REPLACE_PENALTY_MS: Long = 3_000
+    const val REPLACE_PENALTY_MS: Long = 1_500
 
     /**
      * A section's weight divided by the sum of all weights is its target share of the sections dealt

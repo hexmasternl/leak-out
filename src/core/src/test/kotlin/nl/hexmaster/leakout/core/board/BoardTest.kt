@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
@@ -51,6 +52,29 @@ class BoardTest {
         val entered = board.markLiquidEntered(Position(2, 2))
         assertEquals(Cell.Pipe(PipeSection.V, liquidEntered = true), entered[Position(2, 2)])
         assertEquals(Cell.Pipe(PipeSection.V), board[Position(2, 2)])
+    }
+
+    @Test
+    fun `from level holds its mandatory sections without liquid`() {
+        val withMandatory = TestLevels.valid(
+            mandatory = listOf(MandatorySection(Position(3, 2), PipeSection.X), MandatorySection(Position(5, 4), PipeSection.RES)),
+        )
+        val board = Board.from(withMandatory)
+        assertEquals(Cell.Pipe(PipeSection.X, liquidEntered = false, mandatory = true), board[Position(3, 2)])
+        assertEquals(Cell.Pipe(PipeSection.RES, liquidEntered = false, mandatory = true), board[Position(5, 4)])
+        assertEquals(setOf(Position(3, 2), Position(5, 4)), board.pipes.keys)
+    }
+
+    @Test
+    fun `markLiquidEntered keeps the mandatory flag`() {
+        val board = Board.from(TestLevels.valid(mandatory = listOf(MandatorySection(Position(3, 2), PipeSection.X))))
+        val entered = board.markLiquidEntered(Position(3, 2))
+        assertEquals(Cell.Pipe(PipeSection.X, liquidEntered = true, mandatory = true), entered[Position(3, 2)])
+    }
+
+    @Test
+    fun `a placed section is not mandatory`() {
+        assertEquals(false, Cell.Pipe(PipeSection.X).mandatory)
     }
 
     @Test

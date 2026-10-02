@@ -1,0 +1,6 @@
+# Semantic versioning for Leak Out, read by the deploy workflow (.github/workflows/deploy-play-internal.yml).
+# Every deployment from main is tagged v<major>.<minor>.<patch>; the next commit on main bumps the patch.
+# Bump minor or major with "+semver: minor" / "+semver: major" in a commit message (or PR title),
+# or by raising next-version below. Strategy: docs/deployment.md#versioning
+workflow: GitHubFlow/v1
+next-version: 0.1.0

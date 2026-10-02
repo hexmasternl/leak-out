@@ -13,8 +13,11 @@ sealed interface Cell {
     data class Start(val openSide: Side) : Cell
     data class Finish(val openSide: Side) : Cell
 
-    /** A placed section. Once [liquidEntered] is true it can never be replaced. */
-    data class Pipe(val section: PipeSection, val liquidEntered: Boolean = false) : Cell
+    /**
+     * A section on the board. Once [liquidEntered] is true it can never be replaced. A [mandatory]
+     * section was put there by the level, never by the player, and can never be replaced at all.
+     */
+    data class Pipe(val section: PipeSection, val liquidEntered: Boolean = false, val mandatory: Boolean = false) : Cell
 }
 
 /**
@@ -45,10 +48,11 @@ class Board(val grid: GridSize, cells: Map<Position, Cell>) {
     override fun toString(): String = "Board($grid, $cells)"
 
     companion object {
-        /** The board a level starts with: its start, finish and blocked cells, the rest empty. */
+        /** The board a level starts with: its start, finish, blocked cells and unfilled mandatory sections, the rest empty. */
         fun from(level: Level): Board = Board(
             level.grid,
             level.blocked.associateWith { Cell.Blocked } +
+                level.mandatory.associate { it.position to Cell.Pipe(it.section, mandatory = true) } +
                 (level.start.position to Cell.Start(level.start.openSide)) +
                 (level.finish.position to Cell.Finish(level.finish.openSide)),
         )

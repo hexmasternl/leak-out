@@ -7,6 +7,7 @@ import nl.hexmaster.leakout.core.board.Cell
 import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.GridSize
 import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.PipeSection.H
 import nl.hexmaster.leakout.core.level.PipeSection.LB
@@ -26,7 +27,8 @@ class RouteTracerTest {
         start: Endpoint = Endpoint(p(0, 1), Side.RIGHT),
         finish: Endpoint = Endpoint(p(2, 3), Side.TOP),
         blocked: List<Position> = emptyList(),
-    ): Level = TestLevels.valid(grid = GridSize(5, 5), start = start, finish = finish, blocked = blocked)
+        mandatory: List<MandatorySection> = emptyList(),
+    ): Level = TestLevels.valid(grid = GridSize(5, 5), start = start, finish = finish, blocked = blocked, mandatory = mandatory)
 
     private fun board(level: Level, vararg pipes: Pair<Position, PipeSection>): Board =
         pipes.fold(Board.from(level)) { board, (at, section) -> board.with(at, Cell.Pipe(section)) }
@@ -130,6 +132,42 @@ class RouteTracerTest {
             p(1, 1) to X, p(2, 1) to LT, p(2, 0) to LB, p(1, 0) to RB, p(1, 2) to LT, p(0, 2) to RT,
         )
         assertEquals(Route.Open(p(0, 1), Route.Reason.BLOCKED), route)
+    }
+
+    // --- Mandatory sections ---
+
+    /** Start (0, 2) open right, finish (2, 4) open at the top; the cross at (2, 2) can be passed both ways. */
+    private fun crossLevel(mandatory: List<MandatorySection>) =
+        level(start = Endpoint(p(0, 2), Side.RIGHT), finish = Endpoint(p(2, 4), Side.TOP), mandatory = mandatory)
+
+    @Test
+    fun `a route that skips a mandatory reservoir is open at the finish`() {
+        val level = level(mandatory = listOf(MandatorySection(p(4, 4), RES)))
+        val route = trace(level, p(1, 1) to H, p(2, 1) to LB, p(2, 2) to V)
+        assertEquals(Route.Open(p(2, 3), Route.Reason.MANDATORY_MISSED), route)
+    }
+
+    @Test
+    fun `a route through one channel of a mandatory cross is open at the finish`() {
+        val level = level(mandatory = listOf(MandatorySection(p(1, 1), X)))
+        val route = trace(level, p(2, 1) to LB, p(2, 2) to V)
+        assertEquals(Route.Open(p(2, 3), Route.Reason.MANDATORY_MISSED), route)
+    }
+
+    @Test
+    fun `a route through every mandatory channel is complete`() {
+        val level = crossLevel(listOf(MandatorySection(p(1, 2), RES), MandatorySection(p(2, 2), X)))
+        val route = trace(level, p(3, 2) to LT, p(3, 1) to LB, p(2, 1) to RB, p(2, 3) to V)
+        assertEquals(
+            Route.Complete(listOf(p(1, 2), p(2, 2), p(3, 2), p(3, 1), p(2, 1), p(2, 2), p(2, 3))),
+            route,
+        )
+    }
+
+    @Test
+    fun `a mandatory section on an unfinished route does not change why it is open`() {
+        val level = level(mandatory = listOf(MandatorySection(p(4, 4), RES)))
+        assertEquals(Route.Open(p(2, 1), Route.Reason.EMPTY), trace(level, p(1, 1) to H))
     }
 
     @Test

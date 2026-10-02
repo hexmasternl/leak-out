@@ -10,6 +10,8 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -18,6 +20,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +42,10 @@ import nl.hexmaster.leakout.history.data.LeakOutDatabase
 import nl.hexmaster.leakout.history.data.RoomLevelHistoryRepository
 import nl.hexmaster.leakout.settings.DataStoreSettingsRepository
 import nl.hexmaster.leakout.settings.SettingsRepository
+import nl.hexmaster.leakout.ui.designer.AndroidLevelExporter
+import nl.hexmaster.leakout.ui.designer.LevelDesignerScreen
+import nl.hexmaster.leakout.ui.designer.LevelDesignerViewModel
+import nl.hexmaster.leakout.ui.designer.TestPlayScreen
 import nl.hexmaster.leakout.ui.game.GameScreen
 import nl.hexmaster.leakout.ui.levels.LevelLibraryScreen
 import nl.hexmaster.leakout.ui.levels.LevelLibraryViewModel
@@ -56,7 +63,25 @@ private sealed interface Screen {
     data object Library : Screen
     data object Settings : Screen
     data class Game(val level: Level) : Screen
+
+    /** The level designer; only reachable while [FeatureFlags.levelDesigner] is on. */
+    data object Designer : Screen
+
+    /** A test play of a design: nothing is recorded, and leaving returns to the designer. */
+    data class TestPlay(val level: Level) : Screen
 }
+
+/**
+ * Keeps the designer across activity recreation: a recreated activity returns to the designer, and
+ * a test play returns to it too, its design kept by the view model. Every other screen starts again
+ * on the welcome screen, as before.
+ */
+private val ScreenSaver = Saver<Screen, String>(
+    save = { screen -> if (screen is Screen.Designer || screen is Screen.TestPlay) DESIGNER_SCREEN else null },
+    restore = { saved -> if (saved == DESIGNER_SCREEN && FeatureFlags.levelDesigner) Screen.Designer else Screen.Welcome },
+)
+
+private const val DESIGNER_SCREEN = "designer"
 
 class MainActivity : ComponentActivity() {
     private val levels by lazy { BundledLevels(assets) }
@@ -101,6 +126,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // The design being edited, kept across test plays, configuration changes and process death.
+    // Created on first use, so it never exists while the level designer flag is off.
+    private val designerViewModel: LevelDesignerViewModel by viewModels {
+        viewModelFactory {
+            initializer { LevelDesignerViewModel(levels, AndroidLevelExporter(this@MainActivity), createSavedStateHandle()) }
+        }
+    }
+
     // Read once: the installed version does not change while the process runs.
     private val appInfo: AppInfo by lazy {
         @Suppress("DEPRECATION") // The int-flag overload works on every supported API level (min 26).
@@ -131,12 +164,14 @@ class MainActivity : ComponentActivity() {
         setContent {
             LeakOutTheme {
                 SplashGate {
-                    var screen by remember { mutableStateOf<Screen>(Screen.Welcome) }
+                    var screen by rememberSaveable(stateSaver = ScreenSaver) { mutableStateOf<Screen>(Screen.Welcome) }
                     // Every visit opens on the page asked for, not the one left last time.
                     val openLibrary = { page: Int ->
                         library.reopen(page)
                         screen = Screen.Library
                     }
+                    // The only way into the designer, and a no-op while its flag is off.
+                    val openDesigner = { if (FeatureFlags.levelDesigner) screen = Screen.Designer }
                     when (val current = screen) {
                         is Screen.Game -> {
                             val next = remember(current.level) { levels.next(current.level) }
@@ -146,8 +181,19 @@ class MainActivity : ComponentActivity() {
                                 onNextLevel = next?.let { { screen = Screen.Game(it) } },
                                 history = history,
                                 soundEffects = soundEffectsViewModel.soundEffects,
+                                tips = settings,
                             )
                         }
+                        is Screen.TestPlay -> TestPlayScreen(
+                            level = current.level,
+                            onExit = { screen = Screen.Designer },
+                            soundEffects = soundEffectsViewModel.soundEffects,
+                        )
+                        Screen.Designer -> LevelDesignerScreen(
+                            viewModel = designerViewModel,
+                            onTestPlay = { screen = Screen.TestPlay(it) },
+                            onBack = { screen = Screen.Welcome },
+                        )
                         Screen.Library -> LevelLibraryScreen(
                             viewModel = library,
                             onStartLevel = { id -> levels.load(id)?.let { screen = Screen.Game(it) } },
@@ -166,6 +212,7 @@ class MainActivity : ComponentActivity() {
                             onOpenLevelLibrary = openLibrary,
                             onSettings = { screen = Screen.Settings },
                             onExit = { finishAffinity() },
+                            onOpenLevelDesigner = if (FeatureFlags.levelDesigner) openDesigner else null,
                         )
                     }
                 }

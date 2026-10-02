@@ -21,6 +21,7 @@ import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.FlowSettings
 import nl.hexmaster.leakout.core.level.GridSize
 import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.PlacementRules
 import nl.hexmaster.leakout.core.level.Position
@@ -44,6 +45,7 @@ internal object FieldTest {
         initialDelayMs: Long = 10_000,
         cellsPerSecond: Double = 0.8,
         stars: StarBenchmarks = StarBenchmarks(100, 200, 350),
+        mandatory: List<MandatorySection> = emptyList(),
     ): Level = Level(
         id = id,
         name = "Test",
@@ -55,6 +57,7 @@ internal object FieldTest {
         stack = StackSettings(visibleSize = visibleSize, weights = PipeSection.entries.associateWith { if (it == section) 1 else 0 }),
         rules = rules,
         stars = stars,
+        mandatory = mandatory,
     )
 
     /** The 16 × 12 level used for pan and zoom, with the start on the left edge halfway down. */

@@ -18,6 +18,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import nl.hexmaster.leakout.ui.game.GameScreenTags
 import nl.hexmaster.leakout.ui.game.HudTags
 import nl.hexmaster.leakout.ui.game.PauseTags
+import nl.hexmaster.leakout.ui.game.keepsScreenOn
+import nl.hexmaster.leakout.ui.game.onboarding.TipOverlayTags
 import nl.hexmaster.leakout.ui.levels.LevelLibraryTags
 import nl.hexmaster.leakout.ui.levels.levelTileTag
 import nl.hexmaster.leakout.ui.settings.SettingsTags
@@ -26,6 +28,7 @@ import nl.hexmaster.leakout.ui.splash.SplashTiming
 import nl.hexmaster.leakout.ui.title.PlayMenuTags
 import nl.hexmaster.leakout.ui.title.WelcomeScreenTags
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -134,6 +137,11 @@ class MainActivityTest {
         compose.onNodeWithTag(levelTileTag(1)).performClick()
         compose.waitForIdle()
         compose.onNodeWithTag(GameScreenTags.SCREEN).assertIsDisplayed()
+        // On a fresh install the intro tour covers the game first.
+        if (compose.onAllNodesWithTag(TipOverlayTags.SKIP).fetchSemanticsNodes().isNotEmpty()) {
+            compose.onNodeWithTag(TipOverlayTags.SKIP).performClick()
+            compose.waitForIdle()
+        }
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
         compose.onNodeWithTag(PauseTags.EXIT).performClick()
@@ -141,6 +149,30 @@ class MainActivityTest {
 
         compose.onNodeWithTag(GameScreenTags.SCREEN).assertDoesNotExist()
         compose.onNodeWithTag(WelcomeScreenTags.SCREEN).assertIsDisplayed()
+    }
+
+    @Test
+    fun screenIsKeptOnOnlyWhileALevelIsOpen() {
+        skipSplash()
+        assertFalse(compose.activity.keepsScreenOn())
+        playThen(PlayMenuTags.SELECT_LEVEL, LevelLibraryTags.SCREEN)
+        assertFalse(compose.activity.keepsScreenOn())
+
+        compose.onNodeWithTag(levelTileTag(1)).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(GameScreenTags.SCREEN).assertIsDisplayed()
+        compose.waitUntil(5_000) { compose.activity.keepsScreenOn() }
+        if (compose.onAllNodesWithTag(TipOverlayTags.SKIP).fetchSemanticsNodes().isNotEmpty()) {
+            compose.onNodeWithTag(TipOverlayTags.SKIP).performClick()
+            compose.waitForIdle()
+        }
+
+        compose.onNodeWithTag(HudTags.PAUSE).performClick()
+        compose.onNodeWithTag(PauseTags.EXIT).performClick()
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(WelcomeScreenTags.SCREEN).assertIsDisplayed()
+        compose.waitUntil(5_000) { !compose.activity.keepsScreenOn() }
     }
 
     private fun openSettings() {

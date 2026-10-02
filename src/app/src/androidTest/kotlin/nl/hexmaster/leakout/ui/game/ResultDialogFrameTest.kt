@@ -19,6 +19,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import nl.hexmaster.leakout.ui.components.FlowButton
 import nl.hexmaster.leakout.ui.components.FlowButtonSize
 import nl.hexmaster.leakout.ui.components.FlowButtonVariant
+import nl.hexmaster.leakout.ui.components.PanelScale
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import org.junit.Rule
 import org.junit.Test

@@ -14,7 +14,7 @@
 
 - [x] 3.1 Add `mandatory: Boolean = false` to `Cell.Pipe` and place the level's mandatory sections in `Board.from(level)`. Cover in `BoardTest` that a level's board holds them unfilled and that `markLiquidEntered` keeps the flag.
 - [x] 3.2 Make `Placement.check` reject a mandatory pipe with `FIXED`, before the replace checks. Cover in `PlacementTest` a dry mandatory section with `allowReplace` true, and one the liquid has entered.
-- [ ] 3.3 Add the shared `MandatoryProgress` helper that returns the unused mandatory sections for a set of `ChannelUse`s: a cross needs both channels, a reservoir its single channel. Cover the spec's reservoir, one-channel cross and two-channel cross cases in a new `MandatoryProgressTest`.
+- [x] 3.3 Add the shared `MandatoryProgress` helper that returns the unused mandatory sections for a set of `ChannelUse`s: a cross needs both channels, a reservoir its single channel. Cover the spec's reservoir, one-channel cross and two-channel cross cases in a new `MandatoryProgressTest`.
 - [ ] 3.4 Make `FinalScore.of` leave mandatory pipes out of `unusedSections`. Cover in `FinalScoreTest` and `FinalScoreEngineTest` that `RemoveUnused` never takes a mandatory section off the board.
 
 ## 4. Route, win and loss in the engine

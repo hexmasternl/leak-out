@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
@@ -59,30 +60,94 @@ class GamePlayHudTest {
     private lateinit var session: GameSession
     private var exited = false
 
-    // 6.1
+    // 4.1
     @Test
-    fun hudShowsLevelSpeedStarsScoreAndCogInOrder() {
+    fun hudShowsLevelSpeedCountdownScoreAndCogInOrder() {
         show(level(visibleSize = 10))
-
-        compose.onNodeWithTag(HudTags.LEVEL).assertContentDescriptionEquals("Level 1")
-        compose.onNodeWithTag(HudTags.SPEED).assertContentDescriptionEquals("Flow speed 0.8 cells per second")
-        compose.onNodeWithTag(HudTags.STARS).assertContentDescriptionEquals("0 of 3 stars")
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 0")
-        compose.onNodeWithContentDescription("Pause menu").assertIsDisplayed()
-        for (star in 1..3) starNode(star).assert(SemanticsMatcher.expectValue(StarEarned, false))
 
         val hud = bounds(HudTags.HUD)
         val levelBounds = bounds(HudTags.LEVEL)
         val speed = bounds(HudTags.SPEED)
-        val stars = bounds(HudTags.STARS)
+        val countdown = bounds(HudTags.COUNTDOWN)
         val score = bounds(HudTags.SCORE)
         val cog = bounds(HudTags.PAUSE)
         assertTrue(levelBounds.right <= speed.left)
-        assertTrue(speed.right < stars.left)
-        assertTrue(stars.right <= score.left)
+        assertTrue(speed.right <= countdown.left)
+        assertTrue(countdown.right <= score.left)
         assertTrue(score.right <= cog.left)
-        assertEquals(hud.right.value, cog.right.value, 1f)
+        assertEquals(hud.left.value + 16f, levelBounds.left.value, 1f)
+        assertEquals(hud.right.value - 4f, cog.right.value, 1f)
+        assertEquals(ScoreBarWidth.value, (score.right - score.left).value, 1f)
         assertTrue(cog.bottom - cog.top >= 48.dp)
+    }
+
+    // 4.1: the game is landscape only, so 640 dp is about the narrowest HUD.
+    @Test
+    fun countdownKeepsItsMinimumWidthOnANarrowLandscapeScreen() {
+        compose.setContent {
+            LeakOutTheme {
+                Box(Modifier.requiredWidth(640.dp)) {
+                    GameHud(1, 0.8, 10_000L, 10_000L, StarBenchmarks(100, 200, 350), 1_250, onPause = {})
+                }
+            }
+        }
+        val countdown = bounds(HudTags.COUNTDOWN)
+        val score = bounds(HudTags.SCORE)
+        assertTrue(countdown.right - countdown.left >= 96.dp)
+        assertTrue(countdown.right <= score.left)
+        assertEquals(ScoreBarWidth.value, (score.right - score.left).value, 1f)
+    }
+
+    // 4.1
+    @Test
+    fun nothingMovesWhenTheCountdownDisappearsOrTheScoreGrows() {
+        show()
+        val tags = listOf(HudTags.LEVEL, HudTags.SPEED, HudTags.COUNTDOWN_SLOT, HudTags.SCORE, HudTags.PAUSE)
+        val before = tags.map { bounds(it) }
+
+        compose.runOnIdle {
+            session.endCountdown()
+            session.setScore(1_250)
+        }
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(HudTags.COUNTDOWN).assertDoesNotExist()
+        assertEquals(before, tags.map { bounds(it) })
+    }
+
+    // 4.2
+    @Test
+    fun screenReaderReadsTheHud() {
+        compose.mainClock.autoAdvance = false
+        show(level().copy(id = 7))
+        compose.runOnIdle {
+            session.setCountdown(6_200)
+            session.setScore(150)
+        }
+        compose.mainClock.advanceTimeByFrame()
+
+        compose.onNodeWithTag(HudTags.LEVEL).assertContentDescriptionEquals("Level 7")
+        compose.onNodeWithTag(HudTags.SPEED).assertContentDescriptionEquals("Flow speed 8")
+        compose.onNodeWithTag(HudTags.COUNTDOWN).assertContentDescriptionEquals("Flow starts in 7 seconds")
+        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 150, 1 of 3 stars")
+        compose.onNodeWithContentDescription("Pause menu").assertIsDisplayed()
+        // The score bar, its markers and number included, is one item for a screen reader.
+        compose.onAllNodes(hasContentDescription("Score", substring = true)).assertCountEquals(1)
+    }
+
+    // 4.2
+    @Test
+    fun noCountdownIsReadOnceTheFlowStarted() {
+        show()
+        compose.runOnIdle { session.endCountdown() }
+        compose.waitForIdle()
+
+        compose.onAllNodes(hasContentDescription("Flow starts", substring = true), useUnmergedTree = true)
+            .assertCountEquals(0)
+        compose.onNodeWithTag(HudTags.LEVEL).assertContentDescriptionEquals("Level 1")
+        compose.onNodeWithTag(HudTags.SPEED).assertContentDescriptionEquals("Flow speed 8")
+        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 0, 0 of 3 stars")
+        compose.onNodeWithContentDescription("Pause menu").assertIsDisplayed()
     }
 
     // 6.1
@@ -102,25 +167,67 @@ class GamePlayHudTest {
         assertTrue(next.getUnclippedBoundsInRoot().bottom <= 360.dp)
     }
 
-    // 6.2
+    // 3.2
     @Test
-    fun starsFollowTheScoreAndResetOnRestart() {
+    fun flowSpeedIsTheWholeNumber() {
         show()
-        val expected = listOf(100 to 1, 199 to 1, 200 to 2, 350 to 3)
-        for ((score, earned) in expected) {
+        compose.onNodeWithTag(HudTags.SPEED).assertContentDescriptionEquals("Flow speed 8")
+    }
+
+    // 3.2
+    @Test
+    fun flowSpeedIsRoundedHalfUp() {
+        compose.setContent {
+            LeakOutTheme {
+                Box(Modifier.requiredWidth(800.dp)) {
+                    GameHud(1, 1.25, null, 10_000L, StarBenchmarks(100, 200, 350), 0, onPause = {})
+                }
+            }
+        }
+        compose.onNodeWithTag(HudTags.SPEED).assertContentDescriptionEquals("Flow speed 13")
+    }
+
+    // 3.4
+    @Test
+    fun scoreBarFollowsTheScoreAndEmptiesOnRestart() {
+        show()
+        scoreBar().assert(SemanticsMatcher.expectValue(ScoreFill, 0f))
+        scoreBar().assertContentDescriptionEquals("Score 0, 0 of 3 stars")
+
+        for ((score, fill) in listOf(175 to 0.5f, 350 to 1f, 1_250 to 1f)) {
             compose.runOnIdle { session.setScore(score) }
             compose.waitForIdle()
-            for (star in 1..3) {
-                starNode(star).assert(SemanticsMatcher.expectValue(StarEarned, star <= earned))
-                starNode(star).assert(SemanticsMatcher.expectValue(StarScale, 1f))
-            }
-            compose.onNodeWithTag(HudTags.STARS).assertContentDescriptionEquals("$earned of 3 stars")
+            scoreBar().assert(SemanticsMatcher.expectValue(ScoreFill, fill))
         }
+        scoreBar().assertContentDescriptionEquals("Score 1,250, 3 of 3 stars")
 
-        compose.runOnIdle { session.send(GameCommand.Restart) }
+        compose.runOnIdle { session.setScore(250) }
         compose.waitForIdle()
-        for (star in 1..3) starNode(star).assert(SemanticsMatcher.expectValue(StarEarned, false))
-        compose.onNodeWithTag(HudTags.STARS).assertContentDescriptionEquals("0 of 3 stars")
+        compose.mainClock.autoAdvance = false
+        compose.runOnIdle { session.send(GameCommand.Restart) }
+        compose.mainClock.advanceTimeByFrame()
+        // Empty at once, without animating down.
+        scoreBar().assert(SemanticsMatcher.expectValue(ScoreFill, 0f))
+        scoreBar().assertContentDescriptionEquals("Score 0, 0 of 3 stars")
+    }
+
+    // 3.4
+    @Test
+    fun scoreNumberChangesAtOnceWhileTheFillMoves() {
+        show()
+        compose.runOnIdle { session.setScore(50) }
+        compose.waitForIdle()
+        compose.mainClock.autoAdvance = false
+
+        compose.runOnIdle { session.setScore(100) }
+        compose.mainClock.advanceTimeByFrame()
+        compose.mainClock.advanceTimeBy(100)
+        scoreBar().assertScore("100")
+        val moving = scoreBar().fetchSemanticsNode().config[ScoreFill]
+        assertTrue("fill should be on its way, was $moving", moving > 1f / 7 && moving < 2f / 7)
+
+        compose.mainClock.advanceTimeBy(SCORE_FILL_MS + 100L)
+        scoreBar().assert(SemanticsMatcher.expectValue(ScoreFill, 2f / 7))
     }
 
     // 6.3
@@ -200,8 +307,7 @@ class GamePlayHudTest {
 
         compose.onNodeWithTag(PauseTags.DIALOG).assertDoesNotExist()
         compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 150")
-        compose.onNodeWithTag(HudTags.STARS).assertContentDescriptionEquals("1 of 3 stars")
+        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 150, 1 of 3 stars")
         compose.runOnIdle {
             assertFalse(session.state.paused)
             assertEquals(stack, session.state.stack)
@@ -246,9 +352,8 @@ class GamePlayHudTest {
         compose.onNodeWithTag(PauseTags.DIALOG).assertDoesNotExist()
         compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Empty")
         compose.onNodeWithTag(HudTags.LEVEL).assertContentDescriptionEquals("Level 1")
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 0")
-        compose.onNodeWithTag(HudTags.STARS).assertContentDescriptionEquals("0 of 3 stars")
-        for (star in 1..3) starNode(star).assert(SemanticsMatcher.expectValue(StarEarned, false))
+        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 0, 0 of 3 stars")
+        compose.onNodeWithTag(HudTags.SCORE).assert(SemanticsMatcher.expectValue(ScoreFill, 0f))
         compose.runOnIdle {
             assertFalse(session.state.paused)
             assertTrue(session.state.board.pipes.isEmpty())
@@ -333,7 +438,7 @@ class GamePlayHudTest {
         if (compose.mainClock.autoAdvance) compose.waitForIdle() else compose.mainClock.advanceTimeByFrame()
     }
 
-    private fun starNode(n: Int) = compose.onNodeWithTag("hud_star_$n", useUnmergedTree = true)
+    private fun scoreBar() = compose.onNodeWithTag(HudTags.SCORE)
 
     private fun nextNode() = compose.onNodeWithContentDescription("Next: Horizontal straight", useUnmergedTree = true)
 

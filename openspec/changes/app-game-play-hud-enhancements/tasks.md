@@ -17,18 +17,18 @@ Tracking issue: [#38 HUD enhancements](https://github.com/hexmasternl/leak-out/i
 
 ## 3. HUD components
 
-- [ ] 3.1 Restyle the `GameHud` container as the approved HUD panel and keep `HudLayout.HEIGHT` fixed; verify the existing "largest stack fits on a 360 dp screen" instrumented test still passes
-- [ ] 3.2 Show the flow speed as the whole number with the "Flow speed N" description and update strings; verify the HUD instrumented test reads "Flow speed 8" for 0.8
-- [ ] 3.3 Add the countdown bar composable (fill, warning colours, fade-out, hidden for delay 0, reduced motion) with test semantics for fraction and warning; verify instrumented tests for full at start, 40 % after 6 s, frozen while paused, refilled on restart, fades on flow start, absent for delay 0
-- [ ] 3.4 Add the score bar composable (fixed width, markers, centred grouped number, animated fill with snap on new attempt) with test semantics for the fill fraction; verify instrumented tests for empty start, half at 175, full and "1,250" past three stars, empty after restart
-- [ ] 3.5 Add the threshold sparkle driven by `thresholdsPassed` on the animated fill, once per threshold per attempt, off under reduced motion; verify instrumented tests that crossing `stars.one` starts one sparkle, 190→360 starts two, 360→400 none, and none with animations removed
-- [ ] 3.6 Remove `HudStars`/`HudStar` and the HUD star constants, keep `StarIcon` and `WinStars` for the level complete dialog; verify the level complete dialog instrumented tests still pass
+- [x] 3.1 Restyle the `GameHud` container as the approved HUD panel and keep `HudLayout.HEIGHT` fixed; verify the existing "largest stack fits on a 360 dp screen" instrumented test still passes
+- [x] 3.2 Show the flow speed as the whole number with the "Flow speed N" description and update strings; verify the HUD instrumented test reads "Flow speed 8" for 0.8
+- [x] 3.3 Add the countdown bar composable (fill, warning colours, fade-out, hidden for delay 0, reduced motion) with test semantics for fraction and warning; verify instrumented tests for full at start, 40 % after 6 s, frozen while paused, refilled on restart, fades on flow start, absent for delay 0
+- [x] 3.4 Add the score bar composable (fixed width, markers, centred grouped number, animated fill with snap on new attempt) with test semantics for the fill fraction; verify instrumented tests for empty start, half at 175, full and "1,250" past three stars, empty after restart
+- [x] 3.5 Add the threshold sparkle driven by `thresholdsPassed` on the animated fill, once per threshold per attempt, off under reduced motion; verify instrumented tests that crossing `stars.one` starts one sparkle, 190→360 starts two, 360→400 none, and none with animations removed
+- [x] 3.6 Remove `HudStars`/`HudStar` and the HUD star constants, keep `StarIcon` and `WinStars` for the level complete dialog; verify the level complete dialog instrumented tests still pass
 
 ## 4. Wiring and accessibility
 
-- [ ] 4.1 Pass `countdownRemainingMs`, `initialDelayMs`, the level's star thresholds and the score from `GameScreen` to `GameHud`, and lay out level, speed, countdown slot, score bar and cog wheel; verify the item-order instrumented test and that nothing moves when the countdown disappears
-- [ ] 4.2 Set the content descriptions ("Level 7", "Flow speed 8", "Flow starts in 7 seconds", "Score 150, 1 of 3 stars", "Pause menu") with the score bar as one merged node; verify the screen reader instrumented test, including that no countdown is read after the flow starts
+- [x] 4.1 Pass `countdownRemainingMs`, `initialDelayMs`, the level's star thresholds and the score from `GameScreen` to `GameHud`, and lay out level, speed, countdown slot, score bar and cog wheel; verify the item-order instrumented test and that nothing moves when the countdown disappears
+- [x] 4.2 Set the content descriptions ("Level 7", "Flow speed 8", "Flow starts in 7 seconds", "Score 150, 1 of 3 stars", "Pause menu") with the score bar as one merged node; verify the screen reader instrumented test, including that no countdown is read after the flow starts
 
 ## 5. Integration
 
-- [ ] 5.1 Run `./gradlew :app:testDebugUnitTest` and the affected HUD, game screen and level complete instrumented tests on the emulator; verify all pass and post HUD screenshots on issue #38
+- [x] 5.1 Run `./gradlew :app:testDebugUnitTest` and the affected HUD, game screen and level complete instrumented tests on the emulator; verify all pass and post HUD screenshots on issue #38

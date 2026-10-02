@@ -27,29 +27,29 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Renders the issue #38 HUD mock-up at 800 dp and 640 dp and saves each as a PNG in the app's
- * external files folder (`files/hud-mockup/`), so the review screenshots come from the real code.
+ * Renders the HUD review states of issue #38 at 800 dp and 640 dp and saves each as a PNG in the
+ * app's external files folder (`files/hud-screenshots/`), for the screenshots on the issue.
  */
 @RunWith(AndroidJUnit4::class)
-class HudMockupTest {
+class HudScreenshotTest {
     @get:Rule
     val compose = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun mockupRendersAtWideAndNarrowWidths() {
+    fun hudRendersAtWideAndNarrowWidths() {
         // A phone in portrait is narrower than 800 dp.
         compose.runOnUiThread { compose.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
         compose.waitForIdle()
         var width by mutableIntStateOf(800)
         compose.setContent {
             LeakOutTheme {
-                Box(Modifier.width(width.dp).testTag(TAG)) { HudMockupStates() }
+                Box(Modifier.width(width.dp).testTag(TAG)) { GameHudPreviewStates() }
             }
         }
-        save("hud-mockup-800dp")
+        save("hud-800dp")
         width = 640
         compose.waitForIdle()
-        save("hud-mockup-640dp")
+        save("hud-640dp")
     }
 
     private fun save(name: String) {
@@ -57,11 +57,11 @@ class HudMockupTest {
         assertTrue(bitmap.width > 0 && bitmap.height > 0)
         // The panel is drawn, not just the screen background.
         assertNotEquals(LeakOutColors.SurfaceDeep.toArgb(), bitmap.getPixel(bitmap.width / 2, 2))
-        val dir = File(compose.activity.getExternalFilesDir(null), "hud-mockup").apply { mkdirs() }
+        val dir = File(compose.activity.getExternalFilesDir(null), "hud-screenshots").apply { mkdirs() }
         File(dir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
     private companion object {
-        const val TAG = "hud_mockup"
+        const val TAG = "hud_screenshots"
     }
 }

@@ -160,7 +160,7 @@ class LevelLostTest {
         compose.onNodeWithTag(LevelLostTags.DIALOG).assertDoesNotExist()
         compose.cellNode(placed).assertContentDescriptionEquals("Empty")
         compose.cellNode(placed).assert(SemanticsMatcher.keyNotDefined(LeakAt))
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 0")
+        compose.onNodeWithTag(HudTags.SCORE).assertScore("0")
         compose.runOnIdle { assertEquals(Outcome.Playing, session.state.outcome) }
 
         compose.dropOnCell(Position(1, 1))

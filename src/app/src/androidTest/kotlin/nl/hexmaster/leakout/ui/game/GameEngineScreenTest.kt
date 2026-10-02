@@ -68,19 +68,19 @@ class GameEngineScreenTest {
         compose.cellNode(Position(1, 0)).assert(SemanticsMatcher.expectValue(LiquidHead, true))
         compose.cellNode(Position(1, 0)).assertContentDescriptionEquals("Placed H, filled")
         tick(1_000) // leaves the H
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 10")
+        compose.onNodeWithTag(HudTags.SCORE).assertScore("10")
         compose.cellNode(Position(1, 0)).assert(SemanticsMatcher.expectValue(PointsPopupText, listOf("+10")))
         compose.cellNode(Position(1, 0)).assert(SemanticsMatcher.expectValue(FilledChannels, setOf(Channel.SINGLE)))
         compose.cellNode(Position(2, 0)).assert(SemanticsMatcher.expectValue(LiquidHead, true))
         compose.cellNode(Position(1, 0)).assert(SemanticsMatcher.expectValue(LiquidHead, false))
 
         tick(1_000) // leaves the LB
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 25")
+        compose.onNodeWithTag(HudTags.SCORE).assertScore("25")
         compose.cellNode(Position(2, 0)).assert(SemanticsMatcher.expectValue(PointsPopupText, listOf("+15")))
 
         compose.runOnIdle { session.flowToEnd(stepMs = 16) }
         compose.waitForIdle()
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 60")
+        compose.onNodeWithTag(HudTags.SCORE).assertScore("60")
         compose.runOnIdle {
             assertTrue(session.state.outcome is Outcome.Won)
             assertEquals(60, session.state.score)
@@ -120,10 +120,10 @@ class GameEngineScreenTest {
             session.sendTick(2_000) // the start, then the H on (1, 5)
         }
         compose.waitForIdle()
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 10")
+        compose.onNodeWithTag(HudTags.SCORE).assertScore("10")
         compose.runOnIdle { session.setScore(120) } // one star earned
         compose.waitForIdle()
-        compose.onNodeWithTag(HudTags.STARS).assertContentDescriptionEquals("1 of 3 stars")
+        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 120, 1 of 3 stars")
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
         compose.onNodeWithTag(PauseTags.RESTART).performClick()
@@ -133,11 +133,8 @@ class GameEngineScreenTest {
         assertSameRect(startRect, compose.cellRect(start))
         compose.onAllNodes(hasContentDescription("Placed H"), useUnmergedTree = true).assertCountEquals(0)
         compose.onAllNodes(hasContentDescription("Placed H, filled"), useUnmergedTree = true).assertCountEquals(0)
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 0")
-        compose.onNodeWithTag(HudTags.STARS).assertContentDescriptionEquals("0 of 3 stars")
-        for (star in 1..3) {
-            compose.onNodeWithTag("hud_star_$star", useUnmergedTree = true).assert(SemanticsMatcher.expectValue(StarEarned, false))
-        }
+        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 0, 0 of 3 stars")
+        compose.onNodeWithTag(HudTags.SCORE).assert(SemanticsMatcher.expectValue(ScoreFill, 0f))
         compose.onAllNodes(SemanticsMatcher("has a popup") { node ->
             node.config.getOrElseNullable(PointsPopupText) { null }?.isNotEmpty() == true
         }, useUnmergedTree = true).assertCountEquals(0)

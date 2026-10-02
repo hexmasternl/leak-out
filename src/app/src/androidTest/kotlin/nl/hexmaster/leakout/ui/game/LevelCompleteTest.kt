@@ -211,7 +211,7 @@ class LevelCompleteTest {
         compose.onNodeWithTag(LevelCompleteTags.DIALOG).assertDoesNotExist()
         compose.cellNode(Position(1, 0)).assertContentDescriptionEquals("Empty")
         compose.cellNode(finish).assert(SemanticsMatcher.keyNotDefined(FinishFlash))
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 0")
+        compose.onNodeWithTag(HudTags.SCORE).assertScore("0")
         compose.runOnIdle {
             assertEquals(Outcome.Playing, session.state.outcome)
             assertEquals(null, session.state.finalScore)
@@ -232,7 +232,7 @@ class LevelCompleteTest {
 
         compose.onNodeWithTag(LevelCompleteTags.DIALOG).assertDoesNotExist()
         compose.onNodeWithTag(HudTags.LEVEL).assert(hasText("Level 100"))
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 0")
+        compose.onNodeWithTag(HudTags.SCORE).assertScore("0")
         compose.cellNode(Position(1, 0)).assertContentDescriptionEquals("Empty")
         compose.dropOnCell(Position(1, 1))
         compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")

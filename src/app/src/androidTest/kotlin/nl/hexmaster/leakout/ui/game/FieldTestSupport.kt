@@ -2,6 +2,8 @@ package nl.hexmaster.leakout.ui.game
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
@@ -179,6 +181,11 @@ internal fun GameSession.endCountdown() {
     send(GameCommand.Tick(waiting.remainingMs / state.flowTimeScale))
 }
 
+/** Sets the countdown before the flow directly, for the HUD tests. */
+internal fun GameSession.setCountdown(remainingMs: Long) {
+    state = state.copy(flow = FlowState.Waiting(remainingMs))
+}
+
 /** Runs the flow in ticks of [stepMs] until the level is won or lost. The outcome happens at the last tick. */
 internal fun GameSession.flowToEnd(stepMs: Long = 100) {
     var guard = 0
@@ -192,3 +199,10 @@ internal fun GameSession.flowToEnd(stepMs: Long = 100) {
 internal fun GameSession.markLiquidEntered(at: Position) {
     state = state.copy(board = state.board.markLiquidEntered(at))
 }
+
+/** Asserts the HUD score bar reads [score] (as shown, e.g. "1,250"), whatever the stars after it. */
+internal fun SemanticsNodeInteraction.assertScore(score: String): SemanticsNodeInteraction = assert(
+    SemanticsMatcher("score bar reads Score $score") { node ->
+        node.config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull()?.startsWith("Score $score, ") == true
+    },
+)

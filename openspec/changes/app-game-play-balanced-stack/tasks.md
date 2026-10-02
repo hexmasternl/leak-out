@@ -9,9 +9,9 @@ Tracking issue: [#35 Random tile stack population needs to be less random](https
 
 ## 2. Dealer
 
-- [ ] 2.1 Add immutable `core/.../stack/Dealer.kt`: shares of the allowed sections, draws so far, dealt count and drought per section, `Dealer.initial(settings)` and `deal(random): Pair<PipeSection, Dealer>` with deficit steering (design §2, `StrictMath.exp`, `random.nextDouble()`) and the drought limit for the standard sections (design §3)
-- [ ] 2.2 `DealerTest`: first draw distribution within 1 percentage point over 100,000 fresh dealers, disabled section never drawn in 10,000 draws, state updates per draw, a section behind is more likely than a section ahead, drought limit forces the longest drought with tie by `PipeSection` order, `X` and `RES` never forced, same seed same sequence
-- [ ] 2.3 Statistical tests over 10,000 seeded runs of 40 draws with default weights: no standard section missing for more than 15 draws, mean per-section standard deviation at most 0.8, back-to-back repeats at most 12 %; with `X` 6 the cross share is within 1 percentage point of 12.5 %; run `./gradlew :core:test`
+- [x] 2.1 Add immutable `core/.../stack/Dealer.kt`: shares of the allowed sections, draws so far, dealt count and drought per section, `Dealer.initial(settings)` and `deal(random): Pair<PipeSection, Dealer>` with deficit steering (design §2, `StrictMath.exp`, `random.nextDouble()`) and the drought limit for the standard sections (design §3)
+- [x] 2.2 `DealerTest`: first draw distribution within 1 percentage point over 100,000 fresh dealers, disabled section never drawn in 10,000 draws, state updates per draw, a section behind is more likely than a section ahead, drought limit forces the longest drought with tie by `PipeSection` order, `X` and `RES` never forced, same seed same sequence
+- [x] 2.3 Statistical tests over 10,000 seeded runs of 40 draws with default weights: no standard section missing for more than 15 draws, mean per-section standard deviation at most 0.8, back-to-back repeats at most 12 %; with `X` 6 the cross share is within 1 percentage point of 12.5 %; run `./gradlew :core:test`
 
 ## 3. Stack and engine
 

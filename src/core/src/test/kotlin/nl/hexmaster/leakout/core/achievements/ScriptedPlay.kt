@@ -1,6 +1,7 @@
 package nl.hexmaster.leakout.core.achievements
 
 import java.io.File
+import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
@@ -99,6 +100,50 @@ internal class ScriptedPlay(private val engine: GameEngine) {
             }
         }
         return route
+    }
+
+    /**
+     * A long route for a level without mandatory sections: the best of [tries] walks from the start's
+     * facing cell to the finish's facing cell, each [grow]n afterwards. A walk steps to the free,
+     * unused neighbour with the fewest free, unused neighbours of its own (random on a near tie), but
+     * only to one from which the finish's facing cell can still be reached, so it hugs walls and
+     * sweeps the grid instead of taking the shortest way. Routes are compared by their points: 10
+     * per straight, 15 per corner.
+     */
+    fun longPath(level: Level, random: Random, tries: Int = 30): List<Position> {
+        require(level.mandatory.isEmpty()) { "level ${level.id} has mandatory sections" }
+        val free = freeCells(level).toSet()
+        val first = level.start.position.neighbour(level.start.openSide)
+        val last = level.finish.position.neighbour(level.finish.openSide)
+        fun open(at: Position, used: Set<Position>) = Side.entries.map { at.neighbour(it) }.filter { it in free && it !in used }
+        fun reachable(from: Position, used: Set<Position>): Boolean {
+            val seen = mutableSetOf(from)
+            val queue = ArrayDeque(listOf(from))
+            while (queue.isNotEmpty()) {
+                val at = queue.removeFirst()
+                if (at == last) return true
+                open(at, used).filter { seen.add(it) }.forEach(queue::addLast)
+            }
+            return false
+        }
+        fun walk(): List<Position> {
+            val path = mutableListOf(first)
+            val used = mutableSetOf(first)
+            while (path.last() != last) {
+                val next = open(path.last(), used).filter { it != last && reachable(it, used + it) }
+                    .minByOrNull { open(it, used).size + random.nextDouble(-0.45, 0.45) } ?: last
+                path += next
+                used += next
+            }
+            return path
+        }
+        fun points(path: List<Position>): Int {
+            val cells = listOf(level.start.position) + path + level.finish.position
+            return (1 until cells.size - 1).sumOf { i ->
+                if (cells[i - 1].x == cells[i + 1].x || cells[i - 1].y == cells[i + 1].y) 10 else 15
+            }
+        }
+        return (1..tries).map { grow(level, walk()) }.maxBy(::points)
     }
 
     fun freeCells(level: Level): List<Position> =

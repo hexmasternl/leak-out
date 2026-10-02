@@ -14,16 +14,17 @@ import org.junit.jupiter.params.provider.MethodSource
 
 /**
  * Pack 1 Perfect and Perfectionist I need 3 stars on library page 1, so every level on that page
- * must be able to reach its `stars.three` through the engine. Each level is played with the solver's
- * route grown into long detours (more sections the liquid leaves, more points), built during the
- * countdown with a forced stack, as AchievementReachabilityTest does for Big Spender.
+ * must be able to reach its `stars.three` (10 points per free cell) through the engine. Each level
+ * is played with a long route that sweeps the grid ([ScriptedPlay.longPath]: more sections the
+ * liquid leaves, more points), built during the countdown with a forced stack, as
+ * AchievementReachabilityTest does for Big Spender.
  */
 class ThreeStarReachabilityTest {
     private val scripted = ScriptedPlay(GameEngine(Random(5)))
 
     private fun longWin(id: Int): GameState {
         val level = ScriptedPlay.bundled(id)
-        return scripted.play(scripted.build(scripted.start(id), scripted.routeOf(level, scripted.grow(level, scripted.solverPath(level)))))
+        return scripted.play(scripted.build(scripted.start(id), scripted.routeOf(level, scripted.longPath(level, Random(id)))))
     }
 
     @Test

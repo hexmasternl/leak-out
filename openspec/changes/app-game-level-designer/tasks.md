@@ -24,9 +24,9 @@ Tracking issue: [#43 Level designer](https://github.com/hexmasternl/leak-out/iss
 
 ## 4. Designer view model and export (app)
 
-- [ ] 4.1 Define a `LevelExporter` interface and the Android implementation (clipboard with label `level_NNN.json`, `ACTION_SEND` chooser with JSON text and subject `level_NNN.json`)
-- [ ] 4.2 Implement `LevelDesignerViewModel` with `SavedStateHandle`: draft (saved as `LevelWriter` JSON), selected tool, dirty flag, raw text of numeric fields with per-field parse errors, derived `DesignStatus`, actions for every edit, new blank, copy from a bundled level, export (clears dirty) and test play (only when solvable)
-- [ ] 4.3 View model JVM tests: initial blank design with id `bundled count + 1`, copy from bundled level, edits mark dirty, invalid number text keeps the draft, export calls the exporter with writer output and clears dirty, export and test play refused when invalid or unsolvable, state restored from a `SavedStateHandle`
+- [x] 4.1 Define a `LevelExporter` interface and the Android implementation (clipboard with label `level_NNN.json`, `ACTION_SEND` chooser with JSON text and subject `level_NNN.json`)
+- [x] 4.2 Implement `LevelDesignerViewModel` with `SavedStateHandle`: draft (saved as `LevelWriter` JSON), selected tool, dirty flag, raw text of numeric fields with per-field parse errors, derived `DesignStatus`, actions for every edit, new blank, copy from a bundled level, export (clears dirty) and test play (only when solvable)
+- [x] 4.3 View model JVM tests: initial blank design with id `bundled count + 1`, copy from bundled level, edits mark dirty, invalid number text keeps the draft, export calls the exporter with writer output and clears dirty, export and test play refused when invalid or unsolvable, state restored from a `SavedStateHandle`
 
 ## 5. Designer UI (app)
 

@@ -4,28 +4,25 @@ Tracking issue: [#35 Random tile stack population needs to be less random](https
 
 ## 1. Level model
 
-- [ ] 1.1 In `core/.../level/LevelDefaults.kt` set the `H`, `V`, `LT`, `LB`, `RT`, `RB` weights to 10 and add `STACK_ADAPTIVE` (`X` false, `RES` false), `LIKELINESS_MIN` 1, `LIKELINESS_MAX` 20, `LIKELINESS_DROP` 3 and `LIKELINESS_GAIN` 1, each with KDoc
-- [ ] 1.2 Add `adaptive: Map<PipeSection, Boolean>` to `StackSettings` (standard sections always true, `X`/`RES` from the level) with an `isAdaptive(section)` helper; add `AdaptiveDto` (`X`, `RES` only) to `StackDto` in `LevelDto.kt` so any other key is an unknown-key parse error
-- [ ] 1.3 In `LevelValidator.checkStack` reject weights above `LIKELINESS_MAX`, naming `stack.weights.<id>`
-- [ ] 1.4 Tests in `LevelParserTest`, `LevelModelTest` and `LevelValidatorTest` for every scenario of the `game-level-model` delta (new defaults, `X` 6 override, adaptive `RES`, `adaptive.H` rejected, weight 21 rejected); run `./gradlew :core:test`
+- [ ] 1.1 In `core/.../level/LevelDefaults.kt` set the `H`, `V`, `LT`, `LB`, `RT`, `RB` weights to 7 and add `STEERING_STRENGTH` 1.0 and `DROUGHT_FACTOR` 2.5, each with KDoc
+- [ ] 1.2 Tests in `LevelParserTest` and `LevelModelTest` for the new defaults and the `X` 3 override; run `./gradlew :core:test`
 
-## 2. Likeliness algorithm
+## 2. Dealer
 
-- [ ] 2.1 Add immutable `core/.../stack/Likeliness.kt`: current values for the allowed sections, the adaptive set, `draw(random): Pair<PipeSection, Likeliness>` with the drop/gain/clamp rule from design §1 (gain also after a fixed section is drawn), and `Likeliness.initial(settings)`
-- [ ] 2.2 `LikelinessTest`: drop and gain, clamp at 1 and 20, fixed section unchanged and still lets the others gain, adaptive special section, disabled section never drawn in 10,000 draws, first draw distribution within 1 percentage point over 100,000 fresh states, all values within 1..20 over 100,000 draws, same seed same sequence
-- [ ] 2.3 Spread test: 10,000 seeded runs of 40 draws with default weights, mean per-section standard deviation at most 1.8 and at least 99.9 % of runs drawing every standard section; run `./gradlew :core:test`
+- [ ] 2.1 Add immutable `core/.../stack/Dealer.kt`: shares of the allowed sections, draws so far, dealt count and drought per section, `Dealer.initial(settings)` and `deal(random): Pair<PipeSection, Dealer>` with deficit steering (design §2, `StrictMath.exp`, `random.nextDouble()`) and the drought limit for the standard sections (design §3)
+- [ ] 2.2 `DealerTest`: first draw distribution within 1 percentage point over 100,000 fresh dealers, disabled section never drawn in 10,000 draws, state updates per draw, a section behind is more likely than a section ahead, drought limit forces the longest drought with tie by `PipeSection` order, `X` and `RES` never forced, same seed same sequence
+- [ ] 2.3 Statistical tests over 10,000 seeded runs of 40 draws with default weights: no standard section missing for more than 15 draws, mean per-section standard deviation at most 0.8, back-to-back repeats at most 12 %; with `X` 6 the cross share is within 1 percentage point of 12.5 %; run `./gradlew :core:test`
 
 ## 3. Stack and engine
 
-- [ ] 3.1 Give `PipeStack` a `likeliness`; `create(settings, random)` draws the initial sections through it; `afterPlacement(random)` draws from and returns the updated likeliness; delete `WeightedPool` and move its remaining assertions to `LikelinessTest`
+- [ ] 3.1 Give `PipeStack` a `dealer`; `create(settings, random)` draws the initial sections through it; `afterPlacement(random)` deals from and returns the updated dealer; delete `WeightedPool` and move its remaining assertions to `DealerTest`
 - [ ] 3.2 In `GameEngine.place` use `state.stack.afterPlacement(random)` instead of a new `WeightedPool` per placement
-- [ ] 3.3 `PipeStackTest` and `GameEngineTest`: likeliness carries over between placements and across pause/resume, restart resets it to the level's weights, two engines with the same seed deal the same stacks and likeliness after the same placements; existing stack-order tests still pass; run `./gradlew :core:test`
+- [ ] 3.3 `PipeStackTest` and `GameEngineTest`: the dealer carries over between placements and across pause/resume, restart resets it, two engines with the same seed deal the same stacks after the same placements; existing stack-order tests still pass; run `./gradlew :core:test`
 
 ## 4. Levels and docs
 
-- [ ] 4.1 Re-tune the bundled levels in `app/src/main/assets/levels/`: `"X": 1` → `"X": 6`, `"X": 2` → `"X": 12`; verify every level still parses, validates and is solvable with `./gradlew :core:test` (`LevelSolvabilityTest` and the bundled-level tests)
-- [ ] 4.2 Update `docs/level-format.md`: example and defaults table (weights 10, `stack.adaptive`), "Stack weights" renamed/extended to explain initial likeliness, the drop 3 / gain 1 / min 1 / max 20 rule, fixed vs adaptive special sections and the warning that an adaptive rare section climbs to 20
-- [ ] 4.3 If `app-game-level-designer` has landed: add `X`/`RES` adaptive toggles to the designer, have `LevelWriter` write `stack.adaptive` only when it differs from the defaults, and extend its round-trip test; otherwise leave a note on that change's tracking issue that it must add them
+- [ ] 4.1 Re-tune the bundled levels in `app/src/main/assets/levels/`: `"X": 1` → `"X": 3`, `"X": 2` → `"X": 6`; verify every level still parses, validates and is solvable with `./gradlew :core:test` (`LevelSolvabilityTest` and the bundled-level tests)
+- [ ] 4.2 Update `docs/level-format.md`: example and defaults table (weights 7), "Stack weights" explains that a weight is a target share, and a new "How the stack deals" section on deficit steering, the drought limit (standard sections only) and why a retry still deals a different sequence
 
 ## 5. Verify
 

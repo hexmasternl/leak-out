@@ -1,44 +1,65 @@
 package nl.hexmaster.leakout.ui.game
 
 import nl.hexmaster.leakout.core.engine.Replacement
+import nl.hexmaster.leakout.core.level.LevelDefaults
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ReplacementEffectTest {
-    private fun replacement(startedAtMs: Long = 1_000, durationMs: Long = 3_000) =
+    private fun replacement(startedAtMs: Long = 1_000, durationMs: Long = 1_500) =
         Replacement(Position(2, 1), PipeSection.H, PipeSection.V, startedAtMs, startedAtMs + durationMs)
 
     @Test
-    fun `the break takes at most 600 ms and at most 40 percent of the replacement`() {
-        assertEquals(600L, ReplacementTiming.breakMs(3_000))
-        assertEquals(400L, ReplacementTiming.breakMs(1_000))
-        assertEquals(0L, ReplacementTiming.breakMs(0))
+    fun `the sequence is a 600 ms break, a 400 ms hold and a 500 ms fade, the default penalty`() {
+        assertEquals(600L, ReplacementTiming.BREAK_MS)
+        assertEquals(400L, ReplacementTiming.HOLD_MS)
+        assertEquals(500L, ReplacementTiming.FADE_MS)
+        assertEquals(LevelDefaults.REPLACE_PENALTY_MS, ReplacementTiming.SEQUENCE_MS)
     }
 
     @Test
-    fun `the section breaks first and then the busy ring shows`() {
+    fun `the section breaks over the first 600 ms`() {
         val replacement = replacement()
-        val start = replacementFrame(replacement, 1_000)
-        assertEquals(0f, start.breakProgress)
-        assertFalse(start.showsBusyRing)
-        assertEquals(0.5f, replacementFrame(replacement, 1_300).breakProgress)
-        val gone = replacementFrame(replacement, 1_600)
-        assertNull(gone.breakProgress)
-        assertTrue(gone.showsBusyRing)
+        assertEquals(0f, replacementFrame(replacement, 1_000).breakProgress)
+        assertEquals(0.5f, replacementFrame(replacement, 1_300).breakProgress, 1e-5f)
+        assertEquals(1f, replacementFrame(replacement, 1_600).breakProgress, 1e-5f)
     }
 
     @Test
-    fun `the ring follows the progress of the whole replacement`() {
+    fun `the broken pieces lie still and fully visible for 400 ms`() {
         val replacement = replacement()
-        assertEquals(0.5f, replacementFrame(replacement, 2_500).progress, 1e-6f)
-        assertEquals(1f, replacementFrame(replacement, 4_000).progress, 1e-6f)
-        assertEquals(1f, replacementFrame(replacement, 9_000).progress, 1e-6f)
+        for (ms in listOf(1_600L, 1_800L, 2_000L)) {
+            val frame = replacementFrame(replacement, ms)
+            assertEquals("scatter at $ms", 1f, frame.scatter, 1e-5f)
+            assertEquals("alpha at $ms", 1f, frame.alpha, 1e-5f)
+        }
+    }
+
+    @Test
+    fun `the pieces fade out over the last 500 ms`() {
+        val replacement = replacement()
+        assertEquals(0.5f, replacementFrame(replacement, 2_250).alpha, 1e-4f)
+        assertEquals(0f, replacementFrame(replacement, 2_500).alpha, 1e-5f)
+        assertEquals(0f, replacementFrame(replacement, 9_000).alpha, 1e-5f)
+        assertEquals(1f, replacementFrame(replacement, 2_250).scatter, 1e-5f)
+    }
+
+    @Test
+    fun `a replacement of another length scales the phases along`() {
+        val replacement = replacement(durationMs = 3_000)
+        assertEquals(1f, replacementFrame(replacement, 2_200).breakProgress, 1e-5f)
+        assertEquals(1f, replacementFrame(replacement, 3_000).alpha, 1e-5f)
+        assertEquals(0.5f, replacementFrame(replacement, 3_500).alpha, 1e-4f)
+    }
+
+    @Test
+    fun `a replacement without length shows nothing`() {
+        assertEquals(0f, replacementFrame(replacement(durationMs = 0), 1_000).alpha)
     }
 
     @Test

@@ -38,9 +38,11 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import nl.hexmaster.leakout.R
+import nl.hexmaster.leakout.ui.components.DialogEntry
 import nl.hexmaster.leakout.ui.components.FlowButton
 import nl.hexmaster.leakout.ui.components.FlowButtonSize
 import nl.hexmaster.leakout.ui.components.FlowButtonVariant
+import nl.hexmaster.leakout.ui.components.panelScale
 import nl.hexmaster.leakout.ui.splash.rememberReducedMotion
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
@@ -77,8 +79,8 @@ data class PauseDialogEntry(
             else -> PauseDialogEntry(
                 backdropFadeMs = FADE_MS,
                 panelFadeMs = FADE_MS,
-                initialScale = ResultDialogEntry.INITIAL_SCALE,
-                scaleSpec = ResultDialogEntry.PopSpring,
+                initialScale = DialogEntry.INITIAL_SCALE,
+                scaleSpec = DialogEntry.PopSpring,
             )
         }
     }

@@ -2,7 +2,9 @@ package nl.hexmaster.leakout.ui.title
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
@@ -10,6 +12,7 @@ import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -42,7 +45,13 @@ class WelcomeScreenTest {
     /** What the play menu resolves to; throwing simulates a failed history read. */
     private var nextLevel: () -> NextLevel = { NextLevel(levelId = 1, page = 1, isUnlocked = true, highestCompleted = 0) }
 
-    private fun showScreen(widthDp: Int = 800, heightDp: Int = 360) {
+    private var designerOpens = 0
+
+    /** Whether the host passes a level designer callback, as `MainActivity` does with the flag on. */
+    private val designerShown = mutableStateOf(false)
+
+    private fun showScreen(widthDp: Int = 800, heightDp: Int = 360, withDesigner: Boolean = false) {
+        designerShown.value = withDesigner
         compose.setContent {
             LeakOutTheme {
                 Box(Modifier.size(widthDp.dp, heightDp.dp)) {
@@ -55,6 +64,7 @@ class WelcomeScreenTest {
                         onOpenLevelLibrary = { openedPages += it },
                         onSettings = { settings++ },
                         onExit = { exits++ },
+                        onOpenLevelDesigner = if (designerShown.value) ({ designerOpens++ }) else null,
                     )
                 }
             }
@@ -226,6 +236,47 @@ class WelcomeScreenTest {
                 .assertWidthIsAtLeast(48.dp)
             assertTrue(node.getUnclippedBoundsInRoot().bottom <= screen.bottom)
         }
+    }
+
+    @Test
+    fun levelDesignerButtonIsShownInTheTopRightAndOpensTheDesignerOnce() {
+        showScreen(withDesigner = true)
+        val screen = compose.onNodeWithTag(WelcomeScreenTags.SCREEN).getUnclippedBoundsInRoot()
+        val button = compose.onNodeWithTag(WelcomeScreenTags.LEVEL_DESIGNER)
+            .assertIsDisplayed()
+            .assertContentDescriptionEquals("Level designer")
+            .assertHeightIsAtLeast(48.dp)
+            .assertWidthIsAtLeast(48.dp)
+        val bounds = button.getUnclippedBoundsInRoot()
+        assertTrue("right half", bounds.left > (screen.left + screen.right) / 2)
+        assertTrue("top half", bounds.bottom < (screen.top + screen.bottom) / 2)
+
+        button.performClick()
+        compose.runOnIdle {
+            assertEquals(1, designerOpens)
+            assertNoNavigation()
+            assertCounts(settings = 0, exit = 0)
+        }
+        compose.onNodeWithTag(PlayMenuTags.DIALOG).assertDoesNotExist()
+    }
+
+    @Test
+    fun levelDesignerButtonLeavesPlaySettingsAndExitUnchanged() {
+        showScreen()
+        val without = listOf(WelcomeScreenTags.PLAY, WelcomeScreenTags.SETTINGS, WelcomeScreenTags.EXIT)
+            .map { compose.onNodeWithTag(it).getUnclippedBoundsInRoot() }
+        compose.runOnIdle { designerShown.value = true }
+        compose.onNodeWithTag(WelcomeScreenTags.LEVEL_DESIGNER).assertIsDisplayed()
+        val with = listOf(WelcomeScreenTags.PLAY, WelcomeScreenTags.SETTINGS, WelcomeScreenTags.EXIT)
+            .map { compose.onNodeWithTag(it).getUnclippedBoundsInRoot() }
+        assertEquals(without, with)
+    }
+
+    @Test
+    fun levelDesignerButtonIsAbsentWithoutACallback() {
+        showScreen()
+        compose.onNodeWithTag(WelcomeScreenTags.LEVEL_DESIGNER).assertDoesNotExist()
+        compose.onNodeWithContentDescription("Level designer").assertDoesNotExist()
     }
 
     private fun assertCounts(settings: Int, exit: Int) {

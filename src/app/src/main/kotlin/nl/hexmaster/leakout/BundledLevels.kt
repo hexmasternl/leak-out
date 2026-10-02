@@ -6,17 +6,19 @@ import java.util.Locale
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.LevelParser
 import nl.hexmaster.leakout.core.level.ParseResult
+import nl.hexmaster.leakout.ui.designer.DesignerLevels
 import nl.hexmaster.leakout.ui.levels.LevelCatalog
 
 /**
  * The levels shipped in `assets/levels/level_NNN.json`, by id. The level library counts them
- * through [LevelCatalog]; the game loads the one picked and the one after a win.
+ * through [LevelCatalog]; the game loads the one picked and the one after a win, and the level
+ * designer copies one to start a design from.
  */
-class BundledLevels(private val assets: AssetManager) : LevelCatalog {
+class BundledLevels(private val assets: AssetManager) : DesignerLevels {
     private val count: Int by lazy { contiguousCount(assets.list(DIRECTORY).orEmpty().asList()) }
 
     /** The bundled level with [id], or null when there is none. A bundled level that does not parse is a bug. */
-    fun load(id: Int): Level? {
+    override fun load(id: Int): Level? {
         if (id < 1) return null
         val text = try {
             assets.open(path(id)).bufferedReader().use { it.readText() }

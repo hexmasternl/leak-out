@@ -1,6 +1,7 @@
 package nl.hexmaster.leakout.ui.game
 
 import androidx.compose.ui.graphics.toArgb
+import nl.hexmaster.leakout.ui.components.DialogEntry
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -15,7 +16,7 @@ class PauseDialogEntryTest {
         assertEquals(160, entry.backdropFadeMs)
         assertEquals(160, entry.panelFadeMs)
         assertEquals(0.92f, entry.initialScale, 0f)
-        assertSame(ResultDialogEntry.PopSpring, entry.scaleSpec)
+        assertSame(DialogEntry.PopSpring, entry.scaleSpec)
     }
 
     @Test

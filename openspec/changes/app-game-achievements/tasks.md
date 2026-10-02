@@ -19,9 +19,9 @@
 - [x] 2.4 Add `PlayerStats` (sections placed, losses, loss streak per level) with a pure `after(summary)` and `afterAbandoned(placements)`
 - [x] 2.5 Implement `AchievementRules.evaluate(summary?, statsBefore, statsAfter, history, stored)` returning newly unlocked achievements and clamped, never-decreasing steps
 - [x] 2.6 Unit tests for every scenario in the `game-achievements` spec, one group per achievement group
-- [ ] 2.7 Reachability test: scripted engine attempts on bundled levels that unlock each skill and hidden achievement (Crossroads King on a level that can draw crosses; Long Way Round and Wall to Wall on a large grid)
-- [ ] 2.8 Reachability-against-content test: every milestone fits the bundled library (levels ≤ level count, stars ≤ 3 × level count) and pack achievements exist only for full library pages; progress rules use `LevelLibraryLayout.pageOf`, never the library size
-- [ ] 2.9 Run `./gradlew :core:test` and make sure it passes
+- [x] 2.7 Reachability test: scripted engine attempts on bundled levels that unlock each skill and hidden achievement (Crossroads King on a level that can draw crosses; Long Way Round and Wall to Wall on a large grid)
+- [x] 2.8 Reachability-against-content test: every milestone fits the bundled library (levels ≤ level count, stars ≤ 3 × level count) and pack achievements exist only for full library pages; progress rules use `LevelLibraryLayout.pageOf`, never the library size
+- [x] 2.9 Run `./gradlew :core:test` and make sure it passes
 
 ## 3. Local store (app)
 

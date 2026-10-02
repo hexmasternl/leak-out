@@ -23,13 +23,28 @@ interface SettingsRepository {
     suspend fun setMusicVolume(volume: Float)
 
     suspend fun setVibrationEnabled(enabled: Boolean)
+
+    /**
+     * The tips the player has seen, now and after every change; none on first launch. Kept apart
+     * from [settings] so a tip being closed does not recompose everything that reads the settings.
+     */
+    val seenTips: Flow<Set<TipId>>
+
+    /** Stores [tip] as seen. Marking a seen tip again changes nothing. */
+    suspend fun markTipSeen(tip: TipId)
+
+    /** Makes every tip not seen again. The settings and the level history are left alone. */
+    suspend fun resetTips()
 }
 
 /**
  * Settings kept in memory, for tests and previews. It clamps like the DataStore repository, so a
  * test cannot pass on it with a value the real store would not give.
  */
-class InMemorySettingsRepository(initial: Settings = Settings.Default) : SettingsRepository {
+class InMemorySettingsRepository(
+    initial: Settings = Settings.Default,
+    initialSeenTips: Set<TipId> = emptySet(),
+) : SettingsRepository {
     private val state = MutableStateFlow(clamped(initial))
 
     /** The name of every setter called, in order, so tests can prove nothing was written. */
@@ -49,6 +64,20 @@ class InMemorySettingsRepository(initial: Settings = Settings.Default) : Setting
 
     override suspend fun setVibrationEnabled(enabled: Boolean) =
         write("vibrationEnabled") { it.copy(vibrationEnabled = enabled) }
+
+    private val tips = MutableStateFlow(initialSeenTips)
+
+    override val seenTips: StateFlow<Set<TipId>> = tips.asStateFlow()
+
+    override suspend fun markTipSeen(tip: TipId) {
+        writes += "markTipSeen"
+        tips.update { it + tip }
+    }
+
+    override suspend fun resetTips() {
+        writes += "resetTips"
+        tips.value = emptySet()
+    }
 
     private fun write(name: String, change: (Settings) -> Settings) {
         writes += name

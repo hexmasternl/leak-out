@@ -1,5 +1,8 @@
 package nl.hexmaster.leakout.ui.game
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -157,15 +160,61 @@ class PlayingFieldState(private val grid: GridSize, private val start: Position)
         private set
 
     private var coordinates: LayoutCoordinates? = null
+    private var density: Density? = null
+
+    /** Where the field's top-left corner is in the root, updated on every layout pass. */
+    var originInRoot: Offset? by mutableStateOf(null)
+        private set
 
     internal fun onMeasured(size: Size, density: Density) {
         val current = viewport
         if (size.width <= 0f || size.height <= 0f) return
+        this.density = density
         if (current == null || current.fieldSize != size) viewport = FieldViewport.initial(size, grid, start, density)
     }
 
     internal fun onPositioned(coordinates: LayoutCoordinates) {
         this.coordinates = coordinates
+        originInRoot = coordinates.positionInRoot()
+    }
+
+    /** The on-screen rect of [position] in root coordinates, at the current view; null before layout. */
+    fun cellInRoot(position: Position): Rect? {
+        val origin = originInRoot ?: return null
+        return viewport?.cellRect(position)?.translate(origin)
+    }
+
+    /** The field's own rect in root coordinates; null before layout. */
+    fun boundsInRoot(): Rect? {
+        val origin = originInRoot ?: return null
+        return viewport?.let { Rect(origin, it.fieldSize) }
+    }
+
+    /** The view the level starts with, at the current field size; null before layout. */
+    fun initialView(): FieldViewport? {
+        val current = viewport ?: return null
+        val density = density ?: return null
+        return FieldViewport.initial(current.fieldSize, grid, start, density)
+    }
+
+    /**
+     * Moves the view to [target]: at once with [reducedMotion], otherwise over `motion.settle`
+     * (240 ms, decelerating, so the pan never overshoots its limits).
+     */
+    suspend fun animateTo(target: FieldViewport?, reducedMotion: Boolean) {
+        val from = viewport ?: return
+        if (target == null || target == from) return
+        if (reducedMotion) {
+            viewport = target
+            return
+        }
+        animate(0f, 1f, animationSpec = tween(FIELD_SETTLE_MS, easing = FastOutSlowInEasing)) { t, _ ->
+            viewport = target.copy(
+                cellPx = from.cellPx + (target.cellPx - from.cellPx) * t,
+                offset = from.offset + (target.offset - from.offset) * t,
+            )
+        }
+        viewport = target
     }
 
     internal fun transform(zoom: Float, focus: Offset, pan: Offset) {
@@ -179,6 +228,8 @@ class PlayingFieldState(private val grid: GridSize, private val start: Position)
         return viewport?.cellAt(local)
     }
 }
+
+private const val FIELD_SETTLE_MS = 240
 
 @Composable
 fun rememberPlayingFieldState(grid: GridSize, start: Position): PlayingFieldState =
@@ -211,9 +262,9 @@ fun rememberPlayingFieldState(grid: GridSize, start: Position): PlayingFieldStat
  * and the finish tile gets the success ring from [finishFlashFrame], above the pipes and below the
  * popups. It is null while not won.
  *
- * While a [replacement] runs, its old section breaks apart on the tile and then a busy ring fills
- * up until the new section lands; the section that landed last, [landing], pops in. Both are timed
- * by [nowMs].
+ * While a [replacement] runs, its old section breaks apart on the tile, the pieces lie still and
+ * then fade out, after which the new section lands; the section that landed last, [landing], pops
+ * in. Both are timed by [nowMs].
  *
  * The start is drawn as the start valve and the finish as the checkered finish (design system
  * 6.4): a stub of the straight's pipe art under the brass wheel, or under the success ring filled
@@ -672,9 +723,9 @@ private fun DrawScope.drawMissedPulse(rect: Rect, alpha: Float) {
 }
 
 /**
- * The replacement on the tile [rect]. While breaking, the old section shakes and cracks along its
- * quarters, then the quarters fly apart, turn, fall and fade, over the neighbours if need be. Once
- * it is gone, the tile is tinted and a ring fills clockwise from the top up to the landing.
+ * The replacement on the tile [rect]. The old section shakes and cracks along its quarters, then
+ * the quarters fly apart, turn and fall, over the neighbours if need be. They lie still for a
+ * moment and then fade out.
  */
 private fun DrawScope.drawReplacement(
     replacement: Replacement,
@@ -685,10 +736,6 @@ private fun DrawScope.drawReplacement(
 ) {
     val cell = rect.width
     val breakProgress = frame.breakProgress
-    if (breakProgress == null) {
-        drawBusyRing(rect, frame.progress)
-        return
-    }
     val art = pipes.prepared(replacement.removed)
     val scatter = frame.scatter
     if (scatter == 0f) {
@@ -709,7 +756,7 @@ private fun DrawScope.drawReplacement(
             rotate(fragment.spinDegrees * scatter, piece.center)
             clipRect(piece.left, piece.top, piece.right, piece.bottom)
         }) {
-            withAlpha(1f - scatter, piece) { drawPipe(art, rect, emptyMap(), scratch) }
+            withAlpha(frame.alpha, piece) { drawPipe(art, rect, emptyMap(), scratch) }
         }
     }
 }
@@ -727,25 +774,6 @@ private fun DrawScope.drawCracks(rect: Rect, crack: Float) {
         drawLine(LeakOutColors.InkDark, c, kink, cell * 0.035f, StrokeCap.Round)
         drawLine(LeakOutColors.InkDark, kink, end, cell * 0.03f, StrokeCap.Round)
     }
-}
-
-/** The tile tint and the ring that fills to [progress] while the new section is on its way. */
-private fun DrawScope.drawBusyRing(rect: Rect, progress: Float) {
-    val cell = rect.width
-    val inset = rect.deflate(cell * 0.04f)
-    drawRoundRect(LeakOutColors.Brass500.copy(alpha = 0.12f), inset.topLeft, inset.size, CornerRadius(cell * 0.14f))
-    val radius = cell * 0.28f
-    val stroke = cell * 0.07f
-    drawCircle(LeakOutColors.Steel700.copy(alpha = 0.7f), radius, rect.center, style = Stroke(stroke))
-    drawArc(
-        LeakOutColors.Brass300,
-        startAngle = -90f,
-        sweepAngle = 360f * progress,
-        useCenter = false,
-        topLeft = rect.center - Offset(radius, radius),
-        size = Size(radius * 2f, radius * 2f),
-        style = Stroke(stroke, cap = StrokeCap.Round),
-    )
 }
 
 /** Draws [block] into a layer over [bounds] at [alpha], so overlapping strokes fade as one. */

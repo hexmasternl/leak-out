@@ -5,37 +5,42 @@ import nl.hexmaster.leakout.core.engine.Replacement
 import nl.hexmaster.leakout.core.level.Position
 
 object ReplacementTiming {
-    /** The longest the old section takes to break apart. */
-    const val MAX_BREAK_MS = 600L
+    /** How long the old section takes to break apart, in a replacement of [SEQUENCE_MS]. */
+    const val BREAK_MS = 600L
 
-    /** The share of a short replacement the break may take at most. */
-    const val MAX_BREAK_SHARE = 0.4f
+    /** How long the broken pieces then lie still. */
+    const val HOLD_MS = 400L
+
+    /** How long the pieces then take to fade out, after which the new section lands. */
+    const val FADE_MS = 500L
+
+    /** The whole sequence, and so the default replacement penalty. */
+    const val SEQUENCE_MS = BREAK_MS + HOLD_MS + FADE_MS
 
     /** The share of the break during which the section shakes and cracks before it falls apart. */
     const val CRACK_SHARE = 0.3f
 
     /** How long the landed section pops in. */
     const val LANDING_POP_MS = 180L
-
-    /** How long the break of a [durationMs] long replacement takes. */
-    fun breakMs(durationMs: Long): Long = minOf(MAX_BREAK_MS, (durationMs * MAX_BREAK_SHARE).toLong())
 }
 
 /**
- * One frame of a replacement. While the old section breaks, [breakProgress] runs from 0 to 1 and
- * the section is drawn cracking and then flying apart; it is null once the section is gone. From
- * then on the tile shows the busy ring, filled to [progress], the share of the whole replacement.
+ * One frame of a replacement. [breakProgress] runs from 0 to 1 while the old section cracks and
+ * flies apart and stays 1 while the pieces lie still; [fadeProgress] then runs from 0 to 1 while
+ * they fade out. A replacement of another length than [ReplacementTiming.SEQUENCE_MS] scales the
+ * three phases along.
  */
-data class ReplacementFrame(val breakProgress: Float?, val progress: Float) {
-    val showsBusyRing: Boolean get() = breakProgress == null
+data class ReplacementFrame(val breakProgress: Float, val fadeProgress: Float) {
+    /** How visible the pieces are: fully until the fade, gone at its end. */
+    val alpha: Float get() = 1f - fadeProgress
 
     /** How far the section has cracked, 0 to 1, before it falls apart; 1 once it is falling apart. */
-    val crack: Float get() = breakProgress?.let { (it / ReplacementTiming.CRACK_SHARE).coerceAtMost(1f) } ?: 1f
+    val crack: Float get() = (breakProgress / ReplacementTiming.CRACK_SHARE).coerceAtMost(1f)
 
-    /** How far the fragments have flown, eased out, 0 while cracking and 1 at the end of the break. */
+    /** How far the fragments have flown, eased out, 0 while cracking and 1 from the end of the break. */
     val scatter: Float
         get() {
-            val t = breakProgress ?: return 1f
+            val t = breakProgress
             if (t <= ReplacementTiming.CRACK_SHARE) return 0f
             val s = (t - ReplacementTiming.CRACK_SHARE) / (1f - ReplacementTiming.CRACK_SHARE)
             return 1f - (1f - s) * (1f - s)
@@ -44,10 +49,12 @@ data class ReplacementFrame(val breakProgress: Float?, val progress: Float) {
 
 /** The frame of [replacement] at game time [nowMs]. */
 fun replacementFrame(replacement: Replacement, nowMs: Long): ReplacementFrame {
-    val ageMs = (nowMs - replacement.startedAtMs).coerceAtLeast(0L)
-    val breakMs = ReplacementTiming.breakMs(replacement.durationMs)
-    val breakProgress = if (breakMs > 0 && ageMs < breakMs) ageMs.toFloat() / breakMs else null
-    return ReplacementFrame(breakProgress, replacement.progressAt(nowMs))
+    val progress = replacement.progressAt(nowMs)
+    val breakShare = ReplacementTiming.BREAK_MS.toFloat() / ReplacementTiming.SEQUENCE_MS
+    val fadeShare = ReplacementTiming.FADE_MS.toFloat() / ReplacementTiming.SEQUENCE_MS
+    val breakProgress = (progress / breakShare).coerceIn(0f, 1f)
+    val fadeProgress = ((progress - (1f - fadeShare)) / fadeShare).coerceIn(0f, 1f)
+    return ReplacementFrame(breakProgress, fadeProgress)
 }
 
 /**

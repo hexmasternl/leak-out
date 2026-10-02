@@ -249,7 +249,7 @@ class PlayingFieldTest {
         compose.dropOnCell(Position(2, 1))
         compose.cellNode(Position(2, 1)).assertContentDescriptionEquals("Placed V, filled")
 
-        // The V breaks: the tile is empty and busy until the H lands.
+        // The V breaks: the tile is empty until the H lands.
         compose.dropOnCell(Position(1, 1))
         compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Empty")
             .assert(SemanticsMatcher.expectValue(ReplacingCell, true))

@@ -11,6 +11,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -50,6 +51,7 @@ class FlowButtonTest {
                 .assertHeightIsAtLeast(48.dp)
                 .assertHasClickAction()
                 .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+                .assertTextEquals(variant.name)
                 .performClick()
             assertEquals(variant.name, 1, clicks[variant])
         }

@@ -18,6 +18,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import nl.hexmaster.leakout.ui.game.GameScreenTags
 import nl.hexmaster.leakout.ui.game.HudTags
 import nl.hexmaster.leakout.ui.game.PauseTags
+import nl.hexmaster.leakout.ui.game.onboarding.TipOverlayTags
 import nl.hexmaster.leakout.ui.levels.LevelLibraryTags
 import nl.hexmaster.leakout.ui.levels.levelTileTag
 import nl.hexmaster.leakout.ui.settings.SettingsTags
@@ -134,6 +135,11 @@ class MainActivityTest {
         compose.onNodeWithTag(levelTileTag(1)).performClick()
         compose.waitForIdle()
         compose.onNodeWithTag(GameScreenTags.SCREEN).assertIsDisplayed()
+        // On a fresh install the intro tour covers the game first.
+        if (compose.onAllNodesWithTag(TipOverlayTags.SKIP).fetchSemanticsNodes().isNotEmpty()) {
+            compose.onNodeWithTag(TipOverlayTags.SKIP).performClick()
+            compose.waitForIdle()
+        }
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
         compose.onNodeWithTag(PauseTags.EXIT).performClick()

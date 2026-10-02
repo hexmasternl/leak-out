@@ -28,8 +28,8 @@
 
 ## 5. App: animation
 
-- [x] 5.1 Draw the break animation on the replacement tile in `PlayingField`: the `removed` section splits into seeded fragments that drift, rotate and fade over the first `min(600 ms, 40 %)` of the sequence, driven by the game clock
-- [x] 5.2 Draw the busy ring, which fills with the sequence progress, plus the tile tint, for the rest of the sequence
+- [x] 5.1 Draw the break animation on the replacement tile in `PlayingField`, driven by the game clock: the `removed` section cracks and splits into seeded fragments that fly apart and rotate (600 ms), lie still (400 ms) and fade out (500 ms); other penalties scale the phases
+- [x] 5.2 No progress indicator: the busy ring and the tile tint are removed
 - [x] 5.3 Add a short scale-in pop on the landed section (about 150 ms of game time), keyed on the tile and the landing time
 - [x] 5.4 Keep the replacement tile out of the drop highlight, and use colours from `docs/design-system.md`
 

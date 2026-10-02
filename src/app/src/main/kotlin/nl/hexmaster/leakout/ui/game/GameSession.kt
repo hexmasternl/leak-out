@@ -2,6 +2,7 @@ package nl.hexmaster.leakout.ui.game
 
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlin.random.Random
@@ -18,6 +19,7 @@ import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.history.RecordResult
+import nl.hexmaster.leakout.settings.TipId
 
 /**
  * Holds the [GameState] of the running level for Compose. It keeps no game data of its own: every
@@ -41,6 +43,8 @@ class GameSession(level: Level, private val engine: GameEngine = GameEngine()) {
         var next = engine.handle(before, command)
         if (next === before) return false
         winFrameOf(next)?.let { frame -> next = engine.handle(next, GameCommand.RemoveUnused(frame.sectionsRemoved)) }
+        // A new attempt (restart) drops the tips of the old one; its own level-start tips are looked at again.
+        if (next.attempt != before.attempt) clearTips()
         state = next
         before.replacement?.takeIf { landed(before, next) }?.let { lastLanding = Landing(next.attempt, it.at, it.landsAtMs) }
         return true
@@ -69,8 +73,92 @@ class GameSession(level: Level, private val engine: GameEngine = GameEngine()) {
     /** Whether the next section can be dropped on [at] now: the same check a place command runs. */
     fun canPlace(at: Position): Boolean = engine.canPlace(state, at)
 
-    /** The pause dialog is open exactly while the game is paused during play. */
-    val showPauseDialog: Boolean get() = state.paused && state.outcome is Outcome.Playing
+    /**
+     * The pause dialog is open while the game is paused during play, except for the freeze of a
+     * tip; the player pausing during a tip (by leaving the app) opens it over the tip.
+     */
+    val showPauseDialog: Boolean get() = state.paused && state.outcome is Outcome.Playing && (activeTip == null || pausedByUser)
+
+    /** The tips waiting to be shown (game-play-onboarding); the first one is on screen. */
+    var tipQueue: List<TipId> by mutableStateOf(emptyList())
+        private set
+
+    /** The tip on screen, or null. The game is frozen while there is one. */
+    val activeTip: TipId? get() = tipQueue.firstOrNull()
+
+    /** The step of the intro tour on screen, 0 to [INTRO_STEPS] − 1. */
+    var tourStep: Int by mutableIntStateOf(0)
+        private set
+
+    /** Whether the player paused (left the app) while a tip was shown, so the pause dialog shows over it. */
+    var pausedByUser: Boolean by mutableStateOf(false)
+        private set
+
+    /**
+     * The attempt whose level-start tips have been looked at. Until then the game screen holds the
+     * clock, so the countdown cannot move before the intro tour shows.
+     */
+    var tipsCheckedAttempt: Int? by mutableStateOf(null)
+        private set
+
+    /** Tips closed in this session, so one is never shown twice while its "seen" is still being stored. */
+    var closedTips: Set<TipId> by mutableStateOf(emptySet())
+        private set
+
+    /**
+     * Shows the [due] tips that were not closed yet, one after the other, freezing the game with a
+     * pause. [atLevelStart] marks the attempt's level-start tips as looked at, even when none is due.
+     * Nothing happens while a tip is already shown, after the attempt has ended or while paused.
+     */
+    fun offerTips(due: List<TipId>, atLevelStart: Boolean = false) {
+        if (atLevelStart) tipsCheckedAttempt = state.attempt
+        if (activeTip != null || state.outcome !is Outcome.Playing || state.paused) return
+        val fresh = due.filter { it !in closedTips }
+        if (fresh.isEmpty()) return
+        tipQueue = fresh
+        tourStep = 0
+        send(GameCommand.Pause)
+    }
+
+    /** "Next" on the intro tour. */
+    fun nextTourStep() {
+        if (activeTip == TipId.Intro && tourStep < INTRO_STEPS - 1) tourStep++
+    }
+
+    /**
+     * Closes the tip on screen ("Got it", "Let's go", "Skip tour" or Back) and returns it, so the
+     * caller can store it as seen. After the last due tip the game continues where it froze.
+     */
+    fun closeTip(): TipId? {
+        val tip = activeTip ?: return null
+        closedTips = closedTips + tip
+        tipQueue = tipQueue.drop(1)
+        tourStep = 0
+        if (tipQueue.isEmpty() && !pausedByUser) send(GameCommand.Resume)
+        return tip
+    }
+
+    /** The player pauses (pause button, Back, leaving the app). During a tip the game is already frozen. */
+    fun pauseByUser() {
+        if (activeTip != null) {
+            if (state.outcome is Outcome.Playing) pausedByUser = true
+        } else {
+            send(GameCommand.Pause)
+        }
+    }
+
+    /** Resume in the pause dialog: back to the tip, still frozen, or back to the game. */
+    fun resumeByUser() {
+        val tipShown = activeTip != null
+        pausedByUser = false
+        if (!tipShown) send(GameCommand.Resume)
+    }
+
+    private fun clearTips() {
+        tipQueue = emptyList()
+        tourStep = 0
+        pausedByUser = false
+    }
 
     /** Game time since the leak, which drives the leak effect; 0 unless lost. */
     val lossAgeMs: Long get() = (state.outcome as? Outcome.Lost)?.let { state.clockMs - it.atMs } ?: 0L
@@ -169,6 +257,9 @@ enum class PlaceResult {
     /** The tile refused the section; nothing changed. */
     Rejected,
 }
+
+/** The number of steps of the intro tour: start, finish, stack, placing, zoom and pan. */
+const val INTRO_STEPS = 5
 
 object LeakTiming {
     /** How long the leak is shown on the field before the level lost dialog appears. */

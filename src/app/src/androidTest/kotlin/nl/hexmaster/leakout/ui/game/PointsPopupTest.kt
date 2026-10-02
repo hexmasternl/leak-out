@@ -57,16 +57,16 @@ class PointsPopupTest {
         tick(1_000) // through the start
         tick(1_000) // the liquid leaves the corner
 
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 15")
+        compose.onNodeWithTag(HudTags.SCORE).assertScore("15")
         assertPopups(corner, "+15")
 
         tick(999)
         assertPopups(corner, "+15")
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 15")
+        compose.onNodeWithTag(HudTags.SCORE).assertScore("15")
         tick(1) // the popup is over, and the liquid leaves the V below
         assertPopups(corner)
         assertPopups(Position(1, 1), "+10")
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 25")
+        compose.onNodeWithTag(HudTags.SCORE).assertScore("25")
     }
 
     // 6.2
@@ -87,7 +87,7 @@ class PointsPopupTest {
 
         assertPopups(straight, "+10")
         assertPopups(corner, "+15")
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 25")
+        compose.onNodeWithTag(HudTags.SCORE).assertScore("25")
 
         tick(500)
         assertPopups(straight)
@@ -127,7 +127,7 @@ class PointsPopupTest {
         compose.onNodeWithTag(PauseTags.RESTART).performClick()
         compose.waitForIdle()
 
-        compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 0")
+        compose.onNodeWithTag(HudTags.SCORE).assertScore("0")
         compose.runOnIdle { assertTrue(session.state.awards.isEmpty()) }
         assertPopups(corner)
     }

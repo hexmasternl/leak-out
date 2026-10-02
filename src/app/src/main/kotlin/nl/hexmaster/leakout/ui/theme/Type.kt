@@ -55,6 +55,18 @@ object LeakOutTextStyles {
     /** Deep Flow `display.md`: section headers. */
     val DisplayMd = TextStyle(fontFamily = WendyOne, fontWeight = FontWeight.Normal, fontSize = 22.sp, lineHeight = 1.15.em)
 
+    /** Deep Flow `display.sm`: button labels and HUD values. */
+    val DisplaySm = TextStyle(
+        fontFamily = WendyOne,
+        fontWeight = FontWeight.Normal,
+        fontSize = 18.sp,
+        lineHeight = 1.2.em,
+        letterSpacing = 0.25.sp,
+    )
+
+    /** Deep Flow `numeric.md`: HUD counters such as the score. */
+    val NumericMd = TextStyle(fontFamily = WendyOne, fontWeight = FontWeight.Normal, fontSize = 20.sp, lineHeight = 1.0.em)
+
     /** Deep Flow `display.xs`: uppercase eyebrow labels, such as panel titles. */
     val DisplayXs = TextStyle(
         fontFamily = WendyOne,

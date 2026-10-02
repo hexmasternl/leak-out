@@ -59,7 +59,7 @@ object LevelParser {
             return failure(field, "Unknown field '$field'")
         }
         unknownEnumPattern.find(message)?.let {
-            val allowed = Side.entries.joinToString()
+            val allowed = if (path.endsWith(".section")) PipeSection.entries.joinToString() else Side.entries.joinToString()
             return failure(path, "Invalid value '${it.groupValues[1]}' for '$path'; expected one of $allowed")
         }
         val detail = firstLine(e).replace(offsetPrefix, "").replace(pathPattern, "").trim()

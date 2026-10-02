@@ -18,6 +18,7 @@ internal data class LevelDto(
     val stack: StackDto = StackDto(),
     val rules: RulesDto = RulesDto(),
     val stars: StarsDto,
+    val mandatory: List<MandatoryDto> = emptyList(),
 ) {
     fun toLevel(): Level = Level(
         id = id,
@@ -30,6 +31,7 @@ internal data class LevelDto(
         stack = StackSettings(stack.visibleSize, stack.weights.toMap()),
         rules = PlacementRules(rules.allowReplace, rules.replacePenaltyMs),
         stars = StarBenchmarks(stars.one, stars.two, stars.three),
+        mandatory = mandatory.map { MandatorySection(Position(it.x, it.y), it.section) },
     )
 }
 
@@ -43,6 +45,9 @@ internal data class EndpointDto(val x: Int, val y: Int, val openSide: Side) {
 
 @Serializable
 internal data class CellDto(val x: Int, val y: Int)
+
+@Serializable
+internal data class MandatoryDto(val x: Int, val y: Int, val section: PipeSection)
 
 @Serializable
 internal data class FlowDto(

@@ -171,6 +171,49 @@ class LevelParserTest {
     }
 
     @Test
+    fun `level without a mandatory field has no mandatory sections`() {
+        assertEquals(emptyList(), parsed(TestLevels.minimalJson()).mandatory)
+    }
+
+    @Test
+    fun `mandatory sections are parsed in authored order`() {
+        val level = parsed(
+            TestLevels.minimalJson(
+                extra = """, "mandatory": [ { "x": 3, "y": 2, "section": "X" }, { "x": 1, "y": 1, "section": "RES" } ]""",
+            ),
+        )
+        assertEquals(
+            listOf(
+                MandatorySection(Position(3, 2), PipeSection.X),
+                MandatorySection(Position(1, 1), PipeSection.RES),
+            ),
+            level.mandatory,
+        )
+    }
+
+    @Test
+    fun `missing section in a mandatory entry is named with its index`() {
+        val error = failed(TestLevels.minimalJson(extra = """, "mandatory": [ { "x": 3, "y": 2 } ]"""))
+        assertEquals("mandatory[0].section", error.field)
+    }
+
+    @Test
+    fun `unknown section id in a mandatory entry is named`() {
+        val error = failed(TestLevels.minimalJson(extra = """, "mandatory": [ { "x": 3, "y": 2, "section": "Z" } ]"""))
+        assertEquals("mandatory[0].section", error.field)
+        assertTrue("'Z'" in error.message)
+        assertTrue("RES" in error.message)
+    }
+
+    @Test
+    fun `unknown key in a mandatory entry is named`() {
+        val error = failed(
+            TestLevels.minimalJson(extra = """, "mandatory": [ { "x": 3, "y": 2, "section": "X", "fixed": true } ]"""),
+        )
+        assertEquals("mandatory[0].fixed", error.field)
+    }
+
+    @Test
     fun `malformed JSON is rejected without a field`() {
         val error = failed("""{ "id": """)
         assertNull(error.field)

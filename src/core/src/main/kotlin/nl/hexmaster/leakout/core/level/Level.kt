@@ -38,8 +38,16 @@ data class StarBenchmarks(val one: Int, val two: Int, val three: Int) {
 }
 
 /**
+ * A section that is on the board from the start of every attempt. It is never removed, and the
+ * level is only won once the liquid has run through every channel of it. Only a cross or a
+ * reservoir may be mandatory; [LevelValidator] enforces that.
+ */
+data class MandatorySection(val position: Position, val section: PipeSection)
+
+/**
  * One playable level. Instances hold concrete values only: defaults are resolved while parsing.
- * [blocked] keeps the cells in authored order so that validation can report duplicates.
+ * [blocked] and [mandatory] keep their entries in authored order so that validation can report
+ * duplicates.
  */
 data class Level(
     val id: Int,
@@ -52,6 +60,7 @@ data class Level(
     val stack: StackSettings,
     val rules: PlacementRules,
     val stars: StarBenchmarks,
+    val mandatory: List<MandatorySection> = emptyList(),
 ) {
     fun isBlocked(position: Position): Boolean = position in blocked
 

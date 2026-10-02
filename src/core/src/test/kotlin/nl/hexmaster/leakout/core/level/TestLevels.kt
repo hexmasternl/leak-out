@@ -13,7 +13,8 @@ object TestLevels {
         stack: StackSettings = StackSettings(),
         rules: PlacementRules = PlacementRules(),
         stars: StarBenchmarks = StarBenchmarks(100, 200, 350),
-    ): Level = Level(id, name, grid, start, finish, blocked, flow, stack, rules, stars)
+        mandatory: List<MandatorySection> = emptyList(),
+    ): Level = Level(id, name, grid, start, finish, blocked, flow, stack, rules, stars, mandatory)
 
     fun weights(vararg overrides: Pair<PipeSection, Int>): Map<PipeSection, Int> =
         LevelDefaults.STACK_WEIGHTS + overrides

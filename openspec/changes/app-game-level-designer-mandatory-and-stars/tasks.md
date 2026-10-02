@@ -6,18 +6,18 @@
 
 ## 1. Core: mandatory placement
 
-- [ ] 1.1 Add `LevelDraft.toggleMandatory(cell, section)` as in design.md (add, remove same kind, change kind in place, refuse outside the grid, blocked cells, endpoints and a seventh section, throw for sections other than `X` and `RES`); update the class KDoc
-- [ ] 1.2 Add `LevelDraftTest` cases for every scenario of "Mandatory section tools" and "Where mandatory sections can be placed", plus "Endpoint onto a mandatory section" and "Mandatory sections are skipped"
+- [x] 1.1 Add `LevelDraft.toggleMandatory(cell, section)` as in design.md (add, remove same kind, change kind in place, refuse outside the grid, blocked cells, endpoints and a seventh section, throw for sections other than `X` and `RES`); update the class KDoc
+- [x] 1.2 Add `LevelDraftTest` cases for every scenario of "Mandatory section tools" and "Where mandatory sections can be placed", plus "Endpoint onto a mandatory section" and "Mandatory sections are skipped"
 
 ## 2. Core: calculated stars
 
-- [ ] 2.1 Add `Level.freeCells` and `StarBenchmarks.forFreeCells(n)` with integer half-up rounding; test with 60 → 360/450/600, 59 → 350/440/590, 33 → 200/250/330, 10 → 60/80/100, 3 → 20/20/30 and 0 → 0/0/0
-- [ ] 2.2 Route every `LevelDraft` operation through one factory that sets the calculated stars, add `LevelDraft.of(level)`, remove `withStars`, and make `LevelDraft.new` produce 200/250/330; update `LevelDraftTest` (blank level, recalculated after resize, block, endpoint move and clear blocked, unchanged after placing a mandatory section, invalid with 3 free cells)
-- [ ] 2.3 Run `./gradlew :core:test` and make sure everything passes
+- [x] 2.1 Add `Level.freeCells` and `StarBenchmarks.forFreeCells(n)` with integer half-up rounding; test with 60 → 360/450/600, 59 → 350/440/590, 33 → 200/250/330, 10 → 60/80/100, 3 → 20/20/30 and 0 → 0/0/0
+- [x] 2.2 Make the `LevelDraft` constructor set the calculated stars for any level, remove `withStars`, and make `LevelDraft.new` produce 200/250/330; update `LevelDraftTest` (blank level, recalculated after resize, block, endpoint move and clear blocked, unchanged after placing a mandatory section, invalid with 3 free cells)
+- [x] 2.3 Run `./gradlew :core:test` and make sure everything passes
 
 ## 3. App: view model
 
-- [ ] 3.1 Add `DesignerTool.MANDATORY_CROSS` and `MANDATORY_RESERVOIR`, wire them in `onCellTap`, and make `onDrag` ignore them; use `LevelDraft.of` for copy and restore
+- [ ] 3.1 Add `DesignerTool.MANDATORY_CROSS` and `MANDATORY_RESERVOIR`, wire them in `onCellTap`, and make `onDrag` ignore them; copy and restore get calculated stars through the `LevelDraft` constructor
 - [ ] 3.2 Remove `NumberField.StarOne/Two/Three` and their branches
 - [ ] 3.3 Add `LevelDesignerViewModelTest` cases: place/remove/change with each tool, drag places only the first cell, copy of a bundled level recalculates stars and keeps mandatory sections, export JSON contains the mandatory list, restore from saved state keeps mandatory sections and the selected mandatory tool
 - [ ] 3.4 Run `./gradlew :app:testDebugUnitTest` and make sure everything passes

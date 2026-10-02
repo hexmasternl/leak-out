@@ -26,7 +26,7 @@ One operation covers both tools: on a cell holding `section` it removes the entr
 ### Stars derived in `LevelDraft`
 `StarBenchmarks.forFreeCells(n)` in `core` returns `one = roundTo10(6n)`, `two = roundTo10(7.5n)` and `three = 10n`. It is computed in integers: `three = 10n`, `two = (75n + 50) / 100 * 10`, `one = (60n + 50) / 100 * 10`, which rounds halves up for every n ≥ 0. `Level.freeCells` (grid cells minus distinct blocked cells inside the grid minus the two endpoints) is the input.
 
-Every `LevelDraft` is built through one private factory that sets `stars` to the calculated value, so no operation can forget it. A public `LevelDraft.of(level)` does the same for a copied bundled level and for a draft restored from saved state; the data-class constructor stays for tests, but the view model only uses `of`. `withStars` is removed. `LevelDraft.new` calculates them too, so the blank level gets 200, 250 and 330.
+`LevelDraft` becomes a plain class whose constructor takes any `Level` and stores it with the calculated `stars`, so no operation, copied bundled level or restored draft can skip the rule. Equality is on that level, as the data class had it. `withStars` is removed. `LevelDraft.new` calculates them too, so the blank level gets 200, 250 and 330.
 
 *Alternative:* keep the stars in the draft and recalculate only in the view model. Rejected: the rule belongs to the level model, and `core` tests cover it without Android.
 

@@ -13,6 +13,7 @@ import nl.hexmaster.leakout.core.flow.Channel
 import nl.hexmaster.leakout.core.flow.ChannelUse
 import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.FlowSettings
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.PipeSection.H
 import nl.hexmaster.leakout.core.level.PipeSection.LB
@@ -186,6 +187,87 @@ class FlowSimulationTest {
         // An LT at (1, 1) takes the liquid from the left and sends it up into (1, 0), which is empty.
         val after = engine.runToEnd(engine.start(level()).withPipes(p(1, 1) to LT))
         assertEquals(p(1, 1) to Side.TOP, (after.outcome as Outcome.Lost).let { it.at to it.side })
+    }
+
+    // --- Mandatory sections ---
+
+    /** Start (0, 2) open right, finish (2, 4) open at the top; a mandatory reservoir at (1, 2) and cross at (2, 2). */
+    private val mandatoryLevel = engineLevel(
+        start = Endpoint(p(0, 2), Side.RIGHT),
+        finish = Endpoint(p(2, 4), Side.TOP),
+        mandatory = listOf(MandatorySection(p(1, 2), RES), MandatorySection(p(2, 2), X)),
+    )
+
+    /** Right through the reservoir and the cross, up and round, then down through the cross into the finish. */
+    private val mandatoryRoute = listOf(p(3, 2) to LT, p(3, 1) to LB, p(2, 1) to RB, p(2, 3) to V)
+
+    @Test
+    fun `the finish is won once every mandatory section is used`() {
+        val won = engine.runToEnd(engine.start(mandatoryLevel).withPipes(mandatoryRoute), dtMs = 50)
+        assertIs<Outcome.Won>(won.outcome)
+        assertEquals(25 + 10 + 15 + 15 + 15 + 50 + 10, won.score)
+        assertEquals(Cell.Pipe(RES, liquidEntered = true, mandatory = true), won.board[p(1, 2)])
+        assertEquals(Cell.Pipe(X, liquidEntered = true, mandatory = true), won.board[p(2, 2)])
+    }
+
+    @Test
+    fun `reaching the finish without a mandatory reservoir loses at the finish`() {
+        val level = engineLevel(mandatory = listOf(MandatorySection(p(4, 4), RES)))
+        val lost = engine.runToEnd(engine.start(level).withPipes(ROUTE))
+        val outcome = assertIs<Outcome.Lost>(lost.outcome)
+        assertEquals(p(2, 3) to Side.TOP, outcome.at to outcome.side)
+        assertEquals(LossReason.MANDATORY_MISSED, outcome.reason)
+        assertEquals(null, lost.finalScore)
+        assertIs<FlowState.Ended>(lost.flow)
+    }
+
+    @Test
+    fun `a mandatory cross used on one channel loses at the finish`() {
+        val level = engineLevel(mandatory = listOf(MandatorySection(p(1, 1), X)))
+        val lost = engine.runToEnd(engine.start(level).withPipes(p(2, 1) to LB, p(2, 2) to V))
+        assertEquals(LossReason.MANDATORY_MISSED, assertIs<Outcome.Lost>(lost.outcome).reason)
+    }
+
+    @Test
+    fun `the last section scores before a missed mandatory section loses`() {
+        // A corner at (2, 2) takes the liquid from the left down into the finish at (2, 3).
+        val level = engineLevel(start = Endpoint(p(0, 2), Side.RIGHT), mandatory = listOf(MandatorySection(p(4, 4), RES)))
+        val state = engine.start(level).withPipes(p(1, 2) to H, p(2, 2) to LB)
+            .copy(sheet = ScoreSheet(total = 40))
+            .headAt(p(2, 2), Side.LEFT, 0.5)
+        val after = engine.handle(state, Tick(600))
+        assertEquals(55, after.score)
+        assertEquals(Outcome.Lost(p(2, 3), Side.TOP, atMs = 600, reason = LossReason.MANDATORY_MISSED), after.outcome)
+        assertEquals(listOf(Award(p(2, 2), 15, 600)), after.awards)
+    }
+
+    @Test
+    fun `the liquid passes a mandatory cross straight through and scores it`() {
+        val level = engineLevel(mandatory = listOf(MandatorySection(p(1, 1), X)))
+        val state = engine.start(level).withPipes(p(2, 1) to LB).headAt(p(1, 1), Side.LEFT, 0.5)
+        val after = engine.handle(state, Tick(600))
+        assertEquals(p(2, 1), flowing(after).position)
+        assertEquals(Side.LEFT, flowing(after).entry)
+        assertEquals(listOf(Award(p(1, 1), 10, 600)), after.awards)
+    }
+
+    @Test
+    fun `a mandatory reservoir slows the head like a placed one`() {
+        val level = engineLevel(
+            flow = FlowSettings(10_000, 1.0, reservoirSpeedFactor = 0.3),
+            mandatory = listOf(MandatorySection(p(1, 1), RES)),
+        )
+        val state = engine.start(level).headAt(p(1, 1), Side.LEFT, 0.0)
+        assertEquals(0.3, flowing(engine.handle(state, Tick(1_000))).progress, tolerance)
+    }
+
+    @Test
+    fun `leaving a mandatory reservoir into an empty tile leaks`() {
+        val level = engineLevel(mandatory = listOf(MandatorySection(p(1, 1), RES)))
+        val lost = engine.runToEnd(engine.start(level))
+        val outcome = assertIs<Outcome.Lost>(lost.outcome)
+        assertEquals(p(1, 1) to Side.RIGHT, outcome.at to outcome.side)
+        assertEquals(LossReason.LEAK, outcome.reason)
     }
 
     // --- Large ticks ---

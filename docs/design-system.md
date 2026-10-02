@@ -230,14 +230,34 @@ Buttons keep a hint of the old "juicy" press physics without outlines. A **lip**
 
 ### 5.3 HUD bar
 
-Level 1 panel across the top of the game screen, 64 dp tall, `radius.lg` on the bottom corners, 16 dp padding.
+A level 1 panel across the top of the game screen that is clearly set apart from the stack rail and the board below it.
 
-Left to right:
+**Panel**
 
-1. **Level chip** – "LEVEL" `label.md` over the number in `numeric.md`.
-2. **Countdown ring** – 44 dp ring, 5 dp stroke. Track `line.subtle`; progress `liquid.500` with glow; the number inside in `numeric.md`. Turns `brass.500` under 5 s and `leak.500` under 2 s. Once the liquid flows, the ring becomes a **flow-speed dial**: a small liquid wave icon and the speed in "×1.0" format.
-3. **Score** – right-aligned, `numeric.md`, `text.primary`. Three stars sit directly to its left: grey in `text.muted` until earned, then filled `brass.300` with a static brass glow, each popping in with `motion.pop` as the score crosses the level's star thresholds.
-4. **Pause** – 40 dp glass icon button.
+- Height 48 dp. The stack column and the board get the height below it, so this is fixed; it must still let the largest stack fit on a 360 dp tall screen.
+- Fill: vertical gradient `surface.raised` (top) → `surface.deep` (bottom).
+- Depth level 1: 1 dp `line.highlight` on the top edge, shadow `0 4 12` black 35 %. The bottom edge gets a 1 dp `line.subtle` line so the panel reads as its own surface over `surface.deep`.
+- `radius.lg` on the bottom corners only; the top corners run into the status bar.
+- 16 dp (`space.4`) horizontal padding, 12 dp (`space.3`) between items.
+
+Left to right, all items centred vertically:
+
+1. **Level** – "Level 7" in `display.sm`, `text.primary`. Against the left padding.
+2. **Flow speed** – the 20 dp speed icon in `liquid.300` and the speed as a whole number in `display.sm`, `liquid.300`, 4 dp apart, with no unit. The number is the speed in cells per second × 10, rounded half up (0.2 → 2, 0.8 → 8, 1.25 → 13). The engine and level files keep cells per second.
+3. **Countdown bar** – takes all free space between the flow speed and the score bar, at least 96 dp wide.
+   - Track: `radius.pill`, 8 dp tall, `line.subtle`.
+   - Fill: from the left, the remaining countdown divided by the level's `flow.initialDelayMs`. Full when the attempt starts, empty when the liquid starts. It follows flow time, so it freezes on pause and drains 10× in fast forward.
+   - Colour by time left (flow time): `liquid.500` above 5 s, `brass.500` at 5 s or less, `leak.500` at 2 s or less. The fill carries a `G` glow in the same colour.
+   - Once the liquid flows, the bar fades out (see 7.2) and its slot stays empty, so no other item moves. A level with `flow.initialDelayMs` 0 never shows it.
+4. **Score bar** – directly left of the pause button, fixed 200 dp wide, so it never changes size with the score.
+   - Track: `radius.pill`, 20 dp tall, `surface.abyss` with a 1 dp `line.subtle` border.
+   - Fill: from the left, horizontal gradient `brass.500 → brass.300`, the score divided by the level's `stars.three`, clipped to the track's pill shape. Full at or above `stars.three`.
+   - Markers: 2 dp vertical lines in `line.strong`, the full track height, at `stars.one / stars.three` and `stars.two / stars.three` along the bar. The three-star threshold is the end of the bar.
+   - Number: the actual score (also past `stars.three`), centred on the bar, `numeric.md` in `text.primary`, with the device's digit grouping ("1,250"). For legibility over both the brass fill and the dark track it has a 1 dp `surface.abyss` text shadow (offset 0, 1 dp; blur 2 dp). It grows from its centre.
+   - Reaching each threshold sparkles at that point (see 7.2). There are no separate HUD stars; the level complete dialog keeps its stars.
+5. **Pause** – 48 dp touch target with the 24 dp cog in `text.primary` (`text.muted` while disabled). Against the right padding.
+
+Screen reader: "Level 7", "Flow speed 8", "Flow starts in 7 seconds" (whole seconds, rounded up; not read once the bar has gone), "Score 150, 1 of 3 stars" (the score bar is one node including its markers) and "Pause menu".
 
 ### 5.4 Stack rail
 
@@ -336,7 +356,7 @@ Every pipe section is drawn from the same layers, in this order. Sizes are relat
 | `motion.instant` | 90 ms | linear | Press feedback, lip compression |
 | `motion.quick` | 160 ms | ease-out | Chip states, toast fade, scrim |
 | `motion.settle` | 240 ms | spring (stiffness medium, damping 0.75) | Stack slide, cell state change |
-| `motion.pop` | 320 ms | spring (stiffness medium-low, damping 0.6) | Tile placement, dialog entry, star pop |
+| `motion.pop` | 320 ms | spring (stiffness medium-low, damping 0.6) | Tile placement, dialog entry, win dialog star pop |
 | `motion.drift` | 1 600 ms | ease-in-out, loop | Valve glow pulse |
 | `motion.pulse` | 2 000 ms | ease-in-out, loop | Finish ring pulse, current stack piece glow |
 | Liquid fill | continuous | linear | Driven by the simulation, never by an animator |
@@ -346,7 +366,9 @@ Every pipe section is drawn from the same layers, in this order. Sizes are relat
 - **Place tile**: scale 1.15 → 1 with `motion.pop`, 6 % overshoot, a 40 ms haptic tick at the start.
 - **Replace tile**: old tile scales down to 0.7 and fades over `motion.quick`, new tile pops in.
 - **Locked tap**: cell shakes 3 dp left-right twice over 240 ms and flashes `leak.tint`.
-- **Countdown last 3 s**: ring number scales 1 → 1.15 → 1 every second.
+- **Countdown bar fade**: when the liquid starts, the countdown bar fades from 100 % to 0 % opacity over `motion.quick`. Only its alpha changes; its slot stays laid out.
+- **Score bar fill**: when the score changes, the fill grows from where it is to the new length over 600 ms ease-out (`FastOutSlowInEasing`). A change while it is still moving continues from the current length. A new attempt empties the fill at once, without animating. The number shows the new score at once.
+- **Threshold sparkle**: when the moving fill reaches `stars.one`, `stars.two` or `stars.three` (the end of the bar), a 600 ms procedural burst at that point: 6–8 `liquid.glow` and `brass.300` particles flying out 6–14 dp and fading, over a brief `brass.300` glow flash (radius 16 dp, fading out in the first 300 ms). Each threshold sparkles once per attempt; a jump past several thresholds sparkles each one as the fill passes it. Points beyond `stars.three` do not sparkle.
 - **Win**: finish ring flashes, board dims to 60 %, dialog pops in, stars stagger 80 ms each with a small brass particle burst.
 - **Leak**: droplet burst, board shakes 2 dp for 200 ms, then the dialog pops in after 500 ms so the player sees where it went wrong.
 
@@ -356,7 +378,7 @@ Progress is a 0–1 value per segment from the engine. The renderer clips the li
 
 ### 7.4 Reduced motion
 
-When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite). Liquid fill is gameplay, so it is unaffected.
+When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. Liquid fill is gameplay, so it is unaffected.
 
 ---
 

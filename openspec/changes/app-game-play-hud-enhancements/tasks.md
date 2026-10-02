@@ -4,8 +4,8 @@ Tracking issue: [#38 HUD enhancements](https://github.com/hexmasternl/leak-out/i
 
 ## 1. Design system proposal (gate)
 
-- [ ] 1.1 Rewrite `docs/design-system.md` §5.3 HUD bar for the new panel, level, flow speed number, countdown bar and score bar (sizes, colours, tokens, warning colours, marker lines, score legibility), replacing the outdated countdown ring; verify every token named exists in §2–§4
-- [ ] 1.2 Add the countdown fade, score fill and threshold sparkle to §7.2 and their reduced-motion variants to §7.4; verify durations match the spec (600 ms fill, 600 ms sparkle, `motion.quick` fade, 160 ms reduced)
+- [x] 1.1 Rewrite `docs/design-system.md` §5.3 HUD bar for the new panel, level, flow speed number, countdown bar and score bar (sizes, colours, tokens, warning colours, marker lines, score legibility), replacing the outdated countdown ring; verify every token named exists in §2–§4
+- [x] 1.2 Add the countdown fade, score fill and threshold sparkle to §7.2 and their reduced-motion variants to §7.4; verify durations match the spec (600 ms fill, 600 ms sparkle, `motion.quick` fade, 160 ms reduced)
 - [ ] 1.3 Build a static Compose `@Preview` mock-up of the proposed HUD (waiting with countdown, mid-score, full bar past three stars) and attach screenshots to issue #38; verify the preview renders in Android Studio
 - [ ] 1.4 Get the product owner's approval of the design on issue #38 and record any requested changes back into the design system and spec; verify approval is noted on the issue before starting group 2
 

@@ -80,7 +80,8 @@ object ResultDialogMetrics {
  * The window of a result dialog: a full-window, see-through `surface.scrim` (platform dim off, so the
  * field stays visible behind it) with the entry motion, and the panel in the [ResultDialogLayout]
  * chosen by [ResultDialogFrame]. [content] draws the panel's content for the chosen layout;
- * [measureRegular] draws the Regular content with its final values, for measuring only.
+ * [measureRegular] draws the Regular content with its final values, for measuring only; it is
+ * measured again when [measureKey] changes (content that arrives later, such as the achievement row).
  */
 @Composable
 internal fun ResultDialogWindow(
@@ -89,6 +90,7 @@ internal fun ResultDialogWindow(
     panelModifier: Modifier,
     layoutTagPrefix: String,
     measureRegular: @Composable () -> Unit,
+    measureKey: Any? = null,
     reducedMotion: Boolean = rememberReducedMotion(),
     content: @Composable (ResultDialogLayout) -> Unit,
 ) {
@@ -118,7 +120,7 @@ internal fun ResultDialogWindow(
                     .graphicsLayer { this.alpha = alpha.value }
                     .background(LeakOutColors.Scrim),
             )
-            ResultDialogFrame(measureRegular = measureRegular) { layout ->
+            ResultDialogFrame(measureRegular = measureRegular, measureKey = measureKey) { layout ->
                 ResultDialogPanel(
                     layout = layout,
                     modifier = panelModifier
@@ -145,6 +147,7 @@ internal fun ResultDialogWindow(
 internal fun ResultDialogFrame(
     measureRegular: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    measureKey: Any? = null,
     content: @Composable (ResultDialogLayout) -> Unit,
 ) {
     val cache = remember { LayoutChoiceCache() }
@@ -152,7 +155,7 @@ internal fun ResultDialogFrame(
         val gutter = ResultDialogMetrics.Gutter.roundToPx()
         val maxWidth = (constraints.maxWidth - 2 * gutter).coerceAtLeast(0)
         val maxHeight = (constraints.maxHeight - 2 * gutter).coerceAtLeast(0)
-        val key = listOf(constraints.maxWidth, constraints.maxHeight, density, fontScale)
+        val key = listOf(constraints.maxWidth, constraints.maxHeight, density, fontScale, measureKey)
         val layout = cache.layout.takeIf { cache.key == key } ?: run {
             val regularWidth = minOf(maxWidth, ResultDialogMetrics.RegularMaxWidth.roundToPx())
             val measured = subcompose(MEASURE_SLOT) {
@@ -175,7 +178,7 @@ internal fun ResultDialogFrame(
 }
 
 private class LayoutChoiceCache {
-    var key: List<Any>? = null
+    var key: List<Any?>? = null
     var layout: ResultDialogLayout? = null
 }
 

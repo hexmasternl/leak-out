@@ -262,6 +262,7 @@ fun GameScreen(
             onRestart = { session.restart(achievements) },
             onExit = onExit,
             reason = session.select { (state.outcome as? Outcome.Lost)?.reason ?: LossReason.LEAK },
+            unlocked = session.select { unlockedThisAttempt },
         )
     }
     if (showWinDialog) {
@@ -277,6 +278,7 @@ fun GameScreen(
                 onRestart = { session.restart(achievements) },
                 onExit = onExit,
                 newBest = session.select { recordResult is RecordResult.NewHighscore },
+                unlocked = session.select { unlockedThisAttempt },
             )
         }
     }

@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import nl.hexmaster.leakout.R
+import nl.hexmaster.leakout.core.achievements.Achievement
 import nl.hexmaster.leakout.core.engine.LossReason
 import nl.hexmaster.leakout.ui.components.FlowButton
 import nl.hexmaster.leakout.ui.components.FlowButtonSize
@@ -35,6 +36,7 @@ object LevelLostTags {
     const val RESTART = "lost_restart"
     const val EXIT = "lost_exit"
     const val SPLASH = "lost_splash"
+    const val ACHIEVEMENTS = "lost_achievements"
     const val LAYOUT_PREFIX = "lost"
     const val LAYOUT_REGULAR = "lost_layout_regular"
     const val LAYOUT_COMPACT = "lost_layout_compact"
@@ -43,8 +45,9 @@ object LevelLostTags {
 /**
  * Modal level lost dialog (design-system.md 5.6): the [level] number, the splash, "Leaked!", the
  * message for the [reason], the [score] of the attempt, then Restart and Exit. Back works as Exit; a
- * tap outside does nothing. There is no Resume. The dialog uses the Regular layout when it fits the
- * window height and the Compact one otherwise.
+ * tap outside does nothing. There is no Resume. The achievements the loss [unlocked] pop in under the
+ * score. The dialog uses the Regular layout when it fits the window height and the Compact one
+ * otherwise.
  */
 @Composable
 fun LevelLostDialog(
@@ -53,6 +56,7 @@ fun LevelLostDialog(
     onRestart: () -> Unit,
     onExit: () -> Unit,
     reason: LossReason = LossReason.LEAK,
+    unlocked: List<Achievement> = emptyList(),
 ) {
     val paneName = stringResource(R.string.lost_pane_title)
     ResultDialogWindow(
@@ -60,9 +64,11 @@ fun LevelLostDialog(
         dismissOnBackPress = true,
         panelModifier = Modifier.testTag(LevelLostTags.DIALOG).semantics { paneTitle = paneName },
         layoutTagPrefix = LevelLostTags.LAYOUT_PREFIX,
-        measureRegular = { LevelLostContent(ResultDialogLayout.Regular, level, score, reason, {}, {}, measuring = true) },
+        measureRegular = { LevelLostContent(ResultDialogLayout.Regular, level, score, reason, unlocked, {}, {}, measuring = true) },
+        // The tracker can answer after the dialog opened; the row's height then counts too.
+        measureKey = unlocked.isNotEmpty(),
     ) { layout ->
-        LevelLostContent(layout, level, score, reason, onRestart, onExit)
+        LevelLostContent(layout, level, score, reason, unlocked, onRestart, onExit)
     }
 }
 
@@ -72,6 +78,7 @@ private fun LevelLostContent(
     level: Int,
     score: Int,
     reason: LossReason,
+    unlocked: List<Achievement>,
     onRestart: () -> Unit,
     onExit: () -> Unit,
     measuring: Boolean = false,
@@ -89,6 +96,10 @@ private fun LevelLostContent(
             LostMessage(reason, LeakOutTextStyles.BodyMd)
             Spacer(Modifier.height(16.dp))
             LostScore(score, Modifier.tag(LevelLostTags.SCORE))
+            if (unlocked.isNotEmpty()) {
+                Spacer(Modifier.height(12.dp))
+                AchievementUnlockedRow(unlocked, Modifier.tag(LevelLostTags.ACHIEVEMENTS), animate = !measuring)
+            }
             Spacer(Modifier.height(24.dp))
             LostButtons(FlowButtonSize.Large, onRestart, onExit, tag)
         }
@@ -104,6 +115,10 @@ private fun LevelLostContent(
                 LostMessage(reason, LeakOutTextStyles.BodySm)
                 Spacer(Modifier.height(12.dp))
                 LostScore(score, Modifier.tag(LevelLostTags.SCORE))
+                if (unlocked.isNotEmpty()) {
+                    Spacer(Modifier.height(8.dp))
+                    AchievementUnlockedRow(unlocked, Modifier.tag(LevelLostTags.ACHIEVEMENTS), animate = !measuring)
+                }
             },
             buttons = { LostButtons(FlowButtonSize.Medium, onRestart, onExit, tag) },
         )
@@ -169,13 +184,20 @@ private fun ColumnScope.LostButtons(size: FlowButtonSize, onRestart: () -> Unit,
 
 /** The dialog's frame and panel without the dialog window, so previews can render them. */
 @Composable
-private fun LevelLostPreview() {
+private fun LevelLostPreview(unlocked: List<Achievement> = emptyList()) {
     LeakOutTheme {
-        ResultDialogFrame(measureRegular = { LevelLostContent(ResultDialogLayout.Regular, 7, 85, LossReason.LEAK, {}, {}, measuring = true) }) { layout ->
-            ResultDialogPanel(layout) { LevelLostContent(layout, 7, 85, LossReason.LEAK, {}, {}) }
+        ResultDialogFrame(
+            measureRegular = { LevelLostContent(ResultDialogLayout.Regular, 7, 85, LossReason.LEAK, unlocked, {}, {}, measuring = true) },
+            measureKey = unlocked.isNotEmpty(),
+        ) { layout ->
+            ResultDialogPanel(layout) { LevelLostContent(layout, 7, 85, LossReason.LEAK, unlocked, {}, {}) }
         }
     }
 }
+
+@Preview(name = "Level lost, achievements, 640 × 360 (Compact)", widthDp = 640, heightDp = 360, showBackground = true, backgroundColor = 0xFF0C1A2A)
+@Composable
+private fun LevelLostAchievementsPreview() = LevelLostPreview(listOf(Achievement.WET_FEET, Achievement.INSTANT_FLOOD))
 
 @Preview(name = "Level lost, 640 × 360 (Compact)", widthDp = 640, heightDp = 360, showBackground = true, backgroundColor = 0xFF0C1A2A)
 @Composable

@@ -38,8 +38,15 @@ import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.compose.ui.test.hasContentDescription
 import kotlin.random.Random
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import nl.hexmaster.leakout.achievements.AchievementTracker
+import nl.hexmaster.leakout.achievements.InMemoryAchievementRepository
+import nl.hexmaster.leakout.core.achievements.Achievement
 import nl.hexmaster.leakout.core.engine.Outcome
+import nl.hexmaster.leakout.history.InMemoryLevelHistoryRepository
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
@@ -231,7 +238,8 @@ class LevelCompleteTest {
         compose.waitForIdle()
 
         compose.onNodeWithTag(LevelCompleteTags.DIALOG).assertDoesNotExist()
-        compose.onNodeWithTag(HudTags.LEVEL).assert(hasText("Level 100"))
+        // The HUD level label is read by its content description (see GamePlayHudTest), not as text.
+        compose.onNodeWithTag(HudTags.LEVEL).assertContentDescriptionEquals("Level 100")
         compose.onNodeWithTag(HudTags.SCORE).assertScore("0")
         compose.cellNode(Position(1, 0)).assertContentDescriptionEquals("Empty")
         compose.dropOnCell(Position(1, 1))
@@ -355,6 +363,39 @@ class LevelCompleteTest {
         }
     }
 
+    // 5.2
+    @Test
+    fun achievementsTheWinUnlockedAppearOnceTheTallyIsDone() {
+        val tracker = AchievementTracker(InMemoryAchievementRepository(), InMemoryLevelHistoryRepository(), CoroutineScope(Dispatchers.Main))
+        show(achievements = tracker)
+        win()
+        compose.waitUntil(5_000) { session.unlockedThisAttempt.isNotEmpty() }
+        val unlocked = compose.runOnIdle { session.unlockedThisAttempt }
+        // Nothing paused or replaced: at least these two, whatever else the win earned.
+        assertTrue(unlocked.toString(), Achievement.STEADY_HANDS in unlocked && Achievement.MEASURE_TWICE in unlocked)
+
+        tickToDialogAge(300)
+        compose.onNodeWithTag(LevelCompleteTags.DIALOG).assertIsDisplayed()
+        compose.onNodeWithTag(LevelCompleteTags.ACHIEVEMENTS).assertDoesNotExist()
+
+        val end = compose.runOnIdle { WinTally.totalDurationMs(session.state.finalScore!!, session.state.finalStars) }
+        tickToDialogAge(end)
+        for (tag in buttons) compose.onNodeWithTag(tag).assertIsEnabled()
+        compose.onNodeWithTag(LevelCompleteTags.ACHIEVEMENTS)
+            .assertIsDisplayed()
+            .assert(hasText("ACHIEVEMENT UNLOCKED"))
+            .assert(hasContentDescription("Steady Hands", substring = true))
+            .assert(hasContentDescription("Measure Twice", substring = true))
+    }
+
+    // 5.2
+    @Test
+    fun aWinWithoutTrackingHasNoAchievementRow() {
+        show()
+        winAndFinishTally()
+        compose.onNodeWithTag(LevelCompleteTags.ACHIEVEMENTS).assertDoesNotExist()
+    }
+
     private val buttons = listOf(LevelCompleteTags.NEXT, LevelCompleteTags.RESTART, LevelCompleteTags.EXIT)
 
     private fun star(index: Int) = compose.onNodeWithTag("win_star_$index", useUnmergedTree = true)
@@ -394,7 +435,7 @@ class LevelCompleteTest {
 
     private fun tickToDialogAge(ageMs: Long) = tickToWinAge(WinTiming.FINISH_EFFECT_MS + ageMs)
 
-    private fun show(hasNext: Boolean = true) {
+    private fun show(hasNext: Boolean = true, achievements: AchievementTracker? = null) {
         session = GameSession(level, Random(7))
         compose.setContent {
             LeakOutTheme {
@@ -416,6 +457,7 @@ class LevelCompleteTest {
                                 onNextLevel = if (hasNext && shown == level) ({ current = nextLevel }) else null,
                                 random = Random(7),
                                 session = remember { if (shown == level) session else GameSession(shown, Random(7)) },
+                                achievements = achievements,
                             )
                         }
                     }

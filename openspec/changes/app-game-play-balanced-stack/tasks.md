@@ -15,9 +15,9 @@ Tracking issue: [#35 Random tile stack population needs to be less random](https
 
 ## 3. Stack and engine
 
-- [ ] 3.1 Give `PipeStack` a `dealer`; `create(settings, random)` draws the initial sections through it; `afterPlacement(random)` deals from and returns the updated dealer; delete `WeightedPool` and move its remaining assertions to `DealerTest`
-- [ ] 3.2 In `GameEngine.place` use `state.stack.afterPlacement(random)` instead of a new `WeightedPool` per placement
-- [ ] 3.3 `PipeStackTest` and `GameEngineTest`: the dealer carries over between placements and across pause/resume, restart resets it, two engines with the same seed deal the same stacks after the same placements; existing stack-order tests still pass; run `./gradlew :core:test`
+- [x] 3.1 Give `PipeStack` a `dealer`; `create(settings, random)` draws the initial sections through it; `afterPlacement(random)` deals from and returns the updated dealer; delete `WeightedPool` and move its remaining assertions to `DealerTest`
+- [x] 3.2 In `GameEngine.place` use `state.stack.afterPlacement(random)` instead of a new `WeightedPool` per placement
+- [x] 3.3 `PipeStackTest` and `GameEngineTest`: the dealer carries over between placements and across pause/resume, restart resets it, two engines with the same seed deal the same stacks after the same placements; existing stack-order tests still pass; run `./gradlew :core:test`
 
 ## 4. Levels and docs
 

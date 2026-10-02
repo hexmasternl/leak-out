@@ -154,3 +154,18 @@ With mandatory sections, the route must run through every mandatory channel, ent
 
 - **Parse errors** (shape and types) stop at the first problem and name the field by its path, for example `flow.cellsPerSecond`, `stack.weights.Z`, `blocked[1].y` or `mandatory[0].section`.
 - **Validation errors** (meaning) are all reported together, each naming its field, so a file can be fixed in one pass.
+
+## Creating levels with the designer
+
+Debug builds have a level designer; release builds do not (it sits behind the `levelDesigner` feature flag, which is `BuildConfig.LEVEL_DESIGNER`: on in debug, off in release). Open it with the small pencil button in the top-right corner of the welcome screen.
+
+1. Start from a blank level (7 by 5, start on the left, finish on the right, id one past the bundled levels) or with **Start from…** from a copy of a bundled level.
+2. Lay out the grid. Set columns and rows (4 to 50) with the steppers; shrinking drops blocked cells outside the grid and moves the start or finish inside it. Pick a tool and tap the grid: **Start** and **Finish** move an endpoint (keeping its open side), **Block** toggles a cell, and a drag paints every cell it passes. Set each endpoint's open side in the panel.
+3. Fill in the other fields: id, name, flow, stack weights and visible size, rules and stars. Text that is not a number is marked and does not change the level.
+4. Watch the status. It runs `LevelValidator` and then `LevelSolver` on every change, lists every error by field and frames the cells they are about. A solvable level shows the solver's route faintly on the grid.
+5. **Test play** plays the level on the normal game screen. Nothing is recorded in the level history, and leaving returns to the designer with the design intact.
+6. **Export** writes the level with `LevelWriter`, copies it to the clipboard and opens the share sheet with the suggested file name `level_NNN.json`. The JSON leaves out every optional field that holds its default, so it reads like a hand-written file.
+
+Save the exported JSON as `src/app/src/main/assets/levels/level_NNN.json`, with `NNN` matching the level's id, and run `./gradlew :core:test` from `src/`: the bundled level tests parse, validate, solve and round-trip it, and check that its id is not used twice.
+
+Test play and Export are only enabled for a valid, solvable level. The design survives rotation and the app being recreated, but it is not stored permanently: export it before you leave. The designer keeps a copied level's mandatory sections but cannot add, move or remove them; edit `mandatory` in the file for that.

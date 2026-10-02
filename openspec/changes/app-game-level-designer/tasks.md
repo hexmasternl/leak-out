@@ -45,7 +45,7 @@ Tracking issue: [#43 Level designer](https://github.com/hexmasternl/leak-out/iss
 
 ## 7. Docs and verification
 
-- [ ] 7.1 Add a "Creating levels with the designer" section to `docs/level-format.md` (debug only, export, where to save the file, run `:core:test`)
-- [ ] 7.2 Run `./gradlew :core:test` and `./gradlew :app:testDebugUnitTest` and make sure they pass
-- [ ] 7.3 Run the affected instrumented tests (welcome screen, designer, navigation) on the emulator and make sure they pass
-- [ ] 7.4 Run `./gradlew :app:assembleRelease` and confirm the generated `BuildConfig.LEVEL_DESIGNER` is false and the welcome screen has no designer button in release
+- [x] 7.1 Add a "Creating levels with the designer" section to `docs/level-format.md` (debug only, export, where to save the file, run `:core:test`)
+- [x] 7.2 Run `./gradlew :core:test` and `./gradlew :app:testDebugUnitTest` and make sure they pass
+- [x] 7.3 Run the affected instrumented tests (welcome screen, designer, navigation) on the emulator and make sure they pass
+- [x] 7.4 Run `./gradlew :app:assembleRelease` and confirm the generated `BuildConfig.LEVEL_DESIGNER` is false and the welcome screen has no designer button in release

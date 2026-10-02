@@ -12,10 +12,15 @@ enum class EndpointKind { START, FINISH }
  * [LevelValidator]: a draft may be invalid, for example with a start that opens onto the edge, and
  * [status] reports that instead of preventing it.
  *
- * The designer does not edit mandatory sections. A copied level keeps them, a resize drops those
- * outside the grid, and the tools leave their cells alone.
+ * Mandatory sections are only placed with [toggleMandatory]: the Start, Finish and Block tools leave
+ * their cells alone, and a resize drops those outside the grid.
+ *
+ * The star thresholds are not edited: every draft calculates them from the free cells with
+ * [StarBenchmarks.forFreeCells], so [level] has them whatever level the draft was built from.
  */
-data class LevelDraft(val level: Level) {
+class LevelDraft(source: Level) {
+    val level: Level = source.copy(stars = StarBenchmarks.forFreeCells(source.freeCells))
+
     /** Validation first, then solvability: what the designer shows, and whether it may be played. */
     val status: DesignStatus by lazy { DesignStatus.of(level) }
 
@@ -96,6 +101,30 @@ data class LevelDraft(val level: Level) {
 
     fun clearBlocked(): LevelDraft = LevelDraft(level.copy(blocked = emptyList()))
 
+    /**
+     * What a tap with a mandatory section tool does on [cell]: removes a mandatory [section] there,
+     * turns a mandatory section of the other kind into [section] (keeping its place in the list), or
+     * places a new one on a free cell. A cell outside the grid, a blocked cell, the start, the finish
+     * and a new section beyond [LevelValidator.MAX_MANDATORY_SECTIONS] are left alone. Only a cross
+     * or a reservoir can be mandatory.
+     */
+    fun toggleMandatory(cell: Position, section: PipeSection): LevelDraft {
+        require(section in LevelValidator.MANDATORY_KINDS) { "Only a cross or a reservoir can be mandatory, not $section" }
+        val index = level.mandatory.indexOfFirst { it.position == cell }
+        val mandatory = when {
+            index >= 0 && level.mandatory[index].section == section -> level.mandatory.filterIndexed { i, _ -> i != index }
+            index >= 0 -> level.mandatory.mapIndexed { i, existing -> if (i == index) existing.copy(section = section) else existing }
+            !canPlaceMandatory(cell) -> return this
+            else -> level.mandatory + MandatorySection(cell, section)
+        }
+        return LevelDraft(level.copy(mandatory = mandatory))
+    }
+
+    /** Whether a new mandatory section may go on [cell]. */
+    private fun canPlaceMandatory(cell: Position): Boolean =
+        cell in level.grid && !level.isBlocked(cell) && cell != level.start.position && cell != level.finish.position &&
+            level.mandatory.size < LevelValidator.MAX_MANDATORY_SECTIONS
+
     /** Whether the Block tool may change [cell]. */
     fun canBlock(cell: Position): Boolean =
         cell in level.grid && cell != level.start.position && cell != level.finish.position && level.mandatoryAt(cell) == null
@@ -113,7 +142,11 @@ data class LevelDraft(val level: Level) {
 
     fun withRules(rules: PlacementRules): LevelDraft = LevelDraft(level.copy(rules = rules))
 
-    fun withStars(stars: StarBenchmarks): LevelDraft = LevelDraft(level.copy(stars = stars))
+    override fun equals(other: Any?): Boolean = other is LevelDraft && other.level == level
+
+    override fun hashCode(): Int = level.hashCode()
+
+    override fun toString(): String = "LevelDraft(level=$level)"
 
     private fun EndpointKind.other(): EndpointKind = if (this == EndpointKind.START) EndpointKind.FINISH else EndpointKind.START
 
@@ -134,7 +167,8 @@ data class LevelDraft(val level: Level) {
                 flow = FlowSettings(initialDelayMs = 20_000, cellsPerSecond = 0.4),
                 stack = StackSettings(),
                 rules = PlacementRules(),
-                stars = StarBenchmarks(one = 50, two = 80, three = 120),
+                // Replaced by the calculated thresholds: 200, 250 and 330 for the 33 free cells.
+                stars = StarBenchmarks(one = 0, two = 0, three = 0),
             ),
         )
 

@@ -7,10 +7,12 @@ import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.LevelDraft
 import nl.hexmaster.leakout.core.level.LevelParser
 import nl.hexmaster.leakout.core.level.LevelWriter
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.ParseResult
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
+import nl.hexmaster.leakout.core.level.StarBenchmarks
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -163,7 +165,6 @@ class LevelDesignerViewModelTest {
         assertEquals("5", state.text(NumberField.Id))
         assertEquals("0.4", state.text(NumberField.CellsPerSecond))
         assertEquals("7", state.text(NumberField.Weight(PipeSection.H)))
-        assertEquals("120", state.text(NumberField.StarThree))
     }
 
     @Test
@@ -224,11 +225,97 @@ class LevelDesignerViewModelTest {
         val vm = viewModel()
         vm.copyFrom(3)
         vm.changeRows(+1)
-        vm.setNumber(NumberField.StarOne, "x")
+        vm.setNumber(NumberField.InitialDelay, "x")
         vm.newBlank()
         assertEquals(LevelDraft.new(5), vm.state.draft)
         assertFalse(vm.state.dirty)
-        assertFalse(vm.state.isInvalid(NumberField.StarOne))
+        assertFalse(vm.state.isInvalid(NumberField.InitialDelay))
+    }
+
+    // Mandatory sections
+
+    @Test
+    fun `the mandatory tools place, change and remove sections`() {
+        val vm = viewModel()
+        vm.selectTool(DesignerTool.MANDATORY_CROSS)
+        vm.onCellTap(Position(3, 2))
+        assertEquals(listOf(MandatorySection(Position(3, 2), PipeSection.X)), vm.state.level.mandatory)
+        assertTrue(vm.state.dirty)
+
+        vm.selectTool(DesignerTool.MANDATORY_RESERVOIR)
+        vm.onCellTap(Position(3, 2))
+        assertEquals(listOf(MandatorySection(Position(3, 2), PipeSection.RES)), vm.state.level.mandatory)
+
+        vm.onCellTap(Position(3, 2))
+        assertEquals(emptyList<MandatorySection>(), vm.state.level.mandatory)
+    }
+
+    @Test
+    fun `a mandatory tool drag only acts on the cell it starts on`() {
+        val vm = viewModel()
+        vm.selectTool(DesignerTool.MANDATORY_CROSS)
+        vm.onDragStart(Position(1, 1))
+        listOf(2, 3, 4).forEach { vm.onDrag(Position(it, 1)) }
+        vm.onDragEnd()
+        assertEquals(listOf(MandatorySection(Position(1, 1), PipeSection.X)), vm.state.level.mandatory)
+    }
+
+    @Test
+    fun `a mandatory tool tap on the start changes nothing`() {
+        val vm = viewModel()
+        vm.selectTool(DesignerTool.MANDATORY_RESERVOIR)
+        vm.onCellTap(Position(0, 2))
+        assertEquals(emptyList<MandatorySection>(), vm.state.level.mandatory)
+        assertFalse(vm.state.dirty)
+    }
+
+    @Test
+    fun `mandatory sections are exported`() {
+        val vm = viewModel()
+        vm.selectTool(DesignerTool.MANDATORY_CROSS)
+        vm.onCellTap(Position(3, 2))
+        assertTrue(vm.export())
+        val parsed = (LevelParser.parse(exporter.exports.single().second) as ParseResult.Success).level
+        assertEquals(listOf(MandatorySection(Position(3, 2), PipeSection.X)), parsed.mandatory)
+        assertEquals(vm.state.level, parsed)
+        assertEquals(vm.state.level, vm.testPlayLevel())
+    }
+
+    @Test
+    fun `mandatory sections and the mandatory tool are restored`() {
+        val saved = SavedStateHandle()
+        val first = viewModel(saved)
+        first.selectTool(DesignerTool.MANDATORY_RESERVOIR)
+        first.onCellTap(Position(2, 1))
+        val restored = viewModel(saved).state
+        assertEquals(listOf(MandatorySection(Position(2, 1), PipeSection.RES)), restored.level.mandatory)
+        assertEquals(DesignerTool.MANDATORY_RESERVOIR, restored.tool)
+    }
+
+    // Star thresholds
+
+    @Test
+    fun `stars follow the grid`() {
+        val vm = viewModel()
+        assertEquals(StarBenchmarks(200, 250, 330), vm.state.level.stars)
+        vm.selectTool(DesignerTool.BLOCK)
+        vm.onCellTap(Position(3, 1))
+        assertEquals(StarBenchmarks.forFreeCells(32), vm.state.level.stars)
+        vm.changeColumns(+1)
+        assertEquals(StarBenchmarks.forFreeCells(37), vm.state.level.stars)
+    }
+
+    @Test
+    fun `a copied level gets calculated stars and keeps its mandatory sections`() {
+        val handWritten = bundled[0].copy(
+            id = 9,
+            stars = StarBenchmarks(1, 2, 3),
+            mandatory = listOf(MandatorySection(Position(2, 2), PipeSection.X)),
+        )
+        val vm = LevelDesignerViewModel(FakeLevels(listOf(handWritten)), exporter, SavedStateHandle())
+        vm.copyFrom(9)
+        assertEquals(handWritten.mandatory, vm.state.level.mandatory)
+        assertEquals(StarBenchmarks.forFreeCells(handWritten.freeCells), vm.state.level.stars)
     }
 
     @Test

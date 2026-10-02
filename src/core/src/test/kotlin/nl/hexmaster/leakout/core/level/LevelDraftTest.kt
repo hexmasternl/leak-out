@@ -2,6 +2,7 @@ package nl.hexmaster.leakout.core.level
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
@@ -25,7 +26,7 @@ class LevelDraftTest {
         assertEquals(FlowSettings(20_000, 0.4), level.flow)
         assertEquals(StackSettings(), level.stack)
         assertEquals(PlacementRules(), level.rules)
-        assertEquals(StarBenchmarks(50, 80, 120), level.stars)
+        assertEquals(StarBenchmarks(200, 250, 330), level.stars)
         assertEquals(emptyList(), level.mandatory)
     }
 
@@ -189,7 +190,6 @@ class LevelDraftTest {
             .withVisibleStackSize(3)
             .withWeight(PipeSection.X, 1)
             .withRules(PlacementRules(allowReplace = false, replacePenaltyMs = 10))
-            .withStars(StarBenchmarks(1, 2, 3))
         val level = draft.level
         assertEquals(9, level.id)
         assertEquals("Pipes", level.name)
@@ -198,15 +198,138 @@ class LevelDraftTest {
         assertEquals(1, level.stack.weightOf(PipeSection.X))
         assertEquals(7, level.stack.weightOf(PipeSection.H))
         assertEquals(PlacementRules(false, 10), level.rules)
-        assertEquals(StarBenchmarks(1, 2, 3), level.stars)
+        assertEquals(blank.level.stars, level.stars)
         assertEquals(blank.level.grid, level.grid)
     }
+
+    // Mandatory sections
+
+    private val cross = PipeSection.X
+    private val reservoir = PipeSection.RES
+
+    @Test
+    fun `a mandatory cross is placed on a free cell`() {
+        val draft = blank.toggleMandatory(Position(3, 2), cross)
+        assertEquals(listOf(MandatorySection(Position(3, 2), cross)), draft.level.mandatory)
+    }
+
+    @Test
+    fun `tapping a mandatory section of the same kind removes it`() {
+        val draft = blank.toggleMandatory(Position(3, 2), reservoir).toggleMandatory(Position(3, 2), reservoir)
+        assertEquals(emptyList(), draft.level.mandatory)
+    }
+
+    @Test
+    fun `tapping a mandatory section of the other kind changes it in place`() {
+        val draft = blank
+            .toggleMandatory(Position(2, 1), cross)
+            .toggleMandatory(Position(3, 2), cross)
+            .toggleMandatory(Position(2, 1), reservoir)
+        assertEquals(
+            listOf(MandatorySection(Position(2, 1), reservoir), MandatorySection(Position(3, 2), cross)),
+            draft.level.mandatory,
+        )
+    }
+
+    @Test
+    fun `mandatory sections are refused on blocked cells, endpoints and outside the grid`() {
+        val blocked = blank.toggleBlocked(Position(3, 1))
+        assertSame(blocked, blocked.toggleMandatory(Position(3, 1), cross))
+        assertSame(blank, blank.toggleMandatory(blank.level.start.position, reservoir))
+        assertSame(blank, blank.toggleMandatory(blank.level.finish.position, cross))
+        assertSame(blank, blank.toggleMandatory(Position(7, 2), cross))
+    }
+
+    @Test
+    fun `at most six mandatory sections, which can still be removed or changed`() {
+        val six = row(1, 1..5).plus(Position(1, 3)).fold(blank) { draft, cell -> draft.toggleMandatory(cell, cross) }
+        assertEquals(6, six.level.mandatory.size)
+        assertSame(six, six.toggleMandatory(Position(3, 3), cross))
+        assertEquals(5, six.toggleMandatory(Position(1, 1), cross).level.mandatory.size)
+        assertEquals(reservoir, six.toggleMandatory(Position(1, 1), reservoir).level.mandatoryAt(Position(1, 1))?.section)
+    }
+
+    @Test
+    fun `only a cross or a reservoir can be mandatory`() {
+        assertFailsWith<IllegalArgumentException> { blank.toggleMandatory(Position(3, 2), PipeSection.H) }
+    }
+
+    @Test
+    fun `the block tool skips a mandatory section`() {
+        val draft = blank.toggleMandatory(Position(3, 2), cross)
+        assertSame(draft, draft.toggleBlocked(Position(3, 2)))
+    }
+
+    @Test
+    fun `a design with mandatory sections stays valid`() {
+        val draft = blank.toggleMandatory(Position(3, 2), cross).toggleMandatory(Position(2, 0), reservoir)
+        assertTrue(draft.status !is DesignStatus.Invalid)
+    }
+
+    // Star thresholds
+
+    @Test
+    fun `stars follow the free cells`() {
+        assertEquals(StarBenchmarks(360, 450, 600), StarBenchmarks.forFreeCells(60))
+        assertEquals(StarBenchmarks(350, 440, 590), StarBenchmarks.forFreeCells(59))
+        assertEquals(StarBenchmarks(200, 250, 330), StarBenchmarks.forFreeCells(33))
+        assertEquals(StarBenchmarks(20, 20, 30), StarBenchmarks.forFreeCells(3))
+        assertEquals(StarBenchmarks(0, 0, 0), StarBenchmarks.forFreeCells(0))
+    }
+
+    @Test
+    fun `halves round up`() {
+        // 75% of 100 is 75, and 75% of 20 is 15: both round up to the next 10.
+        assertEquals(StarBenchmarks(60, 80, 100), StarBenchmarks.forFreeCells(10))
+        assertEquals(StarBenchmarks(10, 20, 20), StarBenchmarks.forFreeCells(2))
+    }
+
+    @Test
+    fun `free cells leave out blocked cells, the start and the finish`() {
+        val draft = blank.resize(7, 9).toggleBlocked(Position(3, 4))
+        assertEquals(60, draft.level.freeCells)
+        assertEquals(StarBenchmarks(360, 450, 600), draft.level.stars)
+    }
+
+    @Test
+    fun `stars are recalculated after every grid edit`() {
+        val sixty = blank.resize(7, 9).toggleBlocked(Position(3, 4))
+        assertEquals(StarBenchmarks(350, 440, 590), sixty.toggleBlocked(Position(3, 5)).level.stars)
+        assertEquals(StarBenchmarks(370, 460, 610), sixty.clearBlocked().level.stars)
+        assertEquals(sixty.level.stars, sixty.placeStart(Position(0, 3)).level.stars)
+        assertEquals(StarBenchmarks(370, 460, 610), sixty.placeStart(Position(3, 4)).level.stars)
+    }
+
+    @Test
+    fun `mandatory sections do not change the stars`() {
+        assertEquals(blank.level.stars, blank.toggleMandatory(Position(3, 2), cross).level.stars)
+    }
+
+    @Test
+    fun `a draft built from any level calculates its stars`() {
+        val level = blank.level.copy(stars = StarBenchmarks(1, 2, 3))
+        assertEquals(StarBenchmarks(200, 250, 330), LevelDraft(level).level.stars)
+    }
+
+    @Test
+    fun `fewer than four free cells is invalid`() {
+        val crowded = blank.resize(4, 4).paintBlocked(allCells(4).filter { it.y != 2 } + Position(1, 2), blocked = true)
+        assertEquals(1, crowded.level.freeCells)
+        val status = assertIs<DesignStatus.Invalid>(crowded.status)
+        assertTrue("stars" in status.errors.map { it.field })
+    }
+
+    private fun allCells(size: Int) = (0 until size).flatMap { y -> (0 until size).map { x -> Position(x, y) } }
 
     // Status
 
     @Test
     fun `several errors are listed and the start is highlighted`() {
-        val draft = blank.setOpenSide(EndpointKind.START, Side.LEFT).withStars(StarBenchmarks(80, 50, 120))
+        // 4 by 4 with 11 cells blocked: 3 free cells give the non-increasing stars 20, 20 and 30.
+        val draft = blank.resize(4, 4)
+            .paintBlocked(allCells(4).filter { it.y != 2 }.drop(1), blocked = true)
+            .setOpenSide(EndpointKind.START, Side.LEFT)
+        assertEquals(3, draft.level.freeCells)
         val status = assertIs<DesignStatus.Invalid>(draft.status)
         assertEquals(listOf("start.openSide", "stars"), status.errors.map { it.field })
         assertEquals(setOf(Position(0, 2)), status.highlightedCells)

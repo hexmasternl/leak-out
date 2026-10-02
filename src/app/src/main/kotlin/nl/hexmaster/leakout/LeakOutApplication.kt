@@ -12,7 +12,9 @@ class LeakOutApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        container = AppContainer(this, CoroutineScope(SupervisorJob() + Dispatchers.Default))
+        container = AppContainer(this, CoroutineScope(SupervisorJob() + Dispatchers.Default), getString(R.string.app_id))
+        // Starts the Play Games SDK only when games-ids.xml has a real app id; the sync waits for a sign-in.
+        container.playGames.start()
         // Players who finished levels before achievements existed, or before an update added
         // some, get what their history has earned.
         container.tracker.launchReconcile()

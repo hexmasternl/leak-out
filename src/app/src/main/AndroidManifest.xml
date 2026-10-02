@@ -13,6 +13,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.LeakOut">
 
+        <!-- Play Games Services v2. The id is the Play Console export in res/values/games-ids.xml;
+             LeakOutApplication only starts the SDK when it is a positive number. -->
+        <meta-data
+            android:name="com.google.android.gms.games.APP_ID"
+            android:value="@string/app_id" />
+
         <!-- sensorLandscape is applied before the first frame (no portrait flash) and still lets
              the sensor flip between both landscape sides. -->
         <activity

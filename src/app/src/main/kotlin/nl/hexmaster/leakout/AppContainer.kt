@@ -1,10 +1,12 @@
 package nl.hexmaster.leakout
 
 import android.content.Context
+import com.google.android.gms.games.PlayGamesSdk
 import kotlinx.coroutines.CoroutineScope
 import nl.hexmaster.leakout.achievements.AchievementRepository
 import nl.hexmaster.leakout.achievements.AchievementTracker
 import nl.hexmaster.leakout.achievements.data.RoomAchievementRepository
+import nl.hexmaster.leakout.achievements.playgames.PlayGamesServices
 import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.history.data.LeakOutDatabase
 import nl.hexmaster.leakout.history.data.RoomLevelHistoryRepository
@@ -14,8 +16,9 @@ import nl.hexmaster.leakout.history.data.RoomLevelHistoryRepository
  * activity and its view models by hand: a handful of objects does not need a DI framework.
  *
  * @param scope lives as long as the process; work that must outlive a screen runs in it.
+ * @param playGamesAppId the Play Games app id (`R.string.app_id`); not a positive number means no Play Games.
  */
-class AppContainer(context: Context, val scope: CoroutineScope) {
+class AppContainer(context: Context, val scope: CoroutineScope, playGamesAppId: String?) {
     private val appContext = context.applicationContext
 
     private val database: LeakOutDatabase by lazy { LeakOutDatabase.get(appContext) }
@@ -28,6 +31,11 @@ class AppContainer(context: Context, val scope: CoroutineScope) {
 
     /** Decides and stores achievements when an attempt ends, is abandoned, or at start-up. */
     val tracker: AchievementTracker by lazy { AchievementTracker(achievements, history, scope) }
+
+    /** Play Games sign-in ([PlayGamesServices.auth]) and the sync of [achievements] to it. */
+    val playGames: PlayGamesServices by lazy {
+        PlayGamesServices(playGamesAppId, achievements, scope, initializeSdk = { PlayGamesSdk.initialize(appContext) })
+    }
 }
 
 /** The process's [AppContainer]. */

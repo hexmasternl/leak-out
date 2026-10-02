@@ -161,6 +161,14 @@ class MainActivity : ComponentActivity() {
                 override fun onStop(owner: LifecycleOwner) = music.onBackground()
             },
         )
+        // Play Games clients need an activity: the silent sign-in check and the achievement sync run on this one.
+        val playGames = appContainer.playGames
+        playGames.attach(this)
+        lifecycle.addObserver(
+            object : DefaultLifecycleObserver {
+                override fun onDestroy(owner: LifecycleOwner) = playGames.detach(this@MainActivity)
+            },
+        )
         setContent {
             LeakOutTheme {
                 SplashGate {

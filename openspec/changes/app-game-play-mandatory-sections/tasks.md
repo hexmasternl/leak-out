@@ -21,7 +21,7 @@
 
 - [x] 4.1 Make `RouteTracer` return `Route.Open(finish, MANDATORY_MISSED)` when a route that reaches the finish missed a mandatory channel. Cover in `RouteTracerTest` the skipped reservoir, the one-channel cross and the complete route. Keep `FlowStepRouteAgreementTest` passing.
 - [x] 4.2 Add `LossReason { LEAK, MANDATORY_MISSED }` to `Outcome.Lost`, defaulting to `LEAK`. In `FlowSimulation.leaveTile`, lose with `MANDATORY_MISSED` at the finish and its open side when a mandatory section is unused, after the points are awarded. Cover in `FlowSimulationTest` and `GameEngineTest`: win after every mandatory section is used, loss when one is skipped, points before the loss, liquid passing a mandatory cross and a mandatory reservoir at reservoir speed, a restart that resets them unfilled, and a refused drop on a mandatory tile with the stack unchanged.
-- [ ] 4.3 Add a `HeadlessPlayTest` case that plays a level with a mandatory cross and reservoir end to end through engine commands, once winning and once losing with `MANDATORY_MISSED`. Run `./gradlew :core:test` and confirm it passes.
+- [x] 4.3 Add a `HeadlessPlayTest` case that plays a level with a mandatory cross and reservoir end to end through engine commands, once winning and once losing with `MANDATORY_MISSED`. Run `./gradlew :core:test` and confirm it passes.
 
 ## 5. Solver
 

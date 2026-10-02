@@ -21,4 +21,4 @@
 
 ## 5. Verification
 
-- [ ] 5.1 Manual check on a device or emulator in landscape: fresh install, mid-progress, page boundary, all levels done
+- [x] 5.1 Manual check on a device or emulator in landscape: fresh install, mid-progress, page boundary, all levels done

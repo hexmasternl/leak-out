@@ -7,7 +7,7 @@
 ## 2. Level format and validation
 
 - [x] 2.1 Add `MandatorySection(position, section)` and `Level.mandatory: List<MandatorySection>` (default empty), plus an optional `mandatory` array of `{x, y, section}` in `LevelDto`. Cover the parse cases in `LevelParserTest`: absent field, a valid entry, a missing `mandatory[0].section`, an unknown section id and an unknown key inside an entry.
-- [ ] 2.2 Add the validation to `LevelValidator`: at most 6 entries, `section` only `X` or `RES`, inside the grid, not blocked, not on the start or finish, and no duplicate cells. Every error names its `mandatory[i]` field, and a mandatory `X`/`RES` is accepted with stack weight 0. Cover each spec scenario in `LevelValidatorTest`, including several errors reported together.
+- [x] 2.2 Add the validation to `LevelValidator`: at most 6 entries, `section` only `X` or `RES`, inside the grid, not blocked, not on the start or finish, and no duplicate cells. Every error names its `mandatory[i]` field, and a mandatory `X`/`RES` is accepted with stack weight 0. Cover each spec scenario in `LevelValidatorTest`, including several errors reported together.
 - [ ] 2.3 Document the `mandatory` field in `docs/level-format.md`: the full example, a "Mandatory sections" section with the rules and the meaning of "used", and the solver's limits under Solvability. Verify that the documented example JSON parses in a `LevelParserTest` case.
 
 ## 3. Board, placement and the "used" rule

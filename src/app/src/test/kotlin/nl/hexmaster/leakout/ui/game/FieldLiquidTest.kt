@@ -58,4 +58,22 @@ class FieldLiquidTest {
             assertEquals(p.toFloat(), fill.progress, 1e-6f)
         }
     }
+
+    @Test
+    fun `the start is dry while the countdown runs`() {
+        assertEquals(0f, FieldLiquid.startFill(at, emptySet(), null))
+    }
+
+    @Test
+    fun `the start fills with the head's progress once the flow starts`() {
+        assertEquals(0f, FieldLiquid.startFill(at, emptySet(), head(Channel.SINGLE, Side.LEFT, 0.0)))
+        assertEquals(0.4f, FieldLiquid.startFill(at, emptySet(), head(Channel.SINGLE, Side.LEFT, 0.4)), 1e-6f)
+    }
+
+    @Test
+    fun `the start stays full once the head has left it`() {
+        val next = head(Channel.SINGLE, Side.LEFT, 0.1, Position(3, 3))
+        assertEquals(1f, FieldLiquid.startFill(at, setOf(ChannelUse(at, Channel.SINGLE)), next))
+        assertEquals(0f, FieldLiquid.startFill(at, emptySet(), next))
+    }
 }

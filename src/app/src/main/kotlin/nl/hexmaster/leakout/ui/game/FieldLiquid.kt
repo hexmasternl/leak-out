@@ -32,6 +32,17 @@ object FieldLiquid {
         return fills
     }
 
+    /**
+     * How far the liquid has run out of the start at [position], 0..1: 0 while the countdown runs,
+     * the head's progress while it crosses the start, and 1 once it has left. The start has no pipe
+     * art, so without this the liquid stays invisible for a whole cell after the countdown ends.
+     */
+    fun startFill(position: Position, used: Set<ChannelUse>, head: FlowState.Flowing?): Float = when {
+        ChannelUse(position, Channel.SINGLE) in used -> 1f
+        head != null && head.position == position -> head.progress.toFloat().coerceIn(0f, 1f)
+        else -> 0f
+    }
+
     /** A full channel shows the same from either side; this picks one it can be entered from. */
     private fun anyEntry(section: PipeSection, channel: Channel): Side = when (channel) {
         Channel.HORIZONTAL -> Side.LEFT

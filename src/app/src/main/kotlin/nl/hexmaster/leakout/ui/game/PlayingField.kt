@@ -227,11 +227,12 @@ fun PlayingField(
             for (position in cells) {
                 val cell = board[position]
                 val fills = if (cell is Cell.Pipe) FieldLiquid.fills(position, cell.section, used, flowing) else emptyMap()
+                val startFill = if (cell is Cell.Start) FieldLiquid.startFill(position, used, flowing) else 0f
                 val rect = viewport.cellRect(position)
                 if (pop != null && cell is Cell.Pipe && position == landing?.at) {
                     scale(pop, pivot = rect.center) { drawCell(cell, rect, pipes, scratch, fills) }
                 } else {
-                    drawCell(cell, rect, pipes, scratch, fills)
+                    drawCell(cell, rect, pipes, scratch, fills, startFill)
                 }
             }
             replacement?.let { drawReplacement(it, viewport.cellRect(it.at), replacementFrame(it, now), pipes, scratch) }
@@ -358,6 +359,7 @@ private fun DrawScope.drawCell(
     pipes: PipeArtLibrary,
     scratch: LiquidScratch,
     fills: Map<String, ChannelFill>,
+    startFill: Float = 0f,
 ) {
     val inset = rect.deflate(rect.width * 0.04f)
     val corner = CornerRadius(rect.width * 0.14f)
@@ -370,7 +372,7 @@ private fun DrawScope.drawCell(
             drawLine(LeakOutColors.Steel500, a.topLeft, a.bottomRight, rect.width * 0.06f, StrokeCap.Round)
             drawLine(LeakOutColors.Steel500, a.bottomLeft, a.topRight, rect.width * 0.06f, StrokeCap.Round)
         }
-        is Cell.Start -> drawEndpoint(inset, cell.openSide, LeakOutColors.Brass500)
+        is Cell.Start -> drawEndpoint(inset, cell.openSide, LeakOutColors.Brass500, startFill)
         is Cell.Finish -> drawEndpoint(inset, cell.openSide, LeakOutColors.SuccessGreen)
         is Cell.Pipe -> {
             drawRoundRect(LeakOutColors.SurfaceCard.copy(alpha = 0.06f), inset.topLeft, inset.size, corner)
@@ -382,8 +384,11 @@ private fun DrawScope.drawCell(
     }
 }
 
-/** A start or finish: a coloured disc with a stub out of its open side. */
-private fun DrawScope.drawEndpoint(rect: Rect, openSide: Side, color: Color) {
+/**
+ * A start or finish: a coloured disc with a stub out of its open side. [liquid] (0..1) fills the
+ * stub from the centre towards the open side, so the flow shows as soon as it leaves the start.
+ */
+private fun DrawScope.drawEndpoint(rect: Rect, openSide: Side, color: Color, liquid: Float = 0f) {
     drawRoundRect(color.copy(alpha = 0.18f), rect.topLeft, rect.size, CornerRadius(rect.width * 0.14f))
     val center = rect.center
     val edge = when (openSide) {
@@ -393,6 +398,7 @@ private fun DrawScope.drawEndpoint(rect: Rect, openSide: Side, color: Color) {
         Side.BOTTOM -> Offset(center.x, rect.bottom)
     }
     drawLine(LeakOutColors.Steel300, center, edge, rect.width * 0.22f, StrokeCap.Butt)
+    if (liquid > 0f) drawLine(LeakOutColors.Liquid500, center, center + (edge - center) * liquid, rect.width * 0.14f, StrokeCap.Butt)
     drawCircle(color, radius = rect.width * 0.26f, center = center)
     drawCircle(LeakOutColors.Steel900, radius = rect.width * 0.10f, center = center)
 }

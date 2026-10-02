@@ -13,8 +13,8 @@ Tracking issue: [#40 Win and loss dialogs design](https://github.com/hexmasternl
 
 ## 2. Buttons and tokens
 
-- [ ] 2.1 If `app-game-pause-dialog-enhancements` has not landed: add its missing colour tokens and the `FlowButton` component (Primary, Secondary glass, Destructive) exactly as its tasks 1.2, 2.1 and 2.2 describe, with their tests; verify `./gradlew :app:testDebugUnitTest` passes
-- [ ] 2.2 Add the **Success** (gradient `success.500 → success.700`, `text.onStatus`, lip `success.700`, success glow) and **Tertiary** (no fill, `liquid.300` label, no lip, 48 dp touch target) variants to `FlowButtonVariant`; verify JVM unit tests of their colours against §5.1 and that Tertiary has no lip, and an instrumented test that a Tertiary button is at least 48 dp high and clickable
+- [x] 2.1 If `app-game-pause-dialog-enhancements` has not landed: add its missing colour tokens and the `FlowButton` component (Primary, Secondary glass, Destructive) exactly as its tasks 1.2, 2.1 and 2.2 describe, with their tests; verify `./gradlew :app:testDebugUnitTest` passes
+- [x] 2.2 Add the **Success** (gradient `success.500 → success.700`, `text.onStatus`, lip `success.700`, success glow) and **Tertiary** (no fill, `liquid.300` label, no lip, 48 dp touch target) variants to `FlowButtonVariant`; verify JVM unit tests of their colours against §5.1 and that Tertiary has no lip, and an instrumented test that a Tertiary button is at least 48 dp high and clickable
 
 ## 3. Shared layout
 

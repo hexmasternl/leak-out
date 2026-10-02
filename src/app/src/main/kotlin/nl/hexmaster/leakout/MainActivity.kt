@@ -26,6 +26,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import nl.hexmaster.leakout.achievements.playgames.showPlayGamesAchievements
 import nl.hexmaster.leakout.audio.AudioManagerAudioFocus
 import nl.hexmaster.leakout.audio.BundledMusic
 import nl.hexmaster.leakout.audio.DataStoreMusicRotationStore
@@ -40,6 +41,8 @@ import nl.hexmaster.leakout.core.library.NextLevelResolver
 import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.settings.DataStoreSettingsRepository
 import nl.hexmaster.leakout.settings.SettingsRepository
+import nl.hexmaster.leakout.ui.achievements.AchievementsScreen
+import nl.hexmaster.leakout.ui.achievements.AchievementsViewModel
 import nl.hexmaster.leakout.ui.designer.AndroidLevelExporter
 import nl.hexmaster.leakout.ui.designer.LevelDesignerScreen
 import nl.hexmaster.leakout.ui.designer.LevelDesignerViewModel
@@ -60,6 +63,9 @@ private sealed interface Screen {
     data object Welcome : Screen
     data object Library : Screen
     data object Settings : Screen
+
+    /** The achievements, from the local store; reached from Settings, and Back returns there. */
+    data object Achievements : Screen
     data class Game(val level: Level) : Screen
 
     /** The level designer; only reachable while [FeatureFlags.levelDesigner] is on. */
@@ -94,8 +100,21 @@ class MainActivity : ComponentActivity() {
     private val settings: SettingsRepository by lazy { DataStoreSettingsRepository.create(this) }
     private val settingsViewModel: SettingsViewModel by viewModels {
         viewModelFactory {
-            initializer { SettingsViewModel(settings, history, musicPlaylist, onProgressReset = appContainer.tracker::reconcile) }
+            initializer {
+                SettingsViewModel(
+                    settings,
+                    history,
+                    musicPlaylist,
+                    onProgressReset = appContainer.tracker::reconcile,
+                    achievements = appContainer.achievements,
+                    signIn = appContainer.playGames.auth.state,
+                )
+            }
         }
+    }
+
+    private val achievementsViewModel: AchievementsViewModel by viewModels {
+        viewModelFactory { initializer { AchievementsViewModel(appContainer.achievements, appContainer.playGames.auth.state) } }
     }
 
     // The bundled playlist, which is also the music credits on the About panel; null when unreadable.
@@ -214,6 +233,13 @@ class MainActivity : ComponentActivity() {
                             onBack = { screen = Screen.Welcome },
                             onSoundPreview = soundEffectsViewModel.soundEffects::preview,
                             onMusicVolumePreview = music::previewVolume,
+                            onSignIn = { playGames.auth.signIn(this@MainActivity) },
+                            onOpenAchievements = { screen = Screen.Achievements },
+                        )
+                        Screen.Achievements -> AchievementsScreen(
+                            viewModel = achievementsViewModel,
+                            onBack = { screen = Screen.Settings },
+                            onOpenPlayGames = { showPlayGamesAchievements(this@MainActivity) },
                         )
                         Screen.Welcome -> WelcomeScreen(
                             resolveNextLevel = ::resolveNextLevel,

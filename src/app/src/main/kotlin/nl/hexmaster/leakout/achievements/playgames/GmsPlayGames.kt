@@ -51,6 +51,22 @@ class PlayGamesAchievementSync(
     }
 }
 
+/**
+ * Opens the Play Games achievements UI over [activity]. A failure (signed out meanwhile, Play Games
+ * missing) is only logged: the in-app achievements screen stays where it is.
+ */
+fun showPlayGamesAchievements(activity: Activity, log: PlayGamesLog = PlayGamesLog.Android) {
+    PlayGames.getAchievementsClient(activity).achievementsIntent
+        .addOnSuccessListener { intent ->
+            // For a result, as the Play Games docs show: the UI reports a sign-out through it.
+            @Suppress("DEPRECATION")
+            activity.startActivityForResult(intent, REQUEST_ACHIEVEMENTS_UI)
+        }
+        .addOnFailureListener { error -> log.failed("achievements UI", error) }
+}
+
+private const val REQUEST_ACHIEVEMENTS_UI = 9003
+
 /** Waits for a Play Services task without adding the coroutines-play-services dependency for one function. */
 internal suspend fun <T> Task<T>.await(): T = suspendCancellableCoroutine { continuation ->
     addOnCompleteListener { task ->

@@ -59,6 +59,7 @@ import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.history.RecordResult
 import nl.hexmaster.leakout.settings.SettingsRepository
 import nl.hexmaster.leakout.settings.TipId
+import nl.hexmaster.leakout.ui.components.KeepScreenOn
 import nl.hexmaster.leakout.ui.game.onboarding.DragHint
 import nl.hexmaster.leakout.ui.game.onboarding.LocalTipTargets
 import nl.hexmaster.leakout.ui.game.onboarding.TipOverlay
@@ -93,6 +94,8 @@ fun GameScreen(
     soundEffects: SoundEffects? = null,
     tips: SettingsRepository? = null,
 ) {
+    // The display stays on for the whole game screen, its dialogs included.
+    KeepScreenOn()
     val dragState = remember(session) { SectionDragState() }
     // Parse every pipe asset once up front, so no frame mid-game pays for a section's first draw.
     val pipes = rememberPipeArtLibrary().let { library -> remember(library) { library.apply { preloadAll() } } }

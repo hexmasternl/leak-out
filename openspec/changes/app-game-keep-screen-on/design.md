@@ -26,7 +26,7 @@ The app is a single activity (`MainActivity`) that swaps Compose screens with a 
 
 3. **Dialogs need nothing extra.** A Compose `Dialog` is a separate window, but the activity window behind it is still visible and still carries the flag, and Android keeps the screen on while any visible window does. The instrumented test covers the pause and lost dialogs to prove it.
 
-4. **Tests are instrumented.** The behaviour lives in the Android window, which JVM tests cannot see (the project has no Robolectric). The tests read `window.attributes.flags` of the hosting activity and wait for `FLAG_KEEP_SCREEN_ON` to be set or cleared (the flag is applied on the next layout pass, hence `waitUntil`). `KeepScreenOn` has no logic of its own to unit test; `GameScreen`'s logic stays covered by the existing JVM tests.
+4. **Tests are instrumented.** The behaviour lives in the Android window, which JVM tests cannot see (the project has no Robolectric). The tests check that a view in the hosting activity's hierarchy has `keepScreenOn` set, and wait for it to be set or cleared with `waitUntil`. They do not read `window.attributes.flags`: the view root adds `FLAG_KEEP_SCREEN_ON` to its own copy of the layout params, so `window.attributes` never shows it. A one-off probe on a device confirmed that the window manager's flag (`dumpsys window`) tracks the view check exactly. `KeepScreenOn` has no logic of its own to unit test; `GameScreen`'s logic stays covered by the existing JVM tests.
 
 ## Risks / Trade-offs
 

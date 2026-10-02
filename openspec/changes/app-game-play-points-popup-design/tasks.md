@@ -11,8 +11,8 @@ Tracking issue: [#51 Section score indicator is too large](https://github.com/he
 
 ## 2. Style and drawing
 
-- [ ] 2.1 Add `PopupStyle` to `app/.../ui/game/PointsPopup.kt` (text fraction 0.33, fill `SurfaceDeep`, stroke `LiquidGlow` 2 dp (1 dp visible), glow `LiquidGlow` 6 dp at 0.7) and a pure `glowColor(alpha)` that scales the glow alpha by the popup alpha; verify JVM unit tests in `PointsPopupTest`: the tokens equal the design-system values (text fraction 0.33), the fill is opaque, `glowColor(1f)` has alpha 0.7, `glowColor(0.5f)` 0.35 and `glowColor(0f)` 0
-- [ ] 2.2 Rewrite `drawPopups` in `PlayingField.kt`: measure once, then draw the glow pass (text shadow), the 2 dp `liquid.glow` stroke and the `surface.deep` fill on top, all at the frame alpha and inside the existing scale and rise; remove `POPUP_OUTLINE`, `POPUP_TEXT_FRACTION` and the `InkDark`/white passes; add a `@Preview` of a popup over a filled straight; verify `./gradlew :app:testDebugUnitTest` passes and the preview matches the gallery
+- [x] 2.1 Add `PopupStyle` to `app/.../ui/game/PointsPopup.kt` (text fraction 0.33, fill `SurfaceDeep`, stroke `LiquidGlow` 2 dp (1 dp visible), glow `LiquidGlow` 6 dp at 0.7) and a pure `glowColor(alpha)` that scales the glow alpha by the popup alpha; verify JVM unit tests in `PointsPopupTest`: the tokens equal the design-system values (text fraction 0.33), the fill is opaque, `glowColor(1f)` has alpha 0.7, `glowColor(0.5f)` 0.35 and `glowColor(0f)` 0
+- [x] 2.2 Rewrite `drawPopups` in `PlayingField.kt`: measure once, then draw the glow pass (text shadow), the 2 dp `liquid.glow` stroke and the `surface.deep` fill on top, all at the frame alpha and inside the existing scale and rise; remove `POPUP_OUTLINE`, `POPUP_TEXT_FRACTION` and the `InkDark`/white passes; add a `@Preview` of a popup over a filled straight; verify `./gradlew :app:testDebugUnitTest` passes and the preview matches the gallery — unit tests pass; the `@Preview` (`PointsPopupPreview`, 44 dp and 120 dp) was not rendered in Android Studio, the rendered check is the 3.1 screenshot
 
 ## 3. Instrumented tests
 

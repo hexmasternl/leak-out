@@ -194,7 +194,7 @@ A 4 dp base grid. Named steps: `space.1 = 4`, `space.2 = 8`, `space.3 = 12`, `sp
 | 0 | Flat | none | Text, inline chips |
 | 1 | Panel | 1 dp `line.highlight` on top edge · shadow `0 4 12` black 35 % | HUD bar, board plate, stack rail |
 | 2 | Raised | level 1 + 1 dp `line.subtle` border · shadow `0 8 24` black 45 % | Cards, level tiles, buttons at rest |
-| 3 | Floating | shadow `0 24 64` black 60 % · scrim behind | Dialogs, pause sheet |
+| 3 | Floating | shadow `0 24 64` black 60 % · scrim behind | Dialogs, pause dialog |
 | G | Glow | `0 0 24` in the element's colour at 45 % | Flowing liquid, primary button, current stack piece, finish ring |
 
 Glows are additive to a level, never a replacement. A raised primary button is level 2 + G in brass.
@@ -286,7 +286,7 @@ A vertical level 1 panel (`surface.deep` at 90 %, 24 dp radius, `line.strong` ed
 Level 3 floating panel, `radius.lg`, `surface.base`, 1 dp `line.highlight` top edge, no outline, 24 dp padding, max width 360 dp, centred over `surface.scrim` with a 16 dp gutter to the window edge. Entry: scale 0.92 → 1 with `motion.pop`; scrim fades in over `motion.quick` (see 7.2 and 7.4).
 
 - **Win** and **Leak**: the result dialogs, specified below.
-- **Pause**: title "Paused" `display.lg`; glass "Resume" as primary emphasis, glass "Restart", destructive "Quit to Levels".
+- **Pause**: the panel sits on an **opaque backdrop** instead of the scrim: a diagonal linear gradient from `surface.abyss` (top left) to `surface.deep` (bottom right) covering the whole screen, system bar and cutout areas included, so nothing of the frozen board, stack or HUD can be studied while paused. The backdrop fades in over `motion.quick` and disappears at once when the dialog closes; a tap on it does nothing. Title "Paused" in Title Case, `display.lg`, `text.primary`. Medium buttons (48 dp face + 4 dp lip) 12 dp apart, so the panel fits a 360 dp high screen: brass Primary "Resume" (the one main action), glass Secondary "Restart", a 1 dp `line.subtle` separator, Destructive "Exit" (back to the main menu). Back works as Resume.
 
 #### Result dialogs: Win and Leak
 
@@ -582,7 +582,7 @@ Progress is a 0–1 value per segment from the engine. The renderer clips the li
 
 ### 7.4 Reduced motion
 
-When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). Tips (5.9) fade in and out over 160 ms ease-out without the scale; the spotlight and card jump to the next target, the field jumps instead of panning, the glow ring is static at 60 %, and the drag hint is a static 2 dp `liquid.glow` arrow from the next slot to the hint cell with the ghost at rest on the cell. Liquid fill and the win tally are gameplay, so they are unaffected.
+When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). The pause backdrop appears at full opacity at once and the pause panel fades in over 160 ms without the scale. The stack pieces do not accelerate, bounce or stagger: they all slide to their new slot together over 160 ms ease-out, and the new top piece fades in in its slot over 160 ms. Liquid fill and the win tally are gameplay, so they are unaffected.
 
 ---
 

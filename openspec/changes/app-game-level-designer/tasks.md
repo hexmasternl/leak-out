@@ -8,9 +8,9 @@ Tracking issue: [#43 Level designer](https://github.com/hexmasternl/leak-out/iss
 
 ## 2. Level writer (core)
 
-- [ ] 2.1 Implement `core/.../level/LevelWriter.kt`: `Level` to pretty-printed level-format JSON, two-space indent, trailing newline, key order as in `docs/level-format.md`, optional fields omitted when equal to `LevelDefaults`, empty `stack`/`rules`/`weights` omitted
-- [ ] 2.2 Unit tests: minimal level has no `stack`/`rules` and only required `flow` keys; single changed weight written alone; empty `blocked` written as `[]`; blocked order kept
-- [ ] 2.3 Round-trip tests: every bundled `level_NNN.json` parse → write → parse is equal; a level with every optional field non-default round-trips; an invalid level (for example start on the edge) still writes and parses back
+- [x] 2.1 Implement `core/.../level/LevelWriter.kt`: `Level` to pretty-printed level-format JSON, two-space indent, trailing newline, key order as in `docs/level-format.md`, optional fields omitted when equal to `LevelDefaults`, empty `stack`/`rules`/`weights` omitted
+- [x] 2.2 Unit tests: minimal level has no `stack`/`rules` and only required `flow` keys; single changed weight written alone; empty `blocked` written as `[]`; blocked order kept
+- [x] 2.3 Round-trip tests: every bundled `level_NNN.json` parse → write → parse is equal; a level with every optional field non-default round-trips; an invalid level (for example start on the edge) still writes and parses back
 
 ## 3. Level draft editing model (core)
 

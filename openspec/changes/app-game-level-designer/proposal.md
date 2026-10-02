@@ -1,3 +1,5 @@
+Tracking issue: [#43 Level designer](https://github.com/hexmasternl/leak-out/issues/43).
+
 ## Why
 
 Levels are written by hand as `level_NNN.json` files, which is slow and error prone: coordinates are counted on paper, open sides are easy to get wrong, and a mistake only shows up when the parser, validator or solver test fails. An in-game level designer lets a developer lay out a level visually on the real playing field, see at once whether it is valid and solvable, try it out, and export the JSON. It is a development tool, so players must never see it.

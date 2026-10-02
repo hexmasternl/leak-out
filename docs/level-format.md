@@ -20,7 +20,7 @@ Every level is one JSON file in `src/app/src/main/assets/levels/`, named `level_
   },
   "stack": {                        // optional
     "visibleSize": 5,               // optional, 1 to 10: sections shown on the stack
-    "weights": { "H": 3, "V": 3, "LT": 2, "LB": 2, "RT": 2, "RB": 2, "X": 1, "RES": 1 }
+    "weights": { "H": 7, "V": 7, "LT": 7, "LB": 7, "RT": 7, "RB": 7, "X": 3, "RES": 3 }
   },
   "rules": {                        // optional
     "allowReplace": true,           // optional: may an unfilled pipe be replaced
@@ -51,15 +51,14 @@ A level only needs its required fields. Everything else takes the defaults below
 
 ## Defaults
 
-Defaults live in `LevelDefaults`. Each optional field can be overridden on its own, and every other field keeps its default. `"stack": { "weights": { "X": 1 } }` enables the cross and leaves every other weight and the visible size unchanged. Changing a default changes every level that does not override it.
+Defaults live in `LevelDefaults`. Each optional field can be overridden on its own, and every other field keeps its default. `"stack": { "weights": { "X": 3 } }` enables the cross and leaves every other weight and the visible size unchanged. Changing a default changes every level that does not override it.
 
 | Field | Default |
 |-------|---------|
 | `flow.reservoirSpeedFactor` | 0.3 |
 | `flow.speedRampPerCell` | 0.0 |
 | `stack.visibleSize` | 5 |
-| `stack.weights.H`, `V` | 3 |
-| `stack.weights.LT`, `LB`, `RT`, `RB` | 2 |
+| `stack.weights.H`, `V`, `LT`, `LB`, `RT`, `RB` | 7 |
 | `stack.weights.X`, `RES` | 0 |
 | `rules.allowReplace` | true |
 | `rules.replacePenaltyMs` | 3000 |
@@ -71,7 +70,9 @@ Defaults live in `LevelDefaults`. Each optional field can be overridden on its o
 
 ## Stack weights
 
-Each pipe section has a weight. Its chance to be drawn is its weight divided by the sum of all weights. A weight of 0 means the section never appears.
+Each pipe section has a weight. A section's weight divided by the sum of all weights is its *target share*: the part of the sections dealt in an attempt that the stack steers it towards (see [How the stack deals](#how-the-stack-deals)). A weight of 0 means the section never appears.
+
+With the default standard weights (7 each, 42 in total), a cross at weight 3 makes up 3/45 ≈ 6.7 % of the stack and a cross at weight 6 makes up 6/48 = 12.5 %.
 
 | Id | Section | Rule |
 |----|---------|------|
@@ -80,7 +81,17 @@ Each pipe section has a weight. Its chance to be drawn is its weight divided by 
 | `X` | Cross | 0 or more; off by default |
 | `RES` | Reservoir | 0 or more; off by default |
 
-The level has no random seed. Every attempt draws a new stack, so a retry can deal a different, possibly easier sequence.
+## How the stack deals
+
+Sections are dealt one at a time, at random, but steered so that every section stays close to its target share throughout the attempt. Two rules do this; both live in `Dealer` and use the constants in `LevelDefaults`.
+
+**Deficit steering.** After `n` sections have been dealt, a section's *deficit* is how often it should have been dealt by now (target share × `n`) minus how often it was. Each section is drawn with weight `share × e^(k × deficit)`, with steering strength `k` = `STEERING_STRENGTH` (1.0). A section that is behind becomes more likely the longer it stays behind; a section that is ahead, for example one just dealt twice, becomes less likely. Deficits always add up to zero, so nothing drifts over a long level, and the very first section follows the weights exactly. The initial stack is dealt the same way, one section after the other.
+
+**Drought limit.** A straight or corner section that has not been dealt for `⌈DROUGHT_FACTOR / share⌉` draws (`DROUGHT_FACTOR` 2.5) is dealt next without drawing. That is 15 draws with six equal standard sections, 17 next to a cross at weight 3 and 18 next to a cross at weight 6. If several sections reach their limit at once, the one missing longest is dealt, and on a tie the first in the order `H`, `V`, `LT`, `LB`, `RT`, `RB`. The cross and the reservoir are never forced: a designer who makes them rare means it. With steering in place the limit fires about once every two levels; it is a safety net that guarantees no standard section is ever missing for long.
+
+The dealing state (draws so far, count and drought per section) belongs to the attempt: it carries over between placements and across pause, and starts fresh when the level is started or restarted.
+
+The level has no random seed. Every attempt deals a new stack, so a retry still deals a different, possibly easier sequence; steering only makes each sequence fairer, not the same. Tests pass a seeded random source to get a repeatable sequence.
 
 ## Start and finish rules
 

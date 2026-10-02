@@ -60,26 +60,42 @@ Every step except the last SHALL offer "Next" and "Skip tour"; the last step SHA
 - **THEN** the intro tour is shown again from its first step
 
 ### Requirement: Cross section tip
-The first time a cross (`X`) is in the stack during play, the game SHALL freeze and show the cross tip, highlighting the cross in the stack. The tip SHALL explain that a cross has two separate channels the liquid passes straight through, that the first pass scores 10 points and the second pass through the other channel 50 points, and that each channel can be used only once.
+The first time a cross (`X`) in the stack is fully visible on screen during play, the game SHALL freeze and show the cross tip, highlighting the cross in the stack. A section is fully visible when its whole stack slot lies within the visible area of the screen; on a small screen the top of the stack can be cut off, and an `X` in a slot that is partly or entirely cut off SHALL NOT trigger the tip. The tip SHALL explain that a cross has two separate channels the liquid passes straight through, that the first pass scores 10 points and the second pass through the other channel 50 points, and that each channel can be used only once.
 
 #### Scenario: Cross drawn onto the stack
-- **WHEN** the cross tip has not been seen and a placement draws an `X` onto the top of the stack
+- **WHEN** the cross tip has not been seen and a placement draws an `X` onto the top of the stack, where its slot is fully visible
 - **THEN** the game freezes, the `X` in the stack is highlighted and the cross tip is shown with its explanation of the two channels and the 10 and 50 points
 
+#### Scenario: Cross drawn onto a cut-off top of the stack
+- **WHEN** the cross tip has not been seen and a placement draws an `X` onto the top of the stack, where its slot is partly outside the visible area
+- **THEN** no tip is shown and the game keeps running
+
+#### Scenario: Cross moves into view
+- **WHEN** the cross tip has not been seen, an `X` is in a cut-off slot of the stack and a later placement moves it down into a fully visible slot
+- **THEN** the game freezes, the `X` is highlighted in that slot and the cross tip is shown
+
 #### Scenario: Cross in the starting stack
-- **WHEN** the cross tip has not been seen and a level starts with an `X` in its stack
+- **WHEN** the cross tip has not been seen and a level starts with an `X` in a fully visible slot of its stack
 - **THEN** the cross tip is shown before the countdown runs, after the intro tour when that is shown too
+
+#### Scenario: Cross in a cut-off part of the starting stack
+- **WHEN** the cross tip has not been seen and a level starts with an `X` only in slots of its stack that are cut off
+- **THEN** no cross tip is shown before the countdown, and the cross tip is shown once a placement moves the `X` into a fully visible slot
 
 #### Scenario: Cross tip shown once
 - **WHEN** the cross tip has been seen and an `X` is drawn onto the stack
 - **THEN** no tip is shown and the game keeps running
 
 ### Requirement: Reservoir tip
-The first time a reservoir (`RES`) is in the stack during play, the game SHALL freeze and show the reservoir tip, highlighting the reservoir in the stack. The tip SHALL explain that a reservoir only connects left and right, that the liquid slows down to the level's reservoir speed while it fills the reservoir, shown as a percentage of normal speed, and that it scores 25 points.
+The first time a reservoir (`RES`) in the stack is fully visible on screen during play, the game SHALL freeze and show the reservoir tip, highlighting the reservoir in the stack. The tip SHALL explain that a reservoir only connects left and right, that the liquid slows down to the level's reservoir speed while it fills the reservoir, shown as a percentage of normal speed, and that it scores 25 points. Full visibility SHALL be judged as for the cross tip: a `RES` in a slot that is partly or entirely cut off SHALL NOT trigger the tip.
 
 #### Scenario: Reservoir drawn onto the stack
-- **WHEN** the reservoir tip has not been seen, the level's reservoir speed factor is 0.3 and a placement draws a `RES` onto the stack
+- **WHEN** the reservoir tip has not been seen, the level's reservoir speed factor is 0.3 and a placement draws a `RES` onto the stack, where its slot is fully visible
 - **THEN** the game freezes, the `RES` in the stack is highlighted and the tip says the liquid flows at 30 % speed in a reservoir and that it scores 25 points
+
+#### Scenario: Reservoir waits until it is in view
+- **WHEN** the reservoir tip has not been seen, a `RES` is drawn onto a cut-off top of the stack and two placements later it has moved down into a fully visible slot
+- **THEN** no tip is shown on the first placement and the reservoir tip is shown after the placement that makes the `RES` fully visible
 
 #### Scenario: Reservoir tip shown once
 - **WHEN** the reservoir tip has been seen and a `RES` is drawn onto the stack
@@ -107,7 +123,7 @@ The cross, reservoir and mandatory section tips SHALL each offer one "Got it" bu
 When more than one tip is due at the same moment, the game SHALL show them one after the other in this order: intro tour, mandatory section tip, cross tip, reservoir tip. The game SHALL stay frozen until the last of them is closed.
 
 #### Scenario: Everything due on the first level
-- **WHEN** no tip has been seen and the first level played has a mandatory section and an `X` and a `RES` in its starting stack
+- **WHEN** no tip has been seen and the first level played has a mandatory section and an `X` and a `RES` in fully visible slots of its starting stack
 - **THEN** the intro tour, the mandatory section tip, the cross tip and the reservoir tip are shown in that order, and the countdown only starts after the reservoir tip is closed
 
 ### Requirement: The game is frozen while a tip is shown

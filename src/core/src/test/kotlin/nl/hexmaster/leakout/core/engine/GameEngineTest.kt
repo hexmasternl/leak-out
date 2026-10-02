@@ -123,6 +123,58 @@ class GameEngineTest {
         assertEquals(play(engine(seed = 3)), play(engine(seed = 3)))
     }
 
+    // --- Dealing state ---
+
+    @Test
+    fun `the dealer counts every draw of the attempt across placements`() {
+        val level = engineLevel(section = null)
+        var state = engine.start(level)
+        assertEquals(5, state.stack.dealer.draws)
+
+        state = engine.send(state, Place(p(1, 1)), Place(p(2, 1)), Place(p(3, 1)))
+
+        assertEquals(8, state.stack.dealer.draws)
+        assertEquals(state.stack.sections.first(), state.stack.dealer.droughts.filterValues { it == 0 }.keys.single())
+    }
+
+    @Test
+    fun `pause and resume keep the dealer`() {
+        val placed = engine.send(engine.start(engineLevel(section = null)), Place(p(1, 1)))
+        val resumed = engine.send(placed, Pause, Tick(500), Resume)
+        assertEquals(placed.stack, resumed.stack)
+
+        val next = engine.handle(resumed, Place(p(2, 1)))
+        assertEquals(placed.stack.dealer.draws + 1, next.stack.dealer.draws)
+    }
+
+    @Test
+    fun `restart resets the dealer`() {
+        val level = engineLevel(section = null)
+        var state = engine.start(level)
+        // Rows 0, 2 and 4 hold no start or finish, so all 12 placements land on empty tiles.
+        repeat(12) { i -> state = engine.handle(state, Place(p(i % 5, listOf(0, 2, 4)[i / 5]))) }
+        assertEquals(17, state.stack.dealer.draws)
+
+        val restarted = engine.handle(state, Restart)
+
+        assertEquals(5, restarted.stack.dealer.draws)
+        assertEquals(restarted.stack.sections.toSet(), restarted.stack.dealer.dealt.filterValues { it > 0 }.keys)
+    }
+
+    @Test
+    fun `two engines with the same seed deal the same stacks after the same placements`() {
+        val level = engineLevel(section = null)
+        val first = engine(seed = 11)
+        val second = engine(seed = 11)
+        var a = first.start(level)
+        var b = second.start(level)
+        for (at in listOf(p(1, 1), p(2, 1), p(3, 1), p(1, 2), p(1, 1), p(2, 2))) {
+            a = first.handle(a, Place(at))
+            b = second.handle(b, Place(at))
+            assertEquals(a.stack, b.stack)
+        }
+    }
+
     @Test
     fun `a placement makes a new state and leaves the previous one as it was`() {
         val before = engine.start(level)

@@ -55,6 +55,24 @@ class LevelModelTest {
     }
 
     @Test
+    fun `default stack weights deal the straights and corners evenly with specials off`() {
+        val settings = StackSettings()
+        for (section in PipeSection.entries) {
+            assertEquals(if (section.mandatory) 7 else 0, settings.weightOf(section), "$section")
+        }
+        assertEquals(1.0, LevelDefaults.STEERING_STRENGTH)
+        assertEquals(2.5, LevelDefaults.DROUGHT_FACTOR)
+    }
+
+    @Test
+    fun `cross weight 3 next to the defaults allows the cross`() {
+        val level = TestLevels.valid(stack = StackSettings(weights = TestLevels.weights(PipeSection.X to 3)))
+        assertTrue(level.isAllowed(PipeSection.X))
+        assertEquals(3, level.stack.weightOf(PipeSection.X))
+        assertEquals(7, level.stack.weightOf(PipeSection.RB))
+    }
+
+    @Test
     fun `stars below the first threshold are zero`() {
         assertEquals(0, StarBenchmarks(100, 200, 350).starsFor(99))
     }

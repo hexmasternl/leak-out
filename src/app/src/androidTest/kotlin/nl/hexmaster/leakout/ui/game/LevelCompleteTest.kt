@@ -96,21 +96,21 @@ class LevelCompleteTest {
 
         compose.onNodeWithTag(LevelCompleteTags.DIALOG).assertIsDisplayed()
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.PaneTitle, "Level complete"))
-        compose.onNodeWithText("LEVEL COMPLETE").assertIsDisplayed()
-        compose.onNodeWithText("Level complete!").assertIsDisplayed()
+        compose.onNodeWithText("LEVEL 99").assertIsDisplayed()
+        compose.onNodeWithText("Level Complete!").assertIsDisplayed()
         compose.onNodeWithText("You kept the water flowing.").assertIsDisplayed()
-        compose.onNodeWithTag(LevelCompleteTags.EARNED).assert(hasText("60")).assertContentDescriptionEquals("Pipe points 60")
-        compose.onNodeWithTag(LevelCompleteTags.PENALTY).assert(hasText("-0")).assertContentDescriptionEquals("Unused pipes minus 0")
-        compose.onNodeWithTag(LevelCompleteTags.TOTAL).assert(hasText("0")).assertContentDescriptionEquals("Total 0")
+        compose.onNodeWithTag(LevelCompleteTags.EARNED).assert(hasText("60")).assertContentDescriptionEquals("Points 60")
+        compose.onNodeWithTag(LevelCompleteTags.PENALTY).assert(hasText("0")).assertContentDescriptionEquals("Penalty minus 0")
+        compose.onNodeWithTag(LevelCompleteTags.TOTAL).assert(hasText("0")).assertContentDescriptionEquals("Score 0")
         compose.onNodeWithTag(LevelCompleteTags.STARS).assertContentDescriptionEquals("0 of 3 stars")
         for (index in 1..3) star(index).assert(SemanticsMatcher.expectValue(StarEarned, false))
         for (tag in buttons) {
             val bounds = compose.onNodeWithTag(tag).assertIsDisplayed().assertIsNotEnabled().getUnclippedBoundsInRoot()
             assertTrue(bounds.bottom - bounds.top >= 48.dp)
         }
-        compose.onNodeWithTag(LevelCompleteTags.NEXT).assertTextEquals("NEXT LEVEL")
-        compose.onNodeWithTag(LevelCompleteTags.RESTART).assertTextEquals("RESTART")
-        compose.onNodeWithTag(LevelCompleteTags.EXIT).assertTextEquals("EXIT")
+        compose.onNodeWithTag(LevelCompleteTags.NEXT).assertTextEquals("Next Level")
+        compose.onNodeWithTag(LevelCompleteTags.RESTART).assertTextEquals("Restart")
+        compose.onNodeWithTag(LevelCompleteTags.EXIT).assertTextEquals("Exit")
         // The finish stays marked behind the dialog, and nothing has been removed yet.
         compose.cellNode(finish).assert(SemanticsMatcher.expectValue(FinishFlash, true))
         for ((at, section) in unused) compose.cellNode(at).assertContentDescriptionEquals("Placed ${section.name}")
@@ -124,7 +124,7 @@ class LevelCompleteTest {
         // Two of the four penalty steps done.
         tickToDialogAge(WinTiming.EARNED_HOLD_MS + 2 * WinTiming.PENALTY_STEP_MS)
 
-        compose.onNodeWithTag(LevelCompleteTags.PENALTY).assert(hasText("-6"))
+        compose.onNodeWithTag(LevelCompleteTags.PENALTY).assert(hasText("−6"))
         compose.cellNode(unused[0].first).assertContentDescriptionEquals("Empty")
         compose.cellNode(unused[1].first).assertContentDescriptionEquals("Empty")
         compose.cellNode(unused[2].first).assertContentDescriptionEquals("Placed V")
@@ -133,7 +133,7 @@ class LevelCompleteTest {
 
         val end = compose.runOnIdle { WinTally.totalDurationMs(session.state.finalScore!!, 2) }
         tickToDialogAge(end - 1)
-        compose.onNodeWithTag(LevelCompleteTags.PENALTY).assert(hasText("-12"))
+        compose.onNodeWithTag(LevelCompleteTags.PENALTY).assert(hasText("−12"))
         compose.onNodeWithTag(LevelCompleteTags.TOTAL).assert(hasText("48"))
         for ((at, _) in unused) compose.cellNode(at).assertContentDescriptionEquals("Empty")
         for ((at, section) in FieldTest.ROUTE) compose.cellNode(at).assertContentDescriptionEquals("Placed ${section.name}, filled")
@@ -144,7 +144,7 @@ class LevelCompleteTest {
         star(2).assert(SemanticsMatcher.expectValue(StarEarned, true))
         star(3).assert(SemanticsMatcher.expectValue(StarEarned, false))
         compose.onNodeWithTag(LevelCompleteTags.STARS).assertContentDescriptionEquals("2 of 3 stars")
-        compose.onNodeWithTag(LevelCompleteTags.TOTAL).assertContentDescriptionEquals("Total 48")
+        compose.onNodeWithTag(LevelCompleteTags.TOTAL).assertContentDescriptionEquals("Score 48")
         for (tag in buttons) compose.onNodeWithTag(tag).assertIsEnabled()
     }
 
@@ -344,7 +344,7 @@ class LevelCompleteTest {
         compose.onNodeWithTag(LevelCompleteTags.DIALOG).assertIsDisplayed()
         compose.onNodeWithTag(PauseTags.DIALOG).assertDoesNotExist()
         compose.onNodeWithTag(LevelCompleteTags.TOTAL).assert(hasText("48"))
-        compose.onNodeWithTag(LevelCompleteTags.PENALTY).assert(hasText("-12"))
+        compose.onNodeWithTag(LevelCompleteTags.PENALTY).assert(hasText("−12"))
         star(1).assert(SemanticsMatcher.expectValue(StarEarned, true))
         star(2).assert(SemanticsMatcher.expectValue(StarEarned, true))
         for (tag in buttons) compose.onNodeWithTag(tag).assertIsEnabled()

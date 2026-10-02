@@ -17,19 +17,20 @@ Tracking issue: [#36 First time user experience](https://github.com/hexmasternl/
 ## 3. Pure tip scheduling
 
 - [ ] 3.1 Add `TipScheduler.dueTips` with the fixed order and the level-start / after-placement triggers; verify unit tests for first level (any id), tour seen, `X` in starting stack, `X` drawn later, `RES`, everything due at once, nothing due while not playing
+- [ ] 3.4 Make the cross and reservoir tips depend on `fullyVisibleSlots` and add `tipSlot`; verify unit tests for an `X` / `RES` in a cut-off slot (not due), the same section after it moves into a visible slot (due, that slot highlighted), a starting stack with the section only in cut-off slots, and the lowest visible slot chosen when several match
 - [ ] 3.2 Add `TipText.percent` and `TipScheduler.hintCell`; verify unit tests for 0.3→30 %, 0.25→25 %, 0.333→33 % and the hint cell next to the start exit, skipping blocked cells
 - [ ] 3.3 Add callout placement (side with most room, kept on screen); verify unit tests for targets at the left stack, a centre cell and a bottom-right cell on a 640 × 360 dp screen
 
 ## 4. Overlay and targets
 
-- [ ] 4.1 Add `TipTargets` and register the stack column, stack slots, and start, finish and mandatory cells from `StackPanel` and `PlayingField`; verify an instrumented test that the registered start cell rect matches the start tile's bounds
+- [ ] 4.1 Add `TipTargets` and register the stack column, stack slots, and start, finish and mandatory cells from `StackPanel` and `PlayingField`, and derive `fullyVisibleSlots` from the slot rects and the panel's window-clipped bounds; verify an instrumented test that the registered start cell rect matches the start tile's bounds and that, on a screen too short for the whole stack, the cut-off top slots are not in `fullyVisibleSlots`
 - [ ] 4.2 Add `FieldViewport.revealCell` within the pan limits and restore the level-start view after the tour; verify instrumented tests for the finish step on a 16 × 12 level and the view after the tour
 - [ ] 4.3 Build the `TipOverlay` composable per the approved design (scrim cut-out, callout, buttons, step counter, drag hint, reduced motion) consuming all other input; verify instrumented tests that no drag, pinch or pan reaches the game while it is shown and that the static arrow shows with animations off
 
 ## 5. Game wiring
 
 - [ ] 5.1 Freeze via `Pause` for tips in `GameSession`, keep the pause dialog hidden for tip pauses, and resume after the last due tip; verify unit tests on `GameSession` and the instrumented "countdown stops during a tip" and "no pause dialog for a tip" scenarios
-- [ ] 5.2 Evaluate `dueTips` at level start and after each accepted placement in `GameScreen`, show tips in order and mark each seen on close; verify instrumented tests for the first level being level 4, the tour not shown again, restart, and cross and reservoir tips appearing once
+- [ ] 5.2 Evaluate `dueTips` at level start and after each accepted placement in `GameScreen`, re-evaluate when `fullyVisibleSlots` changes, show tips in order and mark each seen on close; verify instrumented tests for the first level being level 4, the tour not shown again, restart, cross and reservoir tips appearing once, and on a short screen a cross drawn onto the cut-off top of the stack only showing its tip after the placement that brings it fully into view
 - [ ] 5.3 Implement Next / Skip tour / Let's go / Got it and Back behaviour; verify instrumented tests for finishing, skipping, Back skipping the tour, Back as Got it, and the liquid continuing where it froze
 - [ ] 5.4 Handle backgrounding during a tip (pause dialog over the tip, Resume keeps the tip and freeze); verify the instrumented "coming back to the app during a tip" scenario and that the existing pause tests still pass
 - [ ] 5.5 Add content descriptions and live-region announcements for tips; verify the instrumented screen reader scenario ("Step 1 of 5", buttons in order)

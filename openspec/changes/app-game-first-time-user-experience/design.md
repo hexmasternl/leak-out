@@ -35,7 +35,7 @@ A tip sends `GameCommand.Pause` and remembers `tipPaused = true` in `GameSession
 Alternative: a separate `Frozen` flag in `core`. Rejected: `Pause` already gives exactly the required freeze (including cancelling a drag), and the difference is purely presentational.
 
 ### 3. A pure `TipScheduler`
-Android-free (`app/.../ui/game/onboarding`): `dueTips(level, stack, outcome, seen: Set<TipId>, atLevelStart: Boolean): List<TipId>` returns the due tips in the fixed order intro → mandatory → cross → reservoir. `GameScreen` evaluates it at level start and after each accepted placement (the only moment the stack changes). `TipId` is an enum with stable string keys (`intro`, `mandatory`, `cross`, `reservoir`) used for storage. The reservoir text uses `TipText.percent(factor)` (0.3 → "30 %", half up).
+Android-free (`app/.../ui/game/onboarding`): `dueTips(level, stack, outcome, seen: Set<TipId>, atLevelStart: Boolean, fullyVisibleSlots: Set<Int>): List<TipId>` returns the due tips in the fixed order intro → mandatory → cross → reservoir. The cross and reservoir tips are only due when an `X` / `RES` sits in a slot whose index is in `fullyVisibleSlots` (see decision 7), and `tipSlot(stack, kind, fullyVisibleSlots)` returns the slot to highlight (the lowest fully visible one). `GameScreen` evaluates it at level start once the stack has been laid out, after each accepted placement (the only moment the stack changes) and whenever `fullyVisibleSlots` changes (e.g. a window resize). `TipId` is an enum with stable string keys (`intro`, `mandatory`, `cross`, `reservoir`) used for storage. The reservoir text uses `TipText.percent(factor)` (0.3 → "30 %", half up).
 
 Alternative: trigger from composables observing the stack. Rejected: harder to test and easy to fire twice on recomposition.
 
@@ -50,9 +50,15 @@ A `TipTargets` holder (a `CompositionLocal`) collects `Rect`s in root coordinate
 ### 6. Overlay input
 The overlay consumes all pointer input outside its buttons, which also blocks dragging, pinching and panning. The drag hint is an `InfiniteTransition` ghost section travelling from the next slot to the nearest empty cell (`TipScheduler.hintCell`, pure: nearest empty, non-blocked cell to the start's exit); reduced motion draws a static arrow.
 
+### 7. Cross and reservoir tips wait until the section is fully visible
+On a small screen `StackLayout` shrinks the slots only down to `MinPreviewSlot`, so with a deep visible stack the top slots can fall outside the screen. Highlighting a section the player cannot see is useless, so a stack section only counts for the cross and reservoir tips when its whole slot rect (from `TipTargets`) lies inside the visible bounds of the stack panel, clipped to the window. `TipTargets` derives `fullyVisibleSlots: Set<Int>` from the slot rects and the panel's clipped bounds (`boundsInWindow`) and passes it to the scheduler, which stays pure. Until a section is fully visible the game simply keeps running; each placement moves the stack down one slot. The next slot is always fully visible, so a tip cannot be missed: at the latest it shows when the section becomes the next one to place, before the player can use it.
+
+Alternative: scroll or shrink the stack to bring the section into view when the tip fires. Rejected: it changes the stack layout the player is used to just for a tip, and the HUD layout is owned by `app-game-play-hud-enhancements`.
+
 ## Risks / Trade-offs
 
 - [The mandatory section tip depends on an unmerged change] → Its task group is last and gated on `app-game-play-mandatory-sections` being on `development`; the rest can ship without it, with `dueTips` simply never returning `mandatory` until levels can have mandatory sections.
+- [On a small screen a cross or reservoir tip comes later than the section was drawn] → Intended: the tip waits until the section can actually be seen, and at the latest shows when the section is the next one to place.
 - [Target rects stale after rotation or zoom] → Rects are re-read every layout pass and the overlay recomputes on change; the screen is landscape-locked.
 - [Tips feel intrusive to experienced players on a new install] → "Skip tour" on every step; Back skips; each tip only once.
 - [Callout covering the target on small screens] → Placement logic picks the side with room and is covered by a JVM test on a 640 × 360 dp layout.

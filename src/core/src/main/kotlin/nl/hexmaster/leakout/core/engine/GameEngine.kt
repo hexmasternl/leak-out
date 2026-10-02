@@ -11,7 +11,6 @@ import nl.hexmaster.leakout.core.route.Route
 import nl.hexmaster.leakout.core.route.RouteTracer
 import nl.hexmaster.leakout.core.score.ScoreSheet
 import nl.hexmaster.leakout.core.stack.PipeStack
-import nl.hexmaster.leakout.core.stack.WeightedPool
 
 /**
  * The single control system of the game: [handle] turns a state and a command into the next state.
@@ -79,7 +78,7 @@ class GameEngine(private val random: Random = Random.Default) {
         val check = placement(state, at)
         if (!check.accepted) return state
         val incoming = state.stack.next
-        val stack = state.stack.afterPlacement(WeightedPool(state.level.stack.weights), random)
+        val stack = state.stack.afterPlacement(random)
         val penaltyMs = state.level.rules.replacePenaltyMs
         if (check == PlacementCheck.Replace && penaltyMs > 0) {
             val removed = (state.board[at] as Cell.Pipe).section

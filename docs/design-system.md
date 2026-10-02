@@ -211,13 +211,14 @@ Buttons keep a hint of the old "juicy" press physics without outlines. A **lip**
 
 | Variant | Fill | Label | Lip | Glow | Use |
 |---------|------|-------|-----|------|-----|
-| Primary | gradient `brass.300 → brass.500` | `text.onBrass`, `display.sm` | `brass.700` | brass | One per screen: Play, Next Level, Retry |
-| Secondary (glass) | `surface.overlay`, 1 dp `line.strong` | `text.primary` | `surface.abyss` | none | Level Select, Settings, Replay |
-| Tertiary | none | `liquid.300` | none | none | Skip, Not now |
+| Primary | gradient `brass.300 → brass.500` | `text.onBrass`, `display.sm` | `brass.700` | brass | One per screen: Play, Restart on the leak dialog |
+| Secondary (glass) | `surface.overlay`, 1 dp `line.strong` | `text.primary` | `surface.abyss` | none | Level Select, Settings, Restart on the win dialog |
+| Tertiary | none | `liquid.300` | none | none | Skip, Not now, Exit on the win and leak dialogs |
 | Destructive | gradient `leak.500 → leak.700` | `text.onStatus` | `leak.700` | none | Give up, Reset progress |
-| Success | gradient `success.500 → success.700` | `text.onStatus` | `success.700` | success | Next Level on win dialog (replaces primary there) |
+| Success | gradient `success.500 → success.700` | `text.onStatus` | `success.700` | success | Next Level on the win dialog (replaces primary there) |
 
-- Height 56 dp (large), 48 dp (medium), 40 dp (small). Radius `radius.md`. Horizontal padding 24 dp.
+- Height 56 dp (large), 48 dp (medium), 40 dp (small): the face. The 4 dp lip comes below it, so a large button takes 60 dp and a medium one 52 dp. Radius `radius.md`. Horizontal padding 24 dp.
+- Tertiary: a text button with no lip, 48 dp high (the minimum touch target) whatever the size.
 - Pressed: translate 2 dp down, lip 2 dp, glow +30 %. Duration 90 ms.
 - Disabled: fill `surface.overlay`, label `text.muted`, no lip, no glow, 60 % opacity.
 - Icon buttons: 48 dp circle, glass variant, icon 24 dp `text.primary`.
@@ -279,11 +280,117 @@ A vertical level 1 panel on the trailing edge of the board (portrait) or the tra
 
 ### 5.6 Dialogs and sheets
 
-Level 3 floating panel, `radius.lg`, `surface.base`, 24 dp padding, max width 360 dp, centred over `surface.scrim`. Entry: scale 0.92 → 1 with `motion.pop`; scrim fades in over 160 ms.
+Level 3 floating panel, `radius.lg`, `surface.base`, 1 dp `line.highlight` top edge, no outline, 24 dp padding, max width 360 dp, centred over `surface.scrim` with a 16 dp gutter to the window edge. Entry: scale 0.92 → 1 with `motion.pop`; scrim fades in over `motion.quick` (see 7.2 and 7.4).
 
-- **Win**: eyebrow "LEVEL COMPLETE" in `display.xs` `success.500`; three stars (earned in `brass.300` with a pop-in stagger of 80 ms, missed in `line.strong`); headline `display.xl`; score row; buttons: Success "Next Level" + glass "Replay" + tertiary "Levels".
-- **Leak**: eyebrow "LEAK!" in `leak.500`; a short splash animation; headline `display.xl` `text.primary`; body `body.md` `text.secondary` telling the player where it leaked; Primary "Try Again" + tertiary "Levels".
+- **Win** and **Leak**: the result dialogs, specified below.
 - **Pause**: title "Paused" `display.lg`; glass "Resume" as primary emphasis, glass "Restart", destructive "Quit to Levels".
+
+#### Result dialogs: Win and Leak
+
+The two dialogs shown when an attempt ends. Both sit over the see-through `surface.scrim` (`#07111C` at 72 %, drawn by the dialog, platform dim off). The see-through scrim is on purpose: during the win tally the unused sections are removed from the field behind the dialog, and the leak dialog relies on the player seeing where it leaked. Once the attempt has ended there is nothing to hide.
+
+**Win** ("Level Complete!")
+
+| Element | Style | Notes |
+|---------|-------|-------|
+| Eyebrow | `display.xs` `success.500` | "LEVEL 7": the level number |
+| Headline | `display.xl` `text.primary` | "Level Complete!" |
+| Message | `body.md` `text.secondary` | "You kept the water flowing." When the win beat the stored best, "New best!" in `display.sm` `brass.300` takes its place once the tally is done, so the panel does not grow |
+| Stars | 40 dp, 12 dp apart | Earned in `brass.300` with a pop-in stagger of 80 ms and a small brass burst, missed in `line.strong` |
+| Score row | three equal columns | See below |
+| Buttons | stacked | Success "Next Level", glass "Restart", tertiary "Exit" |
+
+The **score row** follows the game's scoring (the points earned during play, minus 3 per unused section, never below 0). Three equal columns, each a `label.md` caption in `text.secondary` above its value:
+
+| Column | Caption | Value | Screen reader |
+|--------|---------|-------|---------------|
+| Points | "POINTS" | `numeric.lg` `text.primary`: "120" | "Points 120" |
+| Penalty | "PENALTY" | `numeric.lg` `leak.500`: "−12"; "0" in `text.muted` while there is no penalty | "Penalty minus 12" |
+| Score | "SCORE" | `numeric.lg` `brass.300`: "108", with a brass `G` glow once the tally is done | "Score 108" |
+
+Values use the device's digit grouping. Each column is one screen-reader item. Points shows at once, Penalty counts up while the unused sections are removed, then Score counts up, then the stars pop. The tally is gameplay feedback, so reduced motion does not change it.
+
+**Leak** ("Leaked!")
+
+| Element | Style | Notes |
+|---------|-------|-------|
+| Eyebrow | `display.xs` `leak.500` | "LEVEL 7" |
+| Splash | 72 dp | A `leak.500` centre blob with 6 droplets flying out once (7.2); a still sprite with reduced motion (7.4) |
+| Headline | `display.xl` `text.primary` | "Leaked!" |
+| Message | `body.md` `text.secondary` | "The pipe is leaking. Level lost." |
+| Score | one centred column | "SCORE" caption in `label.md` `text.secondary`, value in `numeric.lg` `brass.300` |
+| Buttons | stacked | Primary "Restart", tertiary "Exit" |
+
+"Restart" and "Exit" are named after what they do in the game (Exit goes to the main menu). Exit is tertiary, not destructive: leaving after a finished attempt loses nothing.
+
+#### Result dialog layouts: Regular and Compact
+
+The game is landscape only and runs down to 640 × 360 dp, where one tall column does not fit. Each result dialog has two layouts and picks one by measuring instead of by a fixed breakpoint, so the choice stays right under font scaling and on tablets:
+
+1. Measure the Regular content at its maximum width (360 dp) with its final values (the final score, the full penalty, "New best!" when it will show), once per window size and font scale.
+2. If that height fits in the window height minus 2 × 16 dp gutter, use **Regular**; otherwise use **Compact**. The choice holds for the dialog's lifetime, so the tally never flips the layout.
+3. In Compact, if the information column is still taller than the space it has (for example 130 % font on a 360 dp screen), that column scrolls vertically and the buttons column stays fully visible.
+
+**Regular**: one centred column, max 360 dp wide, 24 dp padding, the elements in the order of the tables above, large buttons (56 dp face + 4 dp lip) stacked full width with 12 dp spacing, the tertiary Exit a 48 dp text button.
+
+```
+            Win                                Leak
+┌────────────────────────────┐    ┌────────────────────────────┐
+│          LEVEL 7           │    │          LEVEL 7           │
+│      Level Complete!       │    │          (splash)          │
+│ You kept the water flowing.│    │          Leaked!           │
+│         ★   ★   ☆          │    │   The pipe is leaking.     │
+│  POINTS  PENALTY  SCORE    │    │        Level lost.         │
+│   120      −12     108     │    │           SCORE            │
+│ ┌────────────────────────┐ │    │             85             │
+│ │       Next Level       │ │    │ ┌────────────────────────┐ │
+│ └────────────────────────┘ │    │ │        Restart         │ │
+│ ┌────────────────────────┐ │    │ └────────────────────────┘ │
+│ │        Restart         │ │    │            Exit            │
+│ └────────────────────────┘ │    └────────────────────────────┘
+│            Exit            │
+└────────────────────────────┘
+```
+
+**Compact**: max 600 dp wide, 24 dp padding, two columns.
+
+- Left, the information (weight 1, content centred, scrolls if needed): the eyebrow; the headline in `display.lg` instead of `display.xl`. Win: "New best!" in the message's place or nothing (the message line is dropped), stars 32 dp. Leak: the splash at 48 dp beside the headline, the message in `body.sm`. Then the score row.
+- A 1 dp `line.subtle` vertical divider, 24 dp from each column.
+- Right, the buttons (fixed 200 dp wide, vertically centred): the same buttons stacked, medium (48 dp face + 4 dp lip) with 12 dp spacing, Exit a 48 dp text button.
+
+```
+                               Win
+┌──────────────────────────────────┬─────────────────────┐
+│             LEVEL 7              │  ┌───────────────┐  │
+│         Level Complete!          │  │  Next Level   │  │
+│            ★  ★  ☆               │  └───────────────┘  │
+│  POINTS     PENALTY     SCORE    │  ┌───────────────┐  │
+│   120         −12        108     │  │    Restart    │  │
+│                                  │  └───────────────┘  │
+│                                  │        Exit         │
+└──────────────────────────────────┴─────────────────────┘
+                               Leak
+┌──────────────────────────────────┬─────────────────────┐
+│             LEVEL 7              │  ┌───────────────┐  │
+│        (splash) Leaked!          │  │    Restart    │  │
+│ The pipe is leaking. Level lost. │  └───────────────┘  │
+│              SCORE               │        Exit         │
+│               85                 │                     │
+└──────────────────────────────────┴─────────────────────┘
+```
+
+Heights at 100 % font (a text box is its size × line height; a button is face + lip):
+
+| Layout | Sum (dp) | Height |
+|--------|----------|--------|
+| Regular win | 48 padding + 17 eyebrow + 8 + 42 headline + 8 + 24 message + 16 + 40 stars + 16 + 53 score row (17 caption + 4 + 32 value) + 24 + 60 + 12 + 60 + 12 + 48 buttons | ≈ 488 dp |
+| Regular leak | 48 + 17 + 8 + 72 splash + 12 + 42 + 8 + 24 + 16 + 53 + 24 + 60 + 12 + 48 | ≈ 444 dp |
+| Compact win, information | 48 + 17 + 4 + 31 headline + 8 + 22 "New best!" + 8 + 32 stars + 12 + 53 | ≈ 235 dp |
+| Compact leak, information | 48 + 17 + 4 + 48 splash beside the headline + 8 + 20 message + 12 + 53 | ≈ 210 dp |
+| Compact win, buttons | 48 + 52 + 12 + 52 + 12 + 48 | ≈ 224 dp |
+| Compact leak, buttons | 48 + 52 + 12 + 48 | ≈ 160 dp |
+
+On a 640 × 360 dp screen there is 360 − 32 = 328 dp: both Regular layouts are too tall, so phones in landscape get Compact, and every Compact column fits within 328 dp. On a 1280 × 800 dp tablet (768 dp available) both dialogs use Regular.
 
 ### 5.7 Toast
 
@@ -371,6 +478,8 @@ Every pipe section is drawn from the same layers, in this order. Sizes are relat
 - **Threshold sparkle**: when the moving fill reaches `stars.one`, `stars.two` or `stars.three` (the end of the bar), a 600 ms procedural burst at that point: 6–8 `liquid.glow` and `brass.300` particles flying out 6–14 dp and fading, over a brief `brass.300` glow flash (radius 16 dp, fading out in the first 300 ms). Each threshold sparkles once per attempt; a jump past several thresholds sparkles each one as the fill passes it. Points beyond `stars.three` do not sparkle.
 - **Win**: finish ring flashes, board dims to 60 %, dialog pops in, stars stagger 80 ms each with a small brass particle burst.
 - **Leak**: droplet burst, board shakes 2 dp for 200 ms, then the dialog pops in after 500 ms so the player sees where it went wrong.
+- **Result dialog entry** (win and leak, 5.6): the scrim fades from 0 to its 72 % over `motion.quick` (160 ms ease-out) while the panel scales 0.92 → 1 with `motion.pop`. Closing is immediate.
+- **Leak splash** (leak dialog, 5.6): when the dialog opens, 6 droplets in `liquid.500` with `liquid.glow` highlights fly out of a `leak.500` centre blob towards the edge of the splash box over 600 ms ease-out, once, and rest there. It does not loop.
 
 ### 7.3 Liquid progress
 
@@ -378,7 +487,7 @@ Progress is a 0–1 value per segment from the engine. The renderer clips the li
 
 ### 7.4 Reduced motion
 
-When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. Liquid fill is gameplay, so it is unaffected.
+When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). Liquid fill and the win tally are gameplay, so they are unaffected.
 
 ---
 

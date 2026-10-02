@@ -1,36 +1,29 @@
 package nl.hexmaster.leakout.ui.game
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import nl.hexmaster.leakout.R
-import nl.hexmaster.leakout.ui.components.CartoonButton
-import nl.hexmaster.leakout.ui.components.CartoonButtonVariant
+import nl.hexmaster.leakout.ui.components.FlowButton
+import nl.hexmaster.leakout.ui.components.FlowButtonSize
+import nl.hexmaster.leakout.ui.components.FlowButtonVariant
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
@@ -40,99 +33,146 @@ object LevelLostTags {
     const val SCORE = "lost_score"
     const val RESTART = "lost_restart"
     const val EXIT = "lost_exit"
+    const val SPLASH = "lost_splash"
+    const val LAYOUT_PREFIX = "lost"
+    const val LAYOUT_REGULAR = "lost_layout_regular"
+    const val LAYOUT_COMPACT = "lost_layout_compact"
 }
 
 /**
- * Modal level lost dialog: "Leaked!", a leaking pipe, the message, the [score] of the attempt, then
- * Restart and Exit. Back works as Exit; a tap outside does nothing. There is no Resume.
+ * Modal level lost dialog (design-system.md 5.6): the [level] number, the splash, "Leaked!", the
+ * message, the [score] of the attempt, then Restart and Exit. Back works as Exit; a tap outside does
+ * nothing. There is no Resume. The dialog uses the Regular layout when it fits the window height and
+ * the Compact one otherwise.
  */
 @Composable
-fun LevelLostDialog(score: Int, onRestart: () -> Unit, onExit: () -> Unit) {
-    Dialog(
-        onDismissRequest = onExit,
-        properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = false),
-    ) {
-        LevelLostCard(score, onRestart, onExit)
-    }
-}
-
-@Composable
-private fun LevelLostCard(score: Int, onRestart: () -> Unit, onExit: () -> Unit) {
+fun LevelLostDialog(level: Int, score: Int, onRestart: () -> Unit, onExit: () -> Unit) {
     val paneName = stringResource(R.string.lost_pane_title)
-    val locale = LocalConfiguration.current.locales[0]
-    val shape = RoundedCornerShape(16.dp)
-    Column(
-        modifier = Modifier
-            .testTag(LevelLostTags.DIALOG)
-            .semantics { paneTitle = paneName }
-            .widthIn(max = 400.dp)
-            .background(LeakOutColors.SurfaceCard, shape)
-            .border(3.dp, LeakOutColors.InkDark, shape)
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        // The game runs in landscape, down to 360 dp high, so the card stays short: the pipe sits
-        // beside the title and the buttons side by side.
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            LeakingPipe(Modifier.size(width = 64.dp, height = 40.dp))
-            Text(
-                text = stringResource(R.string.lost_title).uppercase(),
-                style = LeakOutTextStyles.Header1,
-                color = LeakOutColors.ErrorRed,
-            )
-        }
-        Text(
-            text = stringResource(R.string.lost_message),
-            style = LeakOutTextStyles.Header2,
-            color = LeakOutColors.InkDark,
-            textAlign = TextAlign.Center,
-        )
-        Text(
-            text = stringResource(R.string.lost_score, HudFormat.score(score, locale)),
-            style = LeakOutTextStyles.Header2,
-            color = LeakOutColors.InkLight,
-            modifier = Modifier.testTag(LevelLostTags.SCORE),
-        )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            CartoonButton(
-                text = stringResource(R.string.lost_restart),
-                onClick = onRestart,
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(LevelLostTags.RESTART),
-            )
-            CartoonButton(
-                text = stringResource(R.string.lost_exit),
-                onClick = onExit,
-                variant = CartoonButtonVariant.Danger,
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(LevelLostTags.EXIT),
-            )
-        }
+    ResultDialogWindow(
+        onDismissRequest = onExit,
+        dismissOnBackPress = true,
+        panelModifier = Modifier.testTag(LevelLostTags.DIALOG).semantics { paneTitle = paneName },
+        layoutTagPrefix = LevelLostTags.LAYOUT_PREFIX,
+        measureRegular = { LevelLostContent(ResultDialogLayout.Regular, level, score, {}, {}, measuring = true) },
+    ) { layout ->
+        LevelLostContent(layout, level, score, onRestart, onExit)
     }
 }
 
-/** A steel pipe stub from the left with liquid dripping out of its open right end. Decoration only. */
 @Composable
-private fun LeakingPipe(modifier: Modifier = Modifier) {
-    Canvas(modifier) {
-        val pipeY = size.height * 0.35f
-        val pipeEnd = size.width * 0.55f
-        val thickness = size.height * 0.34f
-        drawLine(LeakOutColors.Steel700, Offset(0f, pipeY), Offset(pipeEnd, pipeY), thickness + 6.dp.toPx(), StrokeCap.Butt)
-        drawLine(LeakOutColors.Steel300, Offset(0f, pipeY), Offset(pipeEnd, pipeY), thickness, StrokeCap.Butt)
-        drawLine(LeakOutColors.Liquid500, Offset(pipeEnd, pipeY), Offset(pipeEnd + size.width * 0.12f, pipeY + thickness * 0.2f), thickness * 0.5f, StrokeCap.Round)
-        val drops = listOf(0.72f to 0.55f, 0.82f to 0.75f, 0.66f to 0.9f)
-        for ((x, y) in drops) {
-            val center = Offset(size.width * x, size.height * y)
-            drawCircle(LeakOutColors.Liquid500, size.height * 0.08f, center)
-            drawCircle(LeakOutColors.LiquidGlow, size.height * 0.03f, center - Offset(2.dp.toPx(), 2.dp.toPx()))
+private fun LevelLostContent(
+    layout: ResultDialogLayout,
+    level: Int,
+    score: Int,
+    onRestart: () -> Unit,
+    onExit: () -> Unit,
+    measuring: Boolean = false,
+) {
+    // Tags only on the shown content, never on the copy that is only measured.
+    val tag: Modifier.(String) -> Modifier = { if (measuring) this else testTag(it) }
+    when (layout) {
+        ResultDialogLayout.Regular -> RegularColumn {
+            LostEyebrow(level)
+            Spacer(Modifier.height(8.dp))
+            LeakSplash(Modifier.size(72.dp).tag(LevelLostTags.SPLASH))
+            Spacer(Modifier.height(12.dp))
+            LostHeadline(LeakOutTextStyles.DisplayXl)
+            Spacer(Modifier.height(8.dp))
+            LostMessage(LeakOutTextStyles.BodyMd)
+            Spacer(Modifier.height(16.dp))
+            LostScore(score, Modifier.tag(LevelLostTags.SCORE))
+            Spacer(Modifier.height(24.dp))
+            LostButtons(FlowButtonSize.Large, onRestart, onExit, tag)
         }
+        ResultDialogLayout.Compact -> CompactColumns(
+            info = {
+                LostEyebrow(level)
+                Spacer(Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LeakSplash(Modifier.size(48.dp).tag(LevelLostTags.SPLASH))
+                    LostHeadline(LeakOutTextStyles.DisplayLg)
+                }
+                Spacer(Modifier.height(8.dp))
+                LostMessage(LeakOutTextStyles.BodySm)
+                Spacer(Modifier.height(12.dp))
+                LostScore(score, Modifier.tag(LevelLostTags.SCORE))
+            },
+            buttons = { LostButtons(FlowButtonSize.Medium, onRestart, onExit, tag) },
+        )
     }
 }
 
-@Preview(name = "Level lost", widthDp = 440, heightDp = 300)
 @Composable
-private fun LevelLostDialogPreview() {
+private fun LostEyebrow(level: Int) {
+    Text(
+        text = stringResource(R.string.result_eyebrow, level).uppercase(),
+        style = LeakOutTextStyles.DisplayXs,
+        color = LeakOutColors.Leak500,
+    )
+}
+
+@Composable
+private fun LostHeadline(style: TextStyle) {
+    Text(stringResource(R.string.lost_title), style = style, color = LeakOutColors.TextPrimary, textAlign = TextAlign.Center)
+}
+
+@Composable
+private fun LostMessage(style: TextStyle) {
+    Text(stringResource(R.string.lost_message), style = style, color = LeakOutColors.TextSecondary, textAlign = TextAlign.Center)
+}
+
+/** One centred Score column, read as "Score 85". */
+@Composable
+private fun LostScore(score: Int, modifier: Modifier) {
+    val value = HudFormat.score(score, LocalConfiguration.current.locales[0])
+    ResultScoreColumn(
+        caption = stringResource(R.string.lost_score_label),
+        value = value,
+        valueColor = LeakOutColors.Brass300,
+        description = stringResource(R.string.lost_score, value),
+        modifier = modifier.fillMaxWidth(),
+        glow = true,
+    )
+}
+
+/** Brass primary Restart and tertiary Exit, stacked 12 dp apart. */
+@Composable
+private fun ColumnScope.LostButtons(size: FlowButtonSize, onRestart: () -> Unit, onExit: () -> Unit, tag: Modifier.(String) -> Modifier) {
+    FlowButton(
+        text = stringResource(R.string.lost_restart),
+        onClick = onRestart,
+        variant = FlowButtonVariant.Primary,
+        size = size,
+        modifier = Modifier.fillMaxWidth().tag(LevelLostTags.RESTART),
+    )
+    // CompactColumns already spaces its buttons; the Regular column does not.
+    if (size == FlowButtonSize.Large) Spacer(Modifier.height(ResultDialogMetrics.ButtonSpacing))
+    FlowButton(
+        text = stringResource(R.string.lost_exit),
+        onClick = onExit,
+        variant = FlowButtonVariant.Tertiary,
+        modifier = Modifier.fillMaxWidth().tag(LevelLostTags.EXIT),
+    )
+}
+
+/** The dialog's frame and panel without the dialog window, so previews can render them. */
+@Composable
+private fun LevelLostPreview() {
     LeakOutTheme {
-        LevelLostCard(score = 85, onRestart = {}, onExit = {})
+        ResultDialogFrame(measureRegular = { LevelLostContent(ResultDialogLayout.Regular, 7, 85, {}, {}, measuring = true) }) { layout ->
+            ResultDialogPanel(layout) { LevelLostContent(layout, 7, 85, {}, {}) }
+        }
     }
 }
+
+@Preview(name = "Level lost, 640 × 360 (Compact)", widthDp = 640, heightDp = 360, showBackground = true, backgroundColor = 0xFF0C1A2A)
+@Composable
+private fun LevelLostCompactPreview() = LevelLostPreview()
+
+@Preview(name = "Level lost, 640 × 360, 130 % font", widthDp = 640, heightDp = 360, fontScale = 1.3f, showBackground = true, backgroundColor = 0xFF0C1A2A)
+@Composable
+private fun LevelLostLargeFontPreview() = LevelLostPreview()
+
+@Preview(name = "Level lost, 1280 × 800 (Regular)", widthDp = 1280, heightDp = 800, showBackground = true, backgroundColor = 0xFF0C1A2A)
+@Composable
+private fun LevelLostRegularPreview() = LevelLostPreview()

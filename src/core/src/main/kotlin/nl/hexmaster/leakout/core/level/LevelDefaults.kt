@@ -11,15 +11,31 @@ object LevelDefaults {
     const val ALLOW_REPLACE: Boolean = true
     const val REPLACE_PENALTY_MS: Long = 3_000
 
-    /** Cross and reservoir are off unless a level gives them a weight. */
+    /**
+     * A section's weight divided by the sum of all weights is its target share of the sections dealt
+     * in an attempt. The straights and corners are dealt evenly; cross and reservoir are off unless a
+     * level gives them a weight.
+     */
     val STACK_WEIGHTS: Map<PipeSection, Int> = mapOf(
-        PipeSection.H to 3,
-        PipeSection.V to 3,
-        PipeSection.LT to 2,
-        PipeSection.LB to 2,
-        PipeSection.RT to 2,
-        PipeSection.RB to 2,
+        PipeSection.H to 7,
+        PipeSection.V to 7,
+        PipeSection.LT to 7,
+        PipeSection.LB to 7,
+        PipeSection.RT to 7,
+        PipeSection.RB to 7,
         PipeSection.X to 0,
         PipeSection.RES to 0,
     )
+
+    /**
+     * How hard the stack steers towards the target shares: a section is drawn with weight
+     * `share × e^(STEERING_STRENGTH × deficit)`. 0 is pure random; larger values approach a fixed rotation.
+     */
+    const val STEERING_STRENGTH: Double = 1.0
+
+    /**
+     * A straight or corner section that has not been dealt for `⌈DROUGHT_FACTOR / share⌉` draws is
+     * dealt next, so no standard section is missing for more than 2.5 times its expected gap.
+     */
+    const val DROUGHT_FACTOR: Double = 2.5
 }

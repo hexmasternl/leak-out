@@ -373,10 +373,34 @@ section.block > header p{color:var(--text-2)}
 .scorerow{display:flex; justify-content:center; gap:24px; margin:6px 0 4px}
 .scorerow .k{font-size:11px; letter-spacing:.4px; text-transform:uppercase; color:var(--text-3)}
 .scorerow .v{font-family:var(--font-display); font-size:24px}
-.splash{width:88px; height:88px; margin:4px auto 10px}
-.splash .drop{fill:var(--liquid-500); animation:burst .9s ease-out infinite}
+.splash{width:72px; height:72px; margin:4px auto 12px; display:block}
+.splash .drop{fill:var(--liquid-500); animation:burst .6s ease-out both}
 .splash .drop.g{fill:var(--liquid-glow)}
-@keyframes burst{0%{transform:translate(0,0) scale(1); opacity:1} 100%{transform:translate(var(--dx), var(--dy)) scale(.4); opacity:0}}
+/* Once, then the droplets rest (design-system.md 7.2); a still sprite with reduced motion (7.4). */
+@keyframes burst{0%{transform:translate(0,0) scale(1)} 100%{transform:translate(var(--dx), var(--dy)) scale(.85)}}
+@media (prefers-reduced-motion:reduce){ .splash .drop{animation:none; transform:translate(var(--dx), var(--dy)) scale(.85)} }
+.scorerow.cols{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:0}
+.scorerow.one{grid-template-columns:1fr}
+.scorerow.cols .k{font-size:13px; color:var(--text-2); margin-bottom:4px}
+.scorerow.cols .v{font-size:32px; line-height:1}
+.scorerow .v.pen{color:var(--leak-500)}
+.scorerow .v.tot{color:var(--brass-300); text-shadow:0 0 18px rgba(255,207,92,.45)}
+.dialog .actions .btn{width:100%}
+.dialog .actions .btn-tertiary{height:48px}
+.dialog .msg{margin-bottom:16px}
+/* Compact result dialog: the information left, the buttons stacked right (design-system.md 5.6) */
+.scrimbox.wide{grid-column:1 / -1; min-height:0}
+.dialog.compact{max-width:600px; display:flex; align-items:center; gap:24px}
+.dialog.compact .info{flex:1; min-width:0}
+.dialog.compact .divider{align-self:stretch; width:1px; background:var(--line-subtle)}
+.dialog.compact .actions{width:200px; flex:none; margin-top:0}
+.dialog.compact h2{font-size:28px; line-height:1.1; margin-bottom:0}
+.dialog.compact .stars-big{margin:8px 0 12px}
+.dialog.compact .stars-big svg{width:32px; height:32px}
+.dialog.compact .headrow{display:flex; align-items:center; justify-content:center; gap:8px}
+.dialog.compact .splash{width:48px; height:48px; margin:0}
+.dialog.compact .msg{font-size:14px; margin:8px 0 12px}
+@media (max-width:640px){ .dialog.compact{flex-direction:column} .dialog.compact .divider{display:none} .dialog.compact .actions{width:100%} }
 
 /* ===================================================================
    TABLES
@@ -748,44 +772,45 @@ td:first-child{color:var(--text-1)}
       <header>
         <div class="eyebrow">Components</div>
         <h2>Dialogs</h2>
-        <p>Level 3 floating panels over a 72% scrim. They pop in with <code>motion.pop</code> (scale 0.92 → 1). Stars stagger 80ms each.</p>
+        <p>Level 3 floating panels over a 72% scrim. They pop in with <code>motion.pop</code> (scale 0.92 → 1). Stars stagger 80ms each. The win and leak dialogs keep the see-through scrim so the tally and the leak stay visible, and switch to the two-column <b>Compact</b> layout (below) when the one-column <b>Regular</b> layout does not fit the screen height.</p>
       </header>
       <div class="grid g3">
         <div class="scrimbox">
           <div class="floating dialog">
-            <div class="eyebrow" style="color:var(--success-500)">Level complete</div>
+            <div class="eyebrow" style="color:var(--success-500)">Level 7</div>
+            <h2>Level Complete!</h2>
+            <p class="msg">You kept the water flowing.</p>
             <div class="stars-big">
               <svg viewBox="0 0 24 24"><path class="on" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg>
               <svg viewBox="0 0 24 24"><path class="on" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg>
               <svg viewBox="0 0 24 24"><path class="off" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg>
             </div>
-            <h2>Perfect Flow</h2>
-            <div class="scorerow"><div><div class="k">Pipes</div><div class="v">12</div></div><div><div class="k">Bonus</div><div class="v">+45</div></div><div><div class="k">Score</div><div class="v">285</div></div></div>
-            <div class="actions">
+            <div class="scorerow cols"><div><div class="k">Points</div><div class="v">120</div></div><div><div class="k">Penalty</div><div class="v pen">−12</div></div><div><div class="k">Score</div><div class="v tot">108</div></div></div>
+            <div class="actions" style="margin-top:24px">
               <button class="btn btn-success">Next Level</button>
-              <button class="btn btn-glass md">Replay</button>
-              <button class="btn btn-tertiary sm">Levels</button>
+              <button class="btn btn-glass">Restart</button>
+              <button class="btn btn-tertiary">Exit</button>
             </div>
           </div>
         </div>
         <div class="scrimbox">
           <div class="floating dialog">
-            <div class="eyebrow" style="color:var(--leak-500)">Leak!</div>
+            <div class="eyebrow" style="color:var(--leak-500)">Level 7</div>
             <svg class="splash" viewBox="0 0 88 88">
-              <circle cx="44" cy="52" r="14" fill="#0A8DC2" opacity=".5"/>
-              <circle cx="44" cy="48" r="10" fill="#19C6F2"/>
-              <circle class="drop" cx="44" cy="44" r="4" style="--dx:-26px; --dy:-22px"/>
-              <circle class="drop g" cx="44" cy="44" r="3" style="--dx:22px; --dy:-28px; animation-delay:.15s"/>
-              <circle class="drop" cx="44" cy="44" r="3.5" style="--dx:30px; --dy:-6px; animation-delay:.3s"/>
-              <circle class="drop g" cx="44" cy="44" r="2.5" style="--dx:-30px; --dy:2px; animation-delay:.45s"/>
-              <circle class="drop" cx="44" cy="44" r="3" style="--dx:-8px; --dy:-32px; animation-delay:.6s"/>
-              <circle class="drop g" cx="44" cy="44" r="2.5" style="--dx:10px; --dy:-30px; animation-delay:.75s"/>
+              <circle cx="44" cy="44" r="18" fill="#FF5A5F"/><circle cx="38" cy="38" r="5" fill="#FFFFFF" opacity=".35"/>
+              <circle class="drop" cx="44" cy="44" r="8" style="--dx:-30px; --dy:-18px"/>
+              <circle class="drop g" cx="44" cy="44" r="6.5" style="--dx:0px; --dy:-34px"/>
+              <circle class="drop" cx="44" cy="44" r="8" style="--dx:30px; --dy:-18px"/>
+              <circle class="drop g" cx="44" cy="44" r="6.5" style="--dx:30px; --dy:18px"/>
+              <circle class="drop" cx="44" cy="44" r="8" style="--dx:0px; --dy:34px"/>
+              <circle class="drop g" cx="44" cy="44" r="6.5" style="--dx:-30px; --dy:18px"/>
             </svg>
-            <h2>It Spilled</h2>
-            <p>The liquid ran out at row 4, column 3. That cross had no port facing the flow.</p>
-            <div class="actions">
-              <button class="btn btn-primary">Try Again</button>
-              <button class="btn btn-tertiary sm">Levels</button>
+            <h2>Leaked!</h2>
+            <p class="msg">The pipe is leaking. Level lost.</p>
+            <div class="scorerow cols one"><div><div class="k">Score</div><div class="v tot">85</div></div></div>
+            <div class="actions" style="margin-top:24px">
+              <button class="btn btn-primary">Restart</button>
+              <button class="btn btn-tertiary">Exit</button>
             </div>
           </div>
         </div>
@@ -797,6 +822,52 @@ td:first-child{color:var(--text-1)}
               <button class="btn btn-glass">Resume</button>
               <button class="btn btn-glass md">Restart</button>
               <button class="btn btn-danger md">Quit to Levels</button>
+            </div>
+          </div>
+        </div>
+        <div class="scrimbox wide">
+          <div class="floating dialog compact">
+            <div class="info">
+              <div class="eyebrow" style="color:var(--success-500)">Level 7 · Compact</div>
+              <h2>Level Complete!</h2>
+              <div class="stars-big">
+                <svg viewBox="0 0 24 24"><path class="on" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg>
+                <svg viewBox="0 0 24 24"><path class="on" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg>
+                <svg viewBox="0 0 24 24"><path class="off" d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg>
+              </div>
+              <div class="scorerow cols"><div><div class="k">Points</div><div class="v">120</div></div><div><div class="k">Penalty</div><div class="v pen">−12</div></div><div><div class="k">Score</div><div class="v tot">108</div></div></div>
+            </div>
+            <div class="divider"></div>
+            <div class="actions">
+              <button class="btn btn-success md">Next Level</button>
+              <button class="btn btn-glass md">Restart</button>
+              <button class="btn btn-tertiary">Exit</button>
+            </div>
+          </div>
+        </div>
+        <div class="scrimbox wide">
+          <div class="floating dialog compact">
+            <div class="info">
+              <div class="eyebrow" style="color:var(--leak-500)">Level 7 · Compact</div>
+              <div class="headrow">
+                <svg class="splash" viewBox="0 0 88 88">
+                  <circle cx="44" cy="44" r="18" fill="#FF5A5F"/><circle cx="38" cy="38" r="5" fill="#FFFFFF" opacity=".35"/>
+                  <circle class="drop" cx="44" cy="44" r="8" style="--dx:-30px; --dy:-18px"/>
+                  <circle class="drop g" cx="44" cy="44" r="6.5" style="--dx:0px; --dy:-34px"/>
+                  <circle class="drop" cx="44" cy="44" r="8" style="--dx:30px; --dy:-18px"/>
+                  <circle class="drop g" cx="44" cy="44" r="6.5" style="--dx:30px; --dy:18px"/>
+                  <circle class="drop" cx="44" cy="44" r="8" style="--dx:0px; --dy:34px"/>
+                  <circle class="drop g" cx="44" cy="44" r="6.5" style="--dx:-30px; --dy:18px"/>
+                </svg>
+                <h2>Leaked!</h2>
+              </div>
+              <p class="msg">The pipe is leaking. Level lost.</p>
+              <div class="scorerow cols one"><div><div class="k">Score</div><div class="v tot">85</div></div></div>
+            </div>
+            <div class="divider"></div>
+            <div class="actions">
+              <button class="btn btn-primary md">Restart</button>
+              <button class="btn btn-tertiary">Exit</button>
             </div>
           </div>
         </div>

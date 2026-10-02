@@ -209,6 +209,7 @@ fun GameScreen(
     }
     if (showLostDialog) {
         LevelLostDialog(
+            level = currentLevel.id,
             score = session.select { state.score },
             onRestart = { session.send(GameCommand.Restart) },
             onExit = onExit,
@@ -219,6 +220,7 @@ fun GameScreen(
         val frame = session.select { winFrame }
         if (score != null && frame != null) {
             LevelCompleteDialog(
+                level = currentLevel.id,
                 score = score,
                 frame = frame,
                 hasNextLevel = onNextLevel != null,

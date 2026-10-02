@@ -32,6 +32,6 @@
     { "x": 14, "y": 11 }
   ],
   "flow": { "initialDelayMs": 20000, "cellsPerSecond": 0.2 },
-  "stack": { "weights": { "X": 2, "RES": 0 } },
+  "stack": { "weights": { "X": 6, "RES": 0 } },
   "stars": { "one": 270, "two": 440, "three": 650 }
 }

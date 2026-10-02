@@ -175,7 +175,7 @@ leak-out/
     ├── core/                       pure Kotlin (JVM) module – no Android dependencies
     │   └── src/main/kotlin/nl/hexmaster/leakout/core/
     │       ├── model/              Direction, PipeSection, Cell, Board, Level
-    │       ├── stack/              PipeStack, WeightedPool
+    │       ├── stack/              PipeStack, Dealer
     │       ├── flow/               FlowStep, Channel, ChannelUse
     │       ├── engine/             GameEngine (ties board + stack + flow), GameState, GameCommand, FlowSimulation, FlowState
     │       └── level/              LevelDefinition (serializable), LevelParser, LevelValidator

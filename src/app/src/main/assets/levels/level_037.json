@@ -1,0 +1,32 @@
+{
+  "id": 37,
+  "name": "Must Pass",
+  "grid": { "columns": 13, "rows": 9 },
+  "start": { "x": 0, "y": 6, "openSide": "RIGHT" },
+  "finish": { "x": 11, "y": 8, "openSide": "TOP" },
+  "blocked": [
+    { "x": 5, "y": 0 },
+    { "x": 9, "y": 0 },
+    { "x": 8, "y": 1 },
+    { "x": 9, "y": 1 },
+    { "x": 10, "y": 1 },
+    { "x": 2, "y": 2 },
+    { "x": 8, "y": 2 },
+    { "x": 3, "y": 4 },
+    { "x": 11, "y": 4 },
+    { "x": 0, "y": 5 },
+    { "x": 1, "y": 5 },
+    { "x": 3, "y": 5 },
+    { "x": 8, "y": 5 },
+    { "x": 9, "y": 5 },
+    { "x": 6, "y": 6 },
+    { "x": 12, "y": 6 },
+    { "x": 5, "y": 7 }
+  ],
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.304 },
+  "stack": { "weights": { "X": 6, "RES": 5 } },
+  "mandatory": [
+    { "x": 3, "y": 1, "section": "RES" }
+  ],
+  "stars": { "one": 490, "two": 740, "three": 980 }
+}

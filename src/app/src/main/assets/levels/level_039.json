@@ -1,0 +1,35 @@
+{
+  "id": 39,
+  "name": "Double Duty",
+  "grid": { "columns": 13, "rows": 10 },
+  "start": { "x": 3, "y": 0, "openSide": "BOTTOM" },
+  "finish": { "x": 12, "y": 2, "openSide": "LEFT" },
+  "blocked": [
+    { "x": 0, "y": 0 },
+    { "x": 8, "y": 0 },
+    { "x": 9, "y": 0 },
+    { "x": 10, "y": 0 },
+    { "x": 11, "y": 0 },
+    { "x": 11, "y": 1 },
+    { "x": 1, "y": 2 },
+    { "x": 10, "y": 2 },
+    { "x": 1, "y": 3 },
+    { "x": 9, "y": 3 },
+    { "x": 3, "y": 4 },
+    { "x": 9, "y": 4 },
+    { "x": 3, "y": 6 },
+    { "x": 8, "y": 6 },
+    { "x": 3, "y": 7 },
+    { "x": 7, "y": 7 },
+    { "x": 10, "y": 7 },
+    { "x": 7, "y": 8 },
+    { "x": 8, "y": 8 }
+  ],
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.322 },
+  "stack": { "weights": { "X": 6, "RES": 5 } },
+  "mandatory": [
+    { "x": 6, "y": 4, "section": "RES" },
+    { "x": 3, "y": 8, "section": "RES" }
+  ],
+  "stars": { "one": 550, "two": 820, "three": 1090 }
+}

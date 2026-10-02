@@ -39,7 +39,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Plays the bundled showcase level 25, with its mandatory cross at (4, 3) and mandatory reservoir
+ * Plays the bundled showcase level 36, with its mandatory cross at (4, 3) and mandatory reservoir
  * at (3, 5), on the real game screen: the red tiles show, drops on them are refused, skipping the
  * reservoir loses with the missed-section message, and a route through every channel wins.
  */
@@ -49,7 +49,7 @@ class MandatoryShowcaseTest {
     val compose = createAndroidComposeRule<ComponentActivity>()
 
     private lateinit var session: GameSession
-    private val level: Level = checkNotNull(BundledLevels(InstrumentationRegistry.getInstrumentation().targetContext.assets).load(25))
+    private val level: Level = checkNotNull(BundledLevels(InstrumentationRegistry.getInstrumentation().targetContext.assets).load(36))
     private val cross = Position(4, 3)
     private val reservoir = Position(3, 5)
 

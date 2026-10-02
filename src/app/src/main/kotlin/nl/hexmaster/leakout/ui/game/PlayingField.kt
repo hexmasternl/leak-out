@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -807,15 +808,17 @@ private fun DrawScope.drawFinishRing(rect: Rect, frame: FinishFlashFrame) {
 }
 
 /**
- * "+N" for every popup whose tile touches the field: Fredoka bold at 40 % of a tile, an ink outline
- * under a white fill, centred on the tile and lifted by its rise. Off-field popups are skipped but
- * keep their timing, since the age comes from [nowMs].
+ * "+N" for every popup whose tile touches the field, as [PopupStyle] describes: Fredoka bold at a
+ * third of a tile, a liquid-glow halo and stroke under an opaque deep fill, centred on the tile and
+ * lifted by its rise. Off-field popups are skipped but keep their timing, since the age comes from
+ * [nowMs].
  */
 private fun DrawScope.drawPopups(popups: List<Award>, nowMs: Long, viewport: FieldViewport, textMeasurer: TextMeasurer) {
     if (popups.isEmpty()) return
     val field = Rect(Offset.Zero, size)
-    val style = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Bold, fontSize = (viewport.cellPx * POPUP_TEXT_FRACTION).toSp())
-    val outline = Stroke(POPUP_OUTLINE.toPx(), join = StrokeJoin.Round)
+    val style = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Bold, fontSize = (viewport.cellPx * PopupStyle.TEXT_FRACTION).toSp())
+    val edge = Stroke(PopupStyle.strokeWidth.toPx(), join = StrokeJoin.Round)
+    val glowRadius = PopupStyle.glowRadius.toPx()
     for (popup in popups) {
         val frame = popupFrame(popup.ageAt(nowMs)) ?: continue
         val rect = viewport.cellRect(popup.position)
@@ -824,14 +827,12 @@ private fun DrawScope.drawPopups(popups: List<Award>, nowMs: Long, viewport: Fie
         val center = rect.center - Offset(0f, frame.rise * viewport.cellPx)
         val topLeft = center - Offset(layout.size.width / 2f, layout.size.height / 2f)
         scale(frame.scale, pivot = center) {
-            drawText(layout, LeakOutColors.InkDark, topLeft, alpha = frame.alpha, drawStyle = outline)
-            drawText(layout, Color.White, topLeft, alpha = frame.alpha)
+            drawText(layout, PopupStyle.glow, topLeft, alpha = frame.alpha, shadow = Shadow(PopupStyle.glowColor(frame.alpha), Offset.Zero, glowRadius))
+            drawText(layout, PopupStyle.stroke, topLeft, alpha = frame.alpha, drawStyle = edge)
+            drawText(layout, PopupStyle.fill, topLeft, alpha = frame.alpha)
         }
     }
 }
-
-private const val POPUP_TEXT_FRACTION = 0.4f
-private val POPUP_OUTLINE = 3.dp
 
 private val FieldShape = RoundedCornerShape(24.dp)
 
@@ -875,4 +876,39 @@ private fun StartValvePreview() {
 @Composable
 private fun CheckeredFinishPreview() {
     LeakOutTheme { EndpointPreviewStates(start = false) }
+}
+
+/**
+ * Popups as in the design-system gallery: "+10" over a filled straight and "+50" over an empty
+ * tile, halfway through the hold, at the [cell] size. Without [popups] the same tiles are drawn bare.
+ */
+@Composable
+internal fun PopupPreviewStates(cell: Dp, modifier: Modifier = Modifier, popups: Boolean = true) {
+    val grid = GridSize(2, 1)
+    val straight = Position(0, 0)
+    val board = Board(grid, mapOf(straight to Cell.Pipe(PipeSection.H)))
+    val used = setOf(ChannelUse(straight, Channel.SINGLE))
+    PlayingField(
+        board = board,
+        state = rememberPlayingFieldState(grid, straight),
+        highlighted = null,
+        enabled = false,
+        modifier = modifier.size(cell * grid.columns, cell * grid.rows),
+        awards = if (popups) listOf(Award(straight, 10, atMs = 0L), Award(Position(1, 0), 50, atMs = 0L)) else emptyList(),
+        nowMs = { PopupTiming.FADE_IN_MS + PopupTiming.HOLD_MS / 2 },
+        filled = used,
+        flow = { FlowState.Ended(used) },
+        reducedMotion = true,
+    )
+}
+
+@Preview(name = "Points popup at 44 dp and 120 dp", widthDp = 360, heightDp = 140, backgroundColor = 0xFF0C1A2A, showBackground = true)
+@Composable
+private fun PointsPopupPreview() {
+    LeakOutTheme {
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            PopupPreviewStates(FieldLayout.MIN_CELL)
+            PopupPreviewStates(120.dp)
+        }
+    }
 }

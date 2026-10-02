@@ -1,6 +1,8 @@
 package nl.hexmaster.leakout.ui.game
 
+import androidx.compose.ui.unit.dp
 import nl.hexmaster.leakout.core.engine.Award
+import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -83,5 +85,28 @@ class PointsPopupTest {
         assertEquals("+15", PointsFormat.text(15))
         assertEquals("+25", PointsFormat.text(25))
         assertEquals("+50", PointsFormat.text(50))
+    }
+
+    @Test
+    fun `popup style uses the design-system tokens`() {
+        assertEquals(0.33f, PopupStyle.TEXT_FRACTION, 1e-6f)
+        assertEquals(LeakOutColors.SurfaceDeep, PopupStyle.fill)
+        assertEquals(LeakOutColors.LiquidGlow, PopupStyle.stroke)
+        assertEquals(LeakOutColors.LiquidGlow, PopupStyle.glow)
+        assertEquals(2.dp, PopupStyle.strokeWidth)
+        assertEquals(6.dp, PopupStyle.glowRadius)
+    }
+
+    @Test
+    fun `popup fill is opaque`() {
+        assertEquals(1f, PopupStyle.fill.alpha, 1e-6f)
+    }
+
+    @Test
+    fun `glow fades with the popup`() {
+        assertEquals(0.7f, PopupStyle.glowColor(1f).alpha, 1e-2f)
+        assertEquals(0.35f, PopupStyle.glowColor(0.5f).alpha, 1e-2f)
+        assertEquals(0f, PopupStyle.glowColor(0f).alpha, 1e-6f)
+        assertEquals(PopupStyle.glow.copy(alpha = 1f), PopupStyle.glowColor(1f).copy(alpha = 1f))
     }
 }

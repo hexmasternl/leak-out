@@ -25,8 +25,8 @@
 
 ## 5. Solver
 
-- [ ] 5.1 Extend `LevelSolver` with the ordered waypoint search from design.md. Pre-checks name a mandatory section whose entry neighbours cannot carry a pipe, and the returned path runs through every mandatory channel without reusing a cell other than a mandatory cross. Cover every new `level-solvability` scenario in `LevelSolverTest`, plus a test that checks each returned path is self-avoiding and passes each waypoint in an allowed direction.
-- [ ] 5.2 Add a timing guard test: a 50 by 50 level with 6 mandatory sections solves within the test's time budget. Run `./gradlew :core:test`, including `LevelSolvabilityTest` and `BundledLevelsTest`, and confirm it passes.
+- [x] 5.1 Extend `LevelSolver` with the ordered waypoint search from design.md. Pre-checks name a mandatory section whose entry neighbours cannot carry a pipe, and the returned path runs through every mandatory channel without reusing a cell other than a mandatory cross. Cover every new `level-solvability` scenario in `LevelSolverTest`, plus a test that checks each returned path is self-avoiding and passes each waypoint in an allowed direction.
+- [x] 5.2 Add a timing guard test: a 50 by 50 level with 6 mandatory sections solves within the test's time budget. Run `./gradlew :core:test`, including `LevelSolvabilityTest` and `BundledLevelsTest`, and confirm it passes.
 
 ## 6. App rendering, dialog and accessibility
 

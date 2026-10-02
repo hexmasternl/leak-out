@@ -64,6 +64,9 @@ data class Level(
 ) {
     fun isBlocked(position: Position): Boolean = position in blocked
 
+    /** The mandatory section on [position], or `null` when there is none. */
+    fun mandatoryAt(position: Position): MandatorySection? = mandatory.firstOrNull { it.position == position }
+
     /** A section is allowed on the stack when it has a positive weight. */
     fun isAllowed(section: PipeSection): Boolean = stack.weightOf(section) > 0
 }

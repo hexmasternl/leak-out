@@ -33,14 +33,17 @@ class HeadlessPlayTest {
         return assertIs<ParseResult.Success>(LevelParser.parse(file.readText())).level
     }
 
-    /** The straight or corner section for each cell of the solver's path, so the path carries the liquid. */
+    /**
+     * The straight or corner section for each cell of the solver's path, so the path carries the
+     * liquid. The level's mandatory sections are already on the board and are left out.
+     */
     private fun routeFor(level: Level): List<Pair<Position, PipeSection>> {
         val path = assertIs<SolverResult.Solvable>(LevelSolver.solve(level)).path
         val cells = listOf(level.start.position) + path + level.finish.position
         return path.mapIndexed { i, cell ->
             val sides = setOf(sideTowards(cell, cells[i]), sideTowards(cell, cells[i + 2]))
             cell to PipeSection.entries.first { it != PipeSection.X && it != PipeSection.RES && it.openSides == sides }
-        }
+        }.filter { (cell, _) -> level.mandatoryAt(cell) == null }
     }
 
     private fun sideTowards(from: Position, to: Position): Side = Side.entries.first { from.neighbour(it) == to }

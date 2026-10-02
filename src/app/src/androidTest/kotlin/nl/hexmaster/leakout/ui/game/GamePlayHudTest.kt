@@ -357,7 +357,7 @@ class GamePlayHudTest {
         compose.runOnIdle {
             assertFalse(session.state.paused)
             assertTrue(session.state.board.pipes.isEmpty())
-            assertEquals(5, session.state.stack.size)
+            assertEquals(15, session.state.stack.size)
         }
     }
 

@@ -143,6 +143,7 @@ fun GameScreen(
                 Row(Modifier.weight(1f).fillMaxWidth().padding(12.dp)) {
                     StackPanel(
                         stack = session.select { state.stack },
+                        visibleSize = currentLevel.stack.visibleSize,
                         dragState = dragState,
                         enabled = !isStopped && !fastForward && !replacing,
                         modifier = Modifier.width(

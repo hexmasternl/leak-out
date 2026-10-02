@@ -19,7 +19,7 @@ Leak Out ships with 24 levels and will grow in packs of 24 (one library page eac
 - **Achievements screen**: opened from a new **Achievements** button on the settings screen. It lists all 25 achievements from local data: unlocked, locked with progress, or hidden. When signed in, it also has an "Open in Play Games" button that shows the Play Games achievements UI.
 - **Unlock feedback**: the level complete and level lost dialogs show the achievements the attempt unlocked.
 - **25 proposed icons** (plus a placeholder for hidden achievements), 512×512 PNG with SVG sources, in the Deep Flow design system style. They are for the Play Console and the achievements screen and are kept in this change for review (`icons/`).
-- **Play Console setup** (manual, done by the owner): create the app and a Play Games Services project, register the signing SHA-1s, define the 25 achievements and add testers. The change provides a setup checklist and the console data (names, descriptions, XP, icons).
+- **Play Console setup** (manual, done by the owner, completed): create the app and a Play Games Services project, register the signing SHA-1s, define the 25 achievements and add testers. The checklist is `docs/achievements-setup.md`, and the resulting ids are in `games-ids.xml` in this change.
 
 ## Capabilities
 
@@ -41,5 +41,5 @@ Leak Out ships with 24 levels and will grow in packs of 24 (one library page eac
 - `app/`: a new `achievements/` package (Room entities, DAO, repository, `AchievementSync` with Play Games and no-op implementations). The Room database version goes up with a migration. There is a new `ui/achievements/` screen, a Play Games panel on the settings screen, an unlock row in the level complete and level lost dialogs, `GameSession` hooks for when an attempt ends, an `Application` class that starts the Play Games SDK, manifest meta-data and `res/values/games-ids.xml`.
 - Dependencies: adds `com.google.android.gms:play-services-games-v2`, pinned in `gradle/libs.versions.toml`.
 - Assets: 25 achievement icons in `app/src/main/res/drawable-nodpi/` (or vector equivalents), taken from the approved icons.
-- External: a Google Play Console app and Play Games Services project for `nl.hexmaster.leakout`. Until it exists, everything except the sync can be built and tested.
+- External: the Google Play Console app and Play Games Services project `201820010117` for `nl.hexmaster.leakout` (set up). The Play Games configuration is published after the smoke test.
 - Docs: `docs/project-plan.md` gets an achievements section, and the settings documentation covers the new panel.

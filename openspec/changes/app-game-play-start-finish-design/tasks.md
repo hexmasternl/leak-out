@@ -12,8 +12,8 @@ Tracking issue: [#44 Start and end position re-design](https://github.com/hexmas
 
 ## 2. Geometry and glows
 
-- [ ] 2.1 Add the pure endpoint geometry in `app/ui/game/Endpoints.kt`: valve wheel, spokes, hub, chevron for each open side, ring and the 6 × 6 checker squares clipped to the inner disc, in cell units; verify JVM unit tests: the chevron points out of each of the four open sides, the checker has 36 squares spanning the inner diameter, centred on the cell centre, with the top-left one light and neighbours alternating
-- [ ] 2.2 Add `valveGlow` and `finishGlow` (design decision 6); verify JVM unit tests: valve at 0 ms and 1 600 ms equal and different from 800 ms while waiting, 0.6 once flowing, 0.6 under reduced motion; finish period 2 000 ms until won, 0.6 under reduced motion
+- [x] 2.1 Add the pure endpoint geometry in `app/ui/game/Endpoints.kt`: valve wheel, spokes, hub, chevron for each open side, ring and the 6 × 6 checker squares clipped to the inner disc, in cell units; verify JVM unit tests: the chevron points out of each of the four open sides, the checker has 36 squares spanning the inner diameter, centred on the cell centre, with the top-left one light and neighbours alternating
+- [x] 2.2 Add `valveGlow` and `finishGlow` (design decision 6); verify JVM unit tests: valve at 0 ms and 1 600 ms equal and different from 800 ms while waiting, 0.6 once flowing, 0.6 under reduced motion; finish period 2 000 ms until won, 0.6 under reduced motion
 - [ ] 2.3 Add `Success500`, `TextPrimary` and any missing `Brass*` tokens to the app colours if absent; verify `./gradlew :app:testDebugUnitTest` passes
 
 ## 3. Drawing

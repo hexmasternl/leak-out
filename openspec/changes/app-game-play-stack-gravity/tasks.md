@@ -9,8 +9,8 @@ Tracking issue: [#37 Stack animation](https://github.com/hexmasternl/leak-out/is
 
 ## 2. Core
 
-- [ ] 2.1 In `core/stack/PipeStack.kt` add `EXTRA_SECTIONS = 10`, make `create` fill `visibleSize + EXTRA_SECTIONS` sections, add `placements: Int = 0` (incremented by `afterPlacement`) and `idAt(index)` = `placements + size - 1 - index`; verify `PipeStackTest`: a new stack holds `visibleSize + 10` for sizes 1, 5 and 10, size is kept after a placement, `idAt` of the new next section equals the old `idAt` of the second-from-bottom, the new top id is unique, and the same-seed test still passes
-- [ ] 2.2 Check `GameEngine`, `LevelSolver` and the headless level tester only use the next section and are unaffected; verify with `./gradlew :core:test`
+- [x] 2.1 In `core/stack/PipeStack.kt` add `EXTRA_SECTIONS = 10`, make `create` fill `visibleSize + EXTRA_SECTIONS` sections, add `placements: Int = 0` (incremented by `afterPlacement`) and `idAt(index)` = `placements + size - 1 - index`; verify `PipeStackTest`: a new stack holds `visibleSize + 10` for sizes 1, 5 and 10, size is kept after a placement, `idAt` of the new next section equals the old `idAt` of the second-from-bottom, the new top id is unique, and the same-seed test still passes
+- [x] 2.2 Check `GameEngine`, `LevelSolver` and the headless level tester only use the next section and are unaffected; verify with `./gradlew :core:test`
 
 ## 3. Layout and motion model (app, JVM)
 

@@ -14,11 +14,12 @@ class HudFormatTest {
     }
 
     @Test
-    fun `speed has one decimal with the locale's decimal sign`() {
-        assertEquals("0.8", HudFormat.speed(0.8, english))
-        assertEquals("0,8", HudFormat.speed(0.8, dutch))
-        assertEquals("1.0", HudFormat.speed(1.0, english))
-        assertEquals("0.9", HudFormat.speed(0.94, english))
+    fun `speed is the whole number, without a unit`() {
+        assertEquals("2", HudFormat.speed(0.2, english))
+        assertEquals("8", HudFormat.speed(0.8, dutch))
+        assertEquals("8", HudFormat.speed(0.82, english))
+        assertEquals("9", HudFormat.speed(0.85, english))
+        assertEquals("13", HudFormat.speed(1.25, english))
     }
 
     @Test

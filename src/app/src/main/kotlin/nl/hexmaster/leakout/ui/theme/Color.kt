@@ -109,4 +109,10 @@ object LeakOutColors {
     // 2.1 lines: white at 8 % (line.subtle) and 16 % (line.strong)
     val LineSubtle = Color(0x14FFFFFF)
     val LineStrong = Color(0x29FFFFFF)
+
+    // 2.1 line.highlight: white at 22 %, the top-edge highlight of level 1 panels
+    val LineHighlight = Color(0x38FFFFFF)
+
+    // 2.5 status: leak.500, the red countdown warning and the leak splash
+    val Leak500 = Color(0xFFFF5A5F)
 }

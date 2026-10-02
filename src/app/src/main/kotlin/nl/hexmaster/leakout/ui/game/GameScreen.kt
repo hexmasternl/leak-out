@@ -129,8 +129,11 @@ fun GameScreen(
             GameHud(
                 levelId = currentLevel.id,
                 flowSpeed = session.select { state.flowSpeed },
-                stars = session.select { state.stars },
+                countdownRemainingMs = session.select { (state.flow as? FlowState.Waiting)?.remainingMs },
+                initialDelayMs = currentLevel.flow.initialDelayMs,
+                stars = currentLevel.stars,
                 score = session.select { state.score },
+                attempt = attempt,
                 onPause = { session.send(GameCommand.Pause) },
                 pauseEnabled = outcome is Outcome.Playing,
                 modifier = Modifier.fillMaxWidth(),

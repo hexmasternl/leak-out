@@ -26,6 +26,7 @@ class LevelCompleteNewBestTest {
         compose.setContent {
             LeakOutTheme {
                 LevelCompleteDialog(
+                    level = 7,
                     score = score,
                     frame = winFrame(age, score, stars = 2),
                     hasNextLevel = true,

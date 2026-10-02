@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -32,12 +34,15 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -47,6 +52,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import nl.hexmaster.leakout.ui.splash.rememberReducedMotion
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
+import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
 
 /**
  * The two layouts of the result dialogs (design-system.md 5.6): one centred column when it fits the
@@ -184,7 +190,10 @@ internal fun ResultDialogFrame(
         val key = listOf(constraints.maxWidth, constraints.maxHeight, density, fontScale)
         val layout = cache.layout.takeIf { cache.key == key } ?: run {
             val regularWidth = minOf(maxWidth, ResultDialogMetrics.RegularMaxWidth.roundToPx())
-            val measured = subcompose(MEASURE_SLOT) { ResultDialogPanel(ResultDialogLayout.Regular, Modifier) { measureRegular() } }
+            val measured = subcompose(MEASURE_SLOT) {
+                // Never placed and hidden from accessibility and tests: it only gives the height.
+                ResultDialogPanel(ResultDialogLayout.Regular, Modifier.clearAndSetSemantics { }) { measureRegular() }
+            }
                 .map { it.measure(Constraints(maxWidth = regularWidth)) }
             ResultDialogLayout.choose(maxHeight, measured.maxOfOrNull { it.height } ?: 0)
                 .also {
@@ -267,5 +276,32 @@ internal fun CompactColumns(
             verticalArrangement = Arrangement.spacedBy(ResultDialogMetrics.ButtonSpacing),
             content = buttons,
         )
+    }
+}
+
+/**
+ * One column of a result dialog's score row (design-system.md 5.6): a `label.md` [caption] in
+ * `text.secondary` above its [value] in `numeric.lg`, read as one item: [description].
+ */
+@Composable
+internal fun ResultScoreColumn(
+    caption: String,
+    value: String,
+    valueColor: Color,
+    description: String,
+    modifier: Modifier = Modifier,
+    glow: Boolean = false,
+) {
+    Column(
+        modifier.semantics(mergeDescendants = true) { contentDescription = description },
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(caption.uppercase(), style = LeakOutTextStyles.LabelMd, color = LeakOutColors.TextSecondary, maxLines = 1)
+        Spacer(Modifier.height(4.dp))
+        val style = when {
+            glow -> LeakOutTextStyles.NumericLg.copy(shadow = Shadow(LeakOutColors.Brass500.copy(alpha = 0.45f), Offset.Zero, 24f))
+            else -> LeakOutTextStyles.NumericLg
+        }
+        Text(value, style = style, color = valueColor, maxLines = 1)
     }
 }

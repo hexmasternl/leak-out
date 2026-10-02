@@ -78,11 +78,11 @@ fun StarIcon(
 }
 
 /**
- * The three stars of the level complete dialog, 40 dp and 12 dp apart. The first [lit] are earned;
+ * The three stars of the level complete dialog, [size] (40 dp by default) and 12 dp apart. The first [lit] are earned;
  * each is drawn at its scale from [scales], which the win tally pops. Read as "N of 3 stars".
  */
 @Composable
-fun WinStars(lit: Int, scales: List<Float>, modifier: Modifier = Modifier) {
+fun WinStars(lit: Int, scales: List<Float>, modifier: Modifier = Modifier, size: Dp = WIN_STAR_SIZE, tagStars: Boolean = true) {
     val description = stringResource(R.string.hud_stars_description, lit.coerceIn(0, STAR_COUNT))
     Row(
         modifier = modifier.semantics(mergeDescendants = true) { contentDescription = description },
@@ -93,8 +93,8 @@ fun WinStars(lit: Int, scales: List<Float>, modifier: Modifier = Modifier) {
             StarIcon(
                 earned = index < lit,
                 scale = { scales.getOrElse(index) { 1f } },
-                size = WIN_STAR_SIZE,
-                modifier = Modifier.testTag("win_star_${index + 1}"),
+                size = size,
+                modifier = if (tagStars) Modifier.testTag("win_star_${index + 1}") else Modifier,
             )
         }
     }

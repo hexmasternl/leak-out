@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -13,7 +14,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import nl.hexmaster.leakout.core.engine.FlowState
 import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.settings.InMemorySettingsRepository
@@ -36,6 +38,8 @@ import nl.hexmaster.leakout.ui.game.FieldTest
 import nl.hexmaster.leakout.ui.game.GameScreen
 import nl.hexmaster.leakout.ui.game.GameScreenTags
 import nl.hexmaster.leakout.ui.game.GameSession
+import nl.hexmaster.leakout.ui.game.SectionDragState
+import nl.hexmaster.leakout.ui.game.StackPanel
 import nl.hexmaster.leakout.ui.game.PauseTags
 import nl.hexmaster.leakout.ui.game.cellRect
 import nl.hexmaster.leakout.ui.game.dropOnCell
@@ -227,20 +231,54 @@ class GameTipsTest {
     @Test
     fun onAScreenTooShortForTheStackTheCutOffSlotsAreNotFullyVisible() {
         val level = FieldTest.level(id = 4, visibleSize = 10)
-        val session = GameSession(level, Random(7))
-        // Top and bottom of the ten-slot column fall outside a 180 dp tall game screen.
+        val stack = GameSession(level, Random(7)).state.stack
+        val targets = TipTargets()
         compose.setContent {
             LeakOutTheme {
-                Box(Modifier.size(800.dp, 180.dp).consumeWindowInsets(WindowInsets.safeDrawing)) {
-                    GameScreen(level = level, onExit = {}, session = session, tips = InMemorySettingsRepository(initialSeenTips = TipId.entries.toSet()))
+                CompositionLocalProvider(LocalTipTargets provides targets) {
+                    // Far shorter than ten slots need, so the top of the rail is cut off.
+                    Box(Modifier.size(120.dp, 160.dp)) {
+                        StackPanel(stack = stack, visibleSize = 10, dragState = SectionDragState())
+                    }
                 }
             }
         }
         compose.waitForIdle()
-        val stack = compose.onNodeWithTag(GameScreenTags.STACK_PANEL).fetchSemanticsNode().boundsInRoot
-        val slots = compose.onAllNodes(hasContentDescription("Horizontal straight"), useUnmergedTree = true).fetchSemanticsNodes().map { it.boundsInRoot }
-        val visible = TipTargets.fullyVisible(stack, slots.withIndex().associate { it.index to it.value })
+        val visible = compose.runOnIdle { targets.fullyVisibleSlots }!!
+        assertTrue("the next slot is visible", stack.size - 1 in visible)
         assertTrue("the top slot is cut off", 0 !in visible)
-        assertTrue("some slots are visible", visible.isNotEmpty())
+    }
+
+    private fun mandatoryLevel(): Level = FieldTest.level(id = 25).copy(
+        mandatory = listOf(MandatorySection(Position(1, 2), PipeSection.X), MandatorySection(Position(2, 1), PipeSection.RES)),
+    )
+
+    @Test
+    fun theFirstLevelWithMandatorySectionsHighlightsEveryOneOfThem() {
+        val level = mandatoryLevel()
+        val session = GameSession(level, Random(7))
+        val tips = InMemorySettingsRepository(initialSeenTips = setOf(TipId.Intro))
+        show(level, session, tips)
+        assertEquals(TipId.Mandatory, shownTip())
+        assertTrue(session.state.paused)
+        assertEquals(setOf(compose.cellRect(Position(1, 2)), compose.cellRect(Position(2, 1))), spotlights().toSet())
+        tap(TipOverlayTags.DONE)
+        assertEquals(setOf(TipId.Intro, TipId.Mandatory), runBlocking { tips.seenTips.first() })
+    }
+
+    @Test
+    fun theMandatoryTipShowsOnce() {
+        val level = mandatoryLevel()
+        show(level, GameSession(level, Random(7)), InMemorySettingsRepository(initialSeenTips = setOf(TipId.Intro, TipId.Mandatory)))
+        assertEquals(null, shownTip())
+    }
+
+    @Test
+    fun theMandatoryTipComesAfterTheTour() {
+        val level = mandatoryLevel()
+        show(level, GameSession(level, Random(7)))
+        assertEquals(TipId.Intro, shownTip())
+        tap(TipOverlayTags.SKIP)
+        assertEquals(TipId.Mandatory, shownTip())
     }
 }

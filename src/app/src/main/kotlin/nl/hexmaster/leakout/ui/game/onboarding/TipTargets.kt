@@ -30,18 +30,29 @@ class TipTargets(val field: PlayingFieldState? = null) {
     /** The part of the stack panel that is inside the window, in window coordinates. */
     private var stackVisibleInWindow: Rect? by mutableStateOf(null)
     private var slotCount: Int by mutableStateOf(0)
+
+    /** The slots the stack rail shows whole, before the window has its say; null until the rail is laid out. */
+    private var railVisible: Set<Int>? by mutableStateOf(null)
     private val slotsInRoot = mutableStateMapOf<Int, Rect>()
     private val slotsInWindow = mutableStateMapOf<Int, Rect>()
 
-    /** Called by the stack panel with its own coordinates and its number of slots. */
-    fun registerStackPanel(coordinates: LayoutCoordinates, slots: Int) {
+    /** Called by the stack panel with its own coordinates. */
+    fun registerStackPanel(coordinates: LayoutCoordinates) {
         stackColumn = coordinates.rectInRoot()
         stackVisibleInWindow = coordinates.boundsInWindow()
+    }
+
+    /**
+     * Called by the stack rail with its number of slots and the ones it shows whole; the slots
+     * above the rail's clipped top edge are not among them, and may not be composed at all.
+     */
+    fun registerRail(slots: Int, fullyVisible: Set<Int>) {
         if (slotCount != slots) {
             slotCount = slots
             slotsInRoot.keys.retainAll { it < slots }
             slotsInWindow.keys.retainAll { it < slots }
         }
+        if (railVisible != fullyVisible) railVisible = fullyVisible
     }
 
     /** Called by stack slot [index] (0 is the top, the last one the next section). */
@@ -57,14 +68,16 @@ class TipTargets(val field: PlayingFieldState? = null) {
     fun fieldBounds(): Rect? = field?.boundsInRoot()
 
     /**
-     * The indices of the stack slots whose whole rect lies inside the visible part of the stack
-     * panel; null until the panel and every slot have been laid out.
+     * The indices of the stack slots the rail shows whole and whose whole rect also lies inside
+     * the part of the stack panel that is in the window; null until the rail, the panel and the
+     * slots it shows have been laid out.
      */
     val fullyVisibleSlots: Set<Int>?
         get() {
             val visible = stackVisibleInWindow ?: return null
-            if (slotCount == 0 || (0 until slotCount).any { it !in slotsInWindow }) return null
-            return fullyVisible(visible, (0 until slotCount).associateWith { slotsInWindow.getValue(it) })
+            val rail = railVisible ?: return null
+            if (slotCount == 0 || rail.any { it !in slotsInWindow }) return null
+            return fullyVisible(visible, rail.associateWith { slotsInWindow.getValue(it) })
         }
 
     companion object {

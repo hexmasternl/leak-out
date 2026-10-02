@@ -80,6 +80,20 @@ class TipSchedulerTest {
     }
 
     @Test
+    fun `the mandatory tip comes after the tour on a level with mandatory sections, at level start only`() {
+        val mandatory = listOf(Position(2, 2), Position(3, 1))
+        assertEquals(listOf(TipId.Intro, TipId.Mandatory), due(mandatory = mandatory))
+        assertEquals(listOf(TipId.Mandatory), due(seen = setOf(TipId.Intro), mandatory = mandatory))
+        assertEquals(emptyList<TipId>(), due(seen = setOf(TipId.Intro), atLevelStart = false, mandatory = mandatory))
+    }
+
+    @Test
+    fun `the mandatory tip is not due once seen or on a level without mandatory sections`() {
+        assertEquals(emptyList<TipId>(), due(seen = setOf(TipId.Intro, TipId.Mandatory), mandatory = listOf(Position(2, 2))))
+        assertEquals(emptyList<TipId>(), due(seen = setOf(TipId.Intro)))
+    }
+
+    @Test
     fun `nothing is due once the attempt has ended`() {
         assertEquals(emptyList<TipId>(), due(stack(RES, X, H, V, H), outcome = Outcome.Won(1_000)))
         assertEquals(emptyList<TipId>(), due(stack(RES, X, H, V, H), outcome = Outcome.Lost(Position(1, 1), Side.LEFT, 1_000)))

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -49,6 +50,7 @@ import nl.hexmaster.leakout.core.level.StackSettings
 import nl.hexmaster.leakout.core.stack.PipeStack
 import nl.hexmaster.leakout.ui.game.onboarding.LocalTipTargets
 import nl.hexmaster.leakout.ui.game.onboarding.TipTargets
+import nl.hexmaster.leakout.ui.splash.rememberReducedMotion
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 
 object GameScreenTags {
@@ -81,11 +83,12 @@ fun StackPanel(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
+    val reducedMotion = rememberReducedMotion()
     val targets = LocalTipTargets.current
     BoxWithConstraints(
         modifier = modifier
             .testTag(GameScreenTags.STACK_PANEL)
-            .onGloballyPositioned { targets?.registerStackPanel(it, stack.size) }
+            .onGloballyPositioned { targets?.registerStackPanel(it) }
             .fillMaxHeight()
             .background(LeakOutColors.SurfaceDeep.copy(alpha = 0.90f), RoundedCornerShape(24.dp))
             .border(1.dp, Color.White.copy(alpha = 0.16f), RoundedCornerShape(24.dp))
@@ -98,6 +101,7 @@ fun StackPanel(
         val tops = remember(metrics, stack.size, railHeight) { StackLayout.slotTops(metrics, stack.size, railHeight) }
         val fullyVisible = remember(metrics, stack.size, railHeight) { StackLayout.fullyVisibleSlots(metrics, stack.size, railHeight) }
         val composed = remember(metrics, stack.size, railHeight) { StackLayout.composedSlots(metrics, stack.size, railHeight) }
+        SideEffect { targets?.registerRail(stack.size, fullyVisible) }
 
         val motion = remember { StackMotion() }
         val falls = motion.sync(stack, metrics.pitch.value, reducedMotion)
@@ -196,22 +200,19 @@ private fun StackSlot(
     val frameWidth = if (isNext) lerp(1.dp, 2.dp, growth) else 1.dp
 
     val slotModifier = modifier
-        .size(size)
-        .semantics { this.contentDescription = contentDescription }
+        .testTag(GameScreenTags.stackSection(id))
+        .size(slotSize)
+        .then(
+            if (accessible) {
+                Modifier.semantics { this.contentDescription = contentDescription }
+            } else {
+                Modifier.clearAndSetSemantics {}
+            },
+        )
         .onGloballyPositioned {
             coordinates = it
             targets?.registerSlot(index, it)
         }
-        .background(
-            if (isNext) LeakOutColors.SecondaryBase.copy(alpha = 0.28f) else LeakOutColors.SurfaceCard.copy(alpha = 0.08f),
-            RoundedCornerShape(12.dp),
-        )
-        .border(
-            if (isNext) 2.dp else 1.dp,
-            if (isNext) LeakOutColors.SecondaryBase else Color.White.copy(alpha = 0.16f),
-            RoundedCornerShape(12.dp),
-        )
-        .padding(4.dp)
         .then(
             if (draggable) {
                 Modifier.pointerInput(section, dragState) {

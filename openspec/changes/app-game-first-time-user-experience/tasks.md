@@ -41,7 +41,7 @@ Tracking issue: [#36 First time user experience](https://github.com/hexmasternl/
 
 ## 7. Mandatory section tip (after `app-game-play-mandatory-sections` is on `development`)
 
-- [ ] 7.1 Return the mandatory tip from `dueTips` for a level with mandatory sections and register their cells as targets; verify unit tests for the order with mandatory sections and instrumented tests that every mandatory cell is highlighted and the tip shows once
+- [x] 7.1 Return the mandatory tip from `dueTips` for a level with mandatory sections and register their cells as targets; verify unit tests for the order with mandatory sections and instrumented tests that every mandatory cell is highlighted and the tip shows once
 
 ## 8. Integration
 

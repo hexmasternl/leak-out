@@ -296,8 +296,10 @@ private fun GameTips(
     val scope = rememberCoroutineScope()
     val revealMarginPx = with(LocalDensity.current) { RevealMargin.toPx() }
 
+    val mandatory = session.select { state.level.mandatory.map { it.position } }
+
     fun due(atLevelStart: Boolean): List<TipId> =
-        TipScheduler.dueTips(stack, outcome, seen.orEmpty(), atLevelStart, visibleSlots.orEmpty())
+        TipScheduler.dueTips(stack, outcome, seen.orEmpty(), atLevelStart, visibleSlots.orEmpty(), mandatory)
 
     LaunchedEffect(session, attempt, seen != null, visibleSlots != null, checked) {
         if (checked != attempt && seen != null && visibleSlots != null) session.offerTips(due(atLevelStart = true), atLevelStart = true)
@@ -308,11 +310,10 @@ private fun GameTips(
     }
 
     fun close() {
-        val wasIntro = session.activeTip == TipId.Intro
         val tip = session.closeTip() ?: return
         scope.launch { tips.markTipSeen(tip) }
-        // After the tour the field goes back to the view the level starts with.
-        if (wasIntro) scope.launch { fieldState.animateTo(fieldState.initialView(), reducedMotion) }
+        // After the tour and the mandatory tip, which may pan, the field goes back to the view the level starts with.
+        if (tip == TipId.Intro || tip == TipId.Mandatory) scope.launch { fieldState.animateTo(fieldState.initialView(), reducedMotion) }
     }
     BackHandler(enabled = activeTip != null && !pauseDialogShown) { close() }
 
@@ -321,6 +322,7 @@ private fun GameTips(
     val hintCell = remember(attempt, stack) { TipScheduler.hintCell(level, session.state.board) }
     // Field targets outside the view are panned into it first.
     val revealed = when {
+        tip == TipId.Mandatory -> mandatory.firstOrNull()
         tip != TipId.Intro -> null
         step == 1 -> level.finish.position
         step == 3 -> hintCell
@@ -341,7 +343,11 @@ private fun GameTips(
         }
         TipId.Cross -> listOfNotNull(TipScheduler.tipSlot(stack, PipeSection.X, visibleSlots.orEmpty())?.let(targets::slot))
         TipId.Reservoir -> listOfNotNull(TipScheduler.tipSlot(stack, PipeSection.RES, visibleSlots.orEmpty())?.let(targets::slot))
-        TipId.Mandatory -> emptyList()
+        // Every mandatory section that is in the field's view; on a large level the first one is panned into it.
+        TipId.Mandatory -> {
+            val field = targets.fieldBounds()
+            mandatory.mapNotNull(targets::cell).filter { field == null || it.overlaps(field) }
+        }
     }
     val hint = if (tip == TipId.Intro && step == 3) {
         val from = targets.slot(next)

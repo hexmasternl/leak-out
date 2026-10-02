@@ -431,7 +431,7 @@ No account is needed. The only network use is the optional Google Play Games sig
 
 ### 2.11 Achievements
 
-25 achievements at launch, worth 595 XP of the 1,000 Play Games allows. They work fully without Play Games: the local store is the source of truth and Play Games only mirrors it. The growth rules and the checklist for adding a level pack are in [achievements.md](achievements.md); the Play Console setup is in [achievements-setup.md](achievements-setup.md).
+25 achievements at launch, worth 595 XP of the 1,000 Play Games allows. They work fully without Play Games: the local store is the source of truth and Play Games only mirrors it. The growth rules and the checklist for adding a level pack are in [achievements.md](achievements.md); the Play Console setup is in [achievements-setup.md](achievements-setup.md); the full technical reference is [achievements-technical.md](achievements-technical.md).
 
 **Catalogue.** `core/achievements/Achievement` is an enum with a stable `key` (also the `achievement_<key>` resource with the Play Games id), group, type (standard, or incremental with steps), hidden flag and XP. Names, descriptions and icons are app resources, mapped by an exhaustive `when` in `AchievementResources`.
 

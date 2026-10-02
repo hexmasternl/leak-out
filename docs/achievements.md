@@ -1,6 +1,6 @@
 # Achievements
 
-How the achievement catalogue may grow, and what to do when a level pack adds achievements. How achievements work in the game (catalogue, rules, storage, sync) is in [project-plan.md, section 2.11](project-plan.md#211-achievements). The Play Console side (creating achievements, exporting the ids, publishing) is in [achievements-setup.md](achievements-setup.md); this page links to it rather than repeating it.
+How the achievement catalogue may grow, and what to do when a level pack adds achievements. How achievements work in the game (catalogue, rules, storage, sync, UI) is in [achievements-technical.md](achievements-technical.md), with a summary in [project-plan.md, section 2.11](project-plan.md#211-achievements). The Play Console side (creating achievements, exporting the ids, publishing) is in [achievements-setup.md](achievements-setup.md); this page links to it rather than repeating it.
 
 ## Why the catalogue only grows
 
@@ -54,7 +54,7 @@ For pack *n* (library page *n*, 24 new levels). Do the levels first; the achieve
 **App resources**
 
 - [ ] Name and description strings `achievement_name_<key>` and `achievement_desc_<key>` in `app/src/main/res/values/strings.xml`, exactly as they will be in the Play Console, and the same texts in the console list of `AchievementResourcesTest`.
-- [ ] The icon: make it with `icons/generate-icons.mjs` from this change's folder (after archiving it is under `openspec/changes/archive/…-app-game-achievements/icons/`), using the pack or tier template; render it to a 512 × 512 PNG and copy it to `app/src/main/res/drawable-nodpi/achievement_<key>.png`. Keep everything inside the radius-200 safe disc.
+- [ ] The icon: add it to [`assets/achievements/generate-icons.mjs`](../assets/achievements/generate-icons.mjs) using the pack or tier template, run `node generate-icons.mjs .` and `node render-icons.js <key>` in that folder to get the 512 × 512 PNG in `png/`, and copy it to `app/src/main/res/drawable-nodpi/achievement_<key>.png`. Keep everything inside the radius-200 safe disc.
 - [ ] Add the entry to the exhaustive `when` in `AchievementResources` (the build fails until you do).
 
 **Play Console** (follow [achievements-setup.md](achievements-setup.md#adding-achievements-later))

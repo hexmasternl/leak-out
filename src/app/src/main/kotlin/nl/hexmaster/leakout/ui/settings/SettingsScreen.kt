@@ -57,6 +57,8 @@ object SettingsTags {
     const val RESET_DIALOG = "settings_reset_dialog"
     const val RESET_CANCEL = "settings_reset_cancel"
     const val RESET_CONFIRM = "settings_reset_confirm"
+    const val SHOW_TIPS_AGAIN = "settings_show_tips_again"
+    const val TIPS_RESET_TEXT = "settings_tips_reset_text"
     const val ABOUT_PANEL = "settings_about_panel"
     const val ABOUT_VERSION = "settings_about_version"
     const val MUSIC_CREDITS = "settings_music_credits"
@@ -86,6 +88,7 @@ fun SettingsScreen(
         onBack = onBack,
         onVibrationChange = viewModel::onVibrationChange,
         onResetConfirmed = viewModel::onResetConfirmed,
+        onShowTipsAgain = viewModel::onShowTipsAgain,
         modifier = modifier,
         onSoundEnabledChange = viewModel::onSoundEnabledChange,
         onSoundVolumeChange = viewModel::onSoundVolumeChange,
@@ -110,6 +113,7 @@ fun SettingsContent(
     onVibrationChange: (Boolean) -> Unit,
     onResetConfirmed: () -> Unit,
     modifier: Modifier = Modifier,
+    onShowTipsAgain: () -> Unit = {},
     initialDialogOpen: Boolean = false,
     onSoundEnabledChange: (Boolean) -> Unit = {},
     onSoundVolumeChange: (Float) -> Unit = {},
@@ -163,7 +167,12 @@ fun SettingsContent(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(SettingsMetrics.Gutter),
             ) {
-                ProgressPanel(progress = state.progress, onResetProgress = { dialogOpen = true })
+                ProgressPanel(
+                    progress = state.progress,
+                    onResetProgress = { dialogOpen = true },
+                    tips = state.tips,
+                    onShowTipsAgain = onShowTipsAgain,
+                )
                 AboutPanel(appInfo = appInfo) { MusicCredits(state.musicCredits) }
             }
         }

@@ -3,6 +3,7 @@ package nl.hexmaster.leakout.ui.settings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -36,7 +37,7 @@ private class SlowSettings : SettingsRepository {
     override suspend fun setMusicEnabled(enabled: Boolean) = Unit
     override suspend fun setMusicVolume(volume: Float) = Unit
     override suspend fun setVibrationEnabled(enabled: Boolean) = Unit
-    override val seenTips = MutableSharedFlow<Set<TipId>>(replay = 1)
+    override val seenTips = MutableStateFlow<Set<TipId>>(emptySet())
     override suspend fun markTipSeen(tip: TipId) = Unit
     override suspend fun resetTips() = Unit
 }
@@ -187,5 +188,26 @@ class SettingsViewModelTest {
         // three levels at the start of page 1, so a reset gives exactly what a first launch gives.
         assertEquals(listOf(1, 2, 3), tiles.filter { it.isPlayable }.map { it.levelId })
         assertEquals(LevelLibraryViewModel(InMemoryLevelHistoryRepository().asHistoryReader(), LevelCatalog { 48 }).uiState.value, library.uiState.value)
+    }
+
+    @Test
+    fun `show tips again is offered only when a tip was seen`() {
+        val none = SettingsViewModel(InMemorySettingsRepository(), InMemoryLevelHistoryRepository())
+        assertEquals(TipsState(anySeen = false), none.uiState.value!!.tips)
+        val seen = SettingsViewModel(InMemorySettingsRepository(initialSeenTips = setOf(TipId.Intro)), InMemoryLevelHistoryRepository())
+        assertEquals(TipsState(anySeen = true), seen.uiState.value!!.tips)
+    }
+
+    @Test
+    fun `show tips again resets the tips and says they will show again`() = runTest {
+        val settings = InMemorySettingsRepository(Settings(vibrationEnabled = false), setOf(TipId.Intro, TipId.Cross))
+        val history = InMemoryLevelHistoryRepository(twelveLevels)
+        val vm = SettingsViewModel(settings, history)
+        vm.onShowTipsAgain()
+        assertEquals(emptySet<TipId>(), settings.seenTips.value)
+        assertEquals(TipsState(anySeen = false, justReset = true), vm.uiState.value!!.tips)
+        // The settings and the progress are left alone.
+        assertFalse(vm.uiState.value!!.settings.vibrationEnabled)
+        assertEquals(ProgressSummary(12, 31), vm.uiState.value!!.progress)
     }
 }

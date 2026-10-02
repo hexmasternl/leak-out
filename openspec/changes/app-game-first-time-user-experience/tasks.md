@@ -37,7 +37,7 @@ Tracking issue: [#36 First time user experience](https://github.com/hexmasternl/
 
 ## 6. Settings
 
-- [ ] 6.1 Add the "Show tips again" button and "Tips will show again when you play" text to the Progress panel and `SettingsViewModel`; verify instrumented tests for reset, disabled when nothing seen, accessibility, and that a level started afterwards shows the intro tour
+- [x] 6.1 Add the "Show tips again" button and "Tips will show again when you play" text to the Progress panel and `SettingsViewModel`; verify instrumented tests for reset, disabled when nothing seen, accessibility, and that a level started afterwards shows the intro tour
 
 ## 7. Mandatory section tip (after `app-game-play-mandatory-sections` is on `development`)
 

@@ -141,11 +141,18 @@ fun FeelPanel(vibrationEnabled: Boolean, onVibrationChange: (Boolean) -> Unit, m
 }
 
 /**
- * The [progress] summary and the destructive Reset progress button, disabled while there is
- * nothing to reset so the confirm dialog cannot open for nothing.
+ * The [progress] summary, the Show tips again button (disabled while no tip has been seen, then
+ * "Tips will show again when you play" once reset) and the destructive Reset progress button,
+ * disabled while there is nothing to reset so the confirm dialog cannot open for nothing.
  */
 @Composable
-fun ProgressPanel(progress: ProgressSummary, onResetProgress: () -> Unit, modifier: Modifier = Modifier) {
+fun ProgressPanel(
+    progress: ProgressSummary,
+    onResetProgress: () -> Unit,
+    modifier: Modifier = Modifier,
+    tips: TipsState = TipsState.None,
+    onShowTipsAgain: () -> Unit = {},
+) {
     SettingsPanel(title = stringResource(R.string.settings_progress), modifier = modifier.testTag(SettingsTags.PROGRESS_PANEL)) {
         Spacer(Modifier.height(12.dp))
         Text(
@@ -163,6 +170,24 @@ fun ProgressPanel(progress: ProgressSummary, onResetProgress: () -> Unit, modifi
             color = LeakOutColors.TextPrimary,
             modifier = Modifier.testTag(SettingsTags.PROGRESS_SUMMARY),
         )
+        Spacer(Modifier.height(12.dp))
+        CartoonButton(
+            text = stringResource(R.string.settings_show_tips_again),
+            onClick = onShowTipsAgain,
+            variant = CartoonButtonVariant.Primary,
+            enabled = tips.anySeen,
+            faceHeight = 48.dp,
+            modifier = Modifier.fillMaxWidth().testTag(SettingsTags.SHOW_TIPS_AGAIN),
+        )
+        if (tips.justReset) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.settings_tips_reset),
+                style = LeakOutTextStyles.BodySm,
+                color = LeakOutColors.TextSecondary,
+                modifier = Modifier.testTag(SettingsTags.TIPS_RESET_TEXT),
+            )
+        }
         Spacer(Modifier.height(12.dp))
         CartoonButton(
             text = stringResource(R.string.settings_reset_progress),

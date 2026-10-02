@@ -2,6 +2,7 @@ package nl.hexmaster.leakout.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -33,12 +34,21 @@ data class ProgressSummary(val levelsFinished: Int, val starsEarned: Int) {
 /**
  * What the settings screen shows: the stored settings, the progress summary and the background
  * tracks to credit on the About panel, in playlist order (empty when the credits cannot be read).
+ * [tips] drives the Show tips again button.
  */
 data class SettingsUiState(
     val settings: Settings,
     val progress: ProgressSummary,
     val musicCredits: List<Track> = emptyList(),
+    val tips: TipsState = TipsState.None,
 )
+
+/** Whether any tip has been seen (there is something to show again), and whether this screen just reset them. */
+data class TipsState(val anySeen: Boolean, val justReset: Boolean = false) {
+    companion object {
+        val None = TipsState(anySeen = false)
+    }
+}
 
 /**
  * Combines the stored settings and the level history into [uiState], which is null until both have
@@ -51,11 +61,25 @@ class SettingsViewModel(
     musicCredits: Playlist? = null,
 ) : ViewModel() {
     private val credits = musicCredits?.tracks.orEmpty()
+    private val tipsJustReset = MutableStateFlow(false)
 
     val uiState: StateFlow<SettingsUiState?> =
-        combine(settingsRepository.settings, historyRepository.observeAll().map(ProgressSummary::of)) { settings, progress ->
-            SettingsUiState(settings, progress, credits)
+        combine(
+            settingsRepository.settings,
+            historyRepository.observeAll().map(ProgressSummary::of),
+            settingsRepository.seenTips,
+            tipsJustReset,
+        ) { settings, progress, seenTips, justReset ->
+            SettingsUiState(settings, progress, credits, TipsState(seenTips.isNotEmpty(), justReset && seenTips.isEmpty()))
         }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /** Makes every tip show again; the level history and the settings are left alone. */
+    fun onShowTipsAgain() {
+        viewModelScope.launch {
+            settingsRepository.resetTips()
+            tipsJustReset.value = true
+        }
+    }
 
     /** Stores the vibration preference. Nothing vibrates yet; the haptic tick will read it. */
     fun onVibrationChange(enabled: Boolean) {

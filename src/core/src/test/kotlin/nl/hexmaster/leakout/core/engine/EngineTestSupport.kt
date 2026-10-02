@@ -7,6 +7,7 @@ import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.FlowSettings
 import nl.hexmaster.leakout.core.level.GridSize
 import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.PlacementRules
 import nl.hexmaster.leakout.core.level.Position
@@ -31,6 +32,7 @@ internal fun engineLevel(
     start: Endpoint = Endpoint(p(0, 1), Side.RIGHT),
     finish: Endpoint = Endpoint(p(2, 3), Side.TOP),
     visibleSize: Int = 5,
+    mandatory: List<MandatorySection> = emptyList(),
 ): Level = TestLevels.valid(
     grid = GridSize(5, 5),
     start = start,
@@ -42,6 +44,7 @@ internal fun engineLevel(
         weights = if (section == null) StackSettings().weights else PipeSection.entries.associateWith { if (it == section) 1 else 0 },
     ),
     rules = rules,
+    mandatory = mandatory,
 )
 
 /** The route of [engineLevel]: from the start through H, LB and V into the finish. 35 points. */

@@ -1,5 +1,6 @@
 package nl.hexmaster.leakout.core.level
 
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -187,6 +188,20 @@ class LevelParserTest {
                 MandatorySection(Position(3, 2), PipeSection.X),
                 MandatorySection(Position(1, 1), PipeSection.RES),
             ),
+            level.mandatory,
+        )
+    }
+
+    @Test
+    fun `full example in the level format doc parses and validates`() {
+        val doc = File(System.getProperty("leakout.levelFormatDoc")).readText()
+        val example = Regex("```jsonc\\R(.*?)```", RegexOption.DOT_MATCHES_ALL).find(doc)?.groupValues?.get(1)
+            ?: error("no jsonc example in the level format doc")
+        val json = example.lines().joinToString("\n") { it.substringBefore("//") }
+        val level = parsed(json)
+        assertEquals(emptyList(), LevelValidator.validate(level).errors)
+        assertEquals(
+            listOf(MandatorySection(Position(3, 2), PipeSection.X), MandatorySection(Position(5, 5), PipeSection.RES)),
             level.mandatory,
         )
     }

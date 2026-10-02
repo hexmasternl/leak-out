@@ -37,26 +37,29 @@
     <string name="pause_restart">Restart</string>
     <string name="pause_exit">Exit</string>
 
+    <!-- Level complete and level lost dialogs: the level number above the headline -->
+    <string name="result_eyebrow">Level %1$d</string>
+
     <!-- Level lost dialog -->
     <string name="lost_title">Leaked!</string>
     <string name="lost_message">The pipe is leaking. Level lost.</string>
+    <string name="lost_score_label">Score</string>
     <string name="lost_score">Score %1$s</string>
     <string name="lost_restart">Restart</string>
     <string name="lost_exit">Exit</string>
     <string name="lost_pane_title">Level lost</string>
 
     <!-- Level complete dialog -->
-    <string name="win_eyebrow">Level complete</string>
-    <string name="win_title">Level complete!</string>
+    <string name="win_title">Level Complete!</string>
     <string name="win_message">You kept the water flowing.</string>
-    <string name="win_earned">Pipe points</string>
-    <string name="win_penalty">Unused pipes</string>
-    <string name="win_total">Total</string>
-    <string name="win_penalty_value">-%1$s</string>
-    <string name="win_earned_description">Pipe points %1$s</string>
-    <string name="win_penalty_description">Unused pipes minus %1$s</string>
-    <string name="win_total_description">Total %1$s</string>
-    <string name="win_next">Next level</string>
+    <string name="win_earned">Points</string>
+    <string name="win_penalty">Penalty</string>
+    <string name="win_total">Score</string>
+    <string name="win_penalty_value">−%1$s</string>
+    <string name="win_earned_description">Points %1$s</string>
+    <string name="win_penalty_description">Penalty minus %1$s</string>
+    <string name="win_total_description">Score %1$s</string>
+    <string name="win_next">Next Level</string>
     <string name="win_restart">Restart</string>
     <string name="win_exit">Exit</string>
     <string name="win_pane_title">Level complete</string>

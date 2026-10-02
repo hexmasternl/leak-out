@@ -49,6 +49,18 @@ object LeakOutTextStyles {
         letterSpacing = 0.5.sp,
     )
 
+    /** Deep Flow `display.xl` (design-system 3.1): the win / lose headline. */
+    val DisplayXl = TextStyle(
+        fontFamily = WendyOne,
+        fontWeight = FontWeight.Normal,
+        fontSize = 40.sp,
+        lineHeight = 1.05.em,
+        letterSpacing = 0.25.sp,
+    )
+
+    /** Deep Flow `numeric.lg`: the score in the result dialogs. */
+    val NumericLg = TextStyle(fontFamily = WendyOne, fontWeight = FontWeight.Normal, fontSize = 32.sp, lineHeight = 1.0.em)
+
     /** Deep Flow `display.lg` (design-system 3.1): dialog and screen titles. */
     val DisplayLg = TextStyle(fontFamily = WendyOne, fontWeight = FontWeight.Normal, fontSize = 28.sp, lineHeight = 1.1.em)
 
@@ -83,6 +95,9 @@ object LeakOutTextStyles {
 
     /** Deep Flow `body.md`: default body, settings row labels. */
     val BodyMd = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Medium, fontSize = 16.sp, lineHeight = 1.5.em)
+
+    /** Deep Flow `label.md`: uppercase captions such as the score row labels (callers uppercase). */
+    val LabelMd = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Medium, fontSize = 13.sp, lineHeight = 1.3.em, letterSpacing = 0.4.sp)
 
     /** Deep Flow `body.sm`: secondary copy. */
     val BodySm = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Medium, fontSize = 14.sp, lineHeight = 1.45.em)

@@ -19,6 +19,7 @@ import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -86,14 +87,14 @@ class LevelLostTest {
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.PaneTitle, "Level lost"))
         compose.onNodeWithText("Leaked!", ignoreCase = true).assertIsDisplayed()
         compose.onNodeWithText("The pipe is leaking. Level lost.").assertIsDisplayed()
-        compose.onNodeWithTag(LevelLostTags.SCORE).assertTextEquals("Score 85")
+        compose.onNodeWithTag(LevelLostTags.SCORE).assertContentDescriptionEquals("Score 85").assert(hasText("85"))
         compose.onNodeWithText("Resume").assertDoesNotExist()
         for (tag in listOf(LevelLostTags.RESTART, LevelLostTags.EXIT)) {
             val bounds = compose.onNodeWithTag(tag).assertIsDisplayed().getUnclippedBoundsInRoot()
             assertTrue(bounds.bottom - bounds.top >= 48.dp)
         }
-        compose.onNodeWithTag(LevelLostTags.RESTART).assertTextEquals("RESTART")
-        compose.onNodeWithTag(LevelLostTags.EXIT).assertTextEquals("EXIT")
+        compose.onNodeWithTag(LevelLostTags.RESTART).assertTextEquals("Restart")
+        compose.onNodeWithTag(LevelLostTags.EXIT).assertTextEquals("Exit")
         // The leak stays marked behind the dialog.
         compose.cellNode(placed).assert(SemanticsMatcher.expectValue(LeakAt, Side.RIGHT))
     }

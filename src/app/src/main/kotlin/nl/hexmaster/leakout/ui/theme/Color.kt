@@ -115,4 +115,15 @@ object LeakOutColors {
 
     // 2.5 status: leak.500, the red countdown warning and the leak splash
     val Leak500 = Color(0xFFFF5A5F)
+
+    // 2.5 status: leak.700 (destructive button lip) and success.700 (success button lip)
+    val Leak700 = Color(0xFFC9353B)
+    val Success700 = Color(0xFF1FA971)
+
+    // 2.7 Text: labels on brass and on the leak/success buttons
+    val TextOnBrass = Color(0xFF2A1A03)
+    val TextOnStatus = Color(0xFFFFFFFF)
+
+    // 2.1 surface.scrim: surface.abyss at 72 %, behind dialogs
+    val Scrim = Color(0xB807111C)
 }

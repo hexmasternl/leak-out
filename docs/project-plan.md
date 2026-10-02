@@ -134,7 +134,8 @@ All screens are landscape only: `MainActivity` uses `android:screenOrientation="
 3. **Game** – a HUD bar across the top (level, flow speed, three stars earned so far, score, cog wheel pause button), with the stack and the board below it. Once the route is complete, a round fast forward / slow button sits in the bottom right corner, 16 dp from the edges. Back and going to the background also pause the game. While the game screen is open (playing, paused, the end effects and the result dialogs) the display stays on through `keepScreenOn` on the Compose host view, without a wake lock; the main menu, level library and settings follow the normal screen timeout.
 4. **Pause dialog** – opened from the cog wheel: Resume, Restart, a separator and Exit to the main menu (welcome screen). Tapping outside does nothing; Back works as Resume.
 5. **Level complete / failed overlay** – level complete (the level complete dialog, see 1.9): "Level complete!", the stars, pipe points, unused pipes and total, and Next level, Restart and Exit to the main menu. Level failed (the level lost dialog, see 1.9): "Leaked!", the score, Restart and Exit to the main menu.
-6. **Settings** – opened from the welcome screen's Settings button; Back returns to the welcome screen. Two columns: Audio (sound effects and music switches with volume sliders; the sound effects controls work and releasing their slider plays a preview; the music controls work too, and the music follows the slider while it is dragged) and Feel (vibration) on the left, Progress (finished levels and stars, and Reset progress with a confirm dialog) and About (name, version, maker, privacy line, and a Music section crediting every background track as title and artist, read from `assets/music/audio_credits.json`) on the right.
+6. **Settings** – opened from the welcome screen's Settings button; Back returns to the welcome screen. Two columns: Audio (sound effects and music switches with volume sliders; the sound effects controls work and releasing their slider plays a preview; the music controls work too, and the music follows the slider while it is dragged) and Feel (vibration) on the left, Play Games (sign-in state, Sign in, and an Achievements button with the unlocked count), Progress (finished levels and stars, and Reset progress with a confirm dialog) and About (name, version, maker, privacy line, and a Music section crediting every background track as title and artist, read from `assets/music/audio_credits.json`) on the right.
+7. **Achievements** – opened from the settings screen's Achievements button; Back returns to Settings. Every achievement as a card in catalogue order, from the local store whether or not the player is signed in, with the unlocked count and, while signed in to Play Games, a Play Games button (see 2.11).
 
 Background music plays on every screen as one continuous stream: the ten tracks in `app/src/main/assets/music/` (copied from the root `assets/audio/`) in the order of `audio_credits.json`, wrapping after the last. Each cold start begins with the track after the one that last started. The music pauses in the background, resumes in place, respects audio focus (ducking to 20 %) and follows the music settings at once. The debug Pipe Lab stays silent.
 
@@ -424,9 +425,51 @@ Room was chosen over DataStore because progress is per-level rows that are liste
 
 The same file also holds app state that is not a setting: `music_last_started_track` (String, absent until a track has started), the id of the last background track that started, read by `MusicRotationStore` so the next launch begins one track further. It shares the one `settings` DataStore instance; Android allows only one per file.
 
-Reset progress clears `level_history` only; the settings and the music rotation are kept.
+Reset progress clears `level_history` only; the settings, the music rotation and the achievements are kept.
 
-No accounts, no network in the first release.
+No account is needed. The only network use is the optional Google Play Games sign-in and achievement sync (2.11).
+
+### 2.11 Achievements
+
+25 achievements at launch, worth 595 XP of the 1,000 Play Games allows. They work fully without Play Games: the local store is the source of truth and Play Games only mirrors it. The growth rules and the checklist for adding a level pack are in [achievements.md](achievements.md); the Play Console setup is in [achievements-setup.md](achievements-setup.md).
+
+**Catalogue.** `core/achievements/Achievement` is an enum with a stable `key` (also the `achievement_<key>` resource with the Play Games id), group, type (standard, or incremental with steps), hidden flag and XP. Names, descriptions and icons are app resources, mapped by an exhaustive `when` in `AchievementResources`.
+
+| Key | Name | Group | Type / steps | XP | Unlocks when |
+|---|---|---|---|---|---|
+| `first_leak_fixed` | First Leak Fixed | progress | standard | 10 | level 1 is in the history |
+| `levels_finished_1` | Getting the Hang of It | progress | 10 | 15 | 10 levels finished |
+| `star_collector_1` | Star Collector I | progress | 25 | 15 | 25 stars in total |
+| `star_collector_2` | Star Collector II | progress | 60 | 30 | 60 stars in total |
+| `perfectionist_1` | Perfectionist I | progress | 10 | 30 | 10 levels with 3 stars |
+| `pack_1_complete` | Pack 1 Complete | progress | 24 | 30 | every level of library page 1 finished |
+| `pack_1_perfect` | Pack 1 Perfect | progress | 24 | 40 | every level of library page 1 with 3 stars |
+| `zero_waste` | Zero Waste | skill | standard | 30 | a win with no unused sections |
+| `double_cross` | Double Cross | skill | standard | 20 | the liquid left a cross through both channels in one attempt |
+| `crossroads_king` | Crossroads King | skill | standard | 40 | 3 crosses each left twice in one attempt |
+| `ahead_of_the_flow` | Ahead of the Flow | skill | standard | 30 | a win with the route complete while the flow still waited |
+| `full_throttle` | Full Throttle | skill | standard | 15 | a win with fast forward on |
+| `measure_twice` | Measure Twice | skill | standard | 20 | a win with no replacements |
+| `steady_hands` | Steady Hands | skill | standard | 15 | a win without ever pausing (the automatic pause counts) |
+| `long_way_round` | The Long Way Round | skill | standard | 30 | a win where the liquid left 30 or more distinct placed tiles |
+| `big_spender` | Big Spender | skill | standard | 30 | a win with a final total of 500 or more |
+| `apprentice` | Apprentice | lifetime | 100 | 10 | 100 sections placed |
+| `journeyman` | Journeyman | lifetime | 1,000 | 25 | 1,000 sections placed |
+| `guildmaster` | Guildmaster | lifetime | 5,000 | 40 | 5,000 sections placed |
+| `never_give_up` | Never Give Up | lifetime | standard | 20 | a win right after 3 or more losses in a row on that level |
+| `personal_best` | Personal Best | lifetime | standard | 15 | a win beats an existing highscore |
+| `wet_feet` | Wet Feet | lifetime | standard | 5 | the first loss ever |
+| `instant_flood` | Instant Flood | hidden | standard | 20 | a loss before the liquid left any placed section |
+| `wall_to_wall` | Wall to Wall | hidden | standard | 30 | a win with every free cell holding a section |
+| `photo_finish` | Photo Finish | hidden | standard | 30 | the route-completing section went on the tile the liquid head was about to enter |
+
+**Rules.** The engine records the attempt facts the rules need (`placements`, `replacements`, `everPaused`, `routeCompletedBeforeFlow`, `photoFinish`) in `GameState`, reset by every start and restart; it knows nothing about achievements. `AttemptSummary.from(state, recordResult)` captures the state the moment an attempt is first won or lost. `AchievementRules.evaluate` is one pure function over the summary (null at start-up), the player stats, the level history and the stored state; it returns the newly unlocked achievements and the steps, clamped to each total and never lower than stored. Progress achievements use absolute counts and library pages (`LevelLibraryLayout.pageOf`), never the size of the library, so new levels never change an existing achievement.
+
+**Persistence.** Three Room tables next to `level_history` in `LeakOutDatabase`, added by a migration that only creates tables: `achievement_state(key, steps, unlocked_at_ms)`, `player_stats(sections_placed, losses)` and `level_loss_streak(level_id, streak)`. Rows are stored by key, not ordinal. `AchievementTracker` (in `app`) reads, evaluates and writes in one transaction: once per ended attempt (after the win is recorded), once per restarted or exited attempt (its placements only), and with no summary at app start and after every history change, which also backfills players who finished levels before achievements existed. Nothing is ever revoked: Reset progress keeps the achievements and the stats.
+
+**Play Games sync.** `LeakOutApplication` starts the Play Games SDK only when `games-ids.xml` has a positive app id; otherwise the state is `Unavailable` and nothing is synced. `PlayGamesAuth` runs the silent sign-in when `MainActivity` is created and offers Sign in on the settings screen. `AchievementSyncer` pushes the full local state whenever the player becomes signed in and whenever the store changes while signed in, with `unlock` and `setSteps` only (never `increment`), so a failed or repeated push is harmless and is simply retried on the next trigger.
+
+**UI.** The result dialogs show an "Achievement unlocked" row under the score (two names, then "+N more"), after the win tally and without delaying the buttons. The settings screen has a Play Games panel (sign-in state, Sign in, and an always-present "Achievements N / 25" button) that opens the achievements screen: a grid of cards (unlocked, locked with progress, or hidden) and, while signed in, a Play Games button that opens the Play Games achievements UI.
 
 ---
 

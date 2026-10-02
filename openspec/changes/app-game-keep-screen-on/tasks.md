@@ -9,14 +9,14 @@ Tracking issue: [#52 When in game (the game screen is open) always on](https://g
 
 ## 2. Instrumented tests
 
-- [ ] 2.1 Add `KeepScreenOnTest` (androidTest, `ui/game`) with `createAndroidComposeRule<ComponentActivity>` hosting `GameScreen` behind a toggle: assert `FLAG_KEEP_SCREEN_ON` is set on `activity.window.attributes.flags` while playing, still set after `GameCommand.Pause` with the pause dialog shown, still set on the level lost dialog, and cleared once the toggle removes the game screen (use `waitUntil`); run it on the emulator and verify it passes
-- [ ] 2.2 Extend `MainActivityTest`: the flag is not set on the main menu, is set after starting a level, and is cleared after exiting back to the main menu; run it on the emulator and verify it passes
+- [x] 2.1 Add `KeepScreenOnTest` (androidTest, `ui/game`) with `createAndroidComposeRule<ComponentActivity>` hosting `GameScreen` behind a toggle: assert the screen is kept on (a view in the activity hierarchy has `keepScreenOn`, see design decision 4) while playing, still set after `GameCommand.Pause` with the pause dialog shown, still set on the level lost dialog, and cleared once the toggle removes the game screen (use `waitUntil`); run it on the emulator and verify it passes
+- [x] 2.2 Extend `MainActivityTest`: the flag is not set on the main menu, is set after starting a level, and is cleared after exiting back to the main menu; run it on the emulator and verify it passes
 
 ## 3. Documentation
 
-- [ ] 3.1 Add one line to `docs/project-plan.md` (game screen section): the display stays on while the game screen is open, through `keepScreenOn`, without a wake lock; verify it matches the spec
+- [x] 3.1 Add one line to `docs/project-plan.md` (game screen section): the display stays on while the game screen is open, through `keepScreenOn`, without a wake lock; verify it matches the spec
 
 ## 4. Regression
 
-- [ ] 4.1 Run `./gradlew :core:test :app:testDebugUnitTest` from `src/`; verify both pass
-- [ ] 4.2 Run the affected instrumented tests (`KeepScreenOnTest`, `MainActivityTest`, `GameScreenTest`); verify they pass and note the result on issue #52
+- [x] 4.1 Run `./gradlew :core:test :app:testDebugUnitTest` from `src/`; verify both pass
+- [x] 4.2 Run the affected instrumented tests (`KeepScreenOnTest`, `MainActivityTest`, `GameScreenTest`); verify they pass and note the result on issue #52

@@ -1,6 +1,6 @@
 ## 0. Prerequisites
 
-- [ ] 0.1 Make sure `app-settings-page` is archived (this change modifies its `settings-screen` spec) or archive it before this change
+- [x] 0.1 Make sure `app-settings-page` is archived (this change modifies its `settings-screen` spec) or archive it before this change
 
 ## 1. Engine attempt facts (core)
 
@@ -42,10 +42,10 @@
 
 ## 5. Result dialog rows (app)
 
-- [ ] 5.1 Add an `AchievementUnlockedRow` (trophy icon, "Achievement unlocked" in `display.xs` `brass.300`, up to two names joined with " · " then "+N more") that pops in with `motion.pop`
-- [ ] 5.2 Show it in the level complete dialog after the tally, without delaying the buttons, and in the level lost dialog
-- [ ] 5.3 Accessibility semantics: the row reads "Achievement unlocked" plus all names
-- [ ] 5.4 Compose tests for both dialogs: one, four and zero achievements; screen reader text
+- [x] 5.1 Add an `AchievementUnlockedRow` (trophy icon, "Achievement unlocked" in `display.xs` `brass.300`, up to two names joined with " · " then "+N more") that pops in with `motion.pop`
+- [x] 5.2 Show it in the level complete dialog after the tally, without delaying the buttons, and in the level lost dialog
+- [x] 5.3 Accessibility semantics: the row reads "Achievement unlocked" plus all names
+- [x] 5.4 Compose tests for both dialogs: one, four and zero achievements; screen reader text
 
 ## 6. Play Games integration (app)
 
@@ -60,21 +60,21 @@
 
 ## 7. Settings screen changes (app)
 
-- [ ] 7.1 Add the Play Games panel at the top of the right column: sign-in state text, glass "Sign in" button (disabled while signing in, hidden when signed in or unavailable)
-- [ ] 7.2 Add the always-visible "Achievements  N / total" glass button that navigates to `Screen.Achievements`
-- [ ] 7.3 Update the reset dialog body ("Achievements are kept.") and the About privacy line
-- [ ] 7.4 Extend `SettingsViewModel`/`SettingsUiState` with the sign-in state and unlocked count
-- [ ] 7.5 Compose tests for the panel in all four sign-in states, the Achievements button count and navigation, and the updated texts; update existing settings tests
+- [x] 7.1 Add the Play Games panel at the top of the right column: sign-in state text, glass "Sign in" button (disabled while signing in, hidden when signed in or unavailable)
+- [x] 7.2 Add the always-visible "Achievements  N / total" glass button that navigates to `Screen.Achievements`
+- [x] 7.3 Update the reset dialog body ("Achievements are kept.") and the About privacy line
+- [x] 7.4 Extend `SettingsViewModel`/`SettingsUiState` with the sign-in state and unlocked count
+- [x] 7.5 Compose tests for the panel in all four sign-in states, the Achievements button count and navigation, and the updated texts; update existing settings tests
 
 ## 8. Achievements screen (app)
 
-- [ ] 8.1 Add `Screen.Achievements` to `MainActivity`; back button and system Back return to Settings
-- [ ] 8.2 Build `AchievementsViewModel` from `AchievementRepository.observeAll()` and `PlayGamesAuth.state`
-- [ ] 8.3 Build `ui/achievements/AchievementsScreen.kt`: top bar (back, "Achievements", "N / total", "Play Games" button only when signed in), scrolling grid of cards
-- [ ] 8.4 Card states: unlocked (colour icon, date, `success.tint`), locked (dimmed desaturated icon, progress bar with "x / y" for incremental), hidden locked ("?" medallion, "Hidden achievement", "Keep playing to find out.")
-- [ ] 8.5 "Play Games" launches `AchievementsClient.getAchievementsIntent()`
-- [ ] 8.6 Card semantics merged: name, locked/unlocked, "x of y"
-- [ ] 8.7 Compose previews and Compose tests for count, incremental progress, hidden locked/unlocked, signed-in/out button, Back
+- [x] 8.1 Add `Screen.Achievements` to `MainActivity`; back button and system Back return to Settings
+- [x] 8.2 Build `AchievementsViewModel` from `AchievementRepository.observeAll()` and `PlayGamesAuth.state`
+- [x] 8.3 Build `ui/achievements/AchievementsScreen.kt`: top bar (back, "Achievements", "N / total", "Play Games" button only when signed in), scrolling grid of cards
+- [x] 8.4 Card states: unlocked (colour icon, date, `success.tint`), locked (dimmed desaturated icon, progress bar with "x / y" for incremental), hidden locked ("?" medallion, "Hidden achievement", "Keep playing to find out.")
+- [x] 8.5 "Play Games" launches `AchievementsClient.getAchievementsIntent()`
+- [x] 8.6 Card semantics merged: name, locked/unlocked, "x of y"
+- [x] 8.7 Compose previews and Compose tests for count, incremental progress, hidden locked/unlocked, signed-in/out button, Back
 
 ## 9. Icons
 
@@ -84,14 +84,14 @@
 
 ## 10. Documentation
 
-- [ ] 10.1 Add an achievements section to `docs/project-plan.md` (catalogue table, rules, persistence, Play Games sync)
-- [ ] 10.3 Add `docs/achievements.md`: the growth rules (add only, reachable with shipped levels, XP budget table from design 1a) and a checklist for adding a level pack (catalogue entries, strings, icons via `generate-icons.mjs`, Play Console entries, pinned-list update)
+- [x] 10.1 Add an achievements section to `docs/project-plan.md` (catalogue table, rules, persistence, Play Games sync)
+- [x] 10.3 Add `docs/achievements.md`: the growth rules (add only, reachable with shipped levels, XP budget table from design 1a) and a checklist for adding a level pack (catalogue entries, strings, icons via `generate-icons.mjs`, Play Console entries, pinned-list update)
 - [x] 10.2 Add `docs/achievements-setup.md` (planned as `docs/play-games-setup.md`): the Play Console checklist (create the app, PGS project, OAuth credentials for debug/upload/app-signing SHA-1, all catalogue achievements with names, descriptions, XP, steps, hidden flags and icons, testers, export `games-ids.xml`)
 
 ## 11. Verification
 
-- [ ] 11.1 Run `./gradlew :core:test` and `./gradlew :app:testDebugUnitTest`; both pass
-- [ ] 11.2 Run the affected instrumented tests (migration, settings, achievements screen, result dialogs, resource check) on the emulator; they pass
+- [x] 11.1 Run `./gradlew :core:test` and `./gradlew :app:testDebugUnitTest`; both pass
+- [x] 11.2 Run the affected instrumented tests (migration, settings, achievements screen, result dialogs, resource check) on the emulator; they pass (instrumented runs waived by the owner)
 - [x] 11.0 Play Console setup (owner): PGS project `201820010117`, credentials, the 25 achievements (names, descriptions, XP, steps, hidden flags, icons) and testers; the `games-ids.xml` export is in this change
 - [ ] 11.3 Manual smoke test with a tester account (the Play Games configuration is not published yet): install a tester build, sign in from Settings, unlock Wet Feet, see it in the Play Games achievements UI
 - [ ] 11.4 After 11.3 passes, the owner publishes the Play Games configuration (this makes the 25 achievements permanent)

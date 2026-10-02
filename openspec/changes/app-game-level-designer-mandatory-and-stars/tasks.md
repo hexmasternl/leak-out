@@ -2,7 +2,7 @@
 
 ## 0. Prerequisites
 
-- [ ] 0.1 Make sure `app-game-level-designer` is archived (this change modifies the `level-designer` spec it introduces), or archive it first; verify with `openspec list --specs` that `level-designer` exists
+- [x] 0.1 Make sure `app-game-level-designer` is archived (this change modifies the `level-designer` spec it introduces), or archive it first; verify with `openspec list --specs` that `level-designer` exists
 
 ## 1. Core: mandatory placement
 

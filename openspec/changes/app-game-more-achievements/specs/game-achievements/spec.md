@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Achievement catalogue
-The system SHALL define a catalogue of achievements, each with a stable key, a name, a description, a group (progress, skill, lifetime or hidden), a type (standard, or incremental with a number of steps), a hidden flag and an XP value. The catalogue SHALL hold these 36 achievements, the 25 launch achievements first and the later additions after them:
+The system SHALL define a catalogue of achievements, each with a stable key, a name, a description, a group (progress, skill, lifetime or hidden), a type (standard, or incremental with a number of steps), a hidden flag and an XP value. The catalogue SHALL hold these 39 achievements, the 25 launch achievements first and the later additions after them:
 
 | Key | Name | Type | Hidden | XP |
 |---|---|---|---|---|
@@ -41,12 +41,15 @@ The system SHALL define a catalogue of achievements, each with a stable key, a n
 | `eraser` | Eraser | standard | no | 5 |
 | `dramatic_failure` | Dramatic Failure | standard | yes | 5 |
 | `on_your_nerves` | On Your Nerves | standard | yes | 5 |
+| `star_collector_3` | Star Collector III | incremental, 100 | no | 10 |
+| `star_collector_4` | Star Collector IV | incremental, 250 | no | 15 |
+| `snail` | Snail | standard | no | 10 |
 
-`tips_addict` SHALL be in the lifetime group, `dramatic_failure` and `on_your_nerves` in the hidden group, and the other additions in the skill group.
+`tips_addict` SHALL be in the lifetime group, `dramatic_failure` and `on_your_nerves` in the hidden group, `star_collector_3` and `star_collector_4` in the progress group counting stars like the earlier Star Collector tiers, and the other additions in the skill group.
 
 #### Scenario: XP budget
 - **WHEN** the XP values of the catalogue are added up
-- **THEN** the sum is 710, every value is a multiple of 5, and 290 of the 1000 XP Play Games allows is left
+- **THEN** the sum is 745, every value is a multiple of 5, and 255 of the 1000 XP Play Games allows is left
 
 #### Scenario: Launch entries unchanged
 - **WHEN** the catalogue is compared with the 25 launch achievements
@@ -116,6 +119,28 @@ Mandatory sections SHALL count like placed sections.
 #### Scenario: Eleven corners are no snake
 - **WHEN** a level is won and the longest run of corners the liquid left is 11
 - **THEN** Snake is not unlocked
+
+### Requirement: Snail
+Snail SHALL unlock on a win in which the liquid ran through 3 or more reservoirs. Mandatory reservoirs SHALL count like placed ones.
+
+#### Scenario: Three reservoirs and a win
+- **WHEN** a level is won after the liquid left 3 reservoirs
+- **THEN** Snail is newly unlocked
+
+#### Scenario: Two reservoirs
+- **WHEN** a level is won after the liquid left 2 reservoirs
+- **THEN** Snail is not unlocked
+
+#### Scenario: Three reservoirs and a leak
+- **WHEN** the liquid leaves 3 reservoirs and then leaks
+- **THEN** Snail is not unlocked
+
+### Requirement: Higher Star Collector tiers
+Star Collector III and IV SHALL count the stars of every finished level, like Star Collector I and II, and unlock at 100 and 250 stars.
+
+#### Scenario: Between the tiers
+- **WHEN** the stored stars add up to 180
+- **THEN** Star Collector III is unlocked and Star Collector IV shows 180 of 250
 
 ### Requirement: Efficiency Master
 Efficiency Master SHALL unlock on a win when the number of sections on the board at the moment of the win, mandatory and unused sections included, is no more than the number of cells of the level's shortest route as the level solver finds it. A level the solver cannot solve SHALL never unlock it.
@@ -190,6 +215,10 @@ Every skill and hidden achievement this change adds SHALL be possible on at leas
 - **WHEN** the reachability test runs
 - **THEN** a scripted attempt on a bundled 16 × 12 level unlocks The Long Way Round III and Big Spender II
 
-#### Scenario: Snail is not in the catalogue
-- **WHEN** no bundled level can draw a reservoir
-- **THEN** the catalogue has no achievement for passing reservoirs
+#### Scenario: Snail is reachable
+- **WHEN** the reachability test runs
+- **THEN** a scripted attempt on a bundled level that draws reservoirs runs the liquid through 3 of them and unlocks Snail
+
+#### Scenario: Star milestones fit the bundled levels
+- **WHEN** the star milestones are compared with the bundled levels
+- **THEN** 250 stars is no more than 3 stars for every bundled level

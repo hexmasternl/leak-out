@@ -32,8 +32,8 @@
 
 ## 7. Documentation
 
-- [ ] 7.1 Extend `docs/deployment.md` with a "Translations" section: turning on automatic app-strings translation, the enabled languages, unticking brand strings, reviewing in Play's emulator, the release-status decision from 1.1, keeping `SupportedLanguages` and `locales_config.xml` in step, the Latin-script-only limit, and translating the Play Games achievement texts in Play Console. Verify: every step can be followed in Play Console as written.
-- [ ] 7.2 Note in `docs/level-format.md` that level names are not translated, because players never see them. Verify: the doc reads correctly.
+- [x] 7.1 Extend `docs/deployment.md` with a "Translations" section: turning on automatic app-strings translation, the enabled languages, unticking brand strings, reviewing in Play's emulator, the release-status decision from 1.1, keeping `SupportedLanguages` and `locales_config.xml` in step, the Latin-script-only limit, and translating the Play Games achievement texts in Play Console. Verify: every step can be followed in Play Console as written.
+- [x] 7.2 Note in `docs/level-format.md` that level names are not translated, because players never see them. Verify: the doc reads correctly.
 
 ## 8. Integration
 

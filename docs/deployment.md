@@ -31,7 +31,7 @@ On each run it:
 4. decodes the upload keystore and builds `app-release.aab` signed with the **upload key**;
 5. checks that the bundle really is signed;
 6. keeps the bundle as a workflow artifact for 14 days;
-7. uploads it to the Play Console track in `PLAY_TRACK` (default: internal testing), then tags the commit `v<x.y.z>`;
+7. uploads it to the Play Console track in `PLAY_TRACK` (default: internal testing) as a draft release, so Play can [translate it](#translations), then tags the commit `v<x.y.z>`;
 8. deletes the decoded keystore, whether the run succeeded or not.
 
 Three keys and accounts are involved. It helps to keep them apart:
@@ -264,7 +264,7 @@ A successful run:
 - has a **summary** with the version, the version code, the track, the release status and the commit;
 - has an artifact `leak-out-<version>-<version code>` with the uploaded `.aab`, kept for 14 days.
 
-In the Play Console, the release appears under **Test and release → Testing → Internal testing → Releases**, named after its version (for example `1001 (0.1.1)`). Testers who opted in get the update through the Play Store, usually within minutes.
+In the Play Console, the release appears under **Test and release → Testing → Internal testing → Releases**, named after its version (for example `1001 (0.1.1)`). With the default `PLAY_RELEASE_STATUS` it is a draft: review its translations and roll it out (see [Translations](#translations)). Testers who opted in then get the update through the Play Store, usually within minutes.
 
 ## Versioning
 
@@ -297,6 +297,64 @@ Rules that keep this working:
 - Re-running a run that already uploaded gets the same version and code, and Play rejects it as already used. Merge a new commit instead.
 
 Local builds keep `versionName` `0.1.0` and `versionCode` `1` unless you pass `-PversionName=<x.y.z>` and `-PversionCode=<n>`.
+
+## Translations
+
+Leak Out is written in English only. Play Console translates it into other languages with its free **automatic app strings translation** (Gemini): whenever a bundle is uploaded to a **draft** release, Play translates `src/app/src/main/res/values/strings.xml` into the languages you picked and adds the translations to the bundle it serves ([Play Console Help](https://support.google.com/googleplay/android-developer/answer/9844778)). No translation files live in this repository, and debug builds are always English.
+
+### Turn it on (once)
+
+1. In the Play Console, open the app, then **Grow users → Translations → App strings**, and choose **Get started**.
+2. Pick the languages. Only pick languages from the list below, and add any new one to the app first (see [Add or remove a language](#add-or-remove-a-language)).
+3. In the string list, untick **Translate** for every string that must stay as it is: `app_name`, `welcome_title`, `settings_play_games` and `achievements_play_games`. The same strings are `translatable="false"` in `strings.xml`, along with the format-only strings and the debug-only level designer.
+4. Save. From the next upload on, every bundle is translated.
+
+The languages turned on today (the same list as `SupportedLanguages.TAGS` and `res/xml/locales_config.xml`):
+
+| Tag | Language |
+| --- | --- |
+| `en` | English (the source, in `res/values`) |
+| `nl` | Dutch |
+| `de` | German |
+| `fr` | French |
+| `es` | Spanish |
+| `it` | Italian |
+| `pt-BR` | Portuguese (Brazil) |
+
+Only Latin-script languages can be added. The bundled fonts (Fredoka and Wendy One) draw only Latin letters, and `SupportedLanguagesTest` checks that they have every letter these languages need. Wendy One has no "Ÿ", which Android then draws from the system font; French only uses it in a few place names. Cyrillic, Greek, CJK or right-to-left languages need extra fonts and layout checks first.
+
+### Every release: review, then roll out
+
+The workflow uploads with `PLAY_RELEASE_STATUS` `draft` by default ([step 7](#7-set-the-repository-variables)), because Play documents its translation only for draft releases. After a run:
+
+1. Open the draft under **Test and release → Testing → Internal testing → Releases**.
+2. In **Grow users → Translations → App strings**, check new or changed strings in each language. **Preview** shows the translated app in Play's built-in emulator. Fix a translation by editing it there; edits carry over to later releases, and a translation only changes again when its English text changes.
+3. Roll the release out: **Review release → Start rollout to Internal testing**.
+
+To skip the review and roll out from the workflow, set the repository variable `PLAY_RELEASE_STATUS` to `completed`. Do this only after you have checked in the Console that a `completed` upload is translated as well.
+
+### What Play does not translate
+
+- **Play Games achievements.** The names and descriptions players see in Play Games come from the achievements in **Grow users → Play Games services → Setup and management → Achievements**, not from the bundle. Add a translation there for each language, and copy the app's translation of the matching `achievement_name_*` and `achievement_desc_*` strings so both say the same.
+- **The store listing.** Translate it under **Grow users → Store presence → Main store listing → Manage translations**.
+- **Level names** in `src/app/src/main/assets/levels/*.json`. Players never see them (see [docs/level-format.md](level-format.md)).
+
+### Add or remove a language
+
+1. Check that its script is Latin, and add its special letters to `SPECIAL_CHARACTERS` in `SupportedLanguagesTest`.
+2. Add (or remove) its tag in `SupportedLanguages.TAGS` and in `src/app/src/main/res/xml/locales_config.xml`, in the same order. `SupportedLanguagesTest` fails if the two differ. Android 13 and later list exactly these languages in the app's language setting.
+3. Turn the language on (or off) in **Translations → App strings**, then upload a release.
+
+### Writing strings for translation
+
+Play's translator only sees `strings.xml`, so:
+
+- put a comment directly above every string with a placeholder, saying what each placeholder holds;
+- use positional placeholders (`%1$s`, `%2$d`) and `<plurals>` for text that depends on a number;
+- mark brand names and format-only strings `translatable="false"`;
+- never put player-facing text in Kotlin. Lint `HardcodedText` and `HardcodedTextTest` fail the build on it.
+
+`StringResourcesTest` checks the first three rules. To see how a layout copes with longer text, run a debug build with the device language set to **English (XA)** (pseudo-locales are on for debug builds), or run `PseudoLocaleLayoutTest`.
 
 ## Troubleshooting
 

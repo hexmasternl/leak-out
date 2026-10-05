@@ -48,7 +48,7 @@ class GameScreenTest {
 
         compose.dropOnCell(Position(1, 1))
 
-        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed Horizontal straight")
     }
 
     @Test
@@ -61,7 +61,7 @@ class GameScreenTest {
 
         compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Blocked")
         compose.cellNode(Position(0, 0)).assertContentDescriptionEquals("Start")
-        compose.onAllNodes(hasContentDescription("Placed H"), useUnmergedTree = true).assertCountEquals(0)
+        compose.onAllNodes(hasContentDescription("Placed Horizontal straight"), useUnmergedTree = true).assertCountEquals(0)
     }
 
     @Test
@@ -76,7 +76,7 @@ class GameScreenTest {
             }
 
         compose.onNodeWithTag(GameScreenTags.DRAGGED).assertDoesNotExist()
-        compose.onAllNodes(hasContentDescription("Placed H"), useUnmergedTree = true).assertCountEquals(0)
+        compose.onAllNodes(hasContentDescription("Placed Horizontal straight"), useUnmergedTree = true).assertCountEquals(0)
     }
 
     @Test
@@ -91,7 +91,7 @@ class GameScreenTest {
         compose.mainClock.advanceTimeBy(200)
         compose.waitForIdle()
 
-        compose.onAllNodes(hasContentDescription("Placed H"), useUnmergedTree = true).assertCountEquals(0)
+        compose.onAllNodes(hasContentDescription("Placed Horizontal straight"), useUnmergedTree = true).assertCountEquals(0)
         compose.nextNode().assertIsDisplayed()
     }
 

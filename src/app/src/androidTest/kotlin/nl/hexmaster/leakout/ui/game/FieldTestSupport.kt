@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.toSize
+import androidx.test.platform.app.InstrumentationRegistry
 import nl.hexmaster.leakout.core.engine.FlowState
 import nl.hexmaster.leakout.core.engine.GameCommand
 import nl.hexmaster.leakout.core.engine.Outcome
@@ -80,6 +81,10 @@ internal object FieldTest {
 }
 
 internal fun ComposeTestRule.px(value: Dp): Float = with(density) { value.toPx() }
+
+/** The section's spoken name in a cell's content description, as the app's resources give it. */
+internal val PipeSection.spoken: String
+    get() = InstrumentationRegistry.getInstrumentation().targetContext.getString(CellDescription.sectionName(this))
 
 internal fun ComposeTestRule.cellNode(cell: Position): SemanticsNodeInteraction =
     onNodeWithTag(GameScreenTags.cell(cell.x, cell.y), useUnmergedTree = true)

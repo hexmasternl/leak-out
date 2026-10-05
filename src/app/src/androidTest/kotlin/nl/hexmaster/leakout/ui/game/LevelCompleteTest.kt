@@ -120,7 +120,7 @@ class LevelCompleteTest {
         compose.onNodeWithTag(LevelCompleteTags.EXIT).assertTextEquals("Exit")
         // The finish stays marked behind the dialog, and nothing has been removed yet.
         compose.cellNode(finish).assert(SemanticsMatcher.expectValue(FinishFlash, true))
-        for ((at, section) in unused) compose.cellNode(at).assertContentDescriptionEquals("Placed ${section.name}")
+        for ((at, section) in unused) compose.cellNode(at).assertContentDescriptionEquals("Placed ${section.spoken}")
     }
 
     // 7.2
@@ -134,16 +134,16 @@ class LevelCompleteTest {
         compose.onNodeWithTag(LevelCompleteTags.PENALTY).assert(hasText("−6"))
         compose.cellNode(unused[0].first).assertContentDescriptionEquals("Empty")
         compose.cellNode(unused[1].first).assertContentDescriptionEquals("Empty")
-        compose.cellNode(unused[2].first).assertContentDescriptionEquals("Placed V")
-        compose.cellNode(unused[3].first).assertContentDescriptionEquals("Placed LB")
-        compose.cellNode(Position(1, 0)).assertContentDescriptionEquals("Placed H, filled")
+        compose.cellNode(unused[2].first).assertContentDescriptionEquals("Placed Vertical straight")
+        compose.cellNode(unused[3].first).assertContentDescriptionEquals("Placed Left-bottom corner")
+        compose.cellNode(Position(1, 0)).assertContentDescriptionEquals("Placed Horizontal straight, filled")
 
         val end = compose.runOnIdle { WinTally.totalDurationMs(session.state.finalScore!!, 2) }
         tickToDialogAge(end - 1)
         compose.onNodeWithTag(LevelCompleteTags.PENALTY).assert(hasText("−12"))
         compose.onNodeWithTag(LevelCompleteTags.TOTAL).assert(hasText("48"))
         for ((at, _) in unused) compose.cellNode(at).assertContentDescriptionEquals("Empty")
-        for ((at, section) in FieldTest.ROUTE) compose.cellNode(at).assertContentDescriptionEquals("Placed ${section.name}, filled")
+        for ((at, section) in FieldTest.ROUTE) compose.cellNode(at).assertContentDescriptionEquals("Placed ${section.spoken}, filled")
         for (tag in buttons) compose.onNodeWithTag(tag).assertIsNotEnabled()
 
         tick(1)
@@ -225,7 +225,7 @@ class LevelCompleteTest {
         }
 
         compose.dropOnCell(Position(1, 1))
-        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed Horizontal straight")
     }
 
     // 7.4
@@ -243,7 +243,7 @@ class LevelCompleteTest {
         compose.onNodeWithTag(HudTags.SCORE).assertScore("0")
         compose.cellNode(Position(1, 0)).assertContentDescriptionEquals("Empty")
         compose.dropOnCell(Position(1, 1))
-        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed Horizontal straight")
     }
 
     // 7.4

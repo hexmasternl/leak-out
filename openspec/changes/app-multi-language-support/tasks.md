@@ -13,7 +13,7 @@
 ## 3. No hard-coded text
 
 - [x] 3.1 Move `Cell.describe` in `ui/game/PlayingField.kt` to string resources (`cell_*` strings using the `game_section_*` names), resolved through a function a JVM test can call. Add unit tests for every cell kind, mandatory used and unused, and filled. Verify: `:app:testDebugUnitTest` passes.
-- [ ] 3.2 Update the instrumented tests that find cells by content description (`PlayingFieldTest`, `GameScreenTest`, `GameEngineScreenTest`, ...) to the new descriptions. Verify: the affected instrumented tests pass on the emulator.
+- [x] 3.2 Update the instrumented tests that find cells by content description (`PlayingFieldTest`, `GameScreenTest`, `GameEngineScreenTest`, ...) to the new descriptions. Verify: the affected instrumented tests pass on the emulator. *(Compiled with `:app:compileDebugAndroidTestKotlin`. Not run on a device, at the user's request.)*
 - [ ] 3.3 Make lint `HardcodedText` an error in `app/build.gradle.kts`, and add the JVM source scan for `Text("...")` and `contentDescription = "..."` literals outside `@Preview` functions and the `designer` package. Verify: `./gradlew :app:lintDebug :app:testDebugUnitTest` passes, and the scan fails when a literal is added on purpose.
 
 ## 4. Locale-aware formatting

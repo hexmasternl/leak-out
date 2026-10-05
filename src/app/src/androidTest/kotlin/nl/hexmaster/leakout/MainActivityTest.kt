@@ -110,6 +110,16 @@ class MainActivityTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
     }
 
+    /**
+     * On a fresh install the intro tour covers the game first: skips it, then waits out the double
+     * tap after it, in which taps do not reach the game.
+     */
+    private fun skipTourIfShown() {
+        if (compose.onAllNodesWithTag(TipOverlayTags.SKIP).fetchSemanticsNodes().isEmpty()) return
+        compose.onNodeWithTag(TipOverlayTags.SKIP).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag(TipOverlayTags.TAP_GUARD).fetchSemanticsNodes().isEmpty() }
+    }
+
     @Test
     fun continueStartsALevel() {
         skipSplash()
@@ -140,11 +150,7 @@ class MainActivityTest {
         compose.onNodeWithTag(levelTileTag(1)).performClick()
         compose.waitForIdle()
         compose.onNodeWithTag(GameScreenTags.SCREEN).assertIsDisplayed()
-        // On a fresh install the intro tour covers the game first.
-        if (compose.onAllNodesWithTag(TipOverlayTags.SKIP).fetchSemanticsNodes().isNotEmpty()) {
-            compose.onNodeWithTag(TipOverlayTags.SKIP).performClick()
-            compose.waitForIdle()
-        }
+        skipTourIfShown()
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
         compose.onNodeWithTag(PauseTags.EXIT).performClick()
@@ -165,10 +171,7 @@ class MainActivityTest {
         compose.waitForIdle()
         compose.onNodeWithTag(GameScreenTags.SCREEN).assertIsDisplayed()
         compose.waitUntil(5_000) { compose.activity.keepsScreenOn() }
-        if (compose.onAllNodesWithTag(TipOverlayTags.SKIP).fetchSemanticsNodes().isNotEmpty()) {
-            compose.onNodeWithTag(TipOverlayTags.SKIP).performClick()
-            compose.waitForIdle()
-        }
+        skipTourIfShown()
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
         compose.onNodeWithTag(PauseTags.EXIT).performClick()

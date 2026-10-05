@@ -16,12 +16,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.settings.TipId
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
+import androidx.compose.ui.test.performTouchInput
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** The overlay on its own: the reduced-motion drag hint. */
+/** The overlay on its own: the reduced-motion drag hint, the button layout and taps on the buttons. */
 @RunWith(AndroidJUnit4::class)
 class TipOverlayTest {
     @get:Rule
@@ -48,6 +50,43 @@ class TipOverlayTest {
         compose.mainClock.advanceTimeBy(1_000)
         compose.onNodeWithTag(TipOverlayTags.HINT_ARROW).assertIsDisplayed()
         compose.onNodeWithTag(TipOverlayTags.HINT_GHOST).assertIsDisplayed()
+    }
+
+    private fun showStartStep(onNext: () -> Unit = {}, onSkip: () -> Unit = {}) {
+        compose.setContent {
+            LeakOutTheme {
+                Box(Modifier.size(914.dp, 411.dp)) {
+                    TipOverlay(
+                        content = TipContent(TipId.Intro, 0, "The Start", "The liquid comes out here.", "start valve"),
+                        spotlights = listOf(Rect(Offset(40f, 40f), Size(60f, 60f))),
+                        hint = null,
+                        onNext = onNext, onSkip = onSkip, onDone = {},
+                        reducedMotion = false,
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun aFingerTapWithSmallMovesRunsNextAndSkipTour() {
+        var next = 0
+        var skip = 0
+        showStartStep(onNext = { next++ }, onSkip = { skip++ })
+        compose.onNodeWithTag(TipOverlayTags.NEXT, useUnmergedTree = true).performTouchInput { fingerTap() }
+        compose.onNodeWithTag(TipOverlayTags.SKIP, useUnmergedTree = true).performTouchInput { fingerTap() }
+        compose.waitForIdle()
+        assertEquals(1, next)
+        assertEquals(1, skip)
+    }
+
+    @Test
+    fun aFingerTapOnTheScrimRunsNothing() {
+        var calls = 0
+        showStartStep(onNext = { calls++ }, onSkip = { calls++ })
+        compose.onNodeWithTag(TipOverlayTags.OVERLAY).performTouchInput { fingerTap(Offset(width - 10f, height - 10f)) }
+        compose.waitForIdle()
+        assertEquals(0, calls)
     }
 
     @Test

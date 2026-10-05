@@ -89,6 +89,51 @@ class GameTipsTest {
         compose.waitForIdle()
     }
 
+    /** A tap with the small moves a real finger makes, which [tap] leaves out. */
+    private fun fingerTap(tag: String) {
+        compose.onNodeWithTag(tag, useUnmergedTree = true).performTouchInput { fingerTap() }
+        compose.waitForIdle()
+    }
+
+    private fun stepShown(step: Int) = compose.onNode(hasText("$step / 5"), useUnmergedTree = true).assertIsDisplayed()
+
+    // A Samsung Galaxy S21 in landscape: 2400 × 1080 pixels at 420 dpi.
+    private val s21Width = 914.dp
+    private val s21Height = 411.dp
+
+    @Test
+    fun aFingerTapOnSkipTourOnTheFirstStepClosesTheTour() {
+        val tips = InMemorySettingsRepository()
+        val session = show(tips = tips, width = s21Width, height = s21Height)
+        fingerTap(TipOverlayTags.SKIP)
+        assertEquals(null, shownTip())
+        assertFalse(session.state.paused)
+        assertEquals(setOf(TipId.Intro), runBlocking { tips.seenTips.first() })
+    }
+
+    @Test
+    fun aFingerTapOnNextMovesToTheNextStep() {
+        show(width = s21Width, height = s21Height)
+        fingerTap(TipOverlayTags.NEXT)
+        stepShown(2)
+    }
+
+    @Test
+    fun aFingerTapOnNextWhileTheFieldPansToTheFinishStillMovesOn() {
+        show(FieldTest.large(), width = s21Width, height = s21Height)
+        compose.mainClock.autoAdvance = false
+        try {
+            // Into the finish step, which pans the field to the finish and glides the spotlight there.
+            compose.onNodeWithTag(TipOverlayTags.NEXT, useUnmergedTree = true).performClick()
+            compose.mainClock.advanceTimeBy(64)
+            compose.onNodeWithTag(TipOverlayTags.NEXT, useUnmergedTree = true).performTouchInput { fingerTap() }
+            compose.mainClock.advanceTimeBy(1_000)
+        } finally {
+            compose.mainClock.autoAdvance = true
+        }
+        stepShown(3)
+    }
+
     @Test
     fun theFirstLevelPlayedShowsTheTourWithTheCountdownStillFull() {
         val session = show(FieldTest.level(id = 4, initialDelayMs = 10_000))

@@ -119,4 +119,17 @@ class DataStoreSettingsRepositoryTest {
         assertEquals("track-1", store.data.first()[otherKey])
         assertEquals(Settings(vibrationEnabled = false), repository.settings.first())
     }
+
+    @Test
+    fun skipExitConfirmationLeavesTheSettingsAloneAndSurvivesReopening() = runBlocking {
+        DataStoreSettingsRepository(openStore()).apply {
+            setSoundEnabled(false)
+            setSkipExitConfirmation(true)
+        }
+        closeAll()
+
+        val reopened = DataStoreSettingsRepository(openStore())
+        assertEquals(Settings(soundEnabled = false), reopened.settings.first())
+        assertEquals(true, reopened.skipExitConfirmation.first())
+    }
 }

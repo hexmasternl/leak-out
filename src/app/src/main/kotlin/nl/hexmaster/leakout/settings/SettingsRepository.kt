@@ -35,6 +35,14 @@ interface SettingsRepository {
 
     /** Makes every tip not seen again. The settings and the level history are left alone. */
     suspend fun resetTips()
+
+    /**
+     * Whether the welcome screen's Exit leaves without asking, now and after every change; false
+     * on first launch. Set when the player ticks "Never show this again" on the exit dialog.
+     */
+    val skipExitConfirmation: Flow<Boolean>
+
+    suspend fun setSkipExitConfirmation(skip: Boolean)
 }
 
 /**
@@ -77,6 +85,15 @@ class InMemorySettingsRepository(
     override suspend fun resetTips() {
         writes += "resetTips"
         tips.value = emptySet()
+    }
+
+    private val skipExit = MutableStateFlow(false)
+
+    override val skipExitConfirmation: StateFlow<Boolean> = skipExit.asStateFlow()
+
+    override suspend fun setSkipExitConfirmation(skip: Boolean) {
+        writes += "skipExitConfirmation"
+        skipExit.value = skip
     }
 
     private fun write(name: String, change: (Settings) -> Settings) {

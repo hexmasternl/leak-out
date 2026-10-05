@@ -1,7 +1,7 @@
 ## 1. Preference
 
-- [ ] 1.1 Add `skipExitConfirmation: Flow<Boolean>` and `setSkipExitConfirmation(Boolean)` to the settings repository, backed by a DataStore Preferences key `skip_exit_confirmation` (default `false`)
-- [ ] 1.2 Unit tests: default false, set true persists, value survives recreating the DataStore
+- [x] 1.1 Add `skipExitConfirmation: Flow<Boolean>` and `setSkipExitConfirmation(Boolean)` to the settings repository, backed by a DataStore Preferences key `skip_exit_confirmation` (default `false`)
+- [x] 1.2 Unit tests: default false, set true persists, value survives recreating the DataStore
 
 ## 2. Dialog
 

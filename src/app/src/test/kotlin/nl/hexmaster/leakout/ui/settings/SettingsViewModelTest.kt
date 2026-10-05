@@ -45,6 +45,8 @@ private class SlowSettings : SettingsRepository {
     override val seenTips = MutableStateFlow<Set<TipId>>(emptySet())
     override suspend fun markTipSeen(tip: TipId) = Unit
     override suspend fun resetTips() = Unit
+    override val skipExitConfirmation = MutableStateFlow(false)
+    override suspend fun setSkipExitConfirmation(skip: Boolean) = Unit
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

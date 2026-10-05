@@ -146,6 +146,47 @@ internal class ScriptedPlay(private val engine: GameEngine) {
         return (1..tries).map { grow(level, walk()) }.maxBy(::points)
     }
 
+    /**
+     * A route for a level without mandatory sections that runs through [shape] in order: the
+     * shortest way from the start's facing cell to the shape's first cell, the shape, and the
+     * shortest way on from its last cell to the finish's facing cell, never using a cell twice.
+     * Null when a cell of the shape is not free or either end cannot be reached.
+     */
+    fun routeThrough(level: Level, shape: List<Position>): List<Position>? {
+        if (level.mandatory.isNotEmpty()) return null
+        val free = freeCells(level).toSet()
+        if (!free.containsAll(shape)) return null
+        val first = level.start.position.neighbour(level.start.openSide)
+        val last = level.finish.position.neighbour(level.finish.openSide)
+        val inShape = shape.toSet()
+        if ((first in inShape && first != shape.first()) || (last in inShape && last != shape.last())) return null
+        val before = shortestPath(free - inShape + shape.first(), first, shape.first()) ?: return null
+        val after = shortestPath(free - inShape - before.toSet() + shape.last(), shape.last(), last) ?: return null
+        return before + shape.drop(1) + after.drop(1)
+    }
+
+    /** The shortest path from [from] to [to], both included, over the cells of [open]; null when there is none. */
+    fun shortestPath(open: Set<Position>, from: Position, to: Position): List<Position>? {
+        if (from !in open || to !in open) return null
+        val cameFrom = mutableMapOf(from to from)
+        val queue = ArrayDeque(listOf(from))
+        while (queue.isNotEmpty()) {
+            val at = queue.removeFirst()
+            if (at == to) break
+            for (side in Side.entries) {
+                val next = at.neighbour(side)
+                if (next in open && next !in cameFrom) {
+                    cameFrom[next] = at
+                    queue.addLast(next)
+                }
+            }
+        }
+        if (to !in cameFrom) return null
+        val path = mutableListOf(to)
+        while (path.last() != from) path += cameFrom.getValue(path.last())
+        return path.reversed()
+    }
+
     fun freeCells(level: Level): List<Position> =
         (0 until level.grid.rows).flatMap { y -> (0 until level.grid.columns).map { x -> Position(x, y) } }
             .filter { !level.isBlocked(it) && it != level.start.position && it != level.finish.position }

@@ -5,6 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.test.fail
 import nl.hexmaster.leakout.core.engine.FlowState
 import nl.hexmaster.leakout.core.engine.GameCommand
 import nl.hexmaster.leakout.core.engine.GameEngine
@@ -93,6 +94,89 @@ class AchievementReachabilityTest {
     /** Level 1 with nothing placed: the liquid leaves the start valve into an empty tile. */
     private fun instantFlood(): GameState = play(start(1))
 
+    // --- Scripted attempts for the later additions ---
+
+    /** Level 24 (16 × 12) on a route that sweeps most of the board: the walls hugged, then grown by detours. */
+    private val sweep: List<Pair<Position, PipeSection>> by lazy {
+        val level = bundled(24)
+        routeOf(level, scripted.longPath(level, Random(24)))
+    }
+
+    private fun sweepWin(): GameState = play(build(start(24), sweep))
+
+    /** The sweep of level 24 without its last section, so the liquid leaks just before the finish. */
+    private fun sweepLeak(): GameState = play(build(start(24), sweep.dropLast(1)))
+
+    /**
+     * The first bundled level from [ids] with a route through the cells [shapeAt] gives for some
+     * anchor cell, and that route in flow order.
+     */
+    private fun firstRouteThrough(ids: Iterable<Int>, shapeAt: (Position) -> List<Position>): Pair<Level, List<Position>> {
+        for (id in ids) {
+            val level = bundled(id)
+            for (anchor in freeCells(level)) {
+                val path = scripted.routeThrough(level, shapeAt(anchor)) ?: continue
+                return level to path
+            }
+        }
+        fail("no bundled level has room for the shape")
+    }
+
+    /** A row of [length] cells, left to right from [anchor]. */
+    private fun row(anchor: Position, length: Int): List<Position> = (0 until length).map { Position(anchor.x + it, anchor.y) }
+
+    /** A level with a row of 9 free cells on the route: the 7 inside it are passed as horizontal straights. */
+    private fun highway(): GameState {
+        val (level, path) = firstRouteThrough(ScriptedPlay.bundledIds()) { row(it, 9) }
+        return play(build(start(level.id), routeOf(level, path)))
+    }
+
+    /** A level that draws crosses, with a row of 5 cells on the route whose middle 3 are crosses passed straight through. */
+    private fun crossroadMaster(): GameState {
+        val crossLevels = ScriptedPlay.bundledIds().filter { bundled(it).isAllowed(PipeSection.X) }
+        var line = emptyList<Position>()
+        val (level, path) = firstRouteThrough(crossLevels) { anchor -> row(anchor, 5).also { line = it } }
+        val crosses = line.subList(1, 4).toSet()
+        val pipes = routeOf(level, path).map { (at, section) -> at to if (at in crosses) PipeSection.X else section }
+        return play(build(start(level.id), pipes))
+    }
+
+    /** A level with room for a staircase of 16 cells down and to the right: every cell inside it is a corner. */
+    private fun snake(): GameState {
+        val (level, path) = firstRouteThrough(ScriptedPlay.bundledIds()) { anchor ->
+            (0 until 16).map { i -> Position(anchor.x + (i + 1) / 2, anchor.y + i / 2) }
+        }
+        return play(build(start(level.id), routeOf(level, path)))
+    }
+
+    /** Level 1 on the shortest route, with a spare H off the route. */
+    private fun withSpare(): Pair<GameState, Position> {
+        val level = bundled(1)
+        val route = routeOf(level, solverPath(level))
+        val spare = freeCells(level).first { at -> route.none { it.first == at } }
+        return build(start(1), route + (spare to PipeSection.H)) to spare
+    }
+
+    /** Level 1 with a spare section off the route replaced 20 times, each after the last one landed. */
+    private fun eraser(): GameState {
+        var (state, spare) = withSpare()
+        repeat(20) { i ->
+            state = build(state, listOf(spare to if (i % 2 == 0) PipeSection.V else PipeSection.H))
+            state = engine.handle(state, GameCommand.Tick(state.level.rules.replacePenaltyMs))
+        }
+        assertEquals(20, state.replacements)
+        return play(state)
+    }
+
+    /** Level 1 with the spare section replaced once and its tile tapped 5 times before the new one lands. */
+    private fun onYourNerves(): GameState {
+        var (state, spare) = withSpare()
+        state = build(state, listOf(spare to PipeSection.V))
+        repeat(5) { state = engine.handle(state, GameCommand.ReplacementTap(spare)) }
+        assertEquals(5, state.mostReplacementTaps)
+        return play(state)
+    }
+
     private val scripts: Map<Achievement, () -> GameState> = mapOf(
         Achievement.ZERO_WASTE to ::cleanWin,
         Achievement.AHEAD_OF_THE_FLOW to ::cleanWin,
@@ -106,6 +190,16 @@ class AchievementReachabilityTest {
         Achievement.WALL_TO_WALL to ::fullBoardWin,
         Achievement.PHOTO_FINISH to ::photoFinish,
         Achievement.INSTANT_FLOOD to ::instantFlood,
+        Achievement.LONG_WAY_ROUND_2 to ::sweepWin,
+        Achievement.LONG_WAY_ROUND_3 to ::sweepWin,
+        Achievement.BIG_SPENDER_2 to ::sweepWin,
+        Achievement.CROSSROAD_MASTER to ::crossroadMaster,
+        Achievement.EFFICIENCY_MASTER to ::cleanWin,
+        Achievement.HIGHWAY to ::highway,
+        Achievement.SNAKE to ::snake,
+        Achievement.ERASER to ::eraser,
+        Achievement.DRAMATIC_FAILURE to ::sweepLeak,
+        Achievement.ON_YOUR_NERVES to ::onYourNerves,
     )
 
     @Test
@@ -129,6 +223,39 @@ class AchievementReachabilityTest {
         assertIs<Outcome.Won>(end.outcome)
         assertTrue(end.level.isAllowed(PipeSection.X))
         assertEquals(3, AttemptSummary.from(end, null).crossesLeftTwice)
+    }
+
+    @Test
+    fun `the large-grid tiers are reached on a bundled 16 by 12 level`() {
+        val end = sweepWin()
+        assertEquals(16, end.level.grid.columns)
+        assertEquals(12, end.level.grid.rows)
+        val summary = AttemptSummary.from(end, RecordOutcome.FIRST_COMPLETION)
+        assertTrue(summary.distinctTilesLeft >= AchievementRules.LONG_WAY_ROUND_3_TILES, "only ${summary.distinctTilesLeft} tiles")
+        val unlocked = evaluateAttempt(summary).newlyUnlocked
+        assertTrue(unlocked.containsAll(listOf(Achievement.LONG_WAY_ROUND_3, Achievement.BIG_SPENDER_2)), "unlocked $unlocked")
+    }
+
+    @Test
+    fun `Crossroad Master is reached on a level that can draw crosses`() {
+        val end = crossroadMaster()
+        assertIs<Outcome.Won>(end.outcome)
+        assertTrue(end.level.isAllowed(PipeSection.X))
+        assertTrue(AttemptSummary.from(end, null).longestCrossChain >= AchievementRules.CROSSROAD_MASTER_CHAIN)
+    }
+
+    @Test
+    fun `the Dramatic Failure leaks after more than 50 sections`() {
+        val end = sweepLeak()
+        assertIs<Outcome.Lost>(end.outcome)
+        assertTrue(AttemptSummary.from(end, null).sectionsLeft > AchievementRules.DRAMATIC_FAILURE_SECTIONS)
+    }
+
+    @Test
+    fun `Tips Addict is reached from one tips reset`() {
+        val stats = PlayerStats.NONE.afterTipsReset()
+        val unlocked = AchievementRules.evaluate(null, PlayerStats.NONE, stats, emptyMap(), emptyMap()).newlyUnlocked
+        assertTrue(Achievement.TIPS_ADDICT in unlocked)
     }
 
     @Test

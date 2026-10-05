@@ -19,8 +19,8 @@
 
 - [x] 3.1 Append the 11 entries to `Achievement` exactly as in the `game-achievements` spec table (key, group, type, hidden, XP); add them to the `published` list in `AchievementCatalogueTest` and update its total to 710; verify the catalogue test passes
 - [x] 3.2 Add the threshold constants and the rules for the 11 achievements in `AchievementRules` (exhaustive `when`); verify with `AchievementRulesTest` cases for every scenario of the new `game-achievements` requirements
-- [ ] 3.3 Add scripted proofs to `AchievementReachabilityTest` on bundled levels for The Long Way Round II and III, Big Spender II, Crossroad Master, Efficiency Master, Highway, Snake, Eraser, Dramatic Failure and On Your Nerves, plus a stats-only proof for Tips Addict; if a tier proves unreachable, drop it from the catalogue, spec and docs before section 5 and record why in design.md
-- [ ] 3.4 Make sure `AchievementContentTest` still passes (no new milestone exceeds the bundled levels) and run `./gradlew :core:test`
+- [x] 3.3 Add scripted proofs to `AchievementReachabilityTest` on bundled levels for The Long Way Round II and III, Big Spender II, Crossroad Master, Efficiency Master, Highway, Snake, Eraser, Dramatic Failure and On Your Nerves, plus a stats-only proof for Tips Addict; if a tier proves unreachable, drop it from the catalogue, spec and docs before section 5 and record why in design.md
+- [x] 3.4 Make sure `AchievementContentTest` still passes (no new milestone exceeds the bundled levels) and run `./gradlew :core:test`
 
 ## 4. App wiring
 

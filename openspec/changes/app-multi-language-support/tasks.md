@@ -37,5 +37,5 @@
 
 ## 8. Integration
 
-- [ ] 8.1 Run `./gradlew :core:test :app:testDebugUnitTest :app:lintDebug` and the instrumented tests touched in 3.2, 5.2 and 6.1. Verify: all pass.
-- [ ] 8.2 After the first release with translation turned on, install from the internal track on a device set to Dutch, and set the app to German in the per-app language setting. Verify: the app shows in Dutch, then in German.
+- [x] 8.1 Run `./gradlew :core:test :app:testDebugUnitTest :app:lintDebug` and the instrumented tests touched in 3.2, 5.2 and 6.1. Verify: all pass. *(:core:test 1195 and :app:testDebugUnitTest 654 pass, :app:lintDebug and :app:bundleRelease pass. The instrumented tests were compiled but not run on a device, at the user's request.)*
+- [ ] 8.2 After the first release with translation turned on, install from the internal track on a device set to Dutch, and set the app to German in the per-app language setting. Verify: the app shows in Dutch, then in German. *(Open: needs translation turned on in Play Console and a first release.)*

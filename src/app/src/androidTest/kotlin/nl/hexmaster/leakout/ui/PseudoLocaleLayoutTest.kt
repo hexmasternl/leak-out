@@ -165,8 +165,9 @@ class PseudoLocaleLayoutTest {
 @Composable
 private fun PseudoLocale(content: @Composable () -> Unit) {
     val base = LocalContext.current
-    val configuration = remember(base) {
-        Configuration(base.resources.configuration).apply { setLocale(Locale.forLanguageTag("en-XA")) }
+    val baseConfiguration = LocalConfiguration.current
+    val configuration = remember(baseConfiguration) {
+        Configuration(baseConfiguration).apply { setLocale(Locale.forLanguageTag("en-XA")) }
     }
     val context = remember(base, configuration) { base.createConfigurationContext(configuration) }
     CompositionLocalProvider(

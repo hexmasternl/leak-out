@@ -10,9 +10,9 @@ import org.junit.jupiter.params.provider.EnumSource
 
 class AchievementCatalogueTest {
     @Test
-    fun `the launch catalogue uses 595 XP and leaves at least 400 free`() {
-        assertEquals(595, Achievement.totalXp)
-        assertTrue(Achievement.MAX_TOTAL_XP - Achievement.totalXp >= 400)
+    fun `the catalogue uses 710 XP and leaves 290 free`() {
+        assertEquals(710, Achievement.totalXp)
+        assertEquals(290, Achievement.MAX_TOTAL_XP - Achievement.totalXp)
     }
 
     @Test
@@ -21,9 +21,9 @@ class AchievementCatalogueTest {
         assertEquals(
             mapOf(
                 AchievementGroup.PROGRESS to 170,
-                AchievementGroup.SKILL to 230,
-                AchievementGroup.LIFETIME to 115,
-                AchievementGroup.HIDDEN to 80,
+                AchievementGroup.SKILL to 330,
+                AchievementGroup.LIFETIME to 120,
+                AchievementGroup.HIDDEN to 90,
             ),
             byGroup,
         )
@@ -118,6 +118,18 @@ class AchievementCatalogueTest {
         Published("instant_flood", null, hidden = true, xp = 20),
         Published("wall_to_wall", null, hidden = true, xp = 30),
         Published("photo_finish", null, hidden = true, xp = 30),
+        // Later additions (issue #64).
+        Published("tips_addict", null, hidden = false, xp = 5),
+        Published("long_way_round_2", null, hidden = false, xp = 10),
+        Published("long_way_round_3", null, hidden = false, xp = 15),
+        Published("big_spender_2", null, hidden = false, xp = 15),
+        Published("crossroad_master", null, hidden = false, xp = 15),
+        Published("efficiency_master", null, hidden = false, xp = 15),
+        Published("highway", null, hidden = false, xp = 10),
+        Published("snake", null, hidden = false, xp = 15),
+        Published("eraser", null, hidden = false, xp = 5),
+        Published("dramatic_failure", null, hidden = true, xp = 5),
+        Published("on_your_nerves", null, hidden = true, xp = 5),
     )
 
     private data class Published(val key: String, val steps: Int?, val hidden: Boolean, val xp: Int)
@@ -131,9 +143,21 @@ class AchievementCatalogueTest {
     }
 
     @Test
-    fun `the launch catalogue is exactly the published list, in order`() {
+    fun `the catalogue is exactly the published list, in order`() {
         assertEquals(published.map { it.key }, Achievement.entries.take(published.size).map { it.key })
-        assertEquals(25, published.size)
+        assertEquals(36, published.size)
+    }
+
+    @Test
+    fun `the later additions are in their groups`() {
+        assertEquals(AchievementGroup.LIFETIME, Achievement.TIPS_ADDICT.group)
+        assertEquals(AchievementGroup.HIDDEN, Achievement.DRAMATIC_FAILURE.group)
+        assertEquals(AchievementGroup.HIDDEN, Achievement.ON_YOUR_NERVES.group)
+        val skill = listOf(
+            Achievement.LONG_WAY_ROUND_2, Achievement.LONG_WAY_ROUND_3, Achievement.BIG_SPENDER_2, Achievement.CROSSROAD_MASTER,
+            Achievement.EFFICIENCY_MASTER, Achievement.HIGHWAY, Achievement.SNAKE, Achievement.ERASER,
+        )
+        assertTrue(skill.all { it.group == AchievementGroup.SKILL && it.type == AchievementType.Standard })
     }
 
     @Test

@@ -24,6 +24,17 @@ object AchievementRules {
     const val CROSSROADS_KING_CROSSES = 3
     const val LONG_WAY_ROUND_TILES = 30
     const val BIG_SPENDER_TOTAL = 500
+    const val LONG_WAY_ROUND_2_TILES = 50
+    const val LONG_WAY_ROUND_3_TILES = 100
+    const val BIG_SPENDER_2_TOTAL = 1_000
+    const val CROSSROAD_MASTER_CHAIN = 3
+    const val HIGHWAY_RUN = 7
+    const val SNAKE_RUN = 12
+    const val ERASER_REPLACEMENTS = 20
+
+    /** Dramatic Failure needs strictly more sections left than this. */
+    const val DRAMATIC_FAILURE_SECTIONS = 50
+    const val ON_YOUR_NERVES_TAPS = 5
 
     /**
      * @param summary the attempt that just ended, or null at start-up and after a history change:
@@ -80,7 +91,7 @@ object AchievementRules {
         }
     }
 
-    /** Whether the standard [achievement] is earned. Skill and hidden ones need an attempt; Wet Feet only the stats. */
+    /** Whether the standard [achievement] is earned. Skill and hidden ones need an attempt; Wet Feet and Tips Addict only the stats. */
     private fun isEarned(
         achievement: Achievement,
         summary: AttemptSummary?,
@@ -92,6 +103,7 @@ object AchievementRules {
         return when (achievement) {
             Achievement.FIRST_LEAK_FIXED -> 1 in history
             Achievement.WET_FEET -> statsAfter.losses >= 1
+            Achievement.TIPS_ADDICT -> statsAfter.tipsResets >= 1
 
             Achievement.ZERO_WASTE -> won && summary?.unusedSections == 0
             // The liquid can leave a cross twice before it leaks, so these two count on a loss too.
@@ -103,6 +115,15 @@ object AchievementRules {
             Achievement.STEADY_HANDS -> won && summary?.everPaused == false
             Achievement.LONG_WAY_ROUND -> won && (summary?.distinctTilesLeft ?: 0) >= LONG_WAY_ROUND_TILES
             Achievement.BIG_SPENDER -> won && (summary?.finalTotal ?: 0) >= BIG_SPENDER_TOTAL
+            Achievement.LONG_WAY_ROUND_2 -> won && (summary?.distinctTilesLeft ?: 0) >= LONG_WAY_ROUND_2_TILES
+            Achievement.LONG_WAY_ROUND_3 -> won && (summary?.distinctTilesLeft ?: 0) >= LONG_WAY_ROUND_3_TILES
+            Achievement.BIG_SPENDER_2 -> won && (summary?.finalTotal ?: 0) >= BIG_SPENDER_2_TOTAL
+            // Unlike Double Cross, a chain of crosses needs the win.
+            Achievement.CROSSROAD_MASTER -> won && (summary?.longestCrossChain ?: 0) >= CROSSROAD_MASTER_CHAIN
+            Achievement.EFFICIENCY_MASTER -> won && summary?.minimumSections?.let { summary.piecesOnBoard <= it } == true
+            Achievement.HIGHWAY -> won && (summary?.longestStraightRun ?: 0) >= HIGHWAY_RUN
+            Achievement.SNAKE -> won && (summary?.longestCornerRun ?: 0) >= SNAKE_RUN
+            Achievement.ERASER -> won && (summary?.replacements ?: 0) >= ERASER_REPLACEMENTS
 
             Achievement.NEVER_GIVE_UP -> won && summary != null && statsBefore.lossStreak(summary.levelId) >= NEVER_GIVE_UP_LOSSES
             Achievement.PERSONAL_BEST -> won && summary?.record == RecordOutcome.NEW_HIGHSCORE
@@ -110,6 +131,9 @@ object AchievementRules {
             Achievement.INSTANT_FLOOD -> summary?.lost == true && summary.sectionsLeft == 0
             Achievement.WALL_TO_WALL -> won && summary != null && summary.piecesOnBoard >= summary.freeCells
             Achievement.PHOTO_FINISH -> won && summary?.photoFinish == true
+            Achievement.DRAMATIC_FAILURE -> summary?.lost == true && summary.sectionsLeft > DRAMATIC_FAILURE_SECTIONS
+            // Decided when the attempt ends, won or lost.
+            Achievement.ON_YOUR_NERVES -> (summary?.mostReplacementTaps ?: 0) >= ON_YOUR_NERVES_TAPS
 
             Achievement.LEVELS_FINISHED_1, Achievement.STAR_COLLECTOR_1, Achievement.STAR_COLLECTOR_2,
             Achievement.PERFECTIONIST_1, Achievement.PACK_1_COMPLETE, Achievement.PACK_1_PERFECT,

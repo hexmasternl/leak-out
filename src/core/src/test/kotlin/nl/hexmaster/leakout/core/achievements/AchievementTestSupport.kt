@@ -2,7 +2,8 @@ package nl.hexmaster.leakout.core.achievements
 
 /**
  * A won attempt on level 5 that unlocks no skill, lifetime or hidden achievement: one unused
- * section, a replacement, a pause, no cross passed twice, a short route and a small score. Tests
+ * section, a replacement tapped once, a pause, no cross passed twice, a short route one section
+ * longer than the shortest one, short runs of straights and corners and a small score. Tests
  * change the one fact they are about.
  */
 internal fun summary(
@@ -23,14 +24,24 @@ internal fun summary(
     freeCells: Int = 46,
     piecesOnBoard: Int = 10,
     record: RecordOutcome? = if (outcome == AttemptOutcome.WON) RecordOutcome.FIRST_COMPLETION else null,
+    longestCrossChain: Int = 0,
+    longestStraightRun: Int = 2,
+    longestCornerRun: Int = 2,
+    reservoirsLeft: Int = 0,
+    mostReplacementTaps: Int = 1,
+    minimumSections: Int? = 9,
 ) = AttemptSummary(
     levelId, outcome, finalTotal, finalStars, unusedSections, distinctTilesLeft, sectionsLeft, crossesLeftTwice,
     placements, replacements, everPaused, fastForwardAtWin, routeCompletedBeforeFlow, photoFinish, freeCells,
-    piecesOnBoard, record,
+    piecesOnBoard, record, longestCrossChain, longestStraightRun, longestCornerRun, reservoirsLeft,
+    mostReplacementTaps, minimumSections,
 )
 
-internal fun lostSummary(levelId: Int = 5, sectionsLeft: Int = 4, crossesLeftTwice: Int = 0, placements: Int = 6) =
-    summary(levelId = levelId, outcome = AttemptOutcome.LOST, sectionsLeft = sectionsLeft, crossesLeftTwice = crossesLeftTwice, placements = placements)
+internal fun lostSummary(levelId: Int = 5, sectionsLeft: Int = 4, crossesLeftTwice: Int = 0, placements: Int = 6, mostReplacementTaps: Int = 1) =
+    summary(
+        levelId = levelId, outcome = AttemptOutcome.LOST, sectionsLeft = sectionsLeft, crossesLeftTwice = crossesLeftTwice,
+        placements = placements, mostReplacementTaps = mostReplacementTaps,
+    )
 
 /**
  * Evaluates [summary] the way the app does after an attempt: the stats with the attempt added, and

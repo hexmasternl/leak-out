@@ -7,7 +7,7 @@ import kotlin.test.assertFailsWith
 class PlayerStatsTest {
     @Test
     fun `new stats are empty`() {
-        assertEquals(PlayerStats(0, 0, emptyMap()), PlayerStats.NONE)
+        assertEquals(PlayerStats(0, 0, emptyMap(), 0), PlayerStats.NONE)
         assertEquals(0, PlayerStats.NONE.lossStreak(1))
     }
 
@@ -35,6 +35,20 @@ class PlayerStatsTest {
     @Test
     fun `negative placements are refused`() {
         assertFailsWith<IllegalArgumentException> { PlayerStats.NONE.afterAbandoned(-1) }
+    }
+
+    @Test
+    fun `a tips reset adds one and changes nothing else`() {
+        val before = PlayerStats(sectionsPlaced = 12, losses = 2, lossStreakByLevel = mapOf(4 to 1))
+        val once = before.afterTipsReset()
+        assertEquals(before.copy(tipsResets = 1), once)
+        assertEquals(2, once.afterTipsReset().tipsResets)
+    }
+
+    @Test
+    fun `attempts keep the tips resets`() {
+        val stats = PlayerStats(tipsResets = 1).after(lostSummary()).after(summary()).afterAbandoned(3)
+        assertEquals(1, stats.tipsResets)
     }
 
     @Test

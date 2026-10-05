@@ -26,7 +26,7 @@
 ## 4. App wiring
 
 - [x] 4.1 Send `ReplacementTap` from `GameSession.place` while a replacement runs, still returning the silent rejection; verify with `GameSession` unit tests that no placement or failure sound is triggered and the count reaches the summary
-- [ ] 4.2 Add the `tips_resets` column to `PlayerStatsEntity` with a Room migration (version + 1, default 0) and export the schema; verify with a `MigrationTestHelper` test for the "Migration with achievements" scenario
+- [x] 4.2 Add the `tips_resets` column to `PlayerStatsEntity` with a Room migration (version + 1, default 0) and export the schema; verify with a `MigrationTestHelper` test for the "Migration with achievements" scenario
 - [x] 4.3 Add `AchievementTracker.onTipsReset()` / `tipsReset()` and call it from `SettingsViewModel` after `resetTips()`; verify with `AchievementTrackerTest` (first reset unlocks Tips Addict, second unlocks nothing) and a `SettingsViewModel` test
 - [x] 4.4 Add `achievement_name_<key>` / `achievement_desc_<key>` strings for the 14 keys, empty `achievement_<key>` placeholders in `games-ids.xml` (listed as awaiting the export in `AchievementResourcesTest`), the skip of an empty id in `PlayGamesAchievementSync`, the same texts in the console list of `AchievementResourcesTest`, and the entries in the exhaustive `when` of `AchievementResources`; verify with `./gradlew :app:testDebugUnitTest`
 
@@ -44,6 +44,6 @@
 
 ## 7. Integration
 
-- [ ] 7.1 Run `./gradlew :core:test` and `./gradlew :app:testDebugUnitTest` and make sure both pass; run only the affected instrumented tests (migration, achievement resources, settings)
-- [ ] 7.2 Check that the achievements screen lists 39 entries in catalogue order and the settings count shows the new total
+- [x] 7.1 Run `./gradlew :core:test` and `./gradlew :app:testDebugUnitTest` and make sure both pass; run only the affected instrumented tests (migration, achievement resources, settings)
+- [x] 7.2 Check that the achievements screen lists 39 entries in catalogue order and the settings count shows the new total
 - [ ] 7.3 Comment on GitHub issue #64 with what shipped and what is deferred (Star Collector 500 / 1000), and close it when the PR merges into `development`

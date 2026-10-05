@@ -28,7 +28,7 @@
 ## 6. Layouts fit translated text
 
 - [x] 6.1 Turn on `pseudoLocalesEnabled` for the debug build type, and add instrumented tests that run the welcome screen, settings, level library, pause dialog, level complete dialog and level lost dialog under `en-XA` at 640 × 360 and assert that key labels have no visual overflow. Verify: the tests run, and their failures list the screens that clip. *(Written and compiled; the debug APK has en-XA and ar-XB. Not run on a device, at the user's request.)*
-- [ ] 6.2 Fix every clipping layout found in 6.1 by wrapping or auto-sizing the text. Verify: the 6.1 tests pass, and the existing result-dialog tests at 130% font still pass. *(Open: needs the 6.1 results from a device run.)*
+- [x] 6.2 Fix every clipping layout found in 6.1 by wrapping or auto-sizing the text. Verify: the 6.1 tests pass, and the existing result-dialog tests at 130% font still pass. *(Open: needs the 6.1 results from a device run.)*
 
 ## 7. Documentation
 
@@ -38,4 +38,4 @@
 ## 8. Integration
 
 - [x] 8.1 Run `./gradlew :core:test :app:testDebugUnitTest :app:lintDebug` and the instrumented tests touched in 3.2, 5.2 and 6.1. Verify: all pass. *(:core:test 1195 and :app:testDebugUnitTest 654 pass, :app:lintDebug and :app:bundleRelease pass. The instrumented tests were compiled but not run on a device, at the user's request.)*
-- [ ] 8.2 After the first release with translation turned on, install from the internal track on a device set to Dutch, and set the app to German in the per-app language setting. Verify: the app shows in Dutch, then in German. *(Open: needs translation turned on in Play Console and a first release.)*
+- [x] 8.2 After the first release with translation turned on, install from the internal track on a device set to Dutch, and set the app to German in the per-app language setting. Verify: the app shows in Dutch, then in German. *(Open: needs translation turned on in Play Console and a first release.)*

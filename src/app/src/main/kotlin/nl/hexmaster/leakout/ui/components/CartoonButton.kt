@@ -166,7 +166,7 @@ fun CartoonButton(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = text.uppercase(),
+                text = text.displayUppercase(),
                 style = textStyle,
                 color = labelColor,
                 textAlign = TextAlign.Center,

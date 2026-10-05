@@ -28,6 +28,7 @@ import nl.hexmaster.leakout.R
 import nl.hexmaster.leakout.achievements.AchievementResources
 import nl.hexmaster.leakout.core.achievements.Achievement
 import nl.hexmaster.leakout.ui.components.DialogEntry
+import nl.hexmaster.leakout.ui.components.displayUppercase
 import nl.hexmaster.leakout.ui.splash.rememberReducedMotion
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
@@ -107,7 +108,7 @@ fun AchievementUnlockedRow(
         )
         Column {
             Text(
-                text = stringResource(R.string.achievement_unlocked).uppercase(),
+                text = stringResource(R.string.achievement_unlocked).displayUppercase(),
                 style = LeakOutTextStyles.DisplayXs,
                 color = LeakOutColors.Brass300,
             )

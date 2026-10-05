@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
+import nl.hexmaster.leakout.ui.components.displayUppercase
 import nl.hexmaster.leakout.ui.splash.LiquidWordmark
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 
@@ -22,7 +23,7 @@ fun LeakOutTitle(
     modifier: Modifier = Modifier,
 ) {
     LiquidWordmark(
-        text = text.uppercase(),
+        text = text.displayUppercase(),
         sizeDp = sizeDp,
         modifier = modifier.semantics { heading() },
     )

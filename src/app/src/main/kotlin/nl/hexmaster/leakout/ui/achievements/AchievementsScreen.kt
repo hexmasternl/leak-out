@@ -58,6 +58,7 @@ import nl.hexmaster.leakout.core.achievements.Achievement
 import nl.hexmaster.leakout.ui.components.FlowButton
 import nl.hexmaster.leakout.ui.components.FlowButtonSize
 import nl.hexmaster.leakout.ui.components.FlowButtonVariant
+import nl.hexmaster.leakout.ui.components.displayUppercase
 import nl.hexmaster.leakout.ui.settings.SettingsIconButton
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
@@ -154,7 +155,7 @@ private fun TopBar(state: AchievementsUiState?, onBack: () -> Unit, onOpenPlayGa
             modifier = Modifier.testTag(AchievementsTags.BACK),
         )
         Text(
-            text = stringResource(R.string.achievements_title).uppercase(),
+            text = stringResource(R.string.achievements_title).displayUppercase(),
             style = LeakOutTextStyles.DisplayLg,
             color = LeakOutColors.TextPrimary,
             maxLines = 1,

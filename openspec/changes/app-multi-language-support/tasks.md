@@ -18,7 +18,7 @@
 
 ## 4. Locale-aware formatting
 
-- [ ] 4.1 Add a `displayUppercase(locale)` helper and replace every `.uppercase()` on displayed text with it. Add unit tests for Turkish `i` → `İ` and German grouping of 12500 in `HudFormat`. Verify: `:app:testDebugUnitTest` passes and `grep -rn "\.uppercase()" app/src/main` only finds non-display uses.
+- [x] 4.1 Add a `displayUppercase(locale)` helper and replace every `.uppercase()` on displayed text with it. Add unit tests for Turkish `i` → `İ` and German grouping of 12500 in `HudFormat`. Verify: `:app:testDebugUnitTest` passes and `grep -rn "\.uppercase()" app/src/main` only finds non-display uses.
 
 ## 5. Supported languages
 

@@ -28,6 +28,7 @@ import nl.hexmaster.leakout.ui.settings.SettingsTags
 import nl.hexmaster.leakout.ui.splash.SplashScreenTags
 import nl.hexmaster.leakout.ui.splash.SplashTiming
 import nl.hexmaster.leakout.ui.title.PlayMenuTags
+import nl.hexmaster.leakout.ui.title.ExitDialogTags
 import nl.hexmaster.leakout.ui.title.WelcomeScreenTags
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -281,6 +282,11 @@ class MainActivityTest {
         skipSplash()
         compose.onNodeWithTag(WelcomeScreenTags.EXIT).performClick()
         compose.waitForIdle()
+        // The device may hold an earlier opt-out, so the dialog is confirmed only when it is shown.
+        if (compose.onAllNodesWithTag(ExitDialogTags.DIALOG).fetchSemanticsNodes().isNotEmpty()) {
+            compose.onNodeWithTag(ExitDialogTags.YES).performClick()
+            compose.waitForIdle()
+        }
         assertTrue(compose.activity.isFinishing || compose.activity.isDestroyed)
     }
 }

@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -22,7 +23,9 @@ import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlinx.coroutines.runBlocking
 import nl.hexmaster.leakout.core.library.NextLevel
+import nl.hexmaster.leakout.settings.InMemorySettingsRepository
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -47,6 +50,10 @@ class WelcomeScreenTest {
 
     private var designerOpens = 0
 
+    /** The stored exit opt-out, behind the same [ExitConfirmation] the activity uses. */
+    private val exitSettings = InMemorySettingsRepository()
+    private val exitConfirmation = ExitConfirmation(exitSettings)
+
     /** Whether the host passes a level designer callback, as `MainActivity` does with the flag on. */
     private val designerShown = mutableStateOf(false)
 
@@ -65,6 +72,8 @@ class WelcomeScreenTest {
                         onSettings = { settings++ },
                         onExit = { exits++ },
                         onOpenLevelDesigner = if (designerShown.value) ({ designerOpens++ }) else null,
+                        shouldConfirmExit = exitConfirmation::shouldAsk,
+                        onExitAnswered = exitConfirmation::answered,
                     )
                 }
             }
@@ -191,13 +200,97 @@ class WelcomeScreenTest {
     }
 
     @Test
-    fun exitInvokesOnlyOnExitOnce() {
+    fun exitAsksFirstWithoutExiting() {
         showScreen()
         compose.onNodeWithTag(WelcomeScreenTags.EXIT).performClick()
+        compose.onNodeWithTag(ExitDialogTags.DIALOG).assertIsDisplayed()
+        compose.onNodeWithTag(ExitDialogTags.NEVER_SHOW).assertIsOff()
         compose.runOnIdle {
             assertNoNavigation()
-            assertCounts(settings = 0, exit = 1)
+            assertCounts(settings = 0, exit = 0)
         }
+    }
+
+    @Test
+    fun yesExitsOnceWithoutStoringTheOptOut() {
+        showScreen()
+        compose.onNodeWithTag(WelcomeScreenTags.EXIT).performClick()
+        compose.onNodeWithTag(ExitDialogTags.YES).performClick()
+        compose.waitForIdle()
+        compose.runOnIdle {
+            assertCounts(settings = 0, exit = 1)
+            assertEquals(emptyList<String>(), exitSettings.writes)
+        }
+    }
+
+    @Test
+    fun cancelClosesTheDialogAndTheNextExitAsksAgain() {
+        showScreen()
+        compose.onNodeWithTag(WelcomeScreenTags.EXIT).performClick()
+        compose.onNodeWithTag(ExitDialogTags.CANCEL).performClick()
+        compose.onNodeWithTag(ExitDialogTags.DIALOG).assertDoesNotExist()
+        compose.onNodeWithTag(WelcomeScreenTags.SCREEN).assertIsDisplayed()
+        compose.runOnIdle { assertCounts(settings = 0, exit = 0) }
+
+        compose.onNodeWithTag(WelcomeScreenTags.EXIT).performClick()
+        compose.onNodeWithTag(ExitDialogTags.DIALOG).assertIsDisplayed()
+        compose.onNodeWithTag(ExitDialogTags.NEVER_SHOW).assertIsOff()
+        compose.runOnIdle { assertEquals(emptyList<String>(), exitSettings.writes) }
+    }
+
+    @Test
+    fun checkedYesStoresTheOptOutBeforeExiting() {
+        showScreen()
+        compose.onNodeWithTag(WelcomeScreenTags.EXIT).performClick()
+        compose.onNodeWithTag(ExitDialogTags.NEVER_SHOW).performClick()
+        compose.onNodeWithTag(ExitDialogTags.YES).performClick()
+        compose.waitForIdle()
+        compose.runOnIdle {
+            assertCounts(settings = 0, exit = 1)
+            assertTrue(exitSettings.skipExitConfirmation.value)
+        }
+    }
+
+    @Test
+    fun checkedCancelStoresTheOptOutAndTheNextExitIsImmediate() {
+        showScreen()
+        compose.onNodeWithTag(WelcomeScreenTags.EXIT).performClick()
+        compose.onNodeWithTag(ExitDialogTags.NEVER_SHOW).performClick()
+        compose.onNodeWithTag(ExitDialogTags.CANCEL).performClick()
+        compose.waitForIdle()
+        compose.runOnIdle {
+            assertCounts(settings = 0, exit = 0)
+            assertTrue(exitSettings.skipExitConfirmation.value)
+        }
+
+        compose.onNodeWithTag(WelcomeScreenTags.EXIT).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(ExitDialogTags.DIALOG).assertDoesNotExist()
+        compose.runOnIdle { assertCounts(settings = 0, exit = 1) }
+    }
+
+    @Test
+    fun backClosesTheExitDialogWithoutAnAnswer() {
+        showScreen()
+        compose.onNodeWithTag(WelcomeScreenTags.EXIT).performClick()
+        compose.onNodeWithTag(ExitDialogTags.NEVER_SHOW).performClick()
+        Espresso.onView(isRoot()).inRoot(isDialog()).perform(ViewActions.pressBack())
+        compose.waitForIdle()
+        compose.onNodeWithTag(ExitDialogTags.DIALOG).assertDoesNotExist()
+        compose.runOnIdle {
+            assertCounts(settings = 0, exit = 0)
+            assertEquals(emptyList<String>(), exitSettings.writes)
+        }
+    }
+
+    @Test
+    fun anOptedOutPlayerExitsWithoutTheDialog() {
+        runBlocking { exitSettings.setSkipExitConfirmation(true) }
+        showScreen()
+        compose.onNodeWithTag(WelcomeScreenTags.EXIT).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(ExitDialogTags.DIALOG).assertDoesNotExist()
+        compose.runOnIdle { assertCounts(settings = 0, exit = 1) }
     }
 
     @Test

@@ -10,9 +10,9 @@
 
 ## 3. Welcome screen wiring
 
-- [ ] 3.1 On Exit tap, read a snapshot of `skipExitConfirmation`: if true call `onExit()`, otherwise show the dialog (fall back to showing it if the read fails)
-- [ ] 3.2 On Yes: persist the flag if checked (awaiting the write), then call `onExit()`. On Cancel: persist the flag if checked, close the dialog. On outside tap/back: close without persisting
-- [ ] 3.3 Tests for the exit decision logic: flag off shows dialog, flag on exits immediately, checked Yes/Cancel persists, unchecked does not
+- [x] 3.1 On Exit tap, read a snapshot of `skipExitConfirmation`: if true call `onExit()`, otherwise show the dialog (fall back to showing it if the read fails)
+- [x] 3.2 On Yes: persist the flag if checked (awaiting the write), then call `onExit()`. On Cancel: persist the flag if checked, close the dialog. On outside tap/back: close without persisting
+- [x] 3.3 Tests for the exit decision logic: flag off shows dialog, flag on exits immediately, checked Yes/Cancel persists, unchecked does not
 
 ## 4. Verification
 

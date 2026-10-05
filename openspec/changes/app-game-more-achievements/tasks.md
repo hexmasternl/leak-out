@@ -6,9 +6,9 @@
 
 ## 1. Engine facts (core)
 
-- [ ] 1.1 Add `PathStep(at, section)` and `GameState.flowPath`, appended in flow order wherever an exit is awarded and reset by `GameEngine.start`; verify with engine tests for the "Path in flow order", "Cross passed twice" and "Restart clears the path" scenarios
-- [ ] 1.2 Add `GameCommand.ReplacementTap(at)`, `Replacement.taps` and `GameState.mostReplacementTaps`; a tap off the replacement tile or without a replacement returns the same instance; verify with engine tests for every scenario of "Taps on a running replacement are counted"
-- [ ] 1.3 Run `./gradlew :core:test` and make sure the existing engine tests still pass
+- [x] 1.1 Add `PathStep(at, section)` and `GameState.flowPath`, appended in flow order wherever an exit is awarded and reset by `GameEngine.start`; verify with engine tests for the "Path in flow order", "Cross passed twice" and "Restart clears the path" scenarios
+- [x] 1.2 Add `GameCommand.ReplacementTap(at)`, `Replacement.taps` and `GameState.mostReplacementTaps`; a tap off the replacement tile or without a replacement returns the same instance; verify with engine tests for every scenario of "Taps on a running replacement are counted"
+- [x] 1.3 Run `./gradlew :core:test` and make sure the existing engine tests still pass
 
 ## 2. Attempt summary and player stats (core)
 

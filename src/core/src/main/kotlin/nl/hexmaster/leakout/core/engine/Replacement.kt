@@ -6,6 +6,7 @@ import nl.hexmaster.leakout.core.level.Position
 /**
  * A replacement in progress on the tile [at]: [removed] was destroyed at game time [startedAtMs],
  * the tile is empty, and [incoming], taken from the stack at the drop, lands at [landsAtMs].
+ * [taps] counts the [GameCommand.ReplacementTap]s on [at] while it runs.
  */
 data class Replacement(
     val at: Position,
@@ -13,6 +14,7 @@ data class Replacement(
     val incoming: PipeSection,
     val startedAtMs: Long,
     val landsAtMs: Long,
+    val taps: Int = 0,
 ) {
     val durationMs: Long get() = landsAtMs - startedAtMs
 

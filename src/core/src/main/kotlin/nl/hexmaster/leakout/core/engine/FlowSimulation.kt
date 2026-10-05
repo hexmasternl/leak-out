@@ -68,7 +68,11 @@ object FlowSimulation {
         var next = state
         if (pipe != null) {
             val award = state.sheet.award(flow.position, pipe.section)
-            next = next.copy(sheet = award.sheet, awards = next.awards + Award(flow.position, award.points, state.clockMs))
+            next = next.copy(
+                sheet = award.sheet,
+                awards = next.awards + Award(flow.position, award.points, state.clockMs),
+                flowPath = next.flowPath + PathStep(flow.position, pipe.section),
+            )
         }
         return when (val result = FlowStep.after(next.board, flow.position, exit, used)) {
             is FlowStep.Result.Enter -> {

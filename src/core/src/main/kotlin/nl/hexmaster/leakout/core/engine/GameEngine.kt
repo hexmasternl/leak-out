@@ -30,6 +30,7 @@ class GameEngine(private val random: Random = Random.Default) {
         stack = PipeStack.create(level.stack, random),
         flow = FlowState.Waiting(level.flow.initialDelayMs),
         sheet = ScoreSheet(),
+        flowPath = emptyList(),
         awards = emptyList(),
         replaceLockUntilMs = 0L,
         replacement = null,
@@ -45,6 +46,7 @@ class GameEngine(private val random: Random = Random.Default) {
         everPaused = false,
         routeCompletedBeforeFlow = false,
         photoFinish = false,
+        mostReplacementTaps = 0,
     )
 
     fun handle(state: GameState, command: GameCommand): GameState = when (command) {
@@ -60,6 +62,7 @@ class GameEngine(private val random: Random = Random.Default) {
             }
         GameCommand.NormalSpeed -> if (state.fastForward && !state.isStopped) state.copy(fastForward = false) else state
         is GameCommand.Place -> place(state, command.at)
+        is GameCommand.ReplacementTap -> replacementTap(state, command.at)
         is GameCommand.Tick -> tick(state, command.dtMs)
         is GameCommand.RemoveUnused -> removeUnused(state, command.upTo)
     }
@@ -100,6 +103,14 @@ class GameEngine(private val random: Random = Random.Default) {
             )
         }
         return withBoard(counted, state.board.with(at, Cell.Pipe(incoming)), at)
+    }
+
+    /** Counts a tap on the tile of the running replacement. Refused without one, on another tile and while stopped. */
+    private fun replacementTap(state: GameState, at: Position): GameState {
+        val replacement = state.replacement ?: return state
+        if (state.isStopped || replacement.at != at) return state
+        val taps = replacement.taps + 1
+        return state.copy(replacement = replacement.copy(taps = taps), mostReplacementTaps = maxOf(state.mostReplacementTaps, taps))
     }
 
     /**

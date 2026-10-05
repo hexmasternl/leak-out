@@ -21,6 +21,11 @@ data class GameState(
     val flow: FlowState,
     /** The points of this attempt and how often the liquid has left each tile. */
     val sheet: ScoreSheet,
+    /**
+     * Every exit of the liquid from a section, in flow order: a cross left twice is in it twice.
+     * [GameCommand.RemoveUnused] does not change it, as it only takes sections the liquid never entered.
+     */
+    val flowPath: List<PathStep>,
     /** Recent awards, oldest first, dropped after [Award.VISIBLE_MS]. */
     val awards: List<Award>,
     /** Game time until which no placement is accepted, set by a replacement. */
@@ -52,6 +57,8 @@ data class GameState(
      * current channel exits into: the very tile it would otherwise have leaked into.
      */
     val photoFinish: Boolean,
+    /** The most [GameCommand.ReplacementTap]s any one replacement of this attempt got; kept after it lands. */
+    val mostReplacementTaps: Int,
 ) {
     val score: Int get() = sheet.total
 

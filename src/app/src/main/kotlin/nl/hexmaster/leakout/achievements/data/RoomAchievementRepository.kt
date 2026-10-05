@@ -33,6 +33,7 @@ class RoomAchievementRepository(
             sectionsPlaced = row?.sectionsPlaced ?: 0,
             losses = row?.losses ?: 0,
             lossStreakByLevel = dao.lossStreaks().associate { it.levelId to it.streak },
+            tipsResets = row?.tipsResets ?: 0,
         )
     }
 
@@ -46,7 +47,7 @@ class RoomAchievementRepository(
         if (changed.isNotEmpty()) {
             dao.upsertStates(changed.map { (key, row) -> AchievementStateEntity(key, row.steps, row.unlockedAtMs) })
         }
-        dao.upsertStats(PlayerStatsEntity(sectionsPlaced = stats.sectionsPlaced, losses = stats.losses))
+        dao.upsertStats(PlayerStatsEntity(sectionsPlaced = stats.sectionsPlaced, losses = stats.losses, tipsResets = stats.tipsResets))
         val ended = dao.lossStreaks().map { it.levelId }.filter { it !in stats.lossStreakByLevel }
         if (ended.isNotEmpty()) dao.deleteLossStreaks(ended)
         if (stats.lossStreakByLevel.isNotEmpty()) {

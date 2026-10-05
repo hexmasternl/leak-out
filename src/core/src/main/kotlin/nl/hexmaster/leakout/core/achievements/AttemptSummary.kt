@@ -3,9 +3,12 @@ package nl.hexmaster.leakout.core.achievements
 import nl.hexmaster.leakout.core.board.Cell
 import nl.hexmaster.leakout.core.engine.GameState
 import nl.hexmaster.leakout.core.engine.Outcome
+import nl.hexmaster.leakout.core.engine.PathStep
 import nl.hexmaster.leakout.core.level.Level
+import nl.hexmaster.leakout.core.level.LevelSolver
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.core.level.SolverResult
 
 enum class AttemptOutcome { WON, LOST }
 
@@ -29,6 +32,15 @@ enum class RecordOutcome { FIRST_COMPLETION, NEW_HIGHSCORE, NO_IMPROVEMENT }
  * @param freeCells grid cells that are not blocked, not the start and not the finish.
  * @param piecesOnBoard sections on the board when the outcome was reached, mandatory ones included.
  * @param record what recording the win did to the history; null on a loss.
+ * @param longestCrossChain the most crosses the liquid left one directly after the other.
+ * @param longestStraightRun the most straights of the same direction the liquid left one directly after the other.
+ * @param longestCornerRun the most corners the liquid left one directly after the other.
+ * @param reservoirsLeft exits of the liquid from reservoirs.
+ * @param mostReplacementTaps the most taps on the tile of one running replacement.
+ * @param minimumSections the cells of the level's shortest route as [LevelSolver] finds it; null
+ *   when the solver cannot solve the level.
+ *
+ * The route shape facts come from [GameState.flowPath], so mandatory sections count like placed ones.
  */
 data class AttemptSummary(
     val levelId: Int,
@@ -48,6 +60,12 @@ data class AttemptSummary(
     val freeCells: Int,
     val piecesOnBoard: Int,
     val record: RecordOutcome?,
+    val longestCrossChain: Int = 0,
+    val longestStraightRun: Int = 0,
+    val longestCornerRun: Int = 0,
+    val reservoirsLeft: Int = 0,
+    val mostReplacementTaps: Int = 0,
+    val minimumSections: Int? = null,
 ) {
     val won: Boolean get() = outcome == AttemptOutcome.WON
 
@@ -90,7 +108,42 @@ data class AttemptSummary(
                 freeCells = freeCells(state.level),
                 piecesOnBoard = state.board.pipes.size + if (won) state.sectionsRemoved else 0,
                 record = record.takeIf { won },
+                longestCrossChain = longestRun(state.flowPath) { _, step -> step.section == PipeSection.X },
+                longestStraightRun = longestRun(state.flowPath) { previous, step -> step.section in STRAIGHTS && (previous == null || previous.section == step.section) },
+                longestCornerRun = longestRun(state.flowPath) { _, step -> step.section in CORNERS },
+                reservoirsLeft = state.flowPath.count { it.section == PipeSection.RES },
+                mostReplacementTaps = state.mostReplacementTaps,
+                minimumSections = minimumSections(state.level),
             )
+        }
+
+        /**
+         * The cells of [level]'s shortest route as [LevelSolver] finds it, or null when it finds none.
+         * A mandatory cross is on the solver's path twice but is one cell.
+         */
+        fun minimumSections(level: Level): Int? = (LevelSolver.solve(level) as? SolverResult.Solvable)?.path?.distinct()?.size
+
+        private val STRAIGHTS = setOf(PipeSection.H, PipeSection.V)
+        private val CORNERS = setOf(PipeSection.LT, PipeSection.LB, PipeSection.RT, PipeSection.RB)
+
+        /**
+         * The longest run of [path] in which every step [continues] the run: it is given the step
+         * before it in the run (null for the first one) and the step itself.
+         */
+        private fun longestRun(path: List<PathStep>, continues: (previous: PathStep?, step: PathStep) -> Boolean): Int {
+            var longest = 0
+            var run = 0
+            var previous: PathStep? = null
+            for (step in path) {
+                run = when {
+                    continues(previous.takeIf { run > 0 }, step) -> run + 1
+                    continues(null, step) -> 1
+                    else -> 0
+                }
+                previous = step
+                longest = maxOf(longest, run)
+            }
+            return longest
         }
 
         /** The cells of [level] that can hold a section: not blocked, not the start and not the finish. */

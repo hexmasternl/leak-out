@@ -72,7 +72,8 @@ data class TipsState(val anySeen: Boolean, val justReset: Boolean = false) {
  * Combines the stored settings and the level history into [uiState], which is null until both have
  * been read once so the panels never flash the defaults over the real values. [musicCredits] is the
  * bundled playlist, or null when it could not be read. The Play Games panel follows [signIn] and
- * counts the unlocked [achievements].
+ * counts the unlocked [achievements]. [onTipsReset] is called after every "Show tips again", for the
+ * achievements (Tips Addict).
  */
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
@@ -81,6 +82,7 @@ class SettingsViewModel(
     private val onProgressReset: suspend () -> Unit = {},
     achievements: AchievementRepository = InMemoryAchievementRepository(),
     signIn: StateFlow<SignInState> = MutableStateFlow(SignInState.Unavailable),
+    private val onTipsReset: suspend () -> Unit = {},
 ) : ViewModel() {
     private val credits = musicCredits?.tracks.orEmpty()
     private val tipsJustReset = MutableStateFlow(false)
@@ -103,6 +105,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsRepository.resetTips()
             tipsJustReset.value = true
+            onTipsReset()
         }
     }
 

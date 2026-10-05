@@ -9,22 +9,22 @@ What the current facts can't answer:
 - **Taps during a replacement.** `GameScreen` sends taps to `GameSession.place`, which the engine refuses while a replacement runs. A refused command must return the same instance (`new !== old` means accepted), so a refused `Place` can't count anything.
 - **Tips reset.** This happens on the settings screen through `SettingsRepository.resetTips()` and never reaches the tracker.
 
-Bundled content (25 levels, grids up to 16 × 12, cross weight 6 from level 18, reservoir weight 0 everywhere) limits what can be published now. See proposal.md for the list and what is deferred.
+Bundled content limits what can be published now. The change was proposed with 25 levels (grids up to 16 × 12, reservoir weight 0 everywhere); by implementation the library had 96 levels (grids up to 24 × 24, reservoirs from level 25, at most 288 stars), so Snail and Star Collector 100 / 250 joined the change. See proposal.md for the list and what is deferred.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- Add the 11 achievements without changing any launch entry, and keep the rules pure and in `core`.
+- Add the 14 achievements without changing any launch entry, and keep the rules pure and in `core`.
 - Record just enough new engine facts that every new rule is a function of `AttemptSummary` and `PlayerStats`.
 
 **Non-Goals:**
-- Changing level content so that Snail or the higher Star Collector tiers become reachable. Each of those comes with the level pack that makes it reachable.
+- Changing level content so that Star Collector V / VI (500 / 1000 stars) become reachable. Each comes with the level pack that makes it reachable.
 - Any new UI. The achievements screen, unlock rows and sync handle new entries without changes.
 
 ## Decisions
 
 ### 1. Record the flow path as an ordered list in `GameState`
-`GameState.flowPath: List<PathStep>` with `PathStep(at: Position, section: PipeSection)`, added wherever the engine awards points for an exit (the same place `ScoreSheet.award` is called). `AttemptSummary` turns it into numbers so the rules never see the list: `longestCrossChain`, `longestStraightRun` (consecutive `H` or consecutive `V`; a straight that follows another of the same direction is in line with it, because the liquid leaves a straight through the side opposite its entry), `longestCornerRun` and `reservoirsLeft` (not used yet; it costs nothing and is ready for Snail). `sectionsLeft` already exists and is used for Dramatic Failure.
+`GameState.flowPath: List<PathStep>` with `PathStep(at: Position, section: PipeSection)`, added wherever the engine awards points for an exit (the same place `ScoreSheet.award` is called). `AttemptSummary` turns it into numbers so the rules never see the list: `longestCrossChain`, `longestStraightRun` (consecutive `H` or consecutive `V`; a straight that follows another of the same direction is in line with it, because the liquid leaves a straight through the side opposite its entry), `longestCornerRun` and `reservoirsLeft` (for Snail). `sectionsLeft` already exists and is used for Dramatic Failure.
 
 *Alternative:* rebuild the order from the board with `RouteTracer` at the end of the attempt. Rejected: on a loss the traced route and the liquid can differ after a later placement, and a cross's second pass needs the flow history anyway.
 
@@ -44,10 +44,15 @@ Bundled content (25 levels, grids up to 16 × 12, cross weight 6 from level 18, 
 *Alternative:* unlock it directly in the tracker. Rejected: that skips the pure rules and their tests, and `reconcile` couldn't recover a lost unlock.
 
 ### 5. Thresholds as constants beside the existing ones
-`LONG_WAY_ROUND_2_TILES = 50`, `LONG_WAY_ROUND_3_TILES = 100`, `BIG_SPENDER_2_TOTAL = 1000`, `CROSSROAD_MASTER_CHAIN = 3`, `HIGHWAY_RUN = 7`, `SNAKE_RUN = 12`, `ERASER_REPLACEMENTS = 20`, `DRAMATIC_FAILURE_SECTIONS = 50` (strictly more), `ON_YOUR_NERVES_TAPS = 5`. Crossroad Master and Eraser need a win, unlike Double Cross, which also counts on a loss. Abandoned attempts have no summary, so they never count.
+`LONG_WAY_ROUND_2_TILES = 50`, `LONG_WAY_ROUND_3_TILES = 100`, `BIG_SPENDER_2_TOTAL = 1000`, `CROSSROAD_MASTER_CHAIN = 3`, `HIGHWAY_RUN = 7`, `SNAKE_RUN = 12`, `ERASER_REPLACEMENTS = 20`, `DRAMATIC_FAILURE_SECTIONS = 50` (strictly more), `ON_YOUR_NERVES_TAPS = 5`, `SNAIL_RESERVOIRS = 3`. Star Collector III / IV are incremental on the existing `STARS` measure, so they need no rule. Crossroad Master, Snail and Eraser need a win, unlike Double Cross, which also counts on a loss. Abandoned attempts have no summary, so they never count.
 
 ### 6. Catalogue order and the XP guideline
-The new entries go at the end of the enum in the table order of the spec, and are added to the `published` list in `AchievementCatalogueTest` (its total becomes 710). `docs/achievements.md` gets the rebalanced guideline for the 290 XP left: packs 2-13 at 5 + 5 (120), levels finished 50 / 100 / 250 at 15 / 20 / 25 (60), Perfectionist II 15, Star Collector III-VI at 100 / 250 / 500 / 1000 stars for 10 / 15 / 20 / 25 (70), Snail 10. That is 275, leaving 15 spare. Star Collector III-VI replace the earlier III / IV (150 / 400) plan.
+The new entries go at the end of the enum in the table order of the spec, and are added to the `published` list in `AchievementCatalogueTest` (its total becomes 745). Star Collector III / IV (100 / 250 stars, 10 / 15 XP) and Snail (10 XP) are the values the guideline had planned for them. `docs/achievements.md` gets the rebalanced guideline for the 255 XP left: packs 2-13 at 5 + 5 (120), levels finished 50 / 100 / 250 at 15 / 20 / 25 (60), Perfectionist II 15, Star Collector V / VI at 500 / 1000 stars for 20 / 25 (45). That is 240, leaving 15 spare. Star Collector III-VI replace the earlier III / IV (150 / 400) plan.
+
+### 7. An empty Play Games id until the console export
+`AchievementResources` maps every achievement to `R.string.achievement_<key>`, so the app needs those strings before the owner can create the achievements in the Play Console. Until the export lands, `games-ids.xml` holds the 14 new keys with an empty value, and `PlayGamesAchievementSync` skips an achievement whose id is empty: no unlock or set-steps call is made for it, so the sync of the others is not disturbed. The local unlock, the achievements screen and the unlock feedback work as usual; once the real ids ship, the next push (every sign-in) sends what was earned meanwhile. `AchievementResourcesTest` lists the 14 keys as awaiting the export, and the export (task 5.3) empties that list.
+
+*Alternative:* hold the code until the console step is done. Rejected: the console entries become permanent once published, so they should be created from a pinned, tested catalogue, not the other way round.
 
 ## Risks / Trade-offs
 
@@ -55,11 +60,11 @@ The new entries go at the end of the enum in the table order of the spec, and ar
 - [Highway needs a free row or column of 7 cells in line, plus room to turn] → the larger pack 1 grids (11+ columns) have that; it is proven by the reachability test.
 - [Efficiency Master is easy on small levels] → accepted; it is 15 XP and teaches efficient routes. The `<=` against a greedy solver can only make it easier, never unreachable.
 - [`GameSession` sending `ReplacementTap` changes the tap path during a replacement] → `GameSession` tests check that the result is still the silent rejection and that no placement sound plays.
-- [Play Games locks the 11 entries once published] → the console step comes last, after the catalogue test pins them and the smoke test passes.
+- [Play Games locks the 14 entries once published] → the console step comes last, after the catalogue test pins them and the smoke test passes.
 
 ## Migration Plan
 
 1. Archive `app-game-achievements` (and `app-game-first-time-user-experience`, which owns "Show tips again") before this change is archived.
 2. Ship the Room migration with the code; existing achievement data is kept (see the `achievement-persistence` delta).
-3. Once the catalogue is pinned and the reachability tests pass, the owner creates the 11 achievements in the Play Console and exports `games-ids.xml`, which replaces `app/src/main/res/values/games-ids.xml`. `AchievementResourcesInstrumentedTest` must pass with the new ids. After the smoke test the owner publishes the Play Games configuration, which is the last step and can't be undone.
+3. Once the catalogue is pinned and the reachability tests pass, the owner creates the 14 achievements in the Play Console and exports `games-ids.xml`, which replaces `app/src/main/res/values/games-ids.xml`. `AchievementResourcesInstrumentedTest` must pass with the new ids. After the smoke test the owner publishes the Play Games configuration, which is the last step and can't be undone.
 4. Players who already meet a progress or lifetime condition get it at the next start through `reconcile`. Skill achievements need a new attempt.

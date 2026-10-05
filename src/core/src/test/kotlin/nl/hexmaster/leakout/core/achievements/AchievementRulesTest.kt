@@ -7,25 +7,39 @@ import kotlin.test.assertTrue
 import nl.hexmaster.leakout.core.achievements.Achievement.AHEAD_OF_THE_FLOW
 import nl.hexmaster.leakout.core.achievements.Achievement.APPRENTICE
 import nl.hexmaster.leakout.core.achievements.Achievement.BIG_SPENDER
+import nl.hexmaster.leakout.core.achievements.Achievement.BIG_SPENDER_2
+import nl.hexmaster.leakout.core.achievements.Achievement.CROSSROAD_MASTER
 import nl.hexmaster.leakout.core.achievements.Achievement.CROSSROADS_KING
 import nl.hexmaster.leakout.core.achievements.Achievement.DOUBLE_CROSS
+import nl.hexmaster.leakout.core.achievements.Achievement.DRAMATIC_FAILURE
+import nl.hexmaster.leakout.core.achievements.Achievement.EFFICIENCY_MASTER
+import nl.hexmaster.leakout.core.achievements.Achievement.ERASER
 import nl.hexmaster.leakout.core.achievements.Achievement.FIRST_LEAK_FIXED
 import nl.hexmaster.leakout.core.achievements.Achievement.FULL_THROTTLE
 import nl.hexmaster.leakout.core.achievements.Achievement.GUILDMASTER
+import nl.hexmaster.leakout.core.achievements.Achievement.HIGHWAY
 import nl.hexmaster.leakout.core.achievements.Achievement.INSTANT_FLOOD
 import nl.hexmaster.leakout.core.achievements.Achievement.JOURNEYMAN
 import nl.hexmaster.leakout.core.achievements.Achievement.LEVELS_FINISHED_1
 import nl.hexmaster.leakout.core.achievements.Achievement.LONG_WAY_ROUND
+import nl.hexmaster.leakout.core.achievements.Achievement.LONG_WAY_ROUND_2
+import nl.hexmaster.leakout.core.achievements.Achievement.LONG_WAY_ROUND_3
 import nl.hexmaster.leakout.core.achievements.Achievement.MEASURE_TWICE
 import nl.hexmaster.leakout.core.achievements.Achievement.NEVER_GIVE_UP
+import nl.hexmaster.leakout.core.achievements.Achievement.ON_YOUR_NERVES
 import nl.hexmaster.leakout.core.achievements.Achievement.PACK_1_COMPLETE
 import nl.hexmaster.leakout.core.achievements.Achievement.PACK_1_PERFECT
 import nl.hexmaster.leakout.core.achievements.Achievement.PERFECTIONIST_1
 import nl.hexmaster.leakout.core.achievements.Achievement.PERSONAL_BEST
 import nl.hexmaster.leakout.core.achievements.Achievement.PHOTO_FINISH
+import nl.hexmaster.leakout.core.achievements.Achievement.SNAIL
+import nl.hexmaster.leakout.core.achievements.Achievement.SNAKE
 import nl.hexmaster.leakout.core.achievements.Achievement.STAR_COLLECTOR_1
 import nl.hexmaster.leakout.core.achievements.Achievement.STAR_COLLECTOR_2
+import nl.hexmaster.leakout.core.achievements.Achievement.STAR_COLLECTOR_3
+import nl.hexmaster.leakout.core.achievements.Achievement.STAR_COLLECTOR_4
 import nl.hexmaster.leakout.core.achievements.Achievement.STEADY_HANDS
+import nl.hexmaster.leakout.core.achievements.Achievement.TIPS_ADDICT
 import nl.hexmaster.leakout.core.achievements.Achievement.WALL_TO_WALL
 import nl.hexmaster.leakout.core.achievements.Achievement.WET_FEET
 import nl.hexmaster.leakout.core.achievements.Achievement.ZERO_WASTE
@@ -78,10 +92,12 @@ class AchievementRulesTest {
 
         @Test
         fun `progress is clamped to the steps`() {
-            val evaluation = evaluateAttempt(null, history = history(1..30, stars = 3))
+            val evaluation = evaluateAttempt(null, history = history(1..96, stars = 3))
             assertEquals(10, evaluation.steps[LEVELS_FINISHED_1])
             assertEquals(25, evaluation.steps[STAR_COLLECTOR_1])
             assertEquals(60, evaluation.steps[STAR_COLLECTOR_2])
+            assertEquals(100, evaluation.steps[STAR_COLLECTOR_3])
+            assertEquals(250, evaluation.steps[STAR_COLLECTOR_4])
             assertEquals(10, evaluation.steps[PERFECTIONIST_1])
             assertEquals(24, evaluation.steps[PACK_1_COMPLETE])
             assertEquals(24, evaluation.steps[PACK_1_PERFECT])
@@ -218,7 +234,8 @@ class AchievementRulesTest {
             val lost = summary(
                 outcome = AttemptOutcome.LOST, unusedSections = 0, replacements = 0, everPaused = false,
                 fastForwardAtWin = true, routeCompletedBeforeFlow = true, distinctTilesLeft = 40, finalTotal = 900,
-                crossesLeftTwice = 3, photoFinish = true, piecesOnBoard = 46,
+                crossesLeftTwice = 3, photoFinish = true, piecesOnBoard = 46, longestCrossChain = 3,
+                longestStraightRun = 7, longestCornerRun = 12, minimumSections = 46,
             )
             val skill = evaluateAttempt(lost).newlyUnlocked.filter { it.group == AchievementGroup.SKILL || it.group == AchievementGroup.HIDDEN }
             assertEquals(listOf(DOUBLE_CROSS, CROSSROADS_KING), skill)
@@ -332,6 +349,147 @@ class AchievementRulesTest {
     }
 
     @Nested
+    inner class LaterAdditions {
+        private fun unlocks(summary: AttemptSummary) = evaluateAttempt(summary).newlyUnlocked
+
+        @Test
+        fun `one win unlocks every Long Way Round tier it reaches`() {
+            val unlocked = unlocks(summary(distinctTilesLeft = 104))
+            assertTrue(unlocked.containsAll(listOf(LONG_WAY_ROUND, LONG_WAY_ROUND_2, LONG_WAY_ROUND_3)))
+        }
+
+        @Test
+        fun `between two Long Way Round tiers`() {
+            val unlocked = unlocks(summary(distinctTilesLeft = 49))
+            assertTrue(LONG_WAY_ROUND in unlocked)
+            assertFalse(LONG_WAY_ROUND_2 in unlocked)
+            assertTrue(LONG_WAY_ROUND_2 in unlocks(summary(distinctTilesLeft = 50)))
+            assertFalse(LONG_WAY_ROUND_3 in unlocks(summary(distinctTilesLeft = 99)))
+            assertTrue(LONG_WAY_ROUND_3 in unlocks(summary(distinctTilesLeft = 100)))
+        }
+
+        @Test
+        fun `a cross counts once for the Long Way Round tiers`() {
+            assertFalse(LONG_WAY_ROUND_2 in unlocks(summary(distinctTilesLeft = 49, sectionsLeft = 52, crossesLeftTwice = 3)))
+        }
+
+        @Test
+        fun `a loss is no long way round`() {
+            val lost = summary(outcome = AttemptOutcome.LOST, distinctTilesLeft = 60, sectionsLeft = 30)
+            assertTrue(unlocks(lost).none { it == LONG_WAY_ROUND || it == LONG_WAY_ROUND_2 || it == LONG_WAY_ROUND_3 })
+        }
+
+        @Test
+        fun `the penalty counts for Big Spender II`() {
+            // 1009 earned, 4 unused sections: a final total of 997.
+            val unlocked = unlocks(summary(finalTotal = 997, unusedSections = 4))
+            assertTrue(BIG_SPENDER in unlocked)
+            assertFalse(BIG_SPENDER_2 in unlocked)
+            assertTrue(unlocks(summary(finalTotal = 1_000)).containsAll(listOf(BIG_SPENDER, BIG_SPENDER_2)))
+        }
+
+        @Test
+        fun `three crosses in a row on a win make a Crossroad Master`() {
+            assertTrue(CROSSROAD_MASTER in unlocks(summary(longestCrossChain = 3)))
+            assertFalse(CROSSROAD_MASTER in unlocks(summary(longestCrossChain = 2)))
+        }
+
+        @Test
+        fun `three crosses in a row and a leak are no Crossroad Master`() {
+            assertFalse(CROSSROAD_MASTER in unlocks(summary(outcome = AttemptOutcome.LOST, longestCrossChain = 3)))
+        }
+
+        @Test
+        fun `seven straights in a row on a win are a Highway`() {
+            assertTrue(HIGHWAY in unlocks(summary(longestStraightRun = 7)))
+            assertFalse(HIGHWAY in unlocks(summary(longestStraightRun = 6)))
+            assertFalse(HIGHWAY in unlocks(summary(outcome = AttemptOutcome.LOST, longestStraightRun = 7)))
+        }
+
+        @Test
+        fun `twelve corners in a row on a win are a Snake and eleven are not`() {
+            assertTrue(SNAKE in unlocks(summary(longestCornerRun = 12)))
+            assertFalse(SNAKE in unlocks(summary(longestCornerRun = 11)))
+            assertFalse(SNAKE in unlocks(summary(outcome = AttemptOutcome.LOST, longestCornerRun = 12)))
+        }
+
+        @Test
+        fun `a win on the shortest route is Efficiency Master`() {
+            assertTrue(EFFICIENCY_MASTER in unlocks(summary(minimumSections = 9, piecesOnBoard = 9, unusedSections = 0)))
+        }
+
+        @Test
+        fun `one extra section is no Efficiency Master`() {
+            assertFalse(EFFICIENCY_MASTER in unlocks(summary(minimumSections = 9, piecesOnBoard = 10, unusedSections = 1)))
+        }
+
+        @Test
+        fun `replacements do not count against Efficiency Master`() {
+            assertTrue(EFFICIENCY_MASTER in unlocks(summary(minimumSections = 9, piecesOnBoard = 9, unusedSections = 0, replacements = 2, placements = 11)))
+        }
+
+        @Test
+        fun `Efficiency Master needs a win and a solvable level`() {
+            assertFalse(EFFICIENCY_MASTER in unlocks(summary(outcome = AttemptOutcome.LOST, minimumSections = 9, piecesOnBoard = 9)))
+            assertFalse(EFFICIENCY_MASTER in unlocks(summary(minimumSections = null, piecesOnBoard = 9)))
+        }
+
+        @Test
+        fun `twenty replacements on a win are an Eraser`() {
+            assertTrue(ERASER in unlocks(summary(replacements = 20, placements = 40)))
+            assertFalse(ERASER in unlocks(summary(replacements = 19, placements = 40)))
+            assertFalse(ERASER in unlocks(summary(outcome = AttemptOutcome.LOST, replacements = 20, placements = 40)))
+        }
+
+        @Test
+        fun `the first tips reset is Tips Addict, from the stats alone`() {
+            val stats = PlayerStats.NONE.afterTipsReset()
+            assertTrue(TIPS_ADDICT in AchievementRules.evaluate(null, PlayerStats.NONE, stats, emptyMap(), emptyMap()).newlyUnlocked)
+            assertFalse(TIPS_ADDICT in AchievementRules.evaluate(null, PlayerStats.NONE, PlayerStats.NONE, emptyMap(), emptyMap()).newlyUnlocked)
+        }
+
+        @Test
+        fun `a second tips reset unlocks nothing`() {
+            val stored = mapOf(TIPS_ADDICT to StoredAchievement(unlocked = true))
+            val stats = PlayerStats(tipsResets = 1)
+            assertEquals(emptyList(), AchievementRules.evaluate(null, stats, stats.afterTipsReset(), emptyMap(), stored).newlyUnlocked)
+        }
+
+        @Test
+        fun `three reservoirs on a win are a Snail`() {
+            assertTrue(SNAIL in unlocks(summary(reservoirsLeft = 3)))
+            assertFalse(SNAIL in unlocks(summary(reservoirsLeft = 2)))
+            assertFalse(SNAIL in unlocks(summary(outcome = AttemptOutcome.LOST, reservoirsLeft = 3)))
+        }
+
+        @Test
+        fun `the higher Star Collector tiers count stars like the first two`() {
+            // 60 levels with 3 stars: 180 stars.
+            val evaluation = evaluateAttempt(null, history = history(1..60, stars = 3))
+            assertTrue(STAR_COLLECTOR_3 in evaluation.newlyUnlocked)
+            assertFalse(STAR_COLLECTOR_4 in evaluation.newlyUnlocked)
+            assertEquals(100, evaluation.steps[STAR_COLLECTOR_3])
+            assertEquals(180, evaluation.steps[STAR_COLLECTOR_4])
+            assertTrue(STAR_COLLECTOR_4 in evaluateAttempt(null, history = history(1..84, stars = 3)).newlyUnlocked)
+        }
+
+        @Test
+        fun `a loss after more than 50 sections is a Dramatic Failure`() {
+            assertTrue(DRAMATIC_FAILURE in unlocks(lostSummary(sectionsLeft = 51)))
+            assertFalse(DRAMATIC_FAILURE in unlocks(lostSummary(sectionsLeft = 50)))
+            assertFalse(DRAMATIC_FAILURE in unlocks(summary(distinctTilesLeft = 60)))
+        }
+
+        @Test
+        fun `five taps on one replacement are On Your Nerves, won or lost`() {
+            assertTrue(ON_YOUR_NERVES in unlocks(summary(mostReplacementTaps = 5)))
+            assertTrue(ON_YOUR_NERVES in unlocks(lostSummary(mostReplacementTaps = 5)))
+            // Two replacements tapped 3 times each: the attempt's highest count is 3.
+            assertFalse(ON_YOUR_NERVES in unlocks(summary(mostReplacementTaps = 3)))
+        }
+    }
+
+    @Nested
     inner class Evaluation {
         @Test
         fun `an unlocked achievement is never unlocked again`() {
@@ -420,10 +578,21 @@ class AchievementRulesTest {
             val won = evaluateAttempt(
                 everything,
                 statsBefore = PlayerStats(losses = 3, lossStreakByLevel = mapOf(1 to 3)),
-                history = history(1..24, stars = 3),
+                history = history(1..96, stars = 3),
             )
             val flood = evaluateAttempt(lostSummary(sectionsLeft = 0))
-            assertEquals(Achievement.entries.toSet(), (won.newlyUnlocked + flood.newlyUnlocked).toSet())
+            // The later additions that cannot share a single attempt with the ones above.
+            val later = evaluateAttempt(
+                summary(
+                    distinctTilesLeft = 100, finalTotal = 1_000, longestCrossChain = 3, longestStraightRun = 7, longestCornerRun = 12,
+                    replacements = 20, placements = 60, minimumSections = 10, piecesOnBoard = 10, mostReplacementTaps = 5,
+                    reservoirsLeft = 3,
+                ),
+            )
+            val drama = evaluateAttempt(lostSummary(sectionsLeft = 51))
+            val tips = AchievementRules.evaluate(null, PlayerStats.NONE, PlayerStats(tipsResets = 1), emptyMap(), emptyMap())
+            val all = won.newlyUnlocked + flood.newlyUnlocked + later.newlyUnlocked + drama.newlyUnlocked + tips.newlyUnlocked
+            assertEquals(Achievement.entries.toSet(), all.toSet())
         }
     }
 }

@@ -110,6 +110,7 @@ class MainActivity : ComponentActivity() {
                     onProgressReset = appContainer.tracker::reconcile,
                     achievements = appContainer.achievements,
                     signIn = appContainer.playGames.auth.state,
+                    onTipsReset = { appContainer.tracker.tipsReset() },
                 )
             }
         }

@@ -41,6 +41,20 @@ class AchievementResourcesTest {
         "instant_flood" to ("Instant Flood" to "Lose before the liquid reaches any section you placed."),
         "wall_to_wall" to ("Wall to Wall" to "Win with every free cell filled."),
         "photo_finish" to ("Photo Finish" to "Complete the route on the very tile the liquid was about to enter."),
+        "tips_addict" to ("Tips Addict" to "Reset the tips on the settings screen."),
+        "long_way_round_2" to ("The Long Way Round II" to "Win with the liquid flowing through 50 or more sections."),
+        "long_way_round_3" to ("The Long Way Round III" to "Win with the liquid flowing through 100 or more sections."),
+        "big_spender_2" to ("Big Spender II" to "Win a level with a score of 1,000 or more."),
+        "crossroad_master" to ("Crossroad Master" to "Win with the liquid running through 3 crosses in a row."),
+        "efficiency_master" to ("Efficiency Master" to "Win with no more sections on the board than the shortest route needs."),
+        "highway" to ("Highway" to "Win with the liquid running straight through 7 straight sections in a row."),
+        "snake" to ("Snake" to "Win with the liquid running through 12 corners in a row."),
+        "eraser" to ("Eraser" to "Win a level after replacing 20 or more sections."),
+        "dramatic_failure" to ("Dramatic Failure" to "Lose a level after the liquid flowed through more than 50 sections."),
+        "on_your_nerves" to ("On Your Nerves" to "Tap a tile 5 times while its section is being replaced."),
+        "star_collector_3" to ("Star Collector III" to "Collect 100 stars."),
+        "star_collector_4" to ("Star Collector IV" to "Collect 250 stars."),
+        "snail" to ("Snail" to "Win with the liquid flowing through 3 or more reservoirs."),
     )
 
     /** The `<string>` resources of [path], by name. */
@@ -67,11 +81,26 @@ class AchievementResourcesTest {
         }
     }
 
+    /**
+     * Achievements in the catalogue but not yet created in the Play Console: their id is empty until
+     * the next export, and the sync skips them. Empty while every achievement has been exported.
+     */
+    private val awaitingExport = emptySet<String>()
+
     @Test
     fun `every achievement has a Play Games id and no two share one`() {
-        val ids = Achievement.entries.map { gamesIds["achievement_${it.key}"] }
+        val published = Achievement.entries.filter { it.key !in awaitingExport }
+        val ids = published.map { gamesIds["achievement_${it.key}"] }
         assertTrue(ids.toString(), ids.all { !it.isNullOrBlank() })
         assertEquals(ids.size, ids.toSet().size)
+    }
+
+    @Test
+    fun `an achievement awaiting the export has an empty id, never a made-up one`() {
+        for (key in awaitingExport) {
+            assertTrue("$key is not in the catalogue", Achievement.fromKey(key) != null)
+            assertEquals(key, "", gamesIds["achievement_$key"])
+        }
     }
 
     @Test

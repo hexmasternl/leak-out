@@ -43,10 +43,11 @@ class PlayGamesAchievementSync(
     }
 
     companion object {
-        /** The sync for [activity], with the ids from `games-ids.xml`. */
-        fun of(activity: Activity): PlayGamesAchievementSync {
+        /** The sync for [activity], with the ids from `games-ids.xml`; achievements without an id there are skipped. */
+        fun of(activity: Activity): AchievementSync {
             val context: Context = activity.applicationContext
-            return PlayGamesAchievementSync(PlayGames.getAchievementsClient(activity)) { context.getString(AchievementResources.playGamesId(it)) }
+            val idOf = { achievement: Achievement -> context.getString(AchievementResources.playGamesId(achievement)) }
+            return WithPlayGamesId(PlayGamesAchievementSync(PlayGames.getAchievementsClient(activity), idOf), idOf)
         }
     }
 }

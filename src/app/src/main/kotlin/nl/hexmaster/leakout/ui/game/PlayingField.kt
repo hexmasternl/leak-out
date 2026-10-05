@@ -53,6 +53,7 @@ import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsPropertyKey
@@ -80,9 +81,7 @@ import nl.hexmaster.leakout.core.engine.FlowState
 import nl.hexmaster.leakout.core.engine.Replacement
 import nl.hexmaster.leakout.core.flow.Channel
 import nl.hexmaster.leakout.core.flow.ChannelUse
-import nl.hexmaster.leakout.core.flow.MandatoryProgress
 import nl.hexmaster.leakout.core.level.GridSize
-import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
@@ -393,12 +392,15 @@ private fun CellSemantics(
     flow: () -> FlowState?,
 ) {
     val density = LocalDensity.current
+    val context = LocalContext.current
     val cellDp = with(density) { viewport.cellPx.toDp() }
     val popupTexts = awards.groupBy({ it.position }, { PointsFormat.text(it.points) })
     val filledByCell = filled.groupBy({ it.position }, { it.channel })
     for (position in viewport.visibleCells()) {
         val rect = viewport.cellRect(position)
-        val description = board[position].describe(position, filled)
+        val description = CellDescription.text(CellDescription.of(board[position], position, filled)) { id, args ->
+            if (args.isEmpty()) context.getString(id) else context.getString(id, *args)
+        }
         val mandatory = (board[position] as? Cell.Pipe)?.mandatory == true
         val isHighlighted = position == highlighted
         val texts = popupTexts[position].orEmpty()
@@ -478,22 +480,6 @@ private fun CellNode(
 private fun FlowState?.isFlowing(): Boolean = this != null && this !is FlowState.Waiting
 
 private fun Float.rounded(): Float = (this * 100f).roundToInt() / 100f
-
-/** The content description of a cell at [position]; a mandatory section says whether [filled] uses it. */
-private fun Cell.describe(position: Position, filled: Set<ChannelUse>): String = when (this) {
-    Cell.Empty -> "Empty"
-    Cell.Blocked -> "Blocked"
-    is Cell.Start -> "Start"
-    is Cell.Finish -> "Finish"
-    is Cell.Pipe -> when {
-        mandatory -> {
-            val used = MandatoryProgress.isUsed(MandatorySection(position, section), filled)
-            "Mandatory ${section.name}, ${if (used) "used" else "not used yet"}"
-        }
-        liquidEntered -> "Placed ${section.name}, filled"
-        else -> "Placed ${section.name}"
-    }
-}
 
 /**
  * One finger pans after the touch slop, two fingers zoom around their centroid and pan with it.

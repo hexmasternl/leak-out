@@ -25,6 +25,19 @@
     <string name="game_section_rb">Right-bottom corner</string>
     <string name="game_section_x">Cross section</string>
     <string name="game_section_res">Reservoir</string>
+    <!-- Screen reader text for the playing field's cells. -->
+    <string name="cell_empty">Empty</string>
+    <string name="cell_blocked">Blocked</string>
+    <string name="cell_start">Start</string>
+    <string name="cell_finish">Finish</string>
+    <!-- A pipe section the player placed. %1$s: its name, one of the game_section_* strings. -->
+    <string name="cell_placed">Placed %1$s</string>
+    <!-- A placed pipe section the liquid has entered. %1$s: its name, one of the game_section_* strings. -->
+    <string name="cell_placed_filled">Placed %1$s, filled</string>
+    <!-- A mandatory section the liquid has passed through. %1$s: its name, one of the game_section_* strings. -->
+    <string name="cell_mandatory_used">Mandatory %1$s, used</string>
+    <!-- A mandatory section the liquid still has to pass through. %1$s: its name, one of the game_section_* strings. -->
+    <string name="cell_mandatory_unused">Mandatory %1$s, not used yet</string>
     <!-- Screen reader text for the stack. %1$s: the name of the next pipe section, for example "Cross section". -->
     <string name="game_stack_next_section_description">Next: %1$s</string>
 

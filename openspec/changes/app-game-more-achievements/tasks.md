@@ -34,7 +34,7 @@
 
 - [x] 5.1 Add the 14 icons to `assets/achievements/generate-icons.mjs` (tier template for the II/III/IV tiers, hidden placeholder for the two hidden ones), render the 512 × 512 PNGs and copy them to `app/src/main/res/drawable-nodpi/achievement_<key>.png`; verify they stay inside the radius-200 safe disc in `preview.html`
 - [ ] 5.2 Owner: create the 14 achievements in the Play Console with the same names, descriptions, XP, hidden flags and icons, following `docs/achievements-setup.md#adding-achievements-later`
-- [ ] 5.3 Replace `app/src/main/res/values/games-ids.xml` with the new export (existing ids unchanged) and empty the awaiting-export lists in `AchievementResourcesTest` and `AchievementResourcesInstrumentedTest`; verify `AchievementResourcesInstrumentedTest` passes on the emulator
+- [x] 5.3 Replace `app/src/main/res/values/games-ids.xml` with the new export (existing ids unchanged) and empty the awaiting-export lists in `AchievementResourcesTest` and `AchievementResourcesInstrumentedTest`; verify `AchievementResourcesInstrumentedTest` passes on the emulator
 - [ ] 5.4 Owner: smoke test with a tester account (unlock Tips Addict and one skill achievement), then publish the Play Games configuration
 
 ## 6. Docs

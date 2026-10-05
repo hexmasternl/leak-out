@@ -17,13 +17,10 @@ class AchievementResourcesInstrumentedTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
 
     /**
-     * Not yet created in the Play Console: their id is empty until the next export (task 5.3 of
-     * app-game-more-achievements, which empties this), and the sync skips them.
+     * Not yet created in the Play Console: their id is empty until the next export, and the sync
+     * skips them. Empty while every achievement has been exported.
      */
-    private val awaitingExport = setOf(
-        "tips_addict", "long_way_round_2", "long_way_round_3", "big_spender_2", "crossroad_master", "efficiency_master",
-        "highway", "snake", "eraser", "dramatic_failure", "on_your_nerves", "star_collector_3", "star_collector_4", "snail",
-    )
+    private val awaitingExport = emptySet<String>()
 
     @Test
     fun everyKeyHasANonEmptyPlayGamesIdAndNoTwoShareOne() {

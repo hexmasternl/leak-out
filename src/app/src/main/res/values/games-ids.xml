@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--Google Play game services IDs, exported from the Play Console on 2026-10-02.
-    Copy to app/src/main/res/values/games-ids.xml (task 6.2).
-    Five resources are renamed from the Console's name-based names to achievement_<key>:
+<!--Google Play game services IDs, exported from the Play Console on 2026-10-05.
+    Ten resources are renamed from the Console's name-based names to achievement_<key>:
     getting_the_hang_of_it -> levels_finished_1, star_collector_i -> star_collector_1,
-    star_collector_ii -> star_collector_2, perfectionist_i -> perfectionist_1,
-    the_long_way_round -> long_way_round. The ids are unchanged.-->
+    star_collector_ii -> star_collector_2, star_collector_iii -> star_collector_3,
+    star_collector_iv -> star_collector_4, perfectionist_i -> perfectionist_1,
+    the_long_way_round -> long_way_round, the_long_way_round_ii -> long_way_round_2,
+    the_long_way_round_iii -> long_way_round_3, big_spender_ii -> big_spender_2.
+    The ids are unchanged.-->
 <resources>
   <!--app_id-->
   <string name="app_id" translatable="false">201820010117</string>
@@ -60,34 +62,32 @@
   <string name="achievement_wall_to_wall" translatable="false">CgkIhe2j6-8FEAIQGA</string>
   <!--achievement Photo Finish-->
   <string name="achievement_photo_finish" translatable="false">CgkIhe2j6-8FEAIQGQ</string>
-  <!--Added by app-game-more-achievements and not yet created in the Play Console: an empty id
-      is skipped by the sync. The next export (task 5.3) replaces these with the real ids.-->
   <!--achievement Tips Addict-->
-  <string name="achievement_tips_addict" translatable="false"></string>
+  <string name="achievement_tips_addict" translatable="false">CgkIhe2j6-8FEAIQHg</string>
   <!--achievement The Long Way Round II-->
-  <string name="achievement_long_way_round_2" translatable="false"></string>
+  <string name="achievement_long_way_round_2" translatable="false">CgkIhe2j6-8FEAIQGg</string>
   <!--achievement The Long Way Round III-->
-  <string name="achievement_long_way_round_3" translatable="false"></string>
+  <string name="achievement_long_way_round_3" translatable="false">CgkIhe2j6-8FEAIQIQ</string>
   <!--achievement Big Spender II-->
-  <string name="achievement_big_spender_2" translatable="false"></string>
+  <string name="achievement_big_spender_2" translatable="false">CgkIhe2j6-8FEAIQJg</string>
   <!--achievement Crossroad Master-->
-  <string name="achievement_crossroad_master" translatable="false"></string>
+  <string name="achievement_crossroad_master" translatable="false">CgkIhe2j6-8FEAIQGw</string>
   <!--achievement Efficiency Master-->
-  <string name="achievement_efficiency_master" translatable="false"></string>
+  <string name="achievement_efficiency_master" translatable="false">CgkIhe2j6-8FEAIQHQ</string>
   <!--achievement Highway-->
-  <string name="achievement_highway" translatable="false"></string>
+  <string name="achievement_highway" translatable="false">CgkIhe2j6-8FEAIQIA</string>
   <!--achievement Snake-->
-  <string name="achievement_snake" translatable="false"></string>
+  <string name="achievement_snake" translatable="false">CgkIhe2j6-8FEAIQHw</string>
   <!--achievement Eraser-->
-  <string name="achievement_eraser" translatable="false"></string>
+  <string name="achievement_eraser" translatable="false">CgkIhe2j6-8FEAIQJw</string>
   <!--achievement Dramatic Failure-->
-  <string name="achievement_dramatic_failure" translatable="false"></string>
+  <string name="achievement_dramatic_failure" translatable="false">CgkIhe2j6-8FEAIQJQ</string>
   <!--achievement On Your Nerves-->
-  <string name="achievement_on_your_nerves" translatable="false"></string>
+  <string name="achievement_on_your_nerves" translatable="false">CgkIhe2j6-8FEAIQIg</string>
   <!--achievement Star Collector III-->
-  <string name="achievement_star_collector_3" translatable="false"></string>
+  <string name="achievement_star_collector_3" translatable="false">CgkIhe2j6-8FEAIQHA</string>
   <!--achievement Star Collector IV-->
-  <string name="achievement_star_collector_4" translatable="false"></string>
+  <string name="achievement_star_collector_4" translatable="false">CgkIhe2j6-8FEAIQJA</string>
   <!--achievement Snail-->
-  <string name="achievement_snail" translatable="false"></string>
+  <string name="achievement_snail" translatable="false">CgkIhe2j6-8FEAIQIw</string>
 </resources>

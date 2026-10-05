@@ -66,8 +66,14 @@ class GameSession(level: Level, private val engine: GameEngine = GameEngine()) {
     /**
      * Places the stack's next section on [at] and says what that did: a new section on an empty
      * tile, one that destroyed the section the tile held, or nothing because the tile refused it.
+     * While a replacement runs nothing is placed: the tap is sent as a [GameCommand.ReplacementTap],
+     * which only counts taps on the replaced tile, and the result is still a (silent) refusal.
      */
     fun place(at: Position): PlaceResult {
+        if (isReplacing) {
+            send(GameCommand.ReplacementTap(at))
+            return PlaceResult.Rejected
+        }
         val held = state.board[at] is Cell.Pipe
         return when {
             !send(GameCommand.Place(at)) -> PlaceResult.Rejected

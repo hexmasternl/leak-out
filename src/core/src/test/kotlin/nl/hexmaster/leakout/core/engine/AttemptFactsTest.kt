@@ -6,8 +6,11 @@ import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import nl.hexmaster.leakout.core.board.Cell
 import nl.hexmaster.leakout.core.engine.GameCommand.Pause
 import nl.hexmaster.leakout.core.engine.GameCommand.Place
+import nl.hexmaster.leakout.core.engine.GameCommand.RemoveUnused
+import nl.hexmaster.leakout.core.engine.GameCommand.ReplacementTap
 import nl.hexmaster.leakout.core.engine.GameCommand.Restart
 import nl.hexmaster.leakout.core.engine.GameCommand.Resume
 import nl.hexmaster.leakout.core.engine.GameCommand.Tick
@@ -49,6 +52,8 @@ class AttemptFactsTest {
         assertFalse(state.everPaused)
         assertFalse(state.routeCompletedBeforeFlow)
         assertFalse(state.photoFinish)
+        assertEquals(emptyList(), state.flowPath)
+        assertEquals(0, state.mostReplacementTaps)
     }
 
     @Test
@@ -206,5 +211,120 @@ class AttemptFactsTest {
         val won = engine.runToEnd(engine.start(level).placeAll(ROUTE.take(2)).untilHeadIn(p(2, 1)).place(p(2, 2), PipeSection.V))
         assertTrue(won.photoFinish)
         assertFalse(engine.handle(won, Restart).photoFinish)
+    }
+
+    // --- The liquid's path ---
+
+    @Test
+    fun `the path holds every section the liquid left, in flow order`() {
+        val won = engine.runToEnd(engine.start(level).placeAll(ROUTE))
+        assertIs<Outcome.Won>(won.outcome)
+        assertEquals(ROUTE.map { (at, section) -> PathStep(at, section) }, won.flowPath)
+    }
+
+    @Test
+    fun `a cross left twice is in the path twice`() {
+        // Right through the cross on (1, 1), up and round to come down through it, then into the finish.
+        val loop = listOf(
+            p(1, 1) to PipeSection.X,
+            p(2, 1) to PipeSection.LT,
+            p(2, 0) to PipeSection.LB,
+            p(1, 0) to PipeSection.RB,
+            p(1, 2) to PipeSection.RT,
+            p(2, 2) to PipeSection.LB,
+        )
+        val won = engine.runToEnd(engine.start(level).placeAll(loop))
+        assertIs<Outcome.Won>(won.outcome)
+        val cross = PathStep(p(1, 1), PipeSection.X)
+        assertEquals(
+            listOf(cross, PathStep(p(2, 1), PipeSection.LT), PathStep(p(2, 0), PipeSection.LB), PathStep(p(1, 0), PipeSection.RB), cross,
+                PathStep(p(1, 2), PipeSection.RT), PathStep(p(2, 2), PipeSection.LB)),
+            won.flowPath,
+        )
+    }
+
+    @Test
+    fun `a lost attempt keeps the path up to the leak`() {
+        val lost = engine.runToEnd(engine.start(level).placeAll(ROUTE.take(2)))
+        assertIs<Outcome.Lost>(lost.outcome)
+        assertEquals(ROUTE.take(2).map { (at, section) -> PathStep(at, section) }, lost.flowPath)
+    }
+
+    @Test
+    fun `removing unused sections after a win leaves the path alone`() {
+        val won = engine.runToEnd(engine.start(level).placeAll(ROUTE).place(p(4, 4), PipeSection.H))
+        val removed = engine.handle(won, RemoveUnused(1))
+        assertEquals(1, removed.sectionsRemoved)
+        assertEquals(won.flowPath, removed.flowPath)
+    }
+
+    @Test
+    fun `restart clears the path`() {
+        val loop = listOf(p(1, 1) to PipeSection.H, p(2, 1) to PipeSection.H, p(3, 1) to PipeSection.H, p(4, 1) to PipeSection.LB, p(4, 2) to PipeSection.V)
+        val lost = engine.runToEnd(engine.start(level).placeAll(loop))
+        assertEquals(5, lost.flowPath.size)
+        assertEquals(emptyList(), engine.handle(lost, Restart).flowPath)
+    }
+
+    // --- Taps on a running replacement ---
+
+    /** A replacement running on (3, 2): an H there is replaced by a V. */
+    private fun replacing(): GameState {
+        val state = engine.start(level).place(p(3, 2), PipeSection.H).place(p(3, 2), PipeSection.V)
+        assertIs<Replacement>(state.replacement)
+        return state
+    }
+
+    private fun GameState.tap(at: Position, times: Int): GameState =
+        (1..times).fold(this) { s, _ -> engine.handle(s, ReplacementTap(at)).also { assertTrue(it !== s, "tap on $at was refused") } }
+
+    @Test
+    fun `taps on the replaced tile are counted and change nothing else`() {
+        val replacing = replacing()
+        val tapped = replacing.tap(p(3, 2), 4)
+        assertEquals(4, tapped.replacement?.taps)
+        assertEquals(4, tapped.mostReplacementTaps)
+        assertEquals(replacing.board, tapped.board)
+        assertEquals(replacing.stack, tapped.stack)
+        assertEquals(replacing.placements, tapped.placements)
+        assertEquals(replacing.replacement?.landsAtMs, tapped.replacement?.landsAtMs)
+        assertEquals(replacing.replaceLockUntilMs, tapped.replaceLockUntilMs)
+    }
+
+    @Test
+    fun `a tap on another tile is refused`() {
+        val replacing = replacing()
+        assertSame(replacing, engine.handle(replacing, ReplacementTap(p(3, 3))))
+    }
+
+    @Test
+    fun `a tap without a replacement is refused`() {
+        val state = engine.start(level).place(p(3, 2), PipeSection.H)
+        assertSame(state, engine.handle(state, ReplacementTap(p(3, 2))))
+    }
+
+    @Test
+    fun `a tap while paused is refused`() {
+        val paused = engine.handle(replacing(), Pause)
+        assertSame(paused, engine.handle(paused, ReplacementTap(p(3, 2))))
+    }
+
+    @Test
+    fun `the highest tap count of the attempt is kept after the replacements land`() {
+        var state = replacing().tap(p(3, 2), 6)
+        state = engine.handle(state, Tick(level.rules.replacePenaltyMs))
+        assertEquals(null, state.replacement)
+        assertEquals(6, state.mostReplacementTaps)
+        state = state.place(p(3, 2), PipeSection.H).tap(p(3, 2), 2)
+        assertEquals(2, state.replacement?.taps)
+        state = engine.handle(state, Tick(level.rules.replacePenaltyMs))
+        assertEquals(6, state.mostReplacementTaps)
+        assertEquals(Cell.Pipe(PipeSection.H), state.board[p(3, 2)])
+    }
+
+    @Test
+    fun `restart clears the tap count`() {
+        val tapped = replacing().tap(p(3, 2), 3)
+        assertEquals(0, engine.handle(tapped, Restart).mostReplacementTaps)
     }
 }

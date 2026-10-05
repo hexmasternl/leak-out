@@ -11,6 +11,12 @@ sealed interface GameCommand {
     /** Puts the stack's next section on the tile [at]. */
     data class Place(val at: Position) : GameCommand
 
+    /**
+     * A tap on the tile [at] while a replacement runs. It places nothing: a tap on the replaced tile
+     * is counted in [Replacement.taps], any other is refused.
+     */
+    data class ReplacementTap(val at: Position) : GameCommand
+
     data object Pause : GameCommand
 
     data object Resume : GameCommand

@@ -145,7 +145,7 @@ class SettingsPlayGamesTest {
                 .assertIsDisplayed()
                 .assertIsEnabled()
                 .assert(hasText("Achievements"))
-                .assert(hasText("12 / 25"))
+                .assert(hasText("12 / 39"))
                 .assertHeightIsAtLeast(48.dp)
         }
     }
@@ -160,11 +160,11 @@ class SettingsPlayGamesTest {
     @Test
     fun achievementsSurviveAReset() {
         showScreen(SignInState.SignedOut, unlocked = 9, records = listOf(LevelHistory(1, 100, 3)))
-        compose.onNodeWithTag(PlayGamesPanelTags.ACHIEVEMENTS).performScrollTo().assert(hasText("9 / 25"))
+        compose.onNodeWithTag(PlayGamesPanelTags.ACHIEVEMENTS).performScrollTo().assert(hasText("9 / 39"))
         compose.onNodeWithTag(SettingsTags.RESET_PROGRESS).performScrollTo().performClick()
         compose.onNodeWithTag(SettingsTags.RESET_CONFIRM).performClick()
         compose.waitForIdle()
         compose.onNodeWithTag(SettingsTags.PROGRESS_SUMMARY).assertTextEquals("No levels finished yet")
-        compose.onNodeWithTag(PlayGamesPanelTags.ACHIEVEMENTS).performScrollTo().assert(hasText("9 / 25"))
+        compose.onNodeWithTag(PlayGamesPanelTags.ACHIEVEMENTS).performScrollTo().assert(hasText("9 / 39"))
     }
 }

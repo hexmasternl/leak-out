@@ -18,12 +18,13 @@ data class AchievementStateEntity(
     @ColumnInfo(name = "unlocked_at_ms") val unlockedAtMs: Long?,
 )
 
-/** The lifetime player stats: a single row with id [SINGLE_ROW]. */
+/** The lifetime player stats: a single row with id [SINGLE_ROW]. [tipsResets] was added in version 3. */
 @Entity(tableName = "player_stats")
 data class PlayerStatsEntity(
     @PrimaryKey @ColumnInfo(name = "id") val id: Int = SINGLE_ROW,
     @ColumnInfo(name = "sections_placed") val sectionsPlaced: Int,
     @ColumnInfo(name = "losses") val losses: Int,
+    @ColumnInfo(name = "tips_resets", defaultValue = "0") val tipsResets: Int = 0,
 ) {
     companion object {
         const val SINGLE_ROW = 0

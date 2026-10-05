@@ -13,6 +13,7 @@ import nl.hexmaster.leakout.core.engine.GameCommand
 import nl.hexmaster.leakout.core.engine.GameEngine
 import nl.hexmaster.leakout.core.engine.GameState
 import nl.hexmaster.leakout.core.engine.Outcome
+import nl.hexmaster.leakout.core.engine.PathStep
 import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.FlowSettings
 import nl.hexmaster.leakout.core.level.GridSize
@@ -89,6 +90,90 @@ class AttemptSummaryTest {
         assertEquals(25 - 3, summary.freeCells)
         assertEquals(7, summary.piecesOnBoard)
         assertEquals(RecordOutcome.NEW_HIGHSCORE, summary.record)
+        // RES, X, LT, LB, RB, X, V: the corners are the longest run.
+        assertEquals(1, summary.longestCrossChain)
+        assertEquals(1, summary.longestStraightRun)
+        assertEquals(3, summary.longestCornerRun)
+        assertEquals(1, summary.reservoirsLeft)
+        assertEquals(0, summary.mostReplacementTaps)
+        // The mandatory cross is on the solver's path twice but is one cell.
+        assertEquals(6, summary.minimumSections)
+    }
+
+    @Test
+    fun `a win on the shortest route has no more pieces than the minimum`() {
+        val won = engine.start(crossLevel).placeAll(crossRoute).runToEnd()
+        val summary = AttemptSummary.from(won, null)
+        assertEquals(summary.minimumSections, summary.piecesOnBoard)
+        assertTrue(Achievement.EFFICIENCY_MASTER in evaluateAttempt(summary).newlyUnlocked)
+    }
+
+    @Test
+    fun `a won board after removing the unused section still counts it`() {
+        val won = engine.start(crossLevel).placeAll(crossRoute).place(Position(4, 4), PipeSection.H).runToEnd()
+        val removed = engine.handle(won, GameCommand.RemoveUnused(1))
+        val summary = AttemptSummary.from(removed, null)
+        assertEquals(7, summary.piecesOnBoard)
+        assertEquals(6, summary.minimumSections)
+        assertFalse(Achievement.EFFICIENCY_MASTER in evaluateAttempt(summary).newlyUnlocked)
+    }
+
+    @Test
+    fun `a straight line of seven is the longest straight run`() {
+        val level = TestLevels.valid(grid = GridSize(9, 3), start = Endpoint(Position(0, 1), Side.RIGHT), finish = Endpoint(Position(8, 1), Side.LEFT), blocked = emptyList())
+        val won = engine.start(level).placeAll((1..7).map { Position(it, 1) to PipeSection.H }).runToEnd()
+        assertIs<Outcome.Won>(won.outcome)
+        val summary = AttemptSummary.from(won, null)
+        assertEquals(7, summary.longestStraightRun)
+        assertEquals(0, summary.longestCornerRun)
+        assertEquals(7, summary.minimumSections)
+    }
+
+    @Test
+    fun `an unsolvable level has no minimum`() {
+        // The finish's facing cell is blocked.
+        val level = TestLevels.valid(grid = GridSize(5, 5), start = Endpoint(Position(0, 2), Side.RIGHT), finish = Endpoint(Position(4, 2), Side.LEFT), blocked = listOf(Position(3, 2)))
+        assertNull(AttemptSummary.minimumSections(level))
+    }
+
+    /** A lost attempt on [crossLevel] whose recorded path is [sections], one tile apart. */
+    private fun withPath(vararg sections: PipeSection): AttemptSummary {
+        val lost = engine.start(crossLevel).runToEnd()
+        val path = sections.mapIndexed { i, section -> PathStep(Position(i, 0), section) }
+        return AttemptSummary.from(lost.copy(flowPath = path), null)
+    }
+
+    @Test
+    fun `runs of crosses`() {
+        val h = PipeSection.H
+        val x = PipeSection.X
+        assertEquals(3, withPath(h, x, x, x, h).longestCrossChain)
+        assertEquals(2, withPath(x, x, h, x).longestCrossChain)
+        assertEquals(0, withPath(h, h).longestCrossChain)
+    }
+
+    @Test
+    fun `runs of straights only continue in the same direction`() {
+        val h = PipeSection.H
+        val v = PipeSection.V
+        assertEquals(4, withPath(h, h, h, h, PipeSection.X, h, h, h).longestStraightRun)
+        assertEquals(3, withPath(h, h, v, v, v).longestStraightRun)
+        assertEquals(2, withPath(h, PipeSection.RES, h, h).longestStraightRun)
+    }
+
+    @Test
+    fun `runs of corners are broken by any other section`() {
+        val corners = listOf(PipeSection.LT, PipeSection.RB, PipeSection.LB, PipeSection.RT)
+        assertEquals(4, withPath(*corners.toTypedArray(), PipeSection.H, PipeSection.LT).longestCornerRun)
+        assertEquals(2, withPath(PipeSection.LT, PipeSection.RB, PipeSection.RES, PipeSection.LB).longestCornerRun)
+        assertEquals(2, withPath(PipeSection.LT, PipeSection.X, PipeSection.LB, PipeSection.RT).longestCornerRun)
+        assertEquals(2, withPath(PipeSection.RES, PipeSection.H, PipeSection.RES).reservoirsLeft)
+    }
+
+    @Test
+    fun `the most replacement taps reach the summary`() {
+        val lost = engine.start(crossLevel).runToEnd()
+        assertEquals(6, AttemptSummary.from(lost.copy(mostReplacementTaps = 6), null).mostReplacementTaps)
     }
 
     @Test

@@ -192,5 +192,89 @@ object AchievementResources {
             R.drawable.achievement_photo_finish,
             R.string.achievement_photo_finish,
         )
+        Achievement.TIPS_ADDICT -> AchievementRes(
+            R.string.achievement_name_tips_addict,
+            R.string.achievement_desc_tips_addict,
+            R.drawable.achievement_tips_addict,
+            R.string.achievement_tips_addict,
+        )
+        Achievement.LONG_WAY_ROUND_2 -> AchievementRes(
+            R.string.achievement_name_long_way_round_2,
+            R.string.achievement_desc_long_way_round_2,
+            R.drawable.achievement_long_way_round_2,
+            R.string.achievement_long_way_round_2,
+        )
+        Achievement.LONG_WAY_ROUND_3 -> AchievementRes(
+            R.string.achievement_name_long_way_round_3,
+            R.string.achievement_desc_long_way_round_3,
+            R.drawable.achievement_long_way_round_3,
+            R.string.achievement_long_way_round_3,
+        )
+        Achievement.BIG_SPENDER_2 -> AchievementRes(
+            R.string.achievement_name_big_spender_2,
+            R.string.achievement_desc_big_spender_2,
+            R.drawable.achievement_big_spender_2,
+            R.string.achievement_big_spender_2,
+        )
+        Achievement.CROSSROAD_MASTER -> AchievementRes(
+            R.string.achievement_name_crossroad_master,
+            R.string.achievement_desc_crossroad_master,
+            R.drawable.achievement_crossroad_master,
+            R.string.achievement_crossroad_master,
+        )
+        Achievement.EFFICIENCY_MASTER -> AchievementRes(
+            R.string.achievement_name_efficiency_master,
+            R.string.achievement_desc_efficiency_master,
+            R.drawable.achievement_efficiency_master,
+            R.string.achievement_efficiency_master,
+        )
+        Achievement.HIGHWAY -> AchievementRes(
+            R.string.achievement_name_highway,
+            R.string.achievement_desc_highway,
+            R.drawable.achievement_highway,
+            R.string.achievement_highway,
+        )
+        Achievement.SNAKE -> AchievementRes(
+            R.string.achievement_name_snake,
+            R.string.achievement_desc_snake,
+            R.drawable.achievement_snake,
+            R.string.achievement_snake,
+        )
+        Achievement.ERASER -> AchievementRes(
+            R.string.achievement_name_eraser,
+            R.string.achievement_desc_eraser,
+            R.drawable.achievement_eraser,
+            R.string.achievement_eraser,
+        )
+        Achievement.DRAMATIC_FAILURE -> AchievementRes(
+            R.string.achievement_name_dramatic_failure,
+            R.string.achievement_desc_dramatic_failure,
+            R.drawable.achievement_dramatic_failure,
+            R.string.achievement_dramatic_failure,
+        )
+        Achievement.ON_YOUR_NERVES -> AchievementRes(
+            R.string.achievement_name_on_your_nerves,
+            R.string.achievement_desc_on_your_nerves,
+            R.drawable.achievement_on_your_nerves,
+            R.string.achievement_on_your_nerves,
+        )
+        Achievement.STAR_COLLECTOR_3 -> AchievementRes(
+            R.string.achievement_name_star_collector_3,
+            R.string.achievement_desc_star_collector_3,
+            R.drawable.achievement_star_collector_3,
+            R.string.achievement_star_collector_3,
+        )
+        Achievement.STAR_COLLECTOR_4 -> AchievementRes(
+            R.string.achievement_name_star_collector_4,
+            R.string.achievement_desc_star_collector_4,
+            R.drawable.achievement_star_collector_4,
+            R.string.achievement_star_collector_4,
+        )
+        Achievement.SNAIL -> AchievementRes(
+            R.string.achievement_name_snail,
+            R.string.achievement_desc_snail,
+            R.drawable.achievement_snail,
+            R.string.achievement_snail,
+        )
     }
 }

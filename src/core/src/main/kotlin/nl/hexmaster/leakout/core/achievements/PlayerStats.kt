@@ -7,11 +7,13 @@ package nl.hexmaster.leakout.core.achievements
  * @param losses attempts ever lost.
  * @param lossStreakByLevel per level id, the losses since the last win on that level; a level
  *   without a streak is left out.
+ * @param tipsResets times the seen tips were reset with "Show tips again" on the settings screen.
  */
 data class PlayerStats(
     val sectionsPlaced: Int = 0,
     val losses: Int = 0,
     val lossStreakByLevel: Map<Int, Int> = emptyMap(),
+    val tipsResets: Int = 0,
 ) {
     fun lossStreak(levelId: Int): Int = lossStreakByLevel[levelId] ?: 0
 
@@ -32,6 +34,9 @@ data class PlayerStats(
         require(placements >= 0) { "Placements cannot be negative, were $placements" }
         return copy(sectionsPlaced = sectionsPlaced + placements)
     }
+
+    /** The stats after the seen tips were reset once more. */
+    fun afterTipsReset(): PlayerStats = copy(tipsResets = tipsResets + 1)
 
     companion object {
         val NONE = PlayerStats()

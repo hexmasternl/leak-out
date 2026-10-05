@@ -88,6 +88,22 @@ enum class Achievement(
     INSTANT_FLOOD("instant_flood", AchievementGroup.HIDDEN, AchievementType.Standard, xp = 20, hidden = true),
     WALL_TO_WALL("wall_to_wall", AchievementGroup.HIDDEN, AchievementType.Standard, xp = 30, hidden = true),
     PHOTO_FINISH("photo_finish", AchievementGroup.HIDDEN, AchievementType.Standard, xp = 30, hidden = true),
+
+    // Later additions (issue #64), after the launch entries so their order never changes.
+    TIPS_ADDICT("tips_addict", AchievementGroup.LIFETIME, AchievementType.Standard, xp = 5),
+    LONG_WAY_ROUND_2("long_way_round_2", AchievementGroup.SKILL, AchievementType.Standard, xp = 10),
+    LONG_WAY_ROUND_3("long_way_round_3", AchievementGroup.SKILL, AchievementType.Standard, xp = 15),
+    BIG_SPENDER_2("big_spender_2", AchievementGroup.SKILL, AchievementType.Standard, xp = 15),
+    CROSSROAD_MASTER("crossroad_master", AchievementGroup.SKILL, AchievementType.Standard, xp = 15),
+    EFFICIENCY_MASTER("efficiency_master", AchievementGroup.SKILL, AchievementType.Standard, xp = 15),
+    HIGHWAY("highway", AchievementGroup.SKILL, AchievementType.Standard, xp = 10),
+    SNAKE("snake", AchievementGroup.SKILL, AchievementType.Standard, xp = 15),
+    ERASER("eraser", AchievementGroup.SKILL, AchievementType.Standard, xp = 5),
+    DRAMATIC_FAILURE("dramatic_failure", AchievementGroup.HIDDEN, AchievementType.Standard, xp = 5, hidden = true),
+    ON_YOUR_NERVES("on_your_nerves", AchievementGroup.HIDDEN, AchievementType.Standard, xp = 5, hidden = true),
+    STAR_COLLECTOR_3("star_collector_3", AchievementGroup.PROGRESS, incremental(100, Measure.STARS), xp = 10),
+    STAR_COLLECTOR_4("star_collector_4", AchievementGroup.PROGRESS, incremental(250, Measure.STARS), xp = 15),
+    SNAIL("snail", AchievementGroup.SKILL, AchievementType.Standard, xp = 10),
     ;
 
     /** The number of steps of an incremental achievement, null for a standard one. */

@@ -15,8 +15,8 @@
 
 ## 3. Documentation and conventions
 
-- [ ] 3.1 Add a "Release notes" section to `docs/deployment.md` (where the notes come from, the range, PR-title conventions, `Release-note:` / `Release-note: none` with examples, the 500-character limit, the fallback, where to see them) plus a troubleshooting entry for a rejected `whatsnew-en-US` locale, and link it from "How it works"; verify every command shown runs as written
-- [ ] 3.2 Update `.claude/skills/openspec-work-on-change/SKILL.md` so pull request titles are written as a short player-facing release note after the `<change-name>:` prefix, and mention `Release-note: none` for changes players don't see; verify `node scripts/sync-agent-config.mjs --check` reports in sync (run it without `--check` first if needed)
+- [x] 3.1 Add a "Release notes" section to `docs/deployment.md` (where the notes come from, the range, PR-title conventions, `Release-note:` / `Release-note: none` with examples, the 500-character limit, the fallback, where to see them) plus a troubleshooting entry for a rejected `whatsnew-en-US` locale, and link it from "How it works"; verify every command shown runs as written
+- [x] 3.2 Update `.claude/skills/openspec-work-on-change/SKILL.md` so pull request titles are written as a short player-facing release note after the `<change-name>:` prefix, and mention `Release-note: none` for changes players don't see; verify `node scripts/sync-agent-config.mjs --check` reports in sync (run it without `--check` first if needed)
 
 ## 4. Integration
 

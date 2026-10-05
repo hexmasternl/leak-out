@@ -2,8 +2,8 @@
 
 ## 1. Release flow decision
 
-- [ ] 1.1 In Play Console, find out whether automatic app-strings translation is applied to a bundle uploaded through the Publishing API with status `completed` (check one internal release, or Play's documentation). Record the answer in design.md decision 2. Verify: the answer and its source are written down.
-- [ ] 1.2 If `completed` uploads are not translated, change the `PLAY_RELEASE_STATUS` default in `.github/workflows/deploy-play-internal.yml` to `draft`. Verify: `actionlint` (or a workflow dry run) passes and the step summary shows `draft`.
+- [x] 1.1 In Play Console, find out whether automatic app-strings translation is applied to a bundle uploaded through the Publishing API with status `completed` (check one internal release, or Play's documentation). Record the answer in design.md decision 2. Verify: the answer and its source are written down.
+- [x] 1.2 If `completed` uploads are not translated, change the `PLAY_RELEASE_STATUS` default in `.github/workflows/deploy-play-internal.yml` to `draft`. Verify: `actionlint` (or a workflow dry run) passes and the step summary shows `draft`.
 
 ## 2. Translator-ready strings
 

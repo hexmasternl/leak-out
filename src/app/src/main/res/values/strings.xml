@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Leak Out</string>
+    <!-- Brand name, not translated. -->
+    <string name="app_name" translatable="false">Leak Out</string>
     <!-- Brand wordmark: always two uppercase lines, not translated. -->
     <string name="splash_wordmark" translatable="false">LEAK\nOUT</string>
-    <string name="welcome_title">Leak Out</string>
+    <!-- Brand name, not translated. -->
+    <string name="welcome_title" translatable="false">Leak Out</string>
     <string name="welcome_play">Play</string>
     <string name="welcome_settings">Settings</string>
     <string name="welcome_exit">Exit</string>
@@ -23,16 +25,22 @@
     <string name="game_section_rb">Right-bottom corner</string>
     <string name="game_section_x">Cross section</string>
     <string name="game_section_res">Reservoir</string>
+    <!-- Screen reader text for the stack. %1$s: the name of the next pipe section, for example "Cross section". -->
     <string name="game_stack_next_section_description">Next: %1$s</string>
 
     <!-- Game HUD -->
+    <!-- HUD label. %1$s: the level number, already formatted. -->
     <string name="hud_level">Level %1$s</string>
+    <!-- Screen reader text for the flow speed. %1$s: the speed as a number, already formatted. -->
     <string name="hud_speed_description">Flow speed %1$s</string>
+    <!-- Screen reader text for the countdown bar. %1$d: whole seconds until the liquid starts to flow. -->
     <plurals name="hud_countdown_description">
         <item quantity="one">Flow starts in %1$d second</item>
         <item quantity="other">Flow starts in %1$d seconds</item>
     </plurals>
+    <!-- Screen reader text. %1$d: the number of stars earned so far (0 to 3). -->
     <string name="hud_stars_description">%1$d of 3 stars</string>
+    <!-- Screen reader text for the score bar. %1$s: the score, already formatted. %2$d: the stars earned so far (0 to 3). -->
     <string name="hud_score_description">Score %1$s, %2$d of 3 stars</string>
     <string name="hud_pause_menu">Pause menu</string>
 
@@ -42,7 +50,7 @@
     <string name="pause_restart">Restart</string>
     <string name="pause_exit">Exit</string>
 
-    <!-- Level complete and level lost dialogs: the level number above the headline -->
+    <!-- Level complete and level lost dialogs: the level number above the headline, shown in capitals. %1$d: the level number. -->
     <string name="result_eyebrow">Level %1$d</string>
 
     <!-- Level lost dialog -->
@@ -50,6 +58,7 @@
     <string name="lost_message">The pipe is leaking. Level lost.</string>
     <string name="lost_message_mandatory">The liquid missed a mandatory section. Level lost.</string>
     <string name="lost_score_label">Score</string>
+    <!-- Screen reader text for the score in the level lost dialog. %1$s: the score, already formatted. -->
     <string name="lost_score">Score %1$s</string>
     <string name="lost_restart">Restart</string>
     <string name="lost_exit">Exit</string>
@@ -61,9 +70,13 @@
     <string name="win_earned">Points</string>
     <string name="win_penalty">Penalty</string>
     <string name="win_total">Score</string>
-    <string name="win_penalty_value">−%1$s</string>
+    <!-- Format only: a minus sign before the penalty points. -->
+    <string name="win_penalty_value" translatable="false">−%1$s</string>
+    <!-- Screen reader text in the level complete dialog. %1$s: the points earned, already formatted. -->
     <string name="win_earned_description">Points %1$s</string>
+    <!-- Screen reader text in the level complete dialog. %1$s: the penalty points, already formatted. -->
     <string name="win_penalty_description">Penalty minus %1$s</string>
+    <!-- Screen reader text in the level complete dialog. %1$s: the final score, already formatted. -->
     <string name="win_total_description">Score %1$s</string>
     <string name="win_next">Next Level</string>
     <string name="win_restart">Restart</string>
@@ -78,18 +91,25 @@
 
     <!-- Level library -->
     <string name="level_library_title">Levels</string>
+    <!-- Level library page label. %1$d: the page number. -->
     <string name="level_library_page">Page %1$d</string>
     <string name="level_library_previous">Previous page</string>
     <string name="level_library_next">Next page</string>
-    <string name="level_library_star_progress_label">%1$d / %2$d</string>
+    <!-- Format only: stars collected / stars needed. -->
+    <string name="level_library_star_progress_label" translatable="false">%1$d / %2$d</string>
+    <!-- Screen reader text for the star progress bar. %1$d: stars collected. %2$d: stars needed to open the next page. %3$d: the number of that page. -->
     <plurals name="level_library_star_progress_description">
         <item quantity="one">%1$d of %2$d star to open page %3$d</item>
         <item quantity="other">%1$d of %2$d stars to open page %3$d</item>
     </plurals>
     <string name="level_library_star_progress_reached">Next page open</string>
+    <!-- Shown when a locked level is tapped. %1$d: the level number. -->
     <string name="level_library_locked_message">Level %1$d is locked</string>
+    <!-- Screen reader text for a level tile. %1$d: the level number. -->
     <string name="level_tile_locked">Level %1$d, locked</string>
+    <!-- Screen reader text for a level tile. %1$d: the level number. -->
     <string name="level_tile_unlocked">Level %1$d, not played yet</string>
+    <!-- Screen reader text for a level tile. %1$d: the level number. %2$d: the stars earned (1 to 3). -->
     <string name="level_tile_completed">Level %1$d, completed, %2$d of 3 stars</string>
 
     <!-- Settings screen -->
@@ -104,6 +124,7 @@
     <string name="settings_feel">Feel</string>
     <string name="settings_vibration">Vibration</string>
     <string name="settings_progress">Progress</string>
+    <!-- Settings, progress panel. %1$d: the number of finished levels. %2$d: the total stars earned; ★ is a star symbol, keep it. -->
     <plurals name="settings_progress_summary">
         <item quantity="one">%1$d level finished · %2$d ★</item>
         <item quantity="other">%1$d levels finished · %2$d ★</item>
@@ -117,18 +138,22 @@
     <string name="settings_show_tips_again">Show tips again</string>
     <string name="settings_tips_reset">Tips will show again when you play</string>
     <string name="settings_about">About</string>
+    <!-- Settings, about panel. %1$s: the version name, for example 1.2.3. %2$d: the build number. -->
     <string name="settings_about_version">Version %1$s (%2$d)</string>
     <string name="settings_about_maker">Made by HexMaster</string>
     <string name="settings_about_privacy">No account needed. If you sign in to Google Play Games, your achievements are shared with Google Play.</string>
     <string name="settings_about_music">Music</string>
     <!-- Tips (design-system.md 5.9) -->
-    <string name="tip_step_counter">%1$d / %2$d</string>
+    <!-- Format only: current step / number of steps. -->
+    <string name="tip_step_counter" translatable="false">%1$d / %2$d</string>
+    <!-- Screen reader text for the tip tour. %1$d: the current step. %2$d: the number of steps. -->
     <string name="tip_step_description">Step %1$d of %2$d</string>
     <string name="tip_eyebrow">Tip</string>
     <string name="tip_next">Next</string>
     <string name="tip_skip_tour">Skip tour</string>
     <string name="tip_lets_go">Let\'s go</string>
     <string name="tip_got_it">Got it</string>
+    <!-- Screen reader text for the highlighted area of a tip. %1$s: what is highlighted, one of the tip_*_target strings. -->
     <string name="tip_highlighted">Highlighted: %1$s</string>
     <string name="tip_intro_start_title">The Start</string>
     <string name="tip_intro_start_text">The liquid comes out of this valve when the countdown runs out.</string>
@@ -149,64 +174,65 @@
     <string name="tip_cross_text">A cross has two separate channels and the liquid goes straight through. The first pass scores 10 points, a second pass through the other channel 50. Each channel can be used only once.</string>
     <string name="tip_cross_target">cross section in the stack</string>
     <string name="tip_reservoir_title">Reservoir</string>
+    <!-- Tip about the reservoir. %1$d: the speed of the liquid in a reservoir, as a percentage of the normal speed; %% is the percent sign. -->
     <string name="tip_reservoir_text">A reservoir only connects left and right. While it fills, the liquid flows at %1$d %% speed, which buys you time. It scores 25 points.</string>
     <string name="tip_reservoir_target">reservoir in the stack</string>
     <string name="tip_mandatory_title">Mandatory Sections</string>
     <string name="tip_mandatory_text">These sections are already placed and can\'t be removed or replaced. The liquid must pass through every channel of each of them before it reaches the finish, or the level is lost.</string>
     <string name="tip_mandatory_target">mandatory sections on the field</string>
 
-    <!-- Level designer (debug builds only, behind FeatureFlags.levelDesigner). Developer-facing copy. -->
-    <string name="welcome_level_designer">Level designer</string>
-    <string name="designer_title">Level designer</string>
-    <string name="designer_back">Back</string>
-    <string name="designer_status_solvable">Valid and solvable</string>
-    <string name="designer_status_invalid">Invalid: %1$d problems</string>
-    <string name="designer_status_unsolvable">Unsolvable</string>
-    <string name="designer_test_play">Test play</string>
-    <string name="designer_export">Export</string>
-    <string name="designer_start_from">Start from…</string>
-    <string name="designer_start_from_title">Start a design</string>
-    <string name="designer_start_from_blank">New blank level</string>
-    <string name="designer_start_from_level">Copy level %1$d</string>
-    <string name="designer_start_from_cancel">Cancel</string>
-    <string name="designer_section_tools">Tools</string>
-    <string name="designer_tool_start">Start</string>
-    <string name="designer_tool_finish">Finish</string>
-    <string name="designer_tool_block">Block</string>
-    <string name="designer_tool_mandatory_cross">Mandatory cross</string>
-    <string name="designer_tool_mandatory_reservoir">Mandatory reservoir</string>
-    <string name="designer_clear_blocked">Clear blocked</string>
-    <string name="designer_section_grid">Grid</string>
-    <string name="designer_columns">Columns</string>
-    <string name="designer_rows">Rows</string>
-    <string name="designer_decrease">Fewer %1$s</string>
-    <string name="designer_increase">More %1$s</string>
-    <string name="designer_section_endpoints">Open sides</string>
-    <string name="designer_start_side">Start</string>
-    <string name="designer_finish_side">Finish</string>
-    <string name="designer_section_level">Level</string>
-    <string name="designer_field_id">Id</string>
-    <string name="designer_field_name">Name</string>
-    <string name="designer_section_flow">Flow</string>
-    <string name="designer_field_initial_delay">Initial delay (ms)</string>
-    <string name="designer_field_cells_per_second">Cells per second</string>
-    <string name="designer_field_reservoir">Reservoir speed factor</string>
-    <string name="designer_field_speed_ramp">Speed ramp per cell</string>
-    <string name="designer_section_stack">Stack</string>
-    <string name="designer_field_visible_size">Visible size</string>
-    <string name="designer_section_rules">Rules</string>
-    <string name="designer_field_allow_replace">Allow replace</string>
-    <string name="designer_field_replace_penalty">Replace penalty (ms)</string>
-    <string name="designer_section_stars">Stars</string>
-    <string name="designer_stars_calculated">10 points per free cell for three stars, 75% for two and 60% for one.</string>
-    <string name="designer_field_star_one">One</string>
-    <string name="designer_field_star_two">Two</string>
-    <string name="designer_field_star_three">Three</string>
-    <string name="designer_not_a_number">Not a number</string>
-    <string name="designer_discard_title">Discard design?</string>
-    <string name="designer_discard_body">This design has changes that were not exported. They are lost when you leave.</string>
-    <string name="designer_discard_cancel">Keep editing</string>
-    <string name="designer_discard_confirm">Discard</string>
+    <!-- Level designer (debug builds only, behind FeatureFlags.levelDesigner). Developer-facing copy, so not translated. -->
+    <string name="welcome_level_designer" translatable="false">Level designer</string>
+    <string name="designer_title" translatable="false">Level designer</string>
+    <string name="designer_back" translatable="false">Back</string>
+    <string name="designer_status_solvable" translatable="false">Valid and solvable</string>
+    <string name="designer_status_invalid" translatable="false">Invalid: %1$d problems</string>
+    <string name="designer_status_unsolvable" translatable="false">Unsolvable</string>
+    <string name="designer_test_play" translatable="false">Test play</string>
+    <string name="designer_export" translatable="false">Export</string>
+    <string name="designer_start_from" translatable="false">Start from…</string>
+    <string name="designer_start_from_title" translatable="false">Start a design</string>
+    <string name="designer_start_from_blank" translatable="false">New blank level</string>
+    <string name="designer_start_from_level" translatable="false">Copy level %1$d</string>
+    <string name="designer_start_from_cancel" translatable="false">Cancel</string>
+    <string name="designer_section_tools" translatable="false">Tools</string>
+    <string name="designer_tool_start" translatable="false">Start</string>
+    <string name="designer_tool_finish" translatable="false">Finish</string>
+    <string name="designer_tool_block" translatable="false">Block</string>
+    <string name="designer_tool_mandatory_cross" translatable="false">Mandatory cross</string>
+    <string name="designer_tool_mandatory_reservoir" translatable="false">Mandatory reservoir</string>
+    <string name="designer_clear_blocked" translatable="false">Clear blocked</string>
+    <string name="designer_section_grid" translatable="false">Grid</string>
+    <string name="designer_columns" translatable="false">Columns</string>
+    <string name="designer_rows" translatable="false">Rows</string>
+    <string name="designer_decrease" translatable="false">Fewer %1$s</string>
+    <string name="designer_increase" translatable="false">More %1$s</string>
+    <string name="designer_section_endpoints" translatable="false">Open sides</string>
+    <string name="designer_start_side" translatable="false">Start</string>
+    <string name="designer_finish_side" translatable="false">Finish</string>
+    <string name="designer_section_level" translatable="false">Level</string>
+    <string name="designer_field_id" translatable="false">Id</string>
+    <string name="designer_field_name" translatable="false">Name</string>
+    <string name="designer_section_flow" translatable="false">Flow</string>
+    <string name="designer_field_initial_delay" translatable="false">Initial delay (ms)</string>
+    <string name="designer_field_cells_per_second" translatable="false">Cells per second</string>
+    <string name="designer_field_reservoir" translatable="false">Reservoir speed factor</string>
+    <string name="designer_field_speed_ramp" translatable="false">Speed ramp per cell</string>
+    <string name="designer_section_stack" translatable="false">Stack</string>
+    <string name="designer_field_visible_size" translatable="false">Visible size</string>
+    <string name="designer_section_rules" translatable="false">Rules</string>
+    <string name="designer_field_allow_replace" translatable="false">Allow replace</string>
+    <string name="designer_field_replace_penalty" translatable="false">Replace penalty (ms)</string>
+    <string name="designer_section_stars" translatable="false">Stars</string>
+    <string name="designer_stars_calculated" translatable="false" formatted="false">10 points per free cell for three stars, 75% for two and 60% for one.</string>
+    <string name="designer_field_star_one" translatable="false">One</string>
+    <string name="designer_field_star_two" translatable="false">Two</string>
+    <string name="designer_field_star_three" translatable="false">Three</string>
+    <string name="designer_not_a_number" translatable="false">Not a number</string>
+    <string name="designer_discard_title" translatable="false">Discard design?</string>
+    <string name="designer_discard_body" translatable="false">This design has changes that were not exported. They are lost when you leave.</string>
+    <string name="designer_discard_cancel" translatable="false">Keep editing</string>
+    <string name="designer_discard_confirm" translatable="false">Discard</string>
 
     <!-- Achievements: names and descriptions match the Play Console entries exactly. The Play
          Games ids are the achievement_<key> strings in games-ids.xml. -->
@@ -290,7 +316,9 @@
     <string name="achievement_desc_snail">Win with the liquid flowing through 3 or more reservoirs.</string>
 
     <!-- Play Games panel on the settings screen (design.md decision 7) -->
-    <string name="settings_play_games">Play Games</string>
+    <!-- Google product name, not translated. -->
+    <string name="settings_play_games" translatable="false">Play Games</string>
+    <!-- Settings, Play Games panel. %1$s: the player's Play Games name. -->
     <string name="settings_play_games_signed_in">Signed in as %1$s</string>
     <string name="settings_play_games_signed_in_anonymous">Signed in</string>
     <string name="settings_play_games_signed_out">Not signed in</string>
@@ -298,22 +326,32 @@
     <string name="settings_play_games_unavailable">Play Games is not available</string>
     <string name="settings_play_games_sign_in">Sign in</string>
     <string name="settings_achievements">Achievements</string>
-    <string name="settings_achievements_count">%1$d / %2$d</string>
+    <!-- Format only: unlocked / all achievements. -->
+    <string name="settings_achievements_count" translatable="false">%1$d / %2$d</string>
+    <!-- Screen reader text. %1$d: unlocked achievements. %2$d: all achievements. -->
     <string name="settings_achievements_description">Achievements, %1$d of %2$d unlocked</string>
 
     <!-- Achievement row in the result dialogs (design.md decision 9) -->
     <string name="achievement_unlocked">Achievement unlocked</string>
+    <!-- Result dialogs, after the shown achievement names. %1$d: how many more achievements were unlocked. -->
     <string name="achievement_unlocked_more">+%1$d more</string>
+    <!-- Screen reader text. %1$s: the names of the unlocked achievements, separated by commas. -->
     <string name="achievement_unlocked_description">Achievement unlocked: %1$s</string>
 
     <!-- Achievements screen (design.md decision 8) -->
     <string name="achievements_title">Achievements</string>
     <string name="achievements_back">Back to settings</string>
-    <string name="achievements_count">%1$d / %2$d</string>
+    <!-- Format only: unlocked / all achievements. -->
+    <string name="achievements_count" translatable="false">%1$d / %2$d</string>
+    <!-- Screen reader text. %1$d: unlocked achievements. %2$d: all achievements. -->
     <string name="achievements_count_description">%1$d of %2$d achievements unlocked</string>
-    <string name="achievements_play_games">Play Games</string>
-    <string name="achievements_progress">%1$d / %2$d</string>
+    <!-- Google product name, not translated. -->
+    <string name="achievements_play_games" translatable="false">Play Games</string>
+    <!-- Format only: steps done / steps needed. -->
+    <string name="achievements_progress" translatable="false">%1$d / %2$d</string>
+    <!-- Screen reader text for an achievement's progress. %1$d: steps done. %2$d: steps needed. -->
     <string name="achievements_progress_description">%1$d of %2$d</string>
+    <!-- Achievements screen. %1$s: the date the achievement was unlocked, already formatted for the language. -->
     <string name="achievements_unlocked_on">Unlocked %1$s</string>
     <string name="achievements_state_unlocked">unlocked</string>
     <string name="achievements_state_locked">locked</string>

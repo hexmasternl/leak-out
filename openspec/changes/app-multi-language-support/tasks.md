@@ -7,8 +7,8 @@
 
 ## 2. Translator-ready strings
 
-- [ ] 2.1 Add a JVM test in `app` that parses `res/values/strings.xml` and checks the spec's translator-readiness rules: every placeholder string has a translator comment, strings with more than one placeholder use positional placeholders, and `app_name`, `welcome_title` and `splash_wordmark` are marked not translatable. Verify: the test runs and fails on the current file.
-- [ ] 2.2 Update `strings.xml`: add translator comments, make placeholders positional, mark brand strings `translatable="false"`, and turn any number-plus-word text into `<plurals>`. Verify: the test from 2.1 passes with `./gradlew :app:testDebugUnitTest`.
+- [x] 2.1 Add a JVM test in `app` that parses `res/values/strings.xml` and checks the spec's translator-readiness rules: every placeholder string has a translator comment, strings with more than one placeholder use positional placeholders, and `app_name`, `welcome_title` and `splash_wordmark` are marked not translatable. Verify: the test runs and fails on the current file.
+- [x] 2.2 Update `strings.xml`: add translator comments, make placeholders positional, mark brand strings `translatable="false"`, and turn any number-plus-word text into `<plurals>`. Verify: the test from 2.1 passes with `./gradlew :app:testDebugUnitTest`.
 
 ## 3. No hard-coded text
 

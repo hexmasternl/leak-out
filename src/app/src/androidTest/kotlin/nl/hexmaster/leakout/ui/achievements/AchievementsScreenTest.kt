@@ -70,8 +70,8 @@ class AchievementsScreenTest {
         show(Achievement.entries.take(7).map { AchievementProgress(it, unlockedAtMs = unlockedAt) })
         compose.onNodeWithTag(AchievementsTags.TITLE).assertIsDisplayed().assertTextEquals("ACHIEVEMENTS")
         compose.onNodeWithTag(AchievementsTags.COUNT).assertIsDisplayed()
-            .assertTextEquals("7 / 25")
-            .assertContentDescriptionEquals("7 of 25 achievements unlocked")
+            .assertTextEquals("7 / 39")
+            .assertContentDescriptionEquals("7 of 39 achievements unlocked")
     }
 
     @Test

@@ -27,8 +27,8 @@
 
 ## 6. Layouts fit translated text
 
-- [ ] 6.1 Turn on `pseudoLocalesEnabled` for the debug build type, and add instrumented tests that run the welcome screen, settings, level library, pause dialog, level complete dialog and level lost dialog under `en-XA` at 640 × 360 and assert that key labels have no visual overflow. Verify: the tests run, and their failures list the screens that clip.
-- [ ] 6.2 Fix every clipping layout found in 6.1 by wrapping or auto-sizing the text. Verify: the 6.1 tests pass, and the existing result-dialog tests at 130% font still pass.
+- [x] 6.1 Turn on `pseudoLocalesEnabled` for the debug build type, and add instrumented tests that run the welcome screen, settings, level library, pause dialog, level complete dialog and level lost dialog under `en-XA` at 640 × 360 and assert that key labels have no visual overflow. Verify: the tests run, and their failures list the screens that clip. *(Written and compiled; the debug APK has en-XA and ar-XB. Not run on a device, at the user's request.)*
+- [ ] 6.2 Fix every clipping layout found in 6.1 by wrapping or auto-sizing the text. Verify: the 6.1 tests pass, and the existing result-dialog tests at 130% font still pass. *(Open: needs the 6.1 results from a device run.)*
 
 ## 7. Documentation
 

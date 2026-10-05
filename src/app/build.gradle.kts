@@ -55,6 +55,8 @@ android {
         // Feature flags, fixed per build type and read through FeatureFlags (see openspec/specs/feature-flags).
         debug {
             buildConfigField("boolean", "LEVEL_DESIGNER", "true")
+            // en-XA (long, accented) and ar-XB (right to left) for checking translated layouts; PseudoLocaleLayoutTest uses en-XA.
+            isPseudoLocalesEnabled = true
         }
         release {
             buildConfigField("boolean", "LEVEL_DESIGNER", "false")

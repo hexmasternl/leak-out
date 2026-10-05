@@ -32,6 +32,16 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.systemGestures
+import androidx.compose.foundation.layout.union
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.changedToDownIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -68,6 +78,9 @@ object TipOverlayTags {
     const val DONE = "tip_done"
     const val HINT_GHOST = "tip_hint_ghost"
     const val HINT_ARROW = "tip_hint_arrow"
+
+    /** The invisible layer that keeps a quick second tap after a tip closes from reaching the game. */
+    const val TAP_GUARD = "tip_tap_guard"
 }
 
 /** Semantics on the overlay: the spotlight rects in root pixels. A test hook only. */
@@ -131,14 +144,16 @@ fun TipOverlay(
     val scale = remember { Animatable(if (reducedMotion) 1f else 0.92f) }
     LaunchedEffect(Unit) { entry.animateTo(1f, tween(160, easing = LinearOutSlowInEasing)) }
     LaunchedEffect(Unit) { if (!reducedMotion) scale.animateTo(1f, spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMediumLow)) }
-    val glow = if (reducedMotion) {
-        TipOverlayMetrics.RING_GLOW_REDUCED_ALPHA
+    // The animations below are read while drawing, never here: a recomposition every frame (120 Hz
+    // on some phones) would rebuild the card and its buttons under the player's finger.
+    val glow: () -> Float = if (reducedMotion) {
+        { TipOverlayMetrics.RING_GLOW_REDUCED_ALPHA }
     } else {
         val pulse = rememberInfiniteTransition(label = "tipGlow")
         pulse.animateFloat(
             TipOverlayMetrics.RING_GLOW_ALPHA, TipOverlayMetrics.RING_GLOW_PULSE_ALPHA,
             infiniteRepeatable(tween(1_000, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "tipGlowAlpha",
-        ).value
+        ).let { alpha -> { alpha.value } }
     }
     // A single spotlight glides to its next target (`motion.settle`); several jump.
     val single = local.singleOrNull()
@@ -147,7 +162,8 @@ fun TipOverlay(
         if (single == null) return@LaunchedEffect
         if (reducedMotion || glide.value == Rect.Zero) glide.snapTo(single) else glide.animateTo(single, tween(240, easing = FastOutSlowInEasing))
     }
-    val shown = if (single != null && glide.value != Rect.Zero) listOf(glide.value) else local
+    val shown = { if (single != null && glide.value != Rect.Zero) listOf(glide.value) else local }
+    SideEffect { TipOverlayProbe.compositions++ }
 
     Box(
         modifier
@@ -159,21 +175,38 @@ fun TipOverlay(
             }
             .onGloballyPositioned { origin = it.positionInRoot() }
             .graphicsLayer { alpha = entry.value }
-            // Every touch ends here; the buttons above take theirs first.
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) awaitPointerEvent().changes.forEach { it.consume() }
-                }
-            },
+            .pointerInput(Unit) { swallowTouchesOutsideButtons() },
     ) {
         TipSpotlightScrim(shown, Modifier.clearAndSetSemantics { }, glowAlpha = glow)
         hint?.let { DragHintLayer(it.copy(from = it.from.relativeTo(origin), to = it.to.relativeTo(origin)), reducedMotion) }
-        CalloutLayer(spotlights = local, scale = { scale.value }) { pointer -> Callout(content, pointer, onNext, onSkip, onDone) }
+        CalloutLayer(spotlights = local, origin = { origin }, scale = { scale.value }) { pointer -> Callout(content, pointer, onNext, onSkip, onDone) }
     }
 }
 
+/**
+ * Every touch on the overlay ends here, except the ones a button took. A button takes a touch by
+ * consuming its down; its tap is cancelled when a later move of that finger is found consumed, and a
+ * finger on a real touchscreen nearly always moves a little between down and up. So the moves and
+ * the up of a finger that went down on a button are left to the button.
+ */
+private suspend fun PointerInputScope.swallowTouchesOutsideButtons() = awaitPointerEventScope {
+    val onButtons = mutableSetOf<PointerId>()
+    while (true) {
+        awaitPointerEvent().changes.forEach { change ->
+            if (change.changedToDownIgnoreConsumed() && change.isConsumed) onButtons += change.id
+            if (change.id !in onButtons) change.consume()
+            if (!change.pressed) onButtons -= change.id
+        }
+    }
+}
+
+/** How often [TipOverlay] has been composed. A test hook only: a shown tip must not recompose every frame. */
+internal object TipOverlayProbe {
+    var compositions = 0
+}
+
 @Composable
-private fun Callout(content: TipContent, pointer: TipPointer?, onNext: () -> Unit, onSkip: () -> Unit, onDone: () -> Unit) {
+private fun Callout(content: TipContent, pointer: () -> TipPointer?, onNext: () -> Unit, onSkip: () -> Unit, onDone: () -> Unit) {
     val step = content.step
     val stepDescription = step?.let { stringResource(R.string.tip_step_description, it + 1, INTRO_STEPS) }
     val highlighted = stringResource(R.string.tip_highlighted, content.target)
@@ -204,12 +237,33 @@ private fun Callout(content: TipContent, pointer: TipPointer?, onNext: () -> Uni
     }
 }
 
-/** Measures the card and places it with [CalloutPlacement] next to the union of the [spotlights]. */
+/**
+ * Measures the card and places it with [CalloutPlacement] next to the union of the [spotlights],
+ * clear of the display cutout and the system gesture areas of the window; [origin] is where this
+ * layer sits in it. While a finger is down on the card it keeps its place, even when the spotlights
+ * move (the field still panning to a target): a button that slides away under the finger loses its tap.
+ */
 @Composable
-private fun CalloutLayer(spotlights: List<Rect>, scale: () -> Float, content: @Composable (TipPointer?) -> Unit) {
+private fun CalloutLayer(
+    spotlights: List<Rect>,
+    origin: () -> Offset,
+    scale: () -> Float,
+    content: @Composable (pointer: () -> TipPointer?) -> Unit,
+) {
     val density = LocalDensity.current
+    val unsafeInsets = WindowInsets.displayCutout.union(WindowInsets.systemGestures)
+    val windowSize = LocalWindowInfo.current.containerSize
+    // Known only once the card is placed; read while drawing, so setting it here recomposes nothing.
     var pointer by remember { mutableStateOf<TipPointer?>(null) }
-    Layout(content = { content(pointer) }, modifier = Modifier.fillMaxSize().graphicsLayer { scaleX = scale(); scaleY = scale() }) { measurables, constraints ->
+    // A release lays the card out again, so it catches up with spotlights that moved meanwhile.
+    var pressed by remember { mutableStateOf(false) }
+    val held = remember { arrayOfNulls<CalloutPosition>(1) }
+    Layout(
+        content = {
+            Box(Modifier.pointerInput(Unit) { trackPress { pressed = it } }) { content { pointer } }
+        },
+        modifier = Modifier.fillMaxSize().graphicsLayer { scaleX = scale(); scaleY = scale() },
+    ) { measurables, constraints ->
         val gutter = TipOverlayMetrics.ScreenGutter.toPx()
         val maxWidth = (constraints.maxWidth - 2 * gutter).toInt().coerceAtLeast(0)
         val placeable = measurables.single().measure(Constraints(maxWidth = maxWidth, maxHeight = constraints.maxHeight))
@@ -217,9 +271,27 @@ private fun CalloutLayer(spotlights: List<Rect>, scale: () -> Float, content: @C
         val padding = with(density) { TipOverlayMetrics.SpotlightPadding.toPx() }
         val union = spotlights.reduceOrNull { a, b -> Rect(minOf(a.left, b.left), minOf(a.top, b.top), maxOf(a.right, b.right), maxOf(a.bottom, b.bottom)) }
             ?.inflate(padding) ?: Rect(Offset(window.width / 2, window.height / 2), Size.Zero)
-        val placed = CalloutPlacement.place(window, union, Size(placeable.width.toFloat(), placeable.height.toFloat()), gutter, TipOverlayMetrics.CardGap.toPx())
+        // The insets are the window's; only the part that reaches into this layer counts.
+        val at = origin()
+        val unsafe = UnsafeEdges(
+            left = (unsafeInsets.getLeft(this, layoutDirection) - at.x).coerceAtLeast(0f),
+            top = (unsafeInsets.getTop(this) - at.y).coerceAtLeast(0f),
+            right = (unsafeInsets.getRight(this, layoutDirection) - (windowSize.width - at.x - window.width)).coerceAtLeast(0f),
+            bottom = (unsafeInsets.getBottom(this) - (windowSize.height - at.y - window.height)).coerceAtLeast(0f),
+        )
+        val placed = held[0].takeIf { pressed }
+            ?: CalloutPlacement.place(window, union, Size(placeable.width.toFloat(), placeable.height.toFloat()), gutter, TipOverlayMetrics.CardGap.toPx(), unsafe)
+        held[0] = placed
         if (pointer != placed.pointer) pointer = placed.pointer
         layout(constraints.maxWidth, constraints.maxHeight) { placeable.place(placed.topLeft.x.toInt(), placed.topLeft.y.toInt()) }
+    }
+}
+
+/** Tells [onPressed] whether any finger is down on this element. It only looks; it consumes nothing. */
+private suspend fun PointerInputScope.trackPress(onPressed: (Boolean) -> Unit) = awaitPointerEventScope {
+    while (true) {
+        val event = awaitPointerEvent(PointerEventPass.Initial)
+        onPressed(event.changes.any { it.pressed })
     }
 }
 

@@ -89,6 +89,97 @@ class GameTipsTest {
         compose.waitForIdle()
     }
 
+    /** A tap with the small moves a real finger makes, which [tap] leaves out. */
+    private fun fingerTap(tag: String) {
+        compose.onNodeWithTag(tag, useUnmergedTree = true).performTouchInput { fingerTap() }
+        compose.waitForIdle()
+    }
+
+    private fun stepShown(step: Int) = compose.onNode(hasText("$step / 5"), useUnmergedTree = true).assertIsDisplayed()
+
+    // A Samsung Galaxy S21 in landscape: 2400 × 1080 pixels at 420 dpi.
+    private val s21Width = 914.dp
+    private val s21Height = 411.dp
+
+    @Test
+    fun aFingerTapOnSkipTourOnTheFirstStepClosesTheTour() {
+        val tips = InMemorySettingsRepository()
+        val session = show(tips = tips, width = s21Width, height = s21Height)
+        fingerTap(TipOverlayTags.SKIP)
+        assertEquals(null, shownTip())
+        assertFalse(session.state.paused)
+        assertEquals(setOf(TipId.Intro), runBlocking { tips.seenTips.first() })
+    }
+
+    @Test
+    fun aFingerTapOnNextMovesToTheNextStep() {
+        show(width = s21Width, height = s21Height)
+        fingerTap(TipOverlayTags.NEXT)
+        stepShown(2)
+    }
+
+    /** Runs [taps] on a paused clock, so they come as quickly after each other as the player makes them. */
+    private fun quickly(taps: () -> Unit) {
+        compose.mainClock.autoAdvance = false
+        try {
+            taps()
+            compose.mainClock.advanceTimeBy(1_000)
+        } finally {
+            compose.mainClock.autoAdvance = true
+        }
+        compose.waitForIdle()
+    }
+
+    private fun fingerTapOnCell(cell: Position) {
+        val field = compose.fieldRect()
+        val at = compose.cellRect(cell).center - field.topLeft
+        compose.onNodeWithTag(GameScreenTags.FIELD).performTouchInput { fingerTap(at) }
+    }
+
+    @Test
+    fun twoQuickTapsOnNextMoveTwoSteps() {
+        show(width = s21Width, height = s21Height)
+        val next = compose.onNodeWithTag(TipOverlayTags.NEXT, useUnmergedTree = true)
+        quickly {
+            next.performTouchInput { fingerTap() }
+            compose.mainClock.advanceTimeBy(80)
+            next.performTouchInput { fingerTap() }
+        }
+        stepShown(3)
+    }
+
+    @Test
+    fun aQuickTapRightAfterSkipTourDoesNotReachTheGame() {
+        val session = show(width = s21Width, height = s21Height)
+        quickly {
+            compose.onNodeWithTag(TipOverlayTags.SKIP, useUnmergedTree = true).performTouchInput { fingerTap() }
+            compose.mainClock.advanceTimeBy(80)
+            fingerTapOnCell(Position(1, 0))
+        }
+        assertEquals(null, shownTip())
+        assertTrue(session.state.board.pipes.isEmpty())
+        // Once the double tap is over, a tap places a section as usual.
+        fingerTapOnCell(Position(1, 0))
+        compose.waitForIdle()
+        assertFalse(session.state.board.pipes.isEmpty())
+    }
+
+    @Test
+    fun aFingerTapOnNextWhileTheFieldPansToTheFinishStillMovesOn() {
+        show(FieldTest.large(), width = s21Width, height = s21Height)
+        compose.mainClock.autoAdvance = false
+        try {
+            // Into the finish step, which pans the field to the finish and glides the spotlight there.
+            compose.onNodeWithTag(TipOverlayTags.NEXT, useUnmergedTree = true).performClick()
+            compose.mainClock.advanceTimeBy(64)
+            compose.onNodeWithTag(TipOverlayTags.NEXT, useUnmergedTree = true).performTouchInput { fingerTap() }
+            compose.mainClock.advanceTimeBy(1_000)
+        } finally {
+            compose.mainClock.autoAdvance = true
+        }
+        stepShown(3)
+    }
+
     @Test
     fun theFirstLevelPlayedShowsTheTourWithTheCountdownStillFull() {
         val session = show(FieldTest.level(id = 4, initialDelayMs = 10_000))

@@ -80,4 +80,55 @@ class CalloutPlacementTest {
         assertEquals(TipPointerSide.Top, position.pointer?.side)
         assertEquals(112f, position.topLeft.y)
     }
+
+    private fun assertClearOf(unsafe: UnsafeEdges, position: CalloutPosition) {
+        val rect = cardRect(position)
+        assertTrue(
+            "$rect clear of $unsafe",
+            rect.left >= gutter + unsafe.left && rect.top >= gutter + unsafe.top &&
+                rect.right <= window.width - gutter - unsafe.right && rect.bottom <= window.height - gutter - unsafe.bottom,
+        )
+    }
+
+    @Test
+    fun `a cutout on the left moves a card that would open left beside it to below the target`() {
+        val cell = Rect(340f, 20f, 406f, 86f)
+        assertEquals(TipPointerSide.Right, place(cell).pointer?.side)
+        // A punch hole in landscape: the card no longer fits between the cell and the cutout.
+        val unsafe = UnsafeEdges(left = 32f)
+        val position = CalloutPlacement.place(window, cell, card, gutter, gap, unsafe)
+        assertEquals(TipPointerSide.Top, position.pointer?.side)
+        assertEquals(cell.center.x - card.width / 2, position.topLeft.x)
+        assertClearOf(unsafe, position)
+    }
+
+    @Test
+    fun `large side gesture areas keep the card inside them`() {
+        val unsafe = UnsafeEdges(left = 48f, right = 48f)
+        val stack = Rect(4f, 52f, 96f, 356f)
+        val position = CalloutPlacement.place(window, stack, card, gutter, gap, unsafe)
+        assertEquals(TipPointerSide.Left, position.pointer?.side)
+        assertClearOf(unsafe, position)
+    }
+
+    @Test
+    fun `a card centred under a target near the edge is shifted out of the gesture area`() {
+        val unsafe = UnsafeEdges(right = 48f)
+        // Too wide for a card beside it, so the card goes below, centred on it as far as the edge allows.
+        val target = Rect(300f, 16f, 624f, 100f)
+        val position = CalloutPlacement.place(window, target, card, gutter, gap, unsafe)
+        assertEquals(TipPointerSide.Top, position.pointer?.side)
+        assertEquals(window.width - gutter - unsafe.right - card.width, position.topLeft.x)
+        assertClearOf(unsafe, position)
+    }
+
+    @Test
+    fun `without a side free of the unsafe edges the card still stays clear of them`() {
+        val unsafe = UnsafeEdges(left = 40f, right = 40f)
+        val cell = Rect(300f, 172f, 366f, 238f)
+        val position = CalloutPlacement.place(window, cell, card, gutter, gap, unsafe)
+        assertNull(position.pointer)
+        assertEquals(gutter + unsafe.left, position.topLeft.x)
+        assertClearOf(unsafe, position)
+    }
 }

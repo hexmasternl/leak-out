@@ -8,10 +8,10 @@
 
 ## 2. Deployment workflow
 
-- [ ] 2.1 Add a *Generate release notes* step after *Compute version* in `.github/workflows/deploy-play-internal.yml` that runs the tests and the script, falls back to `Bug fixes and improvements.` with a `::warning::` when either fails, writes `$RUNNER_TEMP/whatsnew/whatsnew-en-US` and appends the notes to the step summary; verify by running the step's shell body locally against a throwaway `RUNNER_TEMP`/`GITHUB_STEP_SUMMARY`, once normally and once with the script made to fail, and checking the file contents and the warning
-- [ ] 2.2 Pass `whatsNewDirectory: ${{ runner.temp }}/whatsnew` to the *Upload to Google Play* step; verify against the pinned `r0adkll/upload-google-play` version's `action.yml` that the input exists and expects `whatsnew-<locale>` files
-- [ ] 2.3 Change *Tag the release* to write the tag message (`Leak Out <x.y.z> (version code <n>)`, blank line, notes) to a file and tag with `git tag -a -F`; verify locally in a throwaway repo that `git show <tag>` prints the notes
-- [ ] 2.4 Validate the workflow syntax (`actionlint` if available, otherwise a YAML parse) and verify it reports no errors
+- [x] 2.1 Add a *Generate release notes* step after *Compute version* in `.github/workflows/deploy-play-internal.yml` that runs the tests and the script, falls back to `Bug fixes and improvements.` with a `::warning::` when either fails, writes `$RUNNER_TEMP/whatsnew/whatsnew-en-US` and appends the notes to the step summary; verify by running the step's shell body locally against a throwaway `RUNNER_TEMP`/`GITHUB_STEP_SUMMARY`, once normally and once with the script made to fail, and checking the file contents and the warning
+- [x] 2.2 Pass `whatsNewDirectory: ${{ runner.temp }}/whatsnew` to the *Upload to Google Play* step; verify against the pinned `r0adkll/upload-google-play` version's `action.yml` that the input exists and expects `whatsnew-<locale>` files
+- [x] 2.3 Change *Tag the release* to write the tag message (`Leak Out <x.y.z> (version code <n>)`, blank line, notes) to a file and tag with `git tag -a -F`; verify locally in a throwaway repo that `git show <tag>` prints the notes
+- [x] 2.4 Validate the workflow syntax (`actionlint` if available, otherwise a YAML parse) and verify it reports no errors
 
 ## 3. Documentation and conventions
 

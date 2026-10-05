@@ -21,7 +21,7 @@
 - [x] 3.2 Add the threshold constants and the rules for the 11 achievements (first scope; see 3.5) in `AchievementRules` (exhaustive `when`); verify with `AchievementRulesTest` cases for every scenario of the new `game-achievements` requirements
 - [x] 3.3 Add scripted proofs to `AchievementReachabilityTest` on bundled levels for The Long Way Round II and III, Big Spender II, Crossroad Master, Efficiency Master, Highway, Snake, Eraser, Dramatic Failure and On Your Nerves, plus a stats-only proof for Tips Addict; if a tier proves unreachable, drop it from the catalogue, spec and docs before section 5 and record why in design.md
 - [x] 3.4 Make sure `AchievementContentTest` still passes (no new milestone exceeds the bundled levels) and run `./gradlew :core:test`
-- [ ] 3.5 Add Star Collector III / IV and Snail (the library now has 96 levels with reservoirs): catalogue entries and `published` rows (total 745, 39 entries), `SNAIL_RESERVOIRS` and the Snail rule, `AchievementRulesTest` cases for the Snail and Star Collector scenarios, a scripted Snail proof on a bundled level that draws reservoirs; run `./gradlew :core:test`
+- [x] 3.5 Add Star Collector III / IV and Snail (the library now has 96 levels with reservoirs): catalogue entries and `published` rows (total 745, 39 entries), `SNAIL_RESERVOIRS` and the Snail rule, `AchievementRulesTest` cases for the Snail and Star Collector scenarios, a scripted Snail proof on a bundled level that draws reservoirs; run `./gradlew :core:test`
 
 ## 4. App wiring
 

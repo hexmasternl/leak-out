@@ -141,6 +141,16 @@ class AchievementReachabilityTest {
         return play(build(start(level.id), pipes))
     }
 
+    /** A level that draws reservoirs, with a row of 5 cells on the route whose middle 3 are reservoirs. */
+    private fun snail(): GameState {
+        val reservoirLevels = ScriptedPlay.bundledIds().filter { bundled(it).isAllowed(PipeSection.RES) }
+        var line = emptyList<Position>()
+        val (level, path) = firstRouteThrough(reservoirLevels) { anchor -> row(anchor, 5).also { line = it } }
+        val reservoirs = line.subList(1, 4).toSet()
+        val pipes = routeOf(level, path).map { (at, section) -> at to if (at in reservoirs) PipeSection.RES else section }
+        return play(build(start(level.id), pipes))
+    }
+
     /** A level with room for a staircase of 16 cells down and to the right: every cell inside it is a corner. */
     private fun snake(): GameState {
         val (level, path) = firstRouteThrough(ScriptedPlay.bundledIds()) { anchor ->
@@ -200,6 +210,7 @@ class AchievementReachabilityTest {
         Achievement.ERASER to ::eraser,
         Achievement.DRAMATIC_FAILURE to ::sweepLeak,
         Achievement.ON_YOUR_NERVES to ::onYourNerves,
+        Achievement.SNAIL to ::snail,
     )
 
     @Test
@@ -242,6 +253,14 @@ class AchievementReachabilityTest {
         assertIs<Outcome.Won>(end.outcome)
         assertTrue(end.level.isAllowed(PipeSection.X))
         assertTrue(AttemptSummary.from(end, null).longestCrossChain >= AchievementRules.CROSSROAD_MASTER_CHAIN)
+    }
+
+    @Test
+    fun `Snail is reached on a level that can draw reservoirs`() {
+        val end = snail()
+        assertIs<Outcome.Won>(end.outcome)
+        assertTrue(end.level.isAllowed(PipeSection.RES))
+        assertTrue(AttemptSummary.from(end, null).reservoirsLeft >= AchievementRules.SNAIL_RESERVOIRS)
     }
 
     @Test

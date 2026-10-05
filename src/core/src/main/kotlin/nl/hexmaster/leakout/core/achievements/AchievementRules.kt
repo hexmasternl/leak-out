@@ -35,6 +35,7 @@ object AchievementRules {
     /** Dramatic Failure needs strictly more sections left than this. */
     const val DRAMATIC_FAILURE_SECTIONS = 50
     const val ON_YOUR_NERVES_TAPS = 5
+    const val SNAIL_RESERVOIRS = 3
 
     /**
      * @param summary the attempt that just ended, or null at start-up and after a history change:
@@ -124,6 +125,7 @@ object AchievementRules {
             Achievement.HIGHWAY -> won && (summary?.longestStraightRun ?: 0) >= HIGHWAY_RUN
             Achievement.SNAKE -> won && (summary?.longestCornerRun ?: 0) >= SNAKE_RUN
             Achievement.ERASER -> won && (summary?.replacements ?: 0) >= ERASER_REPLACEMENTS
+            Achievement.SNAIL -> won && (summary?.reservoirsLeft ?: 0) >= SNAIL_RESERVOIRS
 
             Achievement.NEVER_GIVE_UP -> won && summary != null && statsBefore.lossStreak(summary.levelId) >= NEVER_GIVE_UP_LOSSES
             Achievement.PERSONAL_BEST -> won && summary?.record == RecordOutcome.NEW_HIGHSCORE
@@ -138,6 +140,7 @@ object AchievementRules {
             Achievement.LEVELS_FINISHED_1, Achievement.STAR_COLLECTOR_1, Achievement.STAR_COLLECTOR_2,
             Achievement.PERFECTIONIST_1, Achievement.PACK_1_COMPLETE, Achievement.PACK_1_PERFECT,
             Achievement.APPRENTICE, Achievement.JOURNEYMAN, Achievement.GUILDMASTER,
+            Achievement.STAR_COLLECTOR_3, Achievement.STAR_COLLECTOR_4,
             -> error("${achievement.key} is incremental")
         }
     }

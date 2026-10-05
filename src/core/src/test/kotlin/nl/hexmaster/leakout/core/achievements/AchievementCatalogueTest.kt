@@ -10,9 +10,9 @@ import org.junit.jupiter.params.provider.EnumSource
 
 class AchievementCatalogueTest {
     @Test
-    fun `the catalogue uses 710 XP and leaves 290 free`() {
-        assertEquals(710, Achievement.totalXp)
-        assertEquals(290, Achievement.MAX_TOTAL_XP - Achievement.totalXp)
+    fun `the catalogue uses 745 XP and leaves 255 free`() {
+        assertEquals(745, Achievement.totalXp)
+        assertEquals(255, Achievement.MAX_TOTAL_XP - Achievement.totalXp)
     }
 
     @Test
@@ -20,8 +20,8 @@ class AchievementCatalogueTest {
         val byGroup = Achievement.entries.groupBy { it.group }.mapValues { (_, list) -> list.sumOf { it.xp } }
         assertEquals(
             mapOf(
-                AchievementGroup.PROGRESS to 170,
-                AchievementGroup.SKILL to 330,
+                AchievementGroup.PROGRESS to 195,
+                AchievementGroup.SKILL to 340,
                 AchievementGroup.LIFETIME to 120,
                 AchievementGroup.HIDDEN to 90,
             ),
@@ -130,6 +130,9 @@ class AchievementCatalogueTest {
         Published("eraser", null, hidden = false, xp = 5),
         Published("dramatic_failure", null, hidden = true, xp = 5),
         Published("on_your_nerves", null, hidden = true, xp = 5),
+        Published("star_collector_3", 100, hidden = false, xp = 10),
+        Published("star_collector_4", 250, hidden = false, xp = 15),
+        Published("snail", null, hidden = false, xp = 10),
     )
 
     private data class Published(val key: String, val steps: Int?, val hidden: Boolean, val xp: Int)
@@ -145,7 +148,7 @@ class AchievementCatalogueTest {
     @Test
     fun `the catalogue is exactly the published list, in order`() {
         assertEquals(published.map { it.key }, Achievement.entries.take(published.size).map { it.key })
-        assertEquals(36, published.size)
+        assertEquals(39, published.size)
     }
 
     @Test
@@ -155,9 +158,13 @@ class AchievementCatalogueTest {
         assertEquals(AchievementGroup.HIDDEN, Achievement.ON_YOUR_NERVES.group)
         val skill = listOf(
             Achievement.LONG_WAY_ROUND_2, Achievement.LONG_WAY_ROUND_3, Achievement.BIG_SPENDER_2, Achievement.CROSSROAD_MASTER,
-            Achievement.EFFICIENCY_MASTER, Achievement.HIGHWAY, Achievement.SNAKE, Achievement.ERASER,
+            Achievement.EFFICIENCY_MASTER, Achievement.HIGHWAY, Achievement.SNAKE, Achievement.ERASER, Achievement.SNAIL,
         )
         assertTrue(skill.all { it.group == AchievementGroup.SKILL && it.type == AchievementType.Standard })
+        for ((achievement, stars) in listOf(Achievement.STAR_COLLECTOR_3 to 100, Achievement.STAR_COLLECTOR_4 to 250)) {
+            assertEquals(AchievementGroup.PROGRESS, achievement.group)
+            assertEquals(AchievementType.Incremental(stars, Measure.STARS), achievement.type)
+        }
     }
 
     @Test

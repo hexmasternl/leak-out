@@ -101,6 +101,9 @@ enum class Achievement(
     ERASER("eraser", AchievementGroup.SKILL, AchievementType.Standard, xp = 5),
     DRAMATIC_FAILURE("dramatic_failure", AchievementGroup.HIDDEN, AchievementType.Standard, xp = 5, hidden = true),
     ON_YOUR_NERVES("on_your_nerves", AchievementGroup.HIDDEN, AchievementType.Standard, xp = 5, hidden = true),
+    STAR_COLLECTOR_3("star_collector_3", AchievementGroup.PROGRESS, incremental(100, Measure.STARS), xp = 10),
+    STAR_COLLECTOR_4("star_collector_4", AchievementGroup.PROGRESS, incremental(250, Measure.STARS), xp = 15),
+    SNAIL("snail", AchievementGroup.SKILL, AchievementType.Standard, xp = 10),
     ;
 
     /** The number of steps of an incremental achievement, null for a standard one. */

@@ -32,9 +32,12 @@ import nl.hexmaster.leakout.core.achievements.Achievement.PACK_1_PERFECT
 import nl.hexmaster.leakout.core.achievements.Achievement.PERFECTIONIST_1
 import nl.hexmaster.leakout.core.achievements.Achievement.PERSONAL_BEST
 import nl.hexmaster.leakout.core.achievements.Achievement.PHOTO_FINISH
+import nl.hexmaster.leakout.core.achievements.Achievement.SNAIL
 import nl.hexmaster.leakout.core.achievements.Achievement.SNAKE
 import nl.hexmaster.leakout.core.achievements.Achievement.STAR_COLLECTOR_1
 import nl.hexmaster.leakout.core.achievements.Achievement.STAR_COLLECTOR_2
+import nl.hexmaster.leakout.core.achievements.Achievement.STAR_COLLECTOR_3
+import nl.hexmaster.leakout.core.achievements.Achievement.STAR_COLLECTOR_4
 import nl.hexmaster.leakout.core.achievements.Achievement.STEADY_HANDS
 import nl.hexmaster.leakout.core.achievements.Achievement.TIPS_ADDICT
 import nl.hexmaster.leakout.core.achievements.Achievement.WALL_TO_WALL
@@ -89,10 +92,12 @@ class AchievementRulesTest {
 
         @Test
         fun `progress is clamped to the steps`() {
-            val evaluation = evaluateAttempt(null, history = history(1..30, stars = 3))
+            val evaluation = evaluateAttempt(null, history = history(1..96, stars = 3))
             assertEquals(10, evaluation.steps[LEVELS_FINISHED_1])
             assertEquals(25, evaluation.steps[STAR_COLLECTOR_1])
             assertEquals(60, evaluation.steps[STAR_COLLECTOR_2])
+            assertEquals(100, evaluation.steps[STAR_COLLECTOR_3])
+            assertEquals(250, evaluation.steps[STAR_COLLECTOR_4])
             assertEquals(10, evaluation.steps[PERFECTIONIST_1])
             assertEquals(24, evaluation.steps[PACK_1_COMPLETE])
             assertEquals(24, evaluation.steps[PACK_1_PERFECT])
@@ -451,6 +456,24 @@ class AchievementRulesTest {
         }
 
         @Test
+        fun `three reservoirs on a win are a Snail`() {
+            assertTrue(SNAIL in unlocks(summary(reservoirsLeft = 3)))
+            assertFalse(SNAIL in unlocks(summary(reservoirsLeft = 2)))
+            assertFalse(SNAIL in unlocks(summary(outcome = AttemptOutcome.LOST, reservoirsLeft = 3)))
+        }
+
+        @Test
+        fun `the higher Star Collector tiers count stars like the first two`() {
+            // 60 levels with 3 stars: 180 stars.
+            val evaluation = evaluateAttempt(null, history = history(1..60, stars = 3))
+            assertTrue(STAR_COLLECTOR_3 in evaluation.newlyUnlocked)
+            assertFalse(STAR_COLLECTOR_4 in evaluation.newlyUnlocked)
+            assertEquals(100, evaluation.steps[STAR_COLLECTOR_3])
+            assertEquals(180, evaluation.steps[STAR_COLLECTOR_4])
+            assertTrue(STAR_COLLECTOR_4 in evaluateAttempt(null, history = history(1..84, stars = 3)).newlyUnlocked)
+        }
+
+        @Test
         fun `a loss after more than 50 sections is a Dramatic Failure`() {
             assertTrue(DRAMATIC_FAILURE in unlocks(lostSummary(sectionsLeft = 51)))
             assertFalse(DRAMATIC_FAILURE in unlocks(lostSummary(sectionsLeft = 50)))
@@ -555,7 +578,7 @@ class AchievementRulesTest {
             val won = evaluateAttempt(
                 everything,
                 statsBefore = PlayerStats(losses = 3, lossStreakByLevel = mapOf(1 to 3)),
-                history = history(1..24, stars = 3),
+                history = history(1..96, stars = 3),
             )
             val flood = evaluateAttempt(lostSummary(sectionsLeft = 0))
             // The later additions that cannot share a single attempt with the ones above.
@@ -563,6 +586,7 @@ class AchievementRulesTest {
                 summary(
                     distinctTilesLeft = 100, finalTotal = 1_000, longestCrossChain = 3, longestStraightRun = 7, longestCornerRun = 12,
                     replacements = 20, placements = 60, minimumSections = 10, piecesOnBoard = 10, mostReplacementTaps = 5,
+                    reservoirsLeft = 3,
                 ),
             )
             val drama = evaluateAttempt(lostSummary(sectionsLeft = 51))

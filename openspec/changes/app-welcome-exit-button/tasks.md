@@ -16,4 +16,4 @@
 
 ## 4. Verification
 
-- [ ] 4.1 Manual check on a device or emulator in landscape: dialog shown, Cancel, Yes, opt out via Yes and via Cancel, restart the app and confirm Exit is immediate
+- [x] 4.1 Manual check on a device or emulator in landscape: dialog shown, Cancel, Yes, opt out via Yes and via Cancel, restart the app and confirm Exit is immediate (dialog, Cancel and Yes checked by hand on the emulator in landscape; the opt-out and restart were not done by hand, to keep the flag off the shared emulator, and are covered by WelcomeScreenTest and DataStoreSettingsRepositoryTest)

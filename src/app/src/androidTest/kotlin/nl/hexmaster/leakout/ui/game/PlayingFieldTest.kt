@@ -229,7 +229,7 @@ class PlayingFieldTest {
         compose.assertHighlighted(Position(1, 1))
         compose.releaseDrag()
         compose.assertNothingHighlighted()
-        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed Horizontal straight")
     }
 
     // 8.5
@@ -244,10 +244,10 @@ class PlayingFieldTest {
         }
 
         compose.dropOnCell(Position(1, 2))
-        compose.cellNode(Position(1, 2)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(1, 2)).assertContentDescriptionEquals("Placed Horizontal straight")
 
         compose.dropOnCell(Position(2, 1))
-        compose.cellNode(Position(2, 1)).assertContentDescriptionEquals("Placed V, filled")
+        compose.cellNode(Position(2, 1)).assertContentDescriptionEquals("Placed Vertical straight, filled")
 
         // The V breaks: the tile is empty until the H lands.
         compose.dropOnCell(Position(1, 1))
@@ -263,12 +263,12 @@ class PlayingFieldTest {
         compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Empty")
 
         compose.runOnIdle { session.sendTick(60_000) }
-        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed Horizontal straight")
             .assert(SemanticsMatcher.keyNotDefined(ReplacingCell))
         compose.beginDragTo(compose.cellRect(Position(2, 2)).center)
         compose.assertHighlighted(Position(2, 2))
         compose.releaseDrag()
-        compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Placed Horizontal straight")
     }
 
     @Test
@@ -287,10 +287,10 @@ class PlayingFieldTest {
         }
 
         tapCell(Position(1, 2))
-        compose.cellNode(Position(1, 2)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(1, 2)).assertContentDescriptionEquals("Placed Horizontal straight")
 
         tapCell(Position(2, 1))
-        compose.cellNode(Position(2, 1)).assertContentDescriptionEquals("Placed V, filled")
+        compose.cellNode(Position(2, 1)).assertContentDescriptionEquals("Placed Vertical straight, filled")
 
         tapCell(Position(1, 1))
         compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Empty")
@@ -300,13 +300,13 @@ class PlayingFieldTest {
         compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Empty")
 
         compose.runOnIdle { session.sendTick(60_000) }
-        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed Horizontal straight")
         tapCell(Position(0, 3))
         compose.cellNode(Position(0, 3)).assertContentDescriptionEquals("Blocked")
         tapCell(Position(0, 0))
         compose.cellNode(Position(0, 0)).assertContentDescriptionEquals("Start")
         tapCell(Position(2, 2))
-        compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(2, 2)).assertContentDescriptionEquals("Placed Horizontal straight")
         compose.runOnIdle { assertEquals(4, session.state.board.pipes.size) }
     }
 
@@ -355,8 +355,8 @@ class PlayingFieldTest {
 
         compose.dropAt(point)
 
-        compose.cellNode(cell).assertContentDescriptionEquals("Placed H")
-        compose.onAllNodes(hasContentDescription("Placed H"), useUnmergedTree = true).assertCountEquals(1)
+        compose.cellNode(cell).assertContentDescriptionEquals("Placed Horizontal straight")
+        compose.onAllNodes(hasContentDescription("Placed Horizontal straight"), useUnmergedTree = true).assertCountEquals(1)
     }
 
     // 8.7
@@ -394,7 +394,7 @@ class PlayingFieldTest {
         compose.onNodeWithTag(PauseTags.RESTART).performClick()
         compose.waitForIdle()
         assertSameRect(initial, compose.cellRect(start))
-        compose.onAllNodes(hasContentDescription("Placed H"), useUnmergedTree = true).assertCountEquals(0)
+        compose.onAllNodes(hasContentDescription("Placed Horizontal straight"), useUnmergedTree = true).assertCountEquals(0)
     }
 
     @Test
@@ -486,7 +486,7 @@ class PlayingFieldTest {
         compose.cellNode(mandatoryCross)
             .assert(SemanticsMatcher.expectValue(MandatoryTile, true))
             .assert(SemanticsMatcher.expectValue(FieldPipeSection, PipeSection.X))
-            .assertContentDescriptionEquals("Mandatory X, not used yet")
+            .assertContentDescriptionEquals("Mandatory Cross section, not used yet")
         val pixels = fieldPixels()
         assertTrue("mandatory tile ${pixels.tileCorner(mandatoryCross)}", pixels.tileCorner(mandatoryCross).isLeakTinted())
         // Only the mandatory cross: the placed V right below it keeps the plain tile.
@@ -508,7 +508,7 @@ class PlayingFieldTest {
 
         compose.cellNode(mandatoryCross)
             .assert(SemanticsMatcher.expectValue(FilledChannels, setOf(nl.hexmaster.leakout.core.flow.Channel.VERTICAL)))
-            .assertContentDescriptionEquals("Mandatory X, not used yet")
+            .assertContentDescriptionEquals("Mandatory Cross section, not used yet")
         val wet = fieldPixels().tileCorner(mandatoryCross)
         assertTrue("tint stays: $dry then $wet", wet.isLeakTinted())
         assertEquals(dry.red, wet.red, 0.02f)

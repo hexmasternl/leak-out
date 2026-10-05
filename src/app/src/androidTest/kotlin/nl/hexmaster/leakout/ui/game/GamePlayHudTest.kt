@@ -298,7 +298,7 @@ class GamePlayHudTest {
     fun resumeKeepsBoardStackScoreAndStars() {
         show()
         compose.dropOnCell(Position(1, 1))
-        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed Horizontal straight")
         val stack = compose.runOnIdle { session.setScore(150); session.state.stack }
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()
@@ -306,7 +306,7 @@ class GamePlayHudTest {
         compose.waitForIdle()
 
         compose.onNodeWithTag(PauseTags.DIALOG).assertDoesNotExist()
-        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed Horizontal straight")
         compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 150, 1 of 3 stars")
         compose.runOnIdle {
             assertFalse(session.state.paused)
@@ -342,7 +342,7 @@ class GamePlayHudTest {
     fun restartClearsBoardDrawsNewStackAndKeepsRunning() {
         show()
         compose.dropOnCell(Position(1, 1))
-        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed Horizontal straight")
         compose.runOnIdle { session.setScore(250) }
 
         compose.onNodeWithTag(HudTags.PAUSE).performClick()

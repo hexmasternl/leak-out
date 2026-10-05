@@ -44,6 +44,7 @@ import androidx.compose.ui.window.DialogWindowProvider
 import nl.hexmaster.leakout.ui.components.DialogEntry
 import nl.hexmaster.leakout.ui.components.FloatingPanel
 import nl.hexmaster.leakout.ui.components.FloatingPanelMetrics
+import nl.hexmaster.leakout.ui.components.displayUppercase
 import nl.hexmaster.leakout.ui.components.panelScale
 import nl.hexmaster.leakout.ui.splash.rememberReducedMotion
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
@@ -252,7 +253,7 @@ internal fun ResultScoreColumn(
         modifier.semantics(mergeDescendants = true) { contentDescription = description },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(caption.uppercase(), style = LeakOutTextStyles.LabelMd, color = LeakOutColors.TextSecondary, maxLines = 1)
+        Text(caption.displayUppercase(), style = LeakOutTextStyles.LabelMd, color = LeakOutColors.TextSecondary, maxLines = 1)
         Spacer(Modifier.height(4.dp))
         val style = when {
             glow -> LeakOutTextStyles.NumericLg.copy(shadow = Shadow(LeakOutColors.Brass500.copy(alpha = 0.45f), Offset.Zero, 24f))

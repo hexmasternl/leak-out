@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
@@ -27,6 +28,7 @@ import nl.hexmaster.leakout.R
 import nl.hexmaster.leakout.achievements.AchievementResources
 import nl.hexmaster.leakout.core.achievements.Achievement
 import nl.hexmaster.leakout.ui.components.DialogEntry
+import nl.hexmaster.leakout.ui.components.displayUppercase
 import nl.hexmaster.leakout.ui.splash.rememberReducedMotion
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
@@ -75,7 +77,8 @@ fun AchievementUnlockedRow(
 ) {
     if (achievements.isEmpty()) return
     val names = achievements.map { stringResource(AchievementResources.name(it)) }
-    val moreText = stringResource(R.string.achievement_unlocked_more, (names.size - AchievementRowText.MAX_NAMES).coerceAtLeast(0))
+    val more = (names.size - AchievementRowText.MAX_NAMES).coerceAtLeast(0)
+    val moreText = pluralStringResource(R.plurals.achievement_unlocked_more, more, more)
     val shown = AchievementRowText.names(names) { moreText }
     val spoken = stringResource(R.string.achievement_unlocked_description, AchievementRowText.spokenNames(names))
     val pops = animate && !reducedMotion
@@ -105,7 +108,7 @@ fun AchievementUnlockedRow(
         )
         Column {
             Text(
-                text = stringResource(R.string.achievement_unlocked).uppercase(),
+                text = stringResource(R.string.achievement_unlocked).displayUppercase(),
                 style = LeakOutTextStyles.DisplayXs,
                 color = LeakOutColors.Brass300,
             )

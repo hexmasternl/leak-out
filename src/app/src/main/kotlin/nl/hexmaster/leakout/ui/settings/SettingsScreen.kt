@@ -32,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import nl.hexmaster.leakout.R
 import nl.hexmaster.leakout.achievements.playgames.SignInState
 import nl.hexmaster.leakout.settings.Settings
+import nl.hexmaster.leakout.ui.components.displayUppercase
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
@@ -208,7 +209,7 @@ private fun TopBar(onBack: () -> Unit) {
             modifier = Modifier.testTag(SettingsTags.BACK),
         )
         Text(
-            text = stringResource(R.string.settings_title).uppercase(),
+            text = stringResource(R.string.settings_title).displayUppercase(),
             style = LeakOutTextStyles.DisplayLg,
             color = LeakOutColors.TextPrimary,
             modifier = Modifier.testTag(SettingsTags.TITLE).semantics { heading() },

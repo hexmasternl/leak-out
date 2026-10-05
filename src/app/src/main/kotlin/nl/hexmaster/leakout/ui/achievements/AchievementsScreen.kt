@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -57,6 +58,7 @@ import nl.hexmaster.leakout.core.achievements.Achievement
 import nl.hexmaster.leakout.ui.components.FlowButton
 import nl.hexmaster.leakout.ui.components.FlowButtonSize
 import nl.hexmaster.leakout.ui.components.FlowButtonVariant
+import nl.hexmaster.leakout.ui.components.displayUppercase
 import nl.hexmaster.leakout.ui.settings.SettingsIconButton
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
@@ -153,14 +155,14 @@ private fun TopBar(state: AchievementsUiState?, onBack: () -> Unit, onOpenPlayGa
             modifier = Modifier.testTag(AchievementsTags.BACK),
         )
         Text(
-            text = stringResource(R.string.achievements_title).uppercase(),
+            text = stringResource(R.string.achievements_title).displayUppercase(),
             style = LeakOutTextStyles.DisplayLg,
             color = LeakOutColors.TextPrimary,
             maxLines = 1,
             modifier = Modifier.testTag(AchievementsTags.TITLE).semantics { heading() },
         )
         if (state != null) {
-            val description = stringResource(R.string.achievements_count_description, state.unlocked, state.total)
+            val description = pluralStringResource(R.plurals.achievements_count_description, state.total, state.unlocked, state.total)
             Text(
                 text = stringResource(R.string.achievements_count, state.unlocked, state.total),
                 style = LeakOutTextStyles.NumericMd,

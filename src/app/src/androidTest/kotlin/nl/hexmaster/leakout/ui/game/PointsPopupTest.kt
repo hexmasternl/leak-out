@@ -51,7 +51,7 @@ class PointsPopupTest {
             assertTrue(session.placeSection(PipeSection.LB, corner))
             assertTrue(session.placeSection(PipeSection.V, Position(1, 1)))
         }
-        compose.cellNode(corner).assertContentDescriptionEquals("Placed LB")
+        compose.cellNode(corner).assertContentDescriptionEquals("Placed Left-bottom corner")
 
         compose.runOnIdle { session.endCountdown() }
         tick(1_000) // through the start

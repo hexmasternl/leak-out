@@ -259,16 +259,7 @@ private fun StackSlot(
 }
 
 @Composable
-fun PipeSection.label(): String = when (this) {
-    PipeSection.H -> stringResource(R.string.game_section_h)
-    PipeSection.V -> stringResource(R.string.game_section_v)
-    PipeSection.LT -> stringResource(R.string.game_section_lt)
-    PipeSection.LB -> stringResource(R.string.game_section_lb)
-    PipeSection.RT -> stringResource(R.string.game_section_rt)
-    PipeSection.RB -> stringResource(R.string.game_section_rb)
-    PipeSection.X -> stringResource(R.string.game_section_x)
-    PipeSection.RES -> stringResource(R.string.game_section_res)
-}
+fun PipeSection.label(): String = stringResource(CellDescription.sectionName(this))
 
 val DraggedCopyYOffset = 20.dp
 

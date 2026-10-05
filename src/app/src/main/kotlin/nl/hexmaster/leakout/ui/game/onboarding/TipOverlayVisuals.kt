@@ -35,6 +35,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import nl.hexmaster.leakout.ui.components.displayUppercase
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
 
@@ -146,7 +147,7 @@ fun TipCallout(
             .padding(TipOverlayMetrics.CardPadding),
     ) {
         Text(
-            eyebrow.uppercase(),
+            eyebrow.displayUppercase(),
             style = LeakOutTextStyles.DisplayXs,
             color = eyebrowColor,
             modifier = eyebrowDescription?.let { Modifier.semantics { contentDescription = it } } ?: Modifier,

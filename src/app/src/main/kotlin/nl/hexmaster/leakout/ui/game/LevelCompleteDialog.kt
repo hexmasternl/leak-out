@@ -24,6 +24,7 @@ import nl.hexmaster.leakout.core.score.FinalScore
 import nl.hexmaster.leakout.ui.components.FlowButton
 import nl.hexmaster.leakout.ui.components.FlowButtonSize
 import nl.hexmaster.leakout.ui.components.FlowButtonVariant
+import nl.hexmaster.leakout.ui.components.displayUppercase
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
@@ -153,7 +154,7 @@ private fun LevelCompleteContent(
 @Composable
 private fun WinEyebrow(level: Int) {
     Text(
-        text = stringResource(R.string.result_eyebrow, level).uppercase(),
+        text = stringResource(R.string.result_eyebrow, level).displayUppercase(),
         style = LeakOutTextStyles.DisplayXs,
         color = LeakOutColors.Success500,
     )

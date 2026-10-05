@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -89,7 +90,7 @@ fun PlayGamesPanel(
             )
         }
         Spacer(Modifier.height(12.dp))
-        val description = stringResource(R.string.settings_achievements_description, state.unlocked, state.total)
+        val description = pluralStringResource(R.plurals.settings_achievements_description, state.total, state.unlocked, state.total)
         FlowButton(
             text = stringResource(R.string.settings_achievements),
             trailing = stringResource(R.string.settings_achievements_count, state.unlocked, state.total),

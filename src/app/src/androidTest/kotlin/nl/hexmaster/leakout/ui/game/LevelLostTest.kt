@@ -173,7 +173,7 @@ class LevelLostTest {
         compose.runOnIdle { assertEquals(Outcome.Playing, session.state.outcome) }
 
         compose.dropOnCell(Position(1, 1))
-        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(1, 1)).assertContentDescriptionEquals("Placed Horizontal straight")
     }
 
     // 6.3
@@ -295,7 +295,7 @@ class LevelLostTest {
         compose.cellNode(Position(3, 3)).assert(SemanticsMatcher.expectValue(LeakAt, Side.LEFT))
         compose.cellNode(reservoir)
             .assert(SemanticsMatcher.expectValue(MissedMandatory, true))
-            .assertContentDescriptionEquals("Mandatory RES, not used yet")
+            .assertContentDescriptionEquals("Mandatory Reservoir, not used yet")
         compose.cellNode(Position(2, 1)).assert(SemanticsMatcher.keyNotDefined(MissedMandatory))
         tick(999)
         compose.onNodeWithTag(LevelLostTags.DIALOG).assertDoesNotExist()

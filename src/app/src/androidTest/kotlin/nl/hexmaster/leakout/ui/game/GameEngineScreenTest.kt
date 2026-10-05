@@ -66,7 +66,7 @@ class GameEngineScreenTest {
 
         tick(1_000) // through the start
         compose.cellNode(Position(1, 0)).assert(SemanticsMatcher.expectValue(LiquidHead, true))
-        compose.cellNode(Position(1, 0)).assertContentDescriptionEquals("Placed H, filled")
+        compose.cellNode(Position(1, 0)).assertContentDescriptionEquals("Placed Horizontal straight, filled")
         tick(1_000) // leaves the H
         compose.onNodeWithTag(HudTags.SCORE).assertScore("10")
         compose.cellNode(Position(1, 0)).assert(SemanticsMatcher.expectValue(PointsPopupText, listOf("+10")))
@@ -131,8 +131,8 @@ class GameEngineScreenTest {
 
         compose.onNodeWithTag(PauseTags.DIALOG).assertDoesNotExist()
         assertSameRect(startRect, compose.cellRect(start))
-        compose.onAllNodes(hasContentDescription("Placed H"), useUnmergedTree = true).assertCountEquals(0)
-        compose.onAllNodes(hasContentDescription("Placed H, filled"), useUnmergedTree = true).assertCountEquals(0)
+        compose.onAllNodes(hasContentDescription("Placed Horizontal straight"), useUnmergedTree = true).assertCountEquals(0)
+        compose.onAllNodes(hasContentDescription("Placed Horizontal straight, filled"), useUnmergedTree = true).assertCountEquals(0)
         compose.onNodeWithTag(HudTags.SCORE).assertContentDescriptionEquals("Score 0, 0 of 3 stars")
         compose.onNodeWithTag(HudTags.SCORE).assert(SemanticsMatcher.expectValue(ScoreFill, 0f))
         compose.onAllNodes(SemanticsMatcher("has a popup") { node ->

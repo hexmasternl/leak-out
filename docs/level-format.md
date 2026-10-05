@@ -7,7 +7,7 @@ Every level is one JSON file in `src/app/src/main/assets/levels/`, named `level_
 ```jsonc
 {
   "id": 3,                          // required, positive, unique across all levels
-  "name": "First Crossing",         // required, not blank; shown to the player
+  "name": "First Crossing",         // required, not blank; English only, never translated (players do not see it)
   "grid": { "columns": 7, "rows": 9 },                // required, each 4 to 50
   "start":  { "x": 0, "y": 1, "openSide": "RIGHT" },  // required; liquid leaves through openSide
   "finish": { "x": 6, "y": 7, "openSide": "LEFT" },   // required; liquid must enter through openSide
@@ -35,6 +35,8 @@ Every level is one JSON file in `src/app/src/main/assets/levels/`, named `level_
 ```
 
 Comments are shown for explanation only. Level files are plain JSON and must not contain comments. Unknown keys are rejected, so a misspelled key is an error, not a silently ignored setting.
+
+The game shows a level by its number, never by its `name`. The name is only for the level files and the level designer, so it is not translated when the app is shown in other languages (see [Translations](deployment.md#translations)).
 
 ## Minimal example
 

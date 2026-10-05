@@ -144,7 +144,7 @@ Close the terminal afterwards (or remove the four variables), so the passwords d
 4. The **Dashboard** lists the setup tasks the Console requires before a release can go out (such as app access, ads, content rating, target audience, data safety and a privacy policy). Complete those it marks as required.
 5. Back on the release, choose **Review release → Start rollout to Internal testing**.
 
-Rolling this first release out matters. Until an app has had a release rolled out, it is a *draft app*, and the API only accepts releases with status `draft` for it. If you cannot roll out yet, set the variable `PLAY_RELEASE_STATUS` to `draft` in step 7 for now.
+Rolling this first release out matters. Until an app has had a release rolled out, it is a *draft app*, and the API only accepts releases with status `draft` for it. The workflow uploads with status `draft` by default (see [Translations](#translations)), so a draft app works out of the box.
 
 ## 3. Add testers
 
@@ -247,13 +247,13 @@ These two settings are not secret. They are **repository variables**: **Settings
 | Variable | Default when not set | When to change it |
 | --- | --- | --- |
 | `PLAY_TRACK` | `internal` | Set it to the name of a closed testing track to release there instead (see [step 3](#3-add-testers)). |
-| `PLAY_RELEASE_STATUS` | `completed` | Set it to `draft` while the app has never had a release rolled out (a *draft app*). Remove it, or set `completed`, once the first rollout is done. With `draft`, each upload waits in the Console until you roll it out by hand. |
+| `PLAY_RELEASE_STATUS` | `draft` | Each upload waits in the Console as a draft release, so Play can [translate the app strings](#translations) and you can review them before rolling it out by hand. Set it to `completed` to roll out straight away, once you have confirmed in the Console that such uploads are translated too. A *draft app* (no release rolled out yet) only accepts `draft`. |
 
 With the GitHub CLI:
 
 ```sh
 gh variable set PLAY_TRACK --body internal
-gh variable set PLAY_RELEASE_STATUS --body draft       # only while the app is a draft app
+gh variable set PLAY_RELEASE_STATUS --body completed   # roll out without reviewing translations
 ```
 
 ## 8. Run the workflow
@@ -266,7 +266,7 @@ A successful run:
 - has a **summary** with the version, the version code, the track, the release status and the commit;
 - has an artifact `leak-out-<version>-<version code>` with the uploaded `.aab`, kept for 14 days.
 
-In the Play Console, the release appears under **Test and release → Testing → Internal testing → Releases**, named after its version (for example `1001 (0.1.1)`). Testers who opted in get the update through the Play Store, usually within minutes.
+In the Play Console, the release appears under **Test and release → Testing → Internal testing → Releases**, named after its version (for example `1001 (0.1.1)`). With the default `PLAY_RELEASE_STATUS` it is a draft: review its translations and roll it out (see [Translations](#translations)). Testers who opted in then get the update through the Play Store, usually within minutes.
 
 ## Versioning
 
@@ -378,7 +378,7 @@ The release notes are uploaded as `whatsnew-en-US`, and Play only accepts langua
 
 ### Only releases with status draft may be created on draft app
 
-The app has never had a release rolled out. Either roll out a release by hand once (step 2.3), or set `PLAY_RELEASE_STATUS` to `draft` until you have.
+The app has never had a release rolled out, and `PLAY_RELEASE_STATUS` is set to `completed`. Either roll out a release by hand once (step 2.3), or remove the variable (the default is `draft`) until you have.
 
 ### Package not found: nl.hexmaster.leakout
 
@@ -466,7 +466,7 @@ Repository variables:
 | Name | Default | Used for |
 | --- | --- | --- |
 | `PLAY_TRACK` | `internal` | The Play track to upload to |
-| `PLAY_RELEASE_STATUS` | `completed` | The release status (`draft` for a draft app) |
+| `PLAY_RELEASE_STATUS` | `draft` | The release status (`completed` rolls out without review) |
 
 Gradle inputs (set by the workflow, or by you for a local signed build):
 

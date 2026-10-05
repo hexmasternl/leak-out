@@ -22,8 +22,8 @@ import nl.hexmaster.leakout.history.LevelHistoryRepository
  * The callers make sure each attempt is passed in once ([nl.hexmaster.leakout.ui.game.GameSession]
  * does); the tracker itself counts whatever it is given.
  *
- * @param scope outlives every screen (the application's), for the work started by [attemptAbandoned]
- *   and [launchReconcile], which must finish even when the game screen is left at that moment.
+ * @param scope outlives every screen (the application's), for the work started by [attemptAbandoned],
+ *   [tipsReset] and [launchReconcile], which must finish even when the screen is left at that moment.
  */
 class AchievementTracker(
     private val achievements: AchievementRepository,
@@ -41,6 +41,9 @@ class AchievementTracker(
     /** An attempt restarted or exited before it ended: only its [placements] count. Returns what that unlocked. */
     suspend fun onAttemptAbandoned(placements: Int): List<Achievement> = update(null) { it.afterAbandoned(placements) }
 
+    /** The seen tips were reset with "Show tips again": counted in the stats. Returns what that unlocked. */
+    suspend fun onTipsReset(): List<Achievement> = update(null) { it.afterTipsReset() }
+
     /**
      * Awards the progress and lifetime achievements the stored history and stats have earned: at
      * start-up (players who finished levels before achievements existed) and after a history change.
@@ -50,6 +53,9 @@ class AchievementTracker(
 
     /** [onAttemptAbandoned] in the tracker's own scope, so leaving the screen does not cancel it. */
     fun attemptAbandoned(placements: Int): Job = scope.launch { onAttemptAbandoned(placements) }
+
+    /** [onTipsReset] in the tracker's own scope, so leaving the settings screen does not cancel it. */
+    fun tipsReset(): Job = scope.launch { onTipsReset() }
 
     /** [reconcile] in the tracker's own scope. */
     fun launchReconcile(): Job = scope.launch { reconcile() }

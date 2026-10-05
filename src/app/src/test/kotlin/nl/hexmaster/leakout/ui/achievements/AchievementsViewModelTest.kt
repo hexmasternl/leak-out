@@ -47,7 +47,7 @@ class AchievementsViewModelTest {
         val unlocked = Achievement.entries.take(7).map { AchievementProgress(it, unlockedAtMs = 1L) }
         val state = vm(unlocked).uiState.value!!
         assertEquals(7, state.unlocked)
-        assertEquals(25, state.total)
+        assertEquals(39, state.total)
     }
 
     @Test
@@ -103,7 +103,7 @@ class AchievementsViewModelTest {
     @Test
     fun `every hidden achievement is hidden while locked and shown once unlocked`() {
         val hidden = Achievement.entries.filter { it.hidden }
-        assertEquals(listOf(Achievement.INSTANT_FLOOD, Achievement.WALL_TO_WALL, Achievement.PHOTO_FINISH), hidden)
+        assertEquals(listOf(Achievement.INSTANT_FLOOD, Achievement.WALL_TO_WALL, Achievement.PHOTO_FINISH, Achievement.DRAMATIC_FAILURE, Achievement.ON_YOUR_NERVES), hidden)
         for (achievement in hidden) {
             assertEquals(CardLook.HiddenLocked, AchievementCard.of(AchievementProgress(achievement)).look)
             assertEquals(CardLook.Unlocked, AchievementCard.of(AchievementProgress(achievement, unlockedAtMs = 1L)).look)

@@ -15,11 +15,12 @@ import nl.hexmaster.leakout.achievements.data.PlayerStatsEntity
  * The on-device database. Every version's schema is exported to `app/schemas` and committed, and a
  * version bump needs a written migration: there is no destructive fallback, so progress is never lost.
  *
- * Version 2 adds the achievement tables, which a progress reset leaves alone.
+ * Version 2 adds the achievement tables, which a progress reset leaves alone. Version 3 adds the
+ * tips-reset count to the player stats.
  */
 @Database(
     entities = [LevelHistoryEntity::class, AchievementStateEntity::class, PlayerStatsEntity::class, LevelLossStreakEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class LeakOutDatabase : RoomDatabase() {
@@ -48,8 +49,15 @@ abstract class LeakOutDatabase : RoomDatabase() {
             }
         }
 
+        /** Adds the tips-reset count to the player stats, starting at 0; every other row is kept. */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `player_stats` ADD COLUMN `tips_resets` INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         /** Every migration, oldest first; tests open past versions with them. */
-        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
+        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
 
         @Volatile
         private var instance: LeakOutDatabase? = null

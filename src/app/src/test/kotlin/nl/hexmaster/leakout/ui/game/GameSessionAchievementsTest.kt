@@ -91,6 +91,8 @@ class GameSessionAchievementsTest {
                 Achievement.AHEAD_OF_THE_FLOW,
                 Achievement.MEASURE_TWICE,
                 Achievement.STEADY_HANDS,
+                // The route is the level's shortest one.
+                Achievement.EFFICIENCY_MASTER,
             ),
             session.unlockedThisAttempt,
         )
@@ -104,7 +106,7 @@ class GameSessionAchievementsTest {
         repeat(3) { session.recordEnd(tracker) }
         assertEquals(5, store.currentStats.sectionsPlaced)
         assertEquals(1, store.applied.size)
-        assertEquals(5, session.unlockedThisAttempt.size)
+        assertEquals(6, session.unlockedThisAttempt.size)
     }
 
     @Test
@@ -180,6 +182,18 @@ class GameSessionAchievementsTest {
         assertFalse(session.unlockedThisAttempt.isEmpty())
         session.send(Restart)
         assertEquals(emptyList<Achievement>(), session.unlockedThisAttempt)
+    }
+
+    @Test
+    fun `five taps on a running replacement reach the tracker as On Your Nerves`() = runTest {
+        val session = GameSession(level, Random(1))
+        assertTrue(session.placeSection(PipeSection.V, Position(1, 1)))
+        assertEquals(PlaceResult.Replaced, session.place(Position(1, 1)))
+        repeat(5) { assertEquals(PlaceResult.Rejected, session.place(Position(1, 1))) }
+        session.send(Tick(level.rules.replacePenaltyMs))
+        session.win()
+        session.recordEnd(tracker())
+        assertTrue(Achievement.ON_YOUR_NERVES in session.unlockedThisAttempt)
     }
 
     @Test

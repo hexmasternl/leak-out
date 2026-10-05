@@ -99,7 +99,27 @@ class GameSessionPlaceTest {
         session.placeSection(PipeSection.H, Position(2, 0))
         assertEquals(PlaceResult.Replaced, session.place(Position(2, 0)))
         session.assertRejected(Position(3, 0))
-        session.assertRejected(Position(2, 0))
+        val before = session.state
+        assertEquals(PlaceResult.Rejected, session.place(Position(2, 0)))
+        // Only the tap is counted: nothing is placed and the stack is unchanged.
+        assertEquals(before.copy(replacement = before.replacement?.copy(taps = 1), mostReplacementTaps = 1), session.state)
+    }
+
+    @Test
+    fun `taps on the replaced tile are counted and stay silent`() {
+        val player = RecordingSoundEffectPlayer()
+        val sounds = recordingSounds(player)
+        val session = session()
+        session.placeSection(PipeSection.H, Position(2, 0))
+        assertTrue(session.placeWithSound(Position(2, 0), sounds))
+        repeat(5) { assertFalse(session.placeWithSound(Position(2, 0), sounds)) }
+        assertEquals(5, session.state.replacement?.taps)
+        assertEquals(Cell.Empty, session.state.board[Position(2, 0)])
+        // Only the destroy of the replacement itself: no placement or failure sound for the taps.
+        assertEquals(listOf("section_destroy_001.mp3"), player.played)
+        session.send(GameCommand.Tick(2_000))
+        assertFalse(session.isReplacing)
+        assertEquals(5, session.state.mostReplacementTaps)
     }
 
     @Test

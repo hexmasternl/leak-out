@@ -60,4 +60,34 @@
   <string name="achievement_wall_to_wall" translatable="false">CgkIhe2j6-8FEAIQGA</string>
   <!--achievement Photo Finish-->
   <string name="achievement_photo_finish" translatable="false">CgkIhe2j6-8FEAIQGQ</string>
+  <!--Added by app-game-more-achievements and not yet created in the Play Console: an empty id
+      is skipped by the sync. The next export (task 5.3) replaces these with the real ids.-->
+  <!--achievement Tips Addict-->
+  <string name="achievement_tips_addict" translatable="false"></string>
+  <!--achievement The Long Way Round II-->
+  <string name="achievement_long_way_round_2" translatable="false"></string>
+  <!--achievement The Long Way Round III-->
+  <string name="achievement_long_way_round_3" translatable="false"></string>
+  <!--achievement Big Spender II-->
+  <string name="achievement_big_spender_2" translatable="false"></string>
+  <!--achievement Crossroad Master-->
+  <string name="achievement_crossroad_master" translatable="false"></string>
+  <!--achievement Efficiency Master-->
+  <string name="achievement_efficiency_master" translatable="false"></string>
+  <!--achievement Highway-->
+  <string name="achievement_highway" translatable="false"></string>
+  <!--achievement Snake-->
+  <string name="achievement_snake" translatable="false"></string>
+  <!--achievement Eraser-->
+  <string name="achievement_eraser" translatable="false"></string>
+  <!--achievement Dramatic Failure-->
+  <string name="achievement_dramatic_failure" translatable="false"></string>
+  <!--achievement On Your Nerves-->
+  <string name="achievement_on_your_nerves" translatable="false"></string>
+  <!--achievement Star Collector III-->
+  <string name="achievement_star_collector_3" translatable="false"></string>
+  <!--achievement Star Collector IV-->
+  <string name="achievement_star_collector_4" translatable="false"></string>
+  <!--achievement Snail-->
+  <string name="achievement_snail" translatable="false"></string>
 </resources>

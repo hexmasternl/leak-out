@@ -236,6 +236,21 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `show tips again tells the achievements after the tips are reset`() = runTest {
+        val settings = InMemorySettingsRepository(initialSeenTips = setOf(TipId.Intro))
+        val store = InMemoryAchievementRepository()
+        val tracker = AchievementTracker(store, InMemoryLevelHistoryRepository(), backgroundScope)
+        var unlocked = emptyList<Achievement>()
+        val vm = SettingsViewModel(settings, InMemoryLevelHistoryRepository(), onTipsReset = {
+            assertEquals("after the tips are reset", emptySet<TipId>(), settings.seenTips.value)
+            unlocked = tracker.onTipsReset()
+        })
+        vm.onShowTipsAgain()
+        assertEquals(listOf(Achievement.TIPS_ADDICT), unlocked)
+        assertEquals(1, store.currentStats.tipsResets)
+    }
+
+    @Test
     fun `without Play Games the panel is unavailable and counts the whole catalogue`() {
         val state = SettingsViewModel(InMemorySettingsRepository(), InMemoryLevelHistoryRepository()).uiState.value!!
         assertEquals(PlayGamesUiState(SignInState.Unavailable, unlocked = 0, total = Achievement.entries.size), state.playGames)
@@ -250,7 +265,7 @@ class SettingsViewModelTest {
             achievements = InMemoryAchievementRepository(initial = unlocked),
         )
         assertEquals(12, vm.uiState.value!!.playGames.unlocked)
-        assertEquals(25, vm.uiState.value!!.playGames.total)
+        assertEquals(39, vm.uiState.value!!.playGames.total)
     }
 
     @Test

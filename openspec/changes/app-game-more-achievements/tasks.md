@@ -25,14 +25,14 @@
 
 ## 4. App wiring
 
-- [ ] 4.1 Send `ReplacementTap` from `GameSession.place` while a replacement runs, still returning the silent rejection; verify with `GameSession` unit tests that no placement or failure sound is triggered and the count reaches the summary
+- [x] 4.1 Send `ReplacementTap` from `GameSession.place` while a replacement runs, still returning the silent rejection; verify with `GameSession` unit tests that no placement or failure sound is triggered and the count reaches the summary
 - [ ] 4.2 Add the `tips_resets` column to `PlayerStatsEntity` with a Room migration (version + 1, default 0) and export the schema; verify with a `MigrationTestHelper` test for the "Migration with achievements" scenario
-- [ ] 4.3 Add `AchievementTracker.onTipsReset()` / `tipsReset()` and call it from `SettingsViewModel` after `resetTips()`; verify with `AchievementTrackerTest` (first reset unlocks Tips Addict, second unlocks nothing) and a `SettingsViewModel` test
-- [ ] 4.4 Add `achievement_name_<key>` / `achievement_desc_<key>` strings for the 14 keys, empty `achievement_<key>` placeholders in `games-ids.xml` (listed as awaiting the export in `AchievementResourcesTest`), the skip of an empty id in `PlayGamesAchievementSync`, the same texts in the console list of `AchievementResourcesTest`, and the entries in the exhaustive `when` of `AchievementResources`; verify with `./gradlew :app:testDebugUnitTest`
+- [x] 4.3 Add `AchievementTracker.onTipsReset()` / `tipsReset()` and call it from `SettingsViewModel` after `resetTips()`; verify with `AchievementTrackerTest` (first reset unlocks Tips Addict, second unlocks nothing) and a `SettingsViewModel` test
+- [x] 4.4 Add `achievement_name_<key>` / `achievement_desc_<key>` strings for the 14 keys, empty `achievement_<key>` placeholders in `games-ids.xml` (listed as awaiting the export in `AchievementResourcesTest`), the skip of an empty id in `PlayGamesAchievementSync`, the same texts in the console list of `AchievementResourcesTest`, and the entries in the exhaustive `when` of `AchievementResources`; verify with `./gradlew :app:testDebugUnitTest`
 
 ## 5. Icons and Play Console
 
-- [ ] 5.1 Add the 14 icons to `assets/achievements/generate-icons.mjs` (tier template for the II/III/IV tiers, hidden placeholder for the two hidden ones), render the 512 × 512 PNGs and copy them to `app/src/main/res/drawable-nodpi/achievement_<key>.png`; verify they stay inside the radius-200 safe disc in `preview.html`
+- [x] 5.1 Add the 14 icons to `assets/achievements/generate-icons.mjs` (tier template for the II/III/IV tiers, hidden placeholder for the two hidden ones), render the 512 × 512 PNGs and copy them to `app/src/main/res/drawable-nodpi/achievement_<key>.png`; verify they stay inside the radius-200 safe disc in `preview.html`
 - [ ] 5.2 Owner: create the 14 achievements in the Play Console with the same names, descriptions, XP, hidden flags and icons, following `docs/achievements-setup.md#adding-achievements-later`
 - [ ] 5.3 Replace `app/src/main/res/values/games-ids.xml` with the new export (existing ids unchanged) and empty the awaiting-export list in `AchievementResourcesTest`; verify `AchievementResourcesInstrumentedTest` passes on the emulator
 - [ ] 5.4 Owner: smoke test with a tester account (unlock Tips Addict and one skill achievement), then publish the Play Games configuration

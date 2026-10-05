@@ -255,6 +255,34 @@
     <string name="achievement_desc_wall_to_wall">Win with every free cell filled.</string>
     <string name="achievement_name_photo_finish">Photo Finish</string>
     <string name="achievement_desc_photo_finish">Complete the route on the very tile the liquid was about to enter.</string>
+    <string name="achievement_name_tips_addict">Tips Addict</string>
+    <string name="achievement_desc_tips_addict">Reset the tips on the settings screen.</string>
+    <string name="achievement_name_long_way_round_2">The Long Way Round II</string>
+    <string name="achievement_desc_long_way_round_2">Win with the liquid flowing through 50 or more sections.</string>
+    <string name="achievement_name_long_way_round_3">The Long Way Round III</string>
+    <string name="achievement_desc_long_way_round_3">Win with the liquid flowing through 100 or more sections.</string>
+    <string name="achievement_name_big_spender_2">Big Spender II</string>
+    <string name="achievement_desc_big_spender_2">Win a level with a score of 1,000 or more.</string>
+    <string name="achievement_name_crossroad_master">Crossroad Master</string>
+    <string name="achievement_desc_crossroad_master">Win with the liquid running through 3 crosses in a row.</string>
+    <string name="achievement_name_efficiency_master">Efficiency Master</string>
+    <string name="achievement_desc_efficiency_master">Win with no more sections on the board than the shortest route needs.</string>
+    <string name="achievement_name_highway">Highway</string>
+    <string name="achievement_desc_highway">Win with the liquid running straight through 7 straight sections in a row.</string>
+    <string name="achievement_name_snake">Snake</string>
+    <string name="achievement_desc_snake">Win with the liquid running through 12 corners in a row.</string>
+    <string name="achievement_name_eraser">Eraser</string>
+    <string name="achievement_desc_eraser">Win a level after replacing 20 or more sections.</string>
+    <string name="achievement_name_dramatic_failure">Dramatic Failure</string>
+    <string name="achievement_desc_dramatic_failure">Lose a level after the liquid flowed through more than 50 sections.</string>
+    <string name="achievement_name_on_your_nerves">On Your Nerves</string>
+    <string name="achievement_desc_on_your_nerves">Tap a tile 5 times while its section is being replaced.</string>
+    <string name="achievement_name_star_collector_3">Star Collector III</string>
+    <string name="achievement_desc_star_collector_3">Collect 100 stars.</string>
+    <string name="achievement_name_star_collector_4">Star Collector IV</string>
+    <string name="achievement_desc_star_collector_4">Collect 250 stars.</string>
+    <string name="achievement_name_snail">Snail</string>
+    <string name="achievement_desc_snail">Win with the liquid flowing through 3 or more reservoirs.</string>
 
     <!-- Play Games panel on the settings screen (design.md decision 7) -->
     <string name="settings_play_games">Play Games</string>

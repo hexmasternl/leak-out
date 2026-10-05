@@ -134,6 +134,35 @@ class AchievementTrackerTest {
     }
 }
 
+class AchievementTrackerTipsTest {
+    private val store = InMemoryAchievementRepository(clock = { 42L })
+
+    private fun TestScope.tracker() = AchievementTracker(store, InMemoryLevelHistoryRepository(), backgroundScope)
+
+    @Test
+    fun `the first tips reset unlocks Tips Addict and the second unlocks nothing`() = runTest {
+        val tracker = tracker()
+        assertEquals(listOf(Achievement.TIPS_ADDICT), tracker.onTipsReset())
+        assertEquals(emptyList<Achievement>(), tracker.onTipsReset())
+        assertEquals(2, store.currentStats.tipsResets)
+        assertTrue(store.observeAll().first().first { it.achievement == Achievement.TIPS_ADDICT }.unlocked)
+    }
+
+    @Test
+    fun `a tips reset started in the tracker's scope is counted`() = runTest {
+        tracker().tipsReset().join()
+        assertEquals(1, store.currentStats.tipsResets)
+    }
+
+    @Test
+    fun `attempts keep the tips resets`() = runTest {
+        val tracker = tracker()
+        tracker.onTipsReset()
+        tracker.onAttemptEnded(loss(placements = 3))
+        assertEquals(PlayerStats(sectionsPlaced = 3, losses = 1, lossStreakByLevel = mapOf(3 to 1), tipsResets = 1), store.currentStats)
+    }
+}
+
 internal fun loss(levelId: Int = 3, placements: Int = 0, sectionsLeft: Int = 0) = summary(levelId, AttemptOutcome.LOST, placements, sectionsLeft, null)
 
 internal fun win(levelId: Int = 3, placements: Int = 5, record: RecordOutcome? = RecordOutcome.FIRST_COMPLETION) =

@@ -16,8 +16,11 @@ const T = {
 
 const RING = {
   progress: T.l500, skill: T.b500, hidden: T.r500,
-  tier1: T.s300, tier2: T.l300, tier3: T.b300,
+  tier1: T.s300, tier2: T.l300, tier3: T.b300, tier4: T.glow,
 };
+
+// [glyph] scaled by [s] round (256, [cy]), so a tier numeral fits under it.
+const shrink = (glyph, s = 0.72, cy = 226) => `<g transform="translate(256 ${cy}) scale(${s}) translate(-256 -256)">${glyph}</g>`;
 
 const W = 56; // pipe body width
 
@@ -184,6 +187,30 @@ function trophy(pack) {
     `<rect x="186" y="342" width="140" height="48" rx="12" fill="url(#brass)" stroke="${T.b700}" stroke-width="5"/>` + bars;
 }
 
+const longWayRound = () =>
+  pipe('M 120 150 L 330 150 A 50 50 0 0 1 330 250 L 182 250 A 50 50 0 0 0 182 350 L 392 350', { w: 44 }) +
+  flange(122, 150, true, 44) + flange(390, 350, true, 44);
+
+const coinStack = () =>
+  [3, 2, 1, 0].map(i => {
+    const y = 340 - i * 44;
+    return `<ellipse cx="256" cy="${y + 12}" rx="100" ry="34" fill="${T.b700}"/>` +
+      `<rect x="156" y="${y - 10}" width="200" height="22" fill="${T.b700}"/>` +
+      `<ellipse cx="256" cy="${y - 10}" rx="100" ry="34" fill="url(#brass)" stroke="${T.b700}" stroke-width="4"/>` +
+      `<ellipse cx="256" cy="${y - 10}" rx="60" ry="18" fill="none" stroke="${T.b100}" stroke-width="4" opacity="0.6"/>`;
+  }).join('') + drop(256, 180, 0.6);
+
+// A short cross stub over a horizontal pipe at x: the vertical channel of a cross the liquid runs straight through.
+const crossAt = (x, y, w = 40) =>
+  pipe(`M ${x} ${y - 64} L ${x} ${y + 64}`, { w, wet: false }) +
+  flange(x, y - 62, false, w) + flange(x, y + 62, false, w);
+
+// A circular arrow round (cx, cy): the "again" mark of a reset or a replacement.
+const loopArrow = (cx, cy, r, color) => glowed(
+  `<path d="M ${cx + r} ${cy} A ${r} ${r} 0 1 1 ${cx + r * 0.5} ${cy - r * 0.866}" fill="none" stroke="__C__" stroke-width="16" stroke-linecap="round"/>` +
+  `<path d="M ${cx + r * 0.5 - 4} ${cy - r * 0.866 - 26} L ${cx + r * 0.5 + 4} ${cy - r * 0.866 + 2} L ${cx + r * 0.5 - 26} ${cy - r * 0.866 + 10}" fill="none" stroke="__C__" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>`,
+  color, 0.45, 'blurS');
+
 const icons = {
   first_leak_fixed: ['progress',
     pipe('M 130 250 L 382 250') + flange(130, 250) + flange(382, 250) +
@@ -244,18 +271,9 @@ const icons = {
     `<line x1="150" y1="370" x2="362" y2="120" stroke="${T.base}" stroke-width="40" stroke-linecap="round"/>` +
     glowed(`<line x1="150" y1="370" x2="362" y2="120" stroke="__C__" stroke-width="22" stroke-linecap="round"/>`, T.b500, 0.5, 'blurS')],
 
-  long_way_round: ['skill',
-    pipe('M 120 150 L 330 150 A 50 50 0 0 1 330 250 L 182 250 A 50 50 0 0 0 182 350 L 392 350', { w: 44 }) +
-    flange(122, 150, true, 44) + flange(390, 350, true, 44)],
+  long_way_round: ['skill', longWayRound()],
 
-  big_spender: ['skill',
-    [3, 2, 1, 0].map(i => {
-      const y = 340 - i * 44;
-      return `<ellipse cx="256" cy="${y + 12}" rx="100" ry="34" fill="${T.b700}"/>` +
-        `<rect x="156" y="${y - 10}" width="200" height="22" fill="${T.b700}"/>` +
-        `<ellipse cx="256" cy="${y - 10}" rx="100" ry="34" fill="url(#brass)" stroke="${T.b700}" stroke-width="4"/>` +
-        `<ellipse cx="256" cy="${y - 10}" rx="60" ry="18" fill="none" stroke="${T.b100}" stroke-width="4" opacity="0.6"/>`;
-    }).join('') + drop(256, 180, 0.6)],
+  big_spender: ['skill', coinStack()],
 
   apprentice: ['tier1', wrench(256, 236, 0.95) + pips(1)],
   journeyman: ['tier2', wrench(256, 236, 0.95) + pips(2)],
@@ -306,6 +324,65 @@ const icons = {
     `<circle cx="238" cy="256" r="16" fill="${T.glow}"/>` +
     `<path d="M 380 150 l 12 30 l 30 12 l -30 12 l -12 30 l -12 -30 l -30 -12 l 30 -12 Z" fill="#FFFFFF"/>` +
     `<path d="M 380 150 l 12 30 l 30 12 l -30 12 l -12 30 l -12 -30 l -30 -12 l 30 -12 Z" fill="${T.glow}" opacity="0.6" filter="url(#blurS)"/>`],
+
+  // --- Later additions (app-game-more-achievements) ---
+
+  tips_addict: ['progress',
+    `<path d="M 256 112 A 86 86 0 0 1 306 270 L 300 312 L 212 312 L 206 270 A 86 86 0 0 1 256 112 Z" fill="url(#brass)" stroke="${T.b700}" stroke-width="6" stroke-linejoin="round"/>` +
+    `<path d="M 256 112 A 86 86 0 0 1 306 270 L 300 312 L 212 312 L 206 270 A 86 86 0 0 1 256 112 Z" fill="${T.b500}" opacity="0.4" filter="url(#blurS)"/>` +
+    `<path d="M 232 266 L 244 214 L 256 236 L 268 214 L 280 266" fill="none" stroke="${T.b900}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>` +
+    `<rect x="214" y="320" width="84" height="18" rx="7" fill="${T.s300}"/><rect x="222" y="344" width="68" height="18" rx="7" fill="${T.s500}"/>` +
+    loopArrow(352, 336, 38, T.ok)],
+
+  long_way_round_2: ['tier2', shrink(longWayRound()) + numeral(2, 256, 384)],
+  long_way_round_3: ['tier3', shrink(longWayRound()) + numeral(3, 256, 384)],
+
+  big_spender_2: ['tier2', shrink(coinStack()) + numeral(2, 256, 384)],
+
+  crossroad_master: ['skill',
+    crossAt(170, 280) + crossAt(256, 280) + crossAt(342, 280) +
+    pipe('M 108 280 L 404 280', { w: 44 }) +
+    flange(110, 280, true, 44) + flange(402, 280, true, 44) +
+    [170, 256, 342].map(x => star(x, 156, 22)).join('')],
+
+  efficiency_master: ['skill',
+    pipe('M 130 300 L 382 300') + flange(132, 300) + flange(380, 300) +
+    glowed(`<path d="M 150 196 L 362 196 M 172 172 L 148 196 L 172 220 M 340 172 L 364 196 L 340 220" fill="none" stroke="__C__" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>`, T.ok, 0.45, 'blurS')],
+
+  highway: ['skill',
+    pipe('M 100 296 L 412 296', { w: 60 }) + flange(102, 296, true, 60) + flange(410, 296, true, 60) +
+    [0, 1, 2].map(i => `<rect x="${150 + i * 76}" y="188" width="56" height="14" rx="7" fill="${T.b300}"/>`).join('') +
+    glowed(`<path d="M 300 132 L 356 160 L 300 188" fill="none" stroke="__C__" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>`, T.l300, 0.5, 'blurS')],
+
+  snake: ['skill',
+    pipe('M 136 150 L 196 150 L 196 210 L 256 210 L 256 270 L 316 270 L 316 330 L 376 330', { w: 42 }) +
+    flange(138, 150, true, 42) + flange(374, 330, true, 42)],
+
+  eraser: ['skill',
+    pipe('M 150 256 L 362 256', { w: 52, wet: false }) +
+    `<rect x="214" y="206" width="84" height="100" rx="14" fill="${T.s900}" stroke="${T.leak}" stroke-width="8" stroke-dasharray="18 12"/>` +
+    loopArrow(256, 256, 120, T.b500)],
+
+  dramatic_failure: ['hidden',
+    pipe('M 120 140 L 330 140 A 50 50 0 0 1 330 240 L 182 240 A 50 50 0 0 0 182 340 L 290 340', { w: 40 }) +
+    flange(122, 140, true, 40) +
+    `<circle cx="332" cy="340" r="44" fill="${T.leak}" opacity="0.3" filter="url(#blur)"/>` +
+    drop(344, 318, 0.42) + drop(380, 352, 0.32) + drop(330, 380, 0.28)],
+
+  on_your_nerves: ['hidden',
+    `<rect x="186" y="186" width="140" height="140" rx="18" fill="${T.overlay}" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="3"/>` +
+    [60, 92, 124].map((r, i) => `<circle cx="256" cy="256" r="${r}" fill="none" stroke="${T.r300}" stroke-width="${8 - i * 2}" opacity="${0.9 - i * 0.25}"/>`).join('') +
+    `<circle cx="256" cy="256" r="26" fill="${T.r500}"/>` +
+    [0, 1, 2, 3, 4].map(i => `<rect x="${206 + i * 22}" y="372" width="12" height="30" rx="6" fill="${T.r300}"/>`).join('')],
+
+  star_collector_3: ['tier3', star(256, 236, 110) + numeral(3, 256, 372)],
+  star_collector_4: ['tier4', star(256, 236, 110) + numeral(4, 256, 372)],
+
+  snail: ['skill',
+    `<ellipse cx="236" cy="352" rx="134" ry="22" fill="${T.l700}" opacity="0.5"/>` +
+    pipe('M 256 252 A 24 24 0 0 1 304 252 A 52 52 0 0 1 200 252 A 80 80 0 0 1 360 252 A 108 108 0 0 1 144 252', { w: 30 }) +
+    `<path d="M 372 330 C 400 300 404 276 392 252" fill="none" stroke="${T.s300}" stroke-width="16" stroke-linecap="round"/>` +
+    `<circle cx="392" cy="246" r="9" fill="${T.l300}"/>`],
 
   hidden: ['hidden',
     `<path d="M 206 200 A 50 50 0 1 1 286 240 C 266 254 256 264 256 296" fill="none" stroke="${T.r300}" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>` +

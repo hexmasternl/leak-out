@@ -16,9 +16,18 @@ import org.junit.runner.RunWith
 class AchievementResourcesInstrumentedTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
 
+    /**
+     * Not yet created in the Play Console: their id is empty until the next export (task 5.3 of
+     * app-game-more-achievements, which empties this), and the sync skips them.
+     */
+    private val awaitingExport = setOf(
+        "tips_addict", "long_way_round_2", "long_way_round_3", "big_spender_2", "crossroad_master", "efficiency_master",
+        "highway", "snake", "eraser", "dramatic_failure", "on_your_nerves", "star_collector_3", "star_collector_4", "snail",
+    )
+
     @Test
     fun everyKeyHasANonEmptyPlayGamesIdAndNoTwoShareOne() {
-        val ids = Achievement.entries.map { achievement ->
+        val ids = Achievement.entries.filter { it.key !in awaitingExport }.map { achievement ->
             // By name, as the spec states it, and through the mapping the sync uses.
             @Suppress("DiscouragedApi")
             val byName = context.resources.getIdentifier("achievement_${achievement.key}", "string", context.packageName)
@@ -27,6 +36,14 @@ class AchievementResourcesInstrumentedTest {
             context.getString(byName).also { assertTrue(achievement.key, it.isNotBlank()) }
         }
         assertEquals(ids.size, ids.toSet().size)
+    }
+
+    @Test
+    fun anAchievementAwaitingTheExportResolvesToAnEmptyId() {
+        for (key in awaitingExport) {
+            val achievement = Achievement.fromKey(key) ?: error("$key is not in the catalogue")
+            assertEquals(key, "", context.getString(AchievementResources.playGamesId(achievement)))
+        }
     }
 
     @Test

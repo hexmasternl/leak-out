@@ -34,13 +34,13 @@
 
 - [x] 5.1 Add the 14 icons to `assets/achievements/generate-icons.mjs` (tier template for the II/III/IV tiers, hidden placeholder for the two hidden ones), render the 512 × 512 PNGs and copy them to `app/src/main/res/drawable-nodpi/achievement_<key>.png`; verify they stay inside the radius-200 safe disc in `preview.html`
 - [ ] 5.2 Owner: create the 14 achievements in the Play Console with the same names, descriptions, XP, hidden flags and icons, following `docs/achievements-setup.md#adding-achievements-later`
-- [ ] 5.3 Replace `app/src/main/res/values/games-ids.xml` with the new export (existing ids unchanged) and empty the awaiting-export list in `AchievementResourcesTest`; verify `AchievementResourcesInstrumentedTest` passes on the emulator
+- [ ] 5.3 Replace `app/src/main/res/values/games-ids.xml` with the new export (existing ids unchanged) and empty the awaiting-export lists in `AchievementResourcesTest` and `AchievementResourcesInstrumentedTest`; verify `AchievementResourcesInstrumentedTest` passes on the emulator
 - [ ] 5.4 Owner: smoke test with a tester account (unlock Tips Addict and one skill achievement), then publish the Play Games configuration
 
 ## 6. Docs
 
-- [ ] 6.1 Update `docs/achievements.md`: XP used 745 / left 255, the rebalanced guideline (packs 5 + 5, Star Collector V / VI at 500 / 1000 stars), and why Big Spender and The Long Way Round got tiers instead of new values; verify the guideline adds up to at most 255
-- [ ] 6.2 Update `docs/achievements-technical.md` (flow path, replacement taps, minimum sections, tips resets, empty ids before the export), resolve the merge-conflict markers in `docs/achievements-setup.md` (keep the upstream side), and `docs/project-plan.md` section 2.11 with the new achievement list
+- [x] 6.1 Update `docs/achievements.md`: XP used 745 / left 255, the rebalanced guideline (packs 5 + 5, Star Collector V / VI at 500 / 1000 stars), and why Big Spender and The Long Way Round got tiers instead of new values; verify the guideline adds up to at most 255
+- [x] 6.2 Update `docs/achievements-technical.md` (flow path, replacement taps, minimum sections, tips resets, empty ids before the export), resolve the merge-conflict markers in `docs/achievements-setup.md` (keep the upstream side), and `docs/project-plan.md` section 2.11 with the new achievement list
 
 ## 7. Integration
 

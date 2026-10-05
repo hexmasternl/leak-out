@@ -98,6 +98,27 @@ Names and descriptions are not in `core`. They are Android string resources (`ac
 | `wall_to_wall` | Wall to Wall | hidden | standard | ✔ | 30 | a win where every free cell held a section when the level was won |
 | `photo_finish` | Photo Finish | hidden | standard | ✔ | 30 | a win where the route-completing section went on the tile the liquid head was about to enter |
 
+### Later additions
+
+`app-game-more-achievements` (issue #64) added 14 achievements after the launch entries, for 150 XP. The catalogue now holds 39 achievements, 745 of the 1,000 XP. Group totals: progress 195, skill 340, lifetime 120, hidden 90.
+
+| Key | Name | Group | Type / steps | Hidden | XP | Unlocks when |
+|---|---|---|---|---|---|---|
+| `tips_addict` | Tips Addict | lifetime | standard | | 5 | the seen tips were reset with "Show tips again" |
+| `long_way_round_2` | The Long Way Round II | skill | standard | | 10 | a win where the liquid left 50 or more distinct placed tiles |
+| `long_way_round_3` | The Long Way Round III | skill | standard | | 15 | the same with 100 or more |
+| `big_spender_2` | Big Spender II | skill | standard | | 15 | a win with a final total of 1,000 or more |
+| `crossroad_master` | Crossroad Master | skill | standard | | 15 | a win where the liquid left 3 crosses one directly after the other |
+| `efficiency_master` | Efficiency Master | skill | standard | | 15 | a win with no more sections on the board than the solver's shortest route has cells |
+| `highway` | Highway | skill | standard | | 10 | a win where the liquid left 7 straights of the same direction in a row |
+| `snake` | Snake | skill | standard | | 15 | a win where the liquid left 12 corners in a row |
+| `eraser` | Eraser | skill | standard | | 5 | a win with 20 or more replacements |
+| `dramatic_failure` | Dramatic Failure | hidden | standard | ✔ | 5 | a loss after the liquid left more than 50 sections (a cross twice counts twice) |
+| `on_your_nerves` | On Your Nerves | hidden | standard | ✔ | 5 | 5 or more taps on the tile of one running replacement, won or lost |
+| `star_collector_3` | Star Collector III | progress | incremental 100 | | 10 | 100 stars in total |
+| `star_collector_4` | Star Collector IV | progress | incremental 250 | | 15 | 250 stars in total |
+| `snail` | Snail | skill | standard | | 10 | a win where the liquid left 3 or more reservoirs |
+
 ### Why progress never depends on the library size
 
 The game grows in packs of 24 levels (one library page, `LevelLibraryLayout.LEVELS_PER_PAGE`) towards 300 or more. Play Games fixes step counts once published and never deletes achievements. So progress only has two shapes, and both survive new content:
@@ -120,10 +141,13 @@ The growth rules and the XP budget for later packs are in [achievements.md](achi
 | Instant Flood | A loss with no placed section left by the liquid (`sectionsLeft == 0`). |
 | Wall to Wall | A win with `piecesOnBoard >= freeCells`. Mandatory sections count as pieces. |
 | Personal Best | A win whose history record result is a new highscore. |
+| Runs (Crossroad Master, Highway, Snake) | Taken from `GameState.flowPath` in flow order: consecutive crosses, consecutive straights of the same section (`H` after `H` or `V` after `V`; any other section breaks the run) and consecutive corners. Mandatory sections count. |
+| Minimum sections (Efficiency Master) | `LevelSolver.solve(level)`'s path, distinct cells (a mandatory cross is on the path twice). Null for a level the solver can't solve, which never unlocks it. Without mandatory sections the solver's search is exact; with them it is greedy, so a better route still counts (`<=`). |
+| Replacement taps (On Your Nerves) | `GameState.mostReplacementTaps`: the most `ReplacementTap` commands on the replaced tile during one replacement. |
 
 ## Attempt facts in the engine
 
-`core/engine/GameState` carries five attempt facts. The engine sets them as it handles commands; it knows nothing about achievements.
+`core/engine/GameState` carries seven attempt facts. The engine sets them as it handles commands; it knows nothing about achievements.
 
 ```kotlin
 placements: Int                    // accepted Place commands this attempt, replacements included
@@ -131,7 +155,12 @@ replacements: Int                  // accepted Place commands that replaced a se
 everPaused: Boolean                // set by an accepted Pause; Resume keeps it
 routeCompletedBeforeFlow: Boolean  // routeComplete became true while the flow was Waiting
 photoFinish: Boolean               // see the definition above
+flowPath: List<PathStep>           // every exit of the liquid from a section, in flow order: PathStep(at, section)
+mostReplacementTaps: Int           // the most ReplacementTap commands one replacement got
 ```
+
+- `flowPath` grows where the flow awards a section's points (`FlowSimulation.leaveTile`), so a cross left twice is in it twice. `RemoveUnused` only takes sections the liquid never entered and leaves it alone.
+- `GameCommand.ReplacementTap(at)` adds one to `Replacement.taps` when `at` is the replaced tile and a replacement runs (not paused, not ended); anything else is refused. It places nothing and doesn't move the landing. `GameSession.place` sends it instead of `Place` while `isReplacing` and still returns `PlaceResult.Rejected`, which is silent during a replacement.
 
 - They have no defaults. `GameEngine.start` is the only place a state is built, so `Start` and `Restart` reset them with the rest of the attempt.
 - Refused commands leave them unchanged.
@@ -145,17 +174,20 @@ Everything that decides achievements is pure and lives in `core/achievements/`.
 
 `AttemptSummary.from(state, record: RecordOutcome?)` captures one ended attempt from the state at the moment the outcome first became won or lost. It throws while the attempt is still playing.
 
-Fields: `levelId`, `outcome` (`WON` / `LOST`), `finalTotal`, `finalStars`, `unusedSections`, `distinctTilesLeft`, `sectionsLeft`, `crossesLeftTwice`, `placements`, `replacements`, `everPaused`, `fastForwardAtWin`, `routeCompletedBeforeFlow`, `photoFinish`, `freeCells`, `piecesOnBoard`, `record`.
+Fields: `levelId`, `outcome` (`WON` / `LOST`), `finalTotal`, `finalStars`, `unusedSections`, `distinctTilesLeft`, `sectionsLeft`, `crossesLeftTwice`, `placements`, `replacements`, `everPaused`, `fastForwardAtWin`, `routeCompletedBeforeFlow`, `photoFinish`, `freeCells`, `piecesOnBoard`, `record`, `longestCrossChain`, `longestStraightRun`, `longestCornerRun`, `reservoirsLeft`, `mostReplacementTaps`, `minimumSections`.
+
+- The route-shape numbers are computed from `flowPath` here, so the rules never see the list. `minimumSections` runs the level solver once per ended attempt (milliseconds on the bundled levels).
 
 - `piecesOnBoard` adds back `sectionsRemoved` on a win, so the summary is right even when it is built after `RemoveUnused`.
 - `RecordOutcome` (`FIRST_COMPLETION`, `NEW_HIGHSCORE`, `NO_IMPROVEMENT`) is the core copy of the app's `RecordResult`. The app maps it with `RecordResult.toRecordOutcome()` (`app/achievements/AttemptSummaries.kt`). It is ignored on a loss.
 
 ### PlayerStats
 
-`PlayerStats(sectionsPlaced, losses, lossStreakByLevel)` holds the lifetime counters the level history doesn't keep.
+`PlayerStats(sectionsPlaced, losses, lossStreakByLevel, tipsResets)` holds the lifetime counters the level history doesn't keep.
 
 - `after(summary)` adds the attempt's placements. A loss adds 1 to `losses` and to that level's streak; a win clears that level's streak.
 - `afterAbandoned(placements)` adds the placements of a restarted or exited attempt. Negative numbers are refused.
+- `afterTipsReset()` adds 1 to `tipsResets` (Tips Addict). Like every stat it survives a progress reset.
 
 ### AchievementRules.evaluate
 
@@ -181,12 +213,12 @@ AchievementRules.evaluate(
 
 ## Local store
 
-The achievements live in the existing Room database `LeakOutDatabase` (`app/history/data/`), in version 2. `MIGRATION_1_2` only creates the three new tables, so existing history is untouched. Every schema version is exported to `src/app/schemas/` and committed. There is no destructive fallback.
+The achievements live in the existing Room database `LeakOutDatabase` (`app/history/data/`), in version 3. `MIGRATION_1_2` only creates the three new tables, so existing history is untouched; `MIGRATION_2_3` adds `player_stats.tips_resets` (`NOT NULL DEFAULT 0`) and keeps every row. Every schema version is exported to `src/app/schemas/` and committed. There is no destructive fallback.
 
 | Table | Columns |
 |---|---|
 | `achievement_state` | `key` TEXT PK, `steps` INT, `unlocked_at_ms` INT NULL |
-| `player_stats` | `id` INT PK (always 0), `sections_placed` INT, `losses` INT |
+| `player_stats` | `id` INT PK (always 0), `sections_placed` INT, `losses` INT, `tips_resets` INT (version 3) |
 | `level_loss_streak` | `level_id` INT PK, `streak` INT |
 
 Rows are stored by key, not by enum ordinal, so the catalogue can be reordered. A catalogue entry without a row is locked with 0 steps.
@@ -227,6 +259,8 @@ Implementations: `RoomAchievementRepository` (`achievements/data/`, with `Achiev
 - `suspend fun recordAchievements(tracker)`: once per attempt, from the state captured when the outcome first became won or lost. It finishes even when the caller is cancelled, and recompositions don't count twice.
 - `fun abandonAttempt(tracker)` and `fun restart(tracker): Boolean`: an unfinished attempt's placements are counted once.
 
+A tips reset doesn't come from a game: `SettingsViewModel.onShowTipsAgain` resets the tips and then calls its `onTipsReset`, which `MainActivity` wires to `AchievementTracker.tipsReset()` (`onTipsReset()` in the application scope). It goes through the same evaluate-and-store path as an attempt, so a reconcile at start-up would also unlock Tips Addict.
+
 `GameScreen` takes an optional `achievements: AchievementTracker?`. `MainActivity` passes the real tracker; the level designer's test play passes nothing, so test runs are never tracked. Exit from the result dialogs adds nothing, because that attempt was already counted when it ended.
 
 ### Wiring
@@ -240,6 +274,7 @@ Dependency: `com.google.android.gms:play-services-games-v2`, pinned in `src/grad
 ### Configuration
 
 - `src/app/src/main/res/values/games-ids.xml` is the Play Console export: `app_id` (`201820010117`), `package_name` and one `achievement_<key>` string per achievement. The Console names resources after the achievement *names*, so five were renamed to their keys: `getting_the_hang_of_it` → `levels_finished_1`, `star_collector_i` → `star_collector_1`, `star_collector_ii` → `star_collector_2`, `perfectionist_i` → `perfectionist_1`, `the_long_way_round` → `long_way_round`.
+- **An achievement not yet created in the Play Console** has its `achievement_<key>` string with an **empty** value, so the app compiles. `WithPlayGamesId` drops every call for it; once the export brings the real id, the next push sends its state. `AchievementResourcesTest` lists these keys in `awaitingExport`, and the export empties that list.
 - The manifest carries `com.google.android.gms.games.APP_ID` → `@string/app_id`.
 - **Not configured:** when the app id isn't a positive number (`PlayGamesServices.isConfigured`), the SDK isn't started, the sign-in state is `Unavailable` and a no-op sync is used. Tests use the id `0` for this.
 - A build whose signing key has no Play Games credential (for example a debug build on a machine whose debug SHA-1 isn't registered) still starts the SDK, fails the silent sign-in and shows `SignedOut`. The game keeps working.
@@ -250,7 +285,7 @@ Dependency: `com.google.android.gms:play-services-games-v2`, pinned in `src/grad
 |---|---|
 | `PlayGamesServices(appId, achievements, scope, …)` | Owns `configured`, `auth` and `syncer`. `start()` runs in `Application.onCreate` and calls `PlayGamesSdk.initialize`. `attach(activity)` / `detach(activity)` run from `MainActivity.onCreate` / `onDestroy`: attach binds the sync and runs the silent sign-in check. Every v2 client needs an Activity, which is why the sync is bound per activity. |
 | `PlayGamesAuth` | `state: StateFlow<SignInState>` and `checkSilently(activity)` / `signIn(activity)`. `SignInState` is `Unavailable`, `SignedOut`, `SigningIn` or `SignedIn(displayName)`. The state is `SigningIn` during the silent check too. A failed or cancelled sign-in returns to `SignedOut`. When not configured it never touches the SDK. |
-| `AchievementSync` | `unlock(id)` and `setSteps(id, n)`. Implemented by `PlayGamesAchievementSync` (`unlockImmediate` / `setStepsImmediate`, so failures are visible) and `NoOpAchievementSync`. |
+| `AchievementSync` | `unlock(id)` and `setSteps(id, n)`. Implemented by `PlayGamesAchievementSync` (`unlockImmediate` / `setStepsImmediate`, so failures are visible) and `NoOpAchievementSync`. `WithPlayGamesId` wraps the Play Games one and skips achievements with an empty id. |
 | `AchievementSyncer(repo, signIn, scope, log)` | `start()` combines the sign-in state, `observeAll()` and the bound sync, and pushes everything while signed in. `push(sync, all)` returns the number of failed calls. |
 | `PlayGamesLog` | Injectable logger for failed calls. |
 | `GmsPlayGames.kt` | The thin wrappers around the GMS clients, including `showPlayGamesAchievements(activity)`. |
@@ -282,7 +317,7 @@ When the attempt unlocked achievements, the level complete and level lost dialog
 ```
 │ PLAY GAMES                      │
 │ ● Signed in as <name>           │   or "Not signed in"  [ Sign in ]
-│ [ Achievements      12 / 25 ]   │
+│ [ Achievements      12 / 39 ]   │
 ```
 
 - `SignedOut`: "Not signed in" and a glass Sign in button. `SigningIn`: the button is disabled. `SignedIn`: "Signed in as <name>" ("Signed in" without a name), no button. `Unavailable`: "Play Games is not available", no button.
@@ -312,7 +347,7 @@ Source and output are in [`assets/achievements/`](../assets/achievements/):
 | File | What |
 |---|---|
 | `generate-icons.mjs` | Writes every `achievement_<key>.svg`: `node generate-icons.mjs .` from that folder. The design-system tokens are constants at the top. |
-| `achievement_<key>.svg` | The 26 SVG sources: 25 achievements plus `achievement_hidden`. |
+| `achievement_<key>.svg` | The 40 SVG sources: 39 achievements plus `achievement_hidden`. |
 | `render-icons.js` | Renders the SVGs to 512 × 512 PNGs in `png/` with the globally installed Playwright Chromium: `node render-icons.js`, or `node render-icons.js <key>…` for some. |
 | `png/` | The rendered PNGs. These went to the Play Console and are copied to `src/app/src/main/res/drawable-nodpi/achievement_<key>.png`. |
 | `preview.html` | A contact sheet of all PNGs. |
@@ -322,7 +357,7 @@ The PNGs in `png/` and in `drawable-nodpi/` are the ones that were uploaded to t
 Style (Deep Flow):
 
 - A full-bleed `surface.deep` background with a radial vignette. Play Games may crop to a circle, so everything important sits inside a centred disc of radius 200.
-- The medallion is a `surface.raised → surface.base` disc with a `line.highlight` top edge and a ring whose colour gives the group: progress and the single lifetime achievements `liquid.500`, skill `brass.500`, hidden `reservoir.500`. Tiered sets use `steel.300` (tier I), `liquid.300` (tier II) and `brass.300` (tier III).
+- The medallion is a `surface.raised → surface.base` disc with a `line.highlight` top edge and a ring whose colour gives the group: progress and the single lifetime achievements `liquid.500`, skill `brass.500`, hidden `reservoir.500`. Tiered sets use `steel.300` (tier I), `liquid.300` (tier II), `brass.300` (tier III) and `liquid.glow` (tier IV). A higher tier of a skill achievement shrinks the first tier's glyph to make room for the numeral.
 - Pack achievements show the pack number in roman numerals under a trophy (complete) or three stars (perfect). Later tiers and packs reuse these templates in the generator.
 - Glyphs use the pipe recipe (steel body, bore, aqua liquid with `liquid.glow`) or the rounded-stroke icon style. Liquid is the brightest thing in each icon.
 - Roman numerals and pips are drawn as paths in Wendy One shapes, so they render without the font.
@@ -333,18 +368,19 @@ Style (Deep Flow):
 
 | Where | Test | What it proves |
 |---|---|---|
-| core | `AttemptFactsTest` | Every attempt-fact scenario: placements, refused placements, pause, completion during the countdown, photo finish and its negatives, restart clears. |
-| core | `AchievementCatalogueTest` | XP 595 (≤ 1,000), group totals, multiples of 5, steps within 2–10,000, unique snake_case keys, hidden flags, pack ids, and the **pinned `published` list** that may only grow. |
+| core | `AttemptFactsTest` | Every attempt-fact scenario: placements, refused placements, pause, completion during the countdown, photo finish and its negatives, the flow path (order, a cross twice, kept by `RemoveUnused`), replacement taps, restart clears. |
+| core | `AchievementCatalogueTest` | XP 745 (≤ 1,000), group totals, multiples of 5, steps within 2–10,000, unique snake_case keys, hidden flags, pack ids, and the **pinned `published` list** that may only grow. |
 | core | `AchievementRulesTest` | Every rule scenario per group, idempotence, no repeated unlocks. |
 | core | `AttemptSummaryTest`, `PlayerStatsTest` | Summaries from real engine attempts; the stats updates. |
-| core | `AchievementReachabilityTest` | Every skill and hidden achievement unlocked by an attempt played through the engine on a bundled level (scripted with `ScriptedPlay`). |
+| core | `AchievementReachabilityTest` | Every skill and hidden achievement unlocked by an attempt played through the engine on a bundled level (scripted with `ScriptedPlay`, whose `routeThrough` finds a route through a given row or staircase of cells); Tips Addict from the stats alone. |
 | core | `AchievementContentTest` | Milestones fit the bundled levels; pack achievements exist only for full pages; pack progress uses `LevelLibraryLayout.pageOf`. |
 | core | `ThreeStarReachabilityTest` | 3 stars can be reached on every page 1 level, so Perfectionist I and Pack 1 Perfect can be earned. The smallest margin is level 3 (630 against 600). |
 | app JVM | `AchievementTrackerTest` | Once per attempt, abandoned attempts counted once, backfill from history, reset keeps achievements. |
-| app JVM | `GameSessionAchievementsTest` | No double counting on recomposition; restart and exit add placements. |
+| app JVM | `GameSessionAchievementsTest`, `GameSessionPlaceTest` | No double counting on recomposition; restart and exit add placements; taps during a replacement are counted, silent and reach the tracker. |
+| app JVM | `WithPlayGamesIdTest` | No call for an achievement with an empty Play Games id; the others still go out. |
 | app JVM | `PlayGamesAuthTest`, `AchievementSyncerTest`, `PlayGamesServicesTest` | Sign-in states; push on sign-in and on change, idempotent repeats, failures leave local data alone; the unconfigured fallback makes no calls. |
 | app JVM | `AchievementResourcesTest`, `AchievementRowTextTest`, `AchievementsViewModelTest`, `SettingsViewModelTest` | Strings pinned to the Console texts, 512 px icons; row text; card models; panel state. |
-| instrumented | `LeakOutDatabaseMigrationTest`, `AchievementDatabaseTest` | Migration 1→2 keeps history rows; the Room repository. |
+| instrumented | `LeakOutDatabaseMigrationTest`, `AchievementDatabaseTest` | Migration 1→2 keeps history rows; 2→3 keeps history, unlocks and stats and starts the tips resets at 0; the Room repository. |
 | instrumented | `AchievementResourcesInstrumentedTest` | Every key has a non-empty Play Games id and no two share one. |
 | instrumented | `AchievementRowDialogsTest`, `LevelCompleteTest`, `LevelLostTest` | The unlock row in both dialogs: one, four and no achievements; screen reader text. |
 | instrumented | `SettingsPlayGamesTest`, `SettingsScreenTest`, `AchievementsScreenTest`, `MainActivityTest` | The panel in all four states, the count and navigation, the screen's cards, the Play Games button, Back. |
@@ -356,7 +392,7 @@ The real Play Games UI can't be launched from a test. Signing in and seeing an u
 - **Steady Hands also fails on an automatic pause** (the app went to the background). Accepted, and stated in the description.
 - **Double feedback on unlock** while signed in: the dialog row plus the Play Games popup. Accepted.
 - **Abandoned attempts unlock silently.** Placement tiers reached by a restarted or exited attempt show up on the achievements screen and, when signed in, in the Play Games popup, but not in a dialog.
-- **The XP budget is finite.** The guideline in [achievements.md](achievements.md) spends the remaining 405 XP over packs 2–13 and six milestone tiers. Beyond pack 13, XP has to be freed in the guideline before it is spent. Whether Play Games accepts 0-XP achievements is unverified.
+- **The XP budget is finite.** The guideline in [achievements.md](achievements.md) spends 240 of the remaining 255 XP over packs 2–13 and six milestone tiers. Beyond pack 13, XP has to be freed in the guideline before it is spent. Whether Play Games accepts 0-XP achievements is unverified.
 - **English only.** Names and descriptions are string resources, ready for translation, but every language also needs the same text in the Play Console.
 - **No Daylight icon variant.** The icons are full-bleed `surface.deep`, like the board plate.
 - **Rollback:** removing the Play Games dependency leaves the local achievements working.

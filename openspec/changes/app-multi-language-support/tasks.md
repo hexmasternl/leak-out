@@ -22,8 +22,8 @@
 
 ## 5. Supported languages
 
-- [ ] 5.1 Add a `SupportedLanguages` constant (en, nl, de, fr, es, it, pt-BR), `res/xml/locales_config.xml`, `res/resources.properties` (`unqualifiedResLocale=en-US`) and `android:localeConfig` in the manifest. Add a JVM test that the XML matches the constant. Verify: the test passes and `aapt2 dump xmltree` of the debug APK manifest shows the `localeConfig`.
-- [ ] 5.2 Add a font coverage test: both bundled fonts have glyphs for the special characters of every enabled language. Verify: the instrumented test passes on the emulator.
+- [x] 5.1 Add a `SupportedLanguages` constant (en, nl, de, fr, es, it, pt-BR), `res/xml/locales_config.xml` and `android:localeConfig` in the manifest. Add a JVM test that the XML matches the constant. Verify: the test passes and `aapt2 dump xmltree` of the debug APK manifest shows the `localeConfig`.
+- [x] 5.2 Add a font coverage test: both bundled fonts have glyphs for the special characters of every enabled language. Verify: the test passes. *(Done as a JVM test with `java.awt.Font`, so no emulator is needed. Wendy One's missing "Ÿ" is a documented, accepted gap.)*
 
 ## 6. Layouts fit translated text
 

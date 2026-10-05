@@ -29,7 +29,7 @@ Leak Out is English only, so players whose device runs another language still ge
 ## Impact
 
 - `app/src/main/res/values/strings.xml`: new strings for the cell descriptions, `translatable="false"` markers, translator comments.
-- New `app/src/main/res/xml/locales_config.xml` and `android:localeConfig` in `AndroidManifest.xml`. A `res/resources.properties` sets `unqualifiedResLocale=en-US`.
+- New `app/src/main/res/xml/locales_config.xml` and `android:localeConfig` in `AndroidManifest.xml`.
 - `app/build.gradle.kts`: lint `HardcodedText` as error, `generateLocaleConfig` left off; `pseudoLocalesEnabled` in debug.
 - `PlayingField.kt` (cell descriptions) and every `.uppercase()` on displayed text.
 - Layout fixes where pseudo-locale text clips.

@@ -15,6 +15,7 @@ You only do this setup once. After that, releasing is merging `development` into
 - [7. Set the repository variables](#7-set-the-repository-variables)
 - [8. Run the workflow](#8-run-the-workflow)
 - [Versioning](#versioning)
+- [Release notes](#release-notes)
 - [Troubleshooting](#troubleshooting)
 - [Maintenance](#maintenance)
 - [Reference: every secret and variable](#reference-every-secret-and-variable)
@@ -28,11 +29,12 @@ On each run it:
 1. checks that all five secrets are set (and stops with the names of any that are missing);
 2. runs the JVM unit tests (`:core:test`, `:app:testDebugUnitTest`) and stops if any fail;
 3. works out the **version** with GitVersion (`versionName` `x.y.z`) and the **version code** from it (see [Versioning](#versioning));
-4. decodes the upload keystore and builds `app-release.aab` signed with the **upload key**;
-5. checks that the bundle really is signed;
-6. keeps the bundle as a workflow artifact for 14 days;
-7. uploads it to the Play Console track in `PLAY_TRACK` (default: internal testing) as a draft release, so Play can [translate it](#translations), then tags the commit `v<x.y.z>`;
-8. deletes the decoded keystore, whether the run succeeded or not.
+4. writes the **release notes** from the commits since the previous release (see [Release notes](#release-notes));
+5. decodes the upload keystore and builds `app-release.aab` signed with the **upload key**;
+6. checks that the bundle really is signed;
+7. keeps the bundle as a workflow artifact for 14 days;
+8. uploads it with the release notes to the Play Console track in `PLAY_TRACK` (default: internal testing), then tags the commit `v<x.y.z>`;
+9. deletes the decoded keystore, whether the run succeeded or not.
 
 Three keys and accounts are involved. It helps to keep them apart:
 
@@ -298,63 +300,49 @@ Rules that keep this working:
 
 Local builds keep `versionName` `0.1.0` and `versionCode` `1` unless you pass `-PversionName=<x.y.z>` and `-PversionCode=<n>`.
 
-## Translations
+## Release notes
 
-Leak Out is written in English only. Play Console translates it into other languages with its free **automatic app strings translation** (Gemini): whenever a bundle is uploaded to a **draft** release, Play translates `src/app/src/main/res/values/strings.xml` into the languages you picked and adds the translations to the bundle it serves ([Play Console Help](https://support.google.com/googleplay/android-developer/answer/9844778)). No translation files live in this repository, and debug builds are always English.
+Every release in the Play Console gets a "What's new" text that the workflow writes from the commits it releases. Nobody types them in by hand.
 
-### Turn it on (once)
+**Where they come from.** [`scripts/generate-release-notes.sh`](../scripts/generate-release-notes.sh) looks at the commits since the previous `v*` release tag (the whole history for the very first release):
 
-1. In the Play Console, open the app, then **Grow users → Translations → App strings**, and choose **Get started**.
-2. Pick the languages. Only pick languages from the list below, and add any new one to the app first (see [Add or remove a language](#add-or-remove-a-language)).
-3. In the string list, untick **Translate** for every string that must stay as it is: `app_name`, `welcome_title`, `settings_play_games` and `achievements_play_games`. The same strings are `translatable="false"` in `strings.xml`, along with the format-only strings and the debug-only level designer.
-4. Save. From the next upload on, every bundle is translated.
-
-The languages turned on today (the same list as `SupportedLanguages.TAGS` and `res/xml/locales_config.xml`):
-
-| Tag | Language |
+| In the range | Becomes |
 | --- | --- |
-| `en` | English (the source, in `res/values`) |
-| `nl` | Dutch |
-| `de` | German |
-| `fr` | French |
-| `es` | Spanish |
-| `it` | Italian |
-| `pt-BR` | Portuguese (Brazil) |
+| A merged pull request from `feature/<change-name>` | One note: the PR title without the `<change-name>:` prefix, issue references (`(issue #64)`, `(#64)`) and `+semver:` markers, starting with a capital |
+| A `Release-note: <text>` trailer on a commit in that pull request | Replaces the PR title. Several trailers give several notes |
+| `Release-note: none` on a commit in that pull request | Leaves the pull request out |
+| A `Release-note: <text>` trailer on a commit that reached `main` without a feature pull request | A note of its own |
+| Anything else: merges of `development`, `Merge remote-tracking branch …`, commits without a trailer | Nothing |
 
-Only Latin-script languages can be added. The bundled fonts (Fredoka and Wendy One) draw only Latin letters, and `SupportedLanguagesTest` checks that they have every letter these languages need. Wendy One has no "Ÿ", which Android then draws from the system font; French only uses it in a few place names. Cyrillic, Greek, CJK or right-to-left languages need extra fonts and layout checks first.
+Notes are listed oldest first and each text only once. The PR title `app-game-more-achievements: 14 new achievements (issue #64)` becomes:
 
-### Every release: review, then roll out
+```text
+• 14 new achievements
+```
 
-The workflow uploads with `PLAY_RELEASE_STATUS` `draft` by default ([step 7](#7-set-the-repository-variables)), because Play documents its translation only for draft releases. After a run:
+**Write PR titles for players.** The title after the prefix is what testers and players read, so describe what they will notice: `app-game-pause: pause the game at any time`, not `app-game-pause: add PauseState and wire the overlay`. GitHub's *Create a merge commit* puts the title in the merge commit; squash or rebase merges aren't recognised as pull requests, so they only show up through a trailer.
 
-1. Open the draft under **Test and release → Testing → Internal testing → Releases**.
-2. In **Grow users → Translations → App strings**, check new or changed strings in each language. **Preview** shows the translated app in Play's built-in emulator. Fix a translation by editing it there; edits carry over to later releases, and a translation only changes again when its English text changes.
-3. Roll the release out: **Review release → Start rollout to Internal testing**.
+**Trailers** go in the last paragraph of a commit message, so they can be added at any time before the pull request is merged into `development`:
 
-To skip the review and roll out from the workflow, set the repository variable `PLAY_RELEASE_STATUS` to `completed`. Do this only after you have checked in the Console that a `completed` upload is translated as well.
+```sh
+git commit --allow-empty -m "app-game-pause: word the release note" -m "Release-note: Pause the game at any time"
+git commit --allow-empty -m "app-ci: keep out of the release notes" -m "Release-note: none"
+```
 
-### What Play does not translate
+`none` is not case-sensitive. A trailer on the merge commit itself counts for its pull request.
 
-- **Play Games achievements.** The names and descriptions players see in Play Games come from the achievements in **Grow users → Play Games services → Setup and management → Achievements**, not from the bundle. Add a translation there for each language, and copy the app's translation of the matching `achievement_name_*` and `achievement_desc_*` strings so both say the same.
-- **The store listing.** Translate it under **Grow users → Store presence → Main store listing → Manage translations**.
-- **Level names** in `src/app/src/main/assets/levels/*.json`. Players never see them (see [docs/level-format.md](level-format.md)).
+**Limits.** The Play Console accepts at most 500 characters per language. When the notes are longer, whole lines are dropped from the end and a final `• …and more improvements` line is added; a note is never cut in half. When nothing qualifies, the notes are `Bug fixes and improvements.`. The notes are written for `en-US`, the app's default language.
 
-### Add or remove a language
+**Where to see them.** In the run's summary (*Release notes (en-US)*), in the release in the Play Console, and in the tag's message (`git show v<x.y.z>`). To preview the notes of the next release, run from the repository root:
 
-1. Check that its script is Latin, and add its special letters to `SPECIAL_CHARACTERS` in `SupportedLanguagesTest`.
-2. Add (or remove) its tag in `SupportedLanguages.TAGS` and in `src/app/src/main/res/xml/locales_config.xml`, in the same order. `SupportedLanguagesTest` fails if the two differ. Android 13 and later list exactly these languages in the app's language setting.
-3. Turn the language on (or off) in **Translations → App strings**, then upload a release.
+```sh
+git fetch origin --tags
+bash scripts/generate-release-notes.sh origin/main
+```
 
-### Writing strings for translation
+That prints the notes of the latest commit on `main` since the release before it; run it on a merge of `development` you haven't pushed yet to see the next one. Its tests: `bash scripts/generate-release-notes.test.sh`.
 
-Play's translator only sees `strings.xml`, so:
-
-- put a comment directly above every string with a placeholder, saying what each placeholder holds;
-- use positional placeholders (`%1$s`, `%2$d`) and `<plurals>` for text that depends on a number;
-- mark brand names and format-only strings `translatable="false"`;
-- never put player-facing text in Kotlin. Lint `HardcodedText` and `HardcodedTextTest` fail the build on it.
-
-`StringResourcesTest` checks the first three rules. To see how a layout copes with longer text, run a debug build with the device language set to **English (XA)** (pseudo-locales are on for debug builds), or run `PseudoLocaleLayoutTest`.
+**Release notes never stop a deployment.** If the tests or the script fail, the run logs a warning and uploads with `Bug fixes and improvements.`. Fix the script on a feature branch; the next release gets proper notes again (they cover everything since the previous tag, so nothing is lost).
 
 ## Troubleshooting
 
@@ -379,6 +367,14 @@ Every upload needs a version code higher than every earlier one, on any track. T
 ### Version … is below the newest release / does not fit the version code / Tag … already exists on another commit
 
 The *Compute version* step refused the version before anything was built. A `v*` tag was probably added, moved or deleted by hand. Restore the tags so that the newest one is the last release, or bump the version with `+semver: minor` (see [Versioning](#versioning)). When minor or patch would pass 999, bump the next part up.
+
+### The release-notes tests failed / Generating the release notes failed
+
+A warning, not an error: the release went out with `Bug fixes and improvements.` as its notes. The *Generate release notes* step prints the failing test or the script's `::error::`. Reproduce it with `bash scripts/generate-release-notes.test.sh` and fix it on a feature branch (see [Release notes](#release-notes)).
+
+### The upload step rejects the release-notes language
+
+The release notes are uploaded as `whatsnew-en-US`, and Play only accepts languages the store listing has. Check the default language under **Grow users → Store presence → Main store listing**: it must be English (United States) – en-US. If it is another language, either change it there or rename the file in the *Generate release notes* step to `whatsnew-<that language's code>`.
 
 ### Only releases with status draft may be created on draft app
 

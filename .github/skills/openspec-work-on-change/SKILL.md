@@ -170,6 +170,8 @@ branch="feature/$change"
      --body "<body>"
    ```
 
+   The title becomes a line in the Play Store release notes. The deploy workflow removes the `<change-name>:` prefix, so write the summary for players: short, in plain language, about what they will notice (`app-game-pause: pause the game at any time`, not `app-game-pause: add PauseState and wire the overlay`). Keep issue references like `(issue #64)`: they are removed too. When players won't notice the change at all (refactors, CI, docs, tests), add a commit with the trailer `Release-note: none` before opening the pull request. To word the note differently from the title, use `Release-note: <text>` trailers instead. Full rules: `docs/deployment.md#release-notes`.
+
    Run it from inside the worktree (or add `--repo hexmasternl/leak-out`). Build the body from the OpenSpec change artifacts:
    - A one-paragraph summary taken from `openspec/changes/<change-name>/proposal.md`
    - A checklist of the completed tasks from `tasks.md`

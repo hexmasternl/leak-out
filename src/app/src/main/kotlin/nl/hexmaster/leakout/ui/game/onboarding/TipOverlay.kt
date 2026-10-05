@@ -32,6 +32,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.changedToDownIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -159,16 +162,28 @@ fun TipOverlay(
             }
             .onGloballyPositioned { origin = it.positionInRoot() }
             .graphicsLayer { alpha = entry.value }
-            // Every touch ends here; the buttons above take theirs first.
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) awaitPointerEvent().changes.forEach { it.consume() }
-                }
-            },
+            .pointerInput(Unit) { swallowTouchesOutsideButtons() },
     ) {
         TipSpotlightScrim(shown, Modifier.clearAndSetSemantics { }, glowAlpha = glow)
         hint?.let { DragHintLayer(it.copy(from = it.from.relativeTo(origin), to = it.to.relativeTo(origin)), reducedMotion) }
         CalloutLayer(spotlights = local, scale = { scale.value }) { pointer -> Callout(content, pointer, onNext, onSkip, onDone) }
+    }
+}
+
+/**
+ * Every touch on the overlay ends here, except the ones a button took. A button takes a touch by
+ * consuming its down; its tap is cancelled when a later move of that finger is found consumed, and a
+ * finger on a real touchscreen nearly always moves a little between down and up. So the moves and
+ * the up of a finger that went down on a button are left to the button.
+ */
+private suspend fun PointerInputScope.swallowTouchesOutsideButtons() = awaitPointerEventScope {
+    val onButtons = mutableSetOf<PointerId>()
+    while (true) {
+        awaitPointerEvent().changes.forEach { change ->
+            if (change.changedToDownIgnoreConsumed() && change.isConsumed) onButtons += change.id
+            if (change.id !in onButtons) change.consume()
+            if (!change.pressed) onButtons -= change.id
+        }
     }
 }
 

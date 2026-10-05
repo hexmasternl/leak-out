@@ -1,5 +1,15 @@
 # Design
 
+## Root cause (found during implementation)
+
+The overlay's catch-all `pointerInput` (cause 4 below) was the culprit. Pointer events go through the Main pass from child to parent and the Final pass from parent to child. A button's tap detector, after every move that is not an up, looks in the Final pass for a consumed change and cancels the tap if it finds one. The overlay is the button's ancestor and consumed *every* change in the Main pass, so the first move of the finger between down and up cancelled the tap. The press had already shown, and `onClick` never ran. A finger on a real touchscreen almost always reports a few sub-pixel moves (the S21 samples at 240 Hz). `performClick` and an emulator mouse click send none, which is why the existing tests and emulator checks never caught it.
+
+Reproduction: `FingerTap.kt` sends a down, three sub-pixel moves and an up. `TipOverlayTest.aFingerTapWithSmallMovesRunsNextAndSkipTour`, `GameTipsTest.aFingerTapOnSkipTourOnTheFirstStepClosesTheTour` and `GameTipsTest.aFingerTapOnNextMovesToTheNextStep` fail on the old code and pass with the fix. `aFingerTapOnNextWhileTheFieldPansToTheFinishStillMovesOn` passes on both: with the test clock paused, the injected moves are not delivered as separate frames, so it guards the animation path but did not reproduce the bug. The emulator stand-in is the existing Pixel_10 AVD (1080×2424, 420 dpi, punch-hole cutout), which is practically S21-sized (1080×2400, 421 dpi). The tests use an S21-sized window (914×411 dp).
+
+Fix: the overlay still swallows every gesture that starts on the scrim, but it no longer consumes a finger whose down a button already consumed.
+
+Causes 1 to 3 did not cause this bug. They are still handled, as hardening, under the "Tip buttons respond on every supported device" requirement.
+
 ## Context
 
 The tip overlay (`TipOverlay.kt`) is a full-screen `Box` with a catch-all `pointerInput` that consumes every event in the Main pass, so the game underneath gets no input. The callout card sits on top of it and holds `FlowButton`s, which use `clickable` with press feedback through their `MutableInteractionSource`. On the S21 the press feedback shows but `onClick` never runs. A press that starts and is then cancelled, rather than released, causes exactly that.

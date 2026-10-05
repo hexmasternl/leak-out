@@ -2,9 +2,9 @@
 
 ## 1. Reproduce
 
-- [ ] 1.1 Create an S21-like AVD (2400×1080, 420 dpi, landscape, punch-hole cutout, gesture navigation) and describe it in the KDoc of the new tests; verify the app launches on it with the intro tour shown
-- [ ] 1.2 Add an instrumented test in `GameTipsTest` that, with no tips seen yet, taps "Skip tour" on the start step with a real down/up right after the overlay appears; verify it fails on the current code (or record in design.md why it cannot be reproduced on the emulator)
-- [ ] 1.3 Add an instrumented test that taps "Next" while the finish step's field reveal pan and spotlight glide are running; run it on the current code and record the result in design.md
+- [x] 1.1 Use an S21-like AVD (the existing Pixel_10: 1080×2424, 420 dpi, punch-hole cutout; the S21 is 1080×2400, 421 dpi) and S21-sized test windows (914×411 dp); verify the app launches on it with the intro tour shown
+- [x] 1.2 Add an instrumented test in `GameTipsTest` that, with no tips seen yet, taps "Skip tour" on the start step with a real down/up right after the overlay appears; verify it fails on the current code (or record in design.md why it cannot be reproduced on the emulator)
+- [x] 1.3 Add an instrumented test that taps "Next" while the finish step's field reveal pan and spotlight glide are running; run it on the current code and record the result in design.md
 
 ## 2. Stable callout placement
 

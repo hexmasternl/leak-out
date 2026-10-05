@@ -341,13 +341,19 @@
     <string name="settings_achievements">Achievements</string>
     <!-- Format only: unlocked / all achievements. -->
     <string name="settings_achievements_count" translatable="false">%1$d / %2$d</string>
-    <!-- Screen reader text. %1$d: unlocked achievements. %2$d: all achievements. -->
-    <string name="settings_achievements_description">Achievements, %1$d of %2$d unlocked</string>
+    <!-- Screen reader text. %1$d: unlocked achievements. %2$d: all achievements, which also picks the plural form. -->
+    <plurals name="settings_achievements_description">
+        <item quantity="one">Achievements, %1$d of %2$d unlocked</item>
+        <item quantity="other">Achievements, %1$d of %2$d unlocked</item>
+    </plurals>
 
     <!-- Achievement row in the result dialogs (design.md decision 9) -->
     <string name="achievement_unlocked">Achievement unlocked</string>
-    <!-- Result dialogs, after the shown achievement names. %1$d: how many more achievements were unlocked. -->
-    <string name="achievement_unlocked_more">+%1$d more</string>
+    <!-- Result dialogs, after the shown achievement names. %1$d: how many more achievements were unlocked, which also picks the plural form. -->
+    <plurals name="achievement_unlocked_more">
+        <item quantity="one">+%1$d more</item>
+        <item quantity="other">+%1$d more</item>
+    </plurals>
     <!-- Screen reader text. %1$s: the names of the unlocked achievements, separated by commas. -->
     <string name="achievement_unlocked_description">Achievement unlocked: %1$s</string>
 
@@ -356,8 +362,11 @@
     <string name="achievements_back">Back to settings</string>
     <!-- Format only: unlocked / all achievements. -->
     <string name="achievements_count" translatable="false">%1$d / %2$d</string>
-    <!-- Screen reader text. %1$d: unlocked achievements. %2$d: all achievements. -->
-    <string name="achievements_count_description">%1$d of %2$d achievements unlocked</string>
+    <!-- Screen reader text. %1$d: unlocked achievements. %2$d: all achievements, which also picks the plural form. -->
+    <plurals name="achievements_count_description">
+        <item quantity="one">%1$d of %2$d achievement unlocked</item>
+        <item quantity="other">%1$d of %2$d achievements unlocked</item>
+    </plurals>
     <!-- Google product name, not translated. -->
     <string name="achievements_play_games" translatable="false">Play Games</string>
     <!-- Format only: steps done / steps needed. -->

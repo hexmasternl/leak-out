@@ -84,6 +84,12 @@ android {
         compose = true
         buildConfig = true
     }
+
+    // Text reaches players in other languages only through strings.xml (openspec/specs/app-localization).
+    // HardcodedText covers XML; HardcodedTextTest covers the Compose sources.
+    lint {
+        error += "HardcodedText"
+    }
 }
 
 // Every schema version is exported and committed; a version bump needs a written migration.

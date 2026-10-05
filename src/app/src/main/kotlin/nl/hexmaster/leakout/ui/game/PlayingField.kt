@@ -53,8 +53,8 @@ import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
@@ -392,14 +392,14 @@ private fun CellSemantics(
     flow: () -> FlowState?,
 ) {
     val density = LocalDensity.current
-    val context = LocalContext.current
+    val resources = LocalResources.current
     val cellDp = with(density) { viewport.cellPx.toDp() }
     val popupTexts = awards.groupBy({ it.position }, { PointsFormat.text(it.points) })
     val filledByCell = filled.groupBy({ it.position }, { it.channel })
     for (position in viewport.visibleCells()) {
         val rect = viewport.cellRect(position)
         val description = CellDescription.text(CellDescription.of(board[position], position, filled)) { id, args ->
-            if (args.isEmpty()) context.getString(id) else context.getString(id, *args)
+            if (args.isEmpty()) resources.getString(id) else resources.getString(id, *args)
         }
         val mandatory = (board[position] as? Cell.Pipe)?.mandatory == true
         val isHighlighted = position == highlighted

@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -160,7 +161,7 @@ private fun TopBar(state: AchievementsUiState?, onBack: () -> Unit, onOpenPlayGa
             modifier = Modifier.testTag(AchievementsTags.TITLE).semantics { heading() },
         )
         if (state != null) {
-            val description = stringResource(R.string.achievements_count_description, state.unlocked, state.total)
+            val description = pluralStringResource(R.plurals.achievements_count_description, state.total, state.unlocked, state.total)
             Text(
                 text = stringResource(R.string.achievements_count, state.unlocked, state.total),
                 style = LeakOutTextStyles.NumericMd,

@@ -1,6 +1,7 @@
 # Builds a signed release bundle of Leak Out and uploads it to the Play Console's private
 # testing track on every push to main. Setup of every secret, key and variable: docs/deployment.md
 # Versioning (GitVersion gives versionName x.y.z, versionCode derives from it): docs/deployment.md#versioning
+# Release notes (from the commits since the previous release tag): docs/deployment.md#release-notes
 
 name: Deploy to Play internal testing
 
@@ -109,6 +110,35 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           echo "Version $VERSION_NAME, version code $VERSION_CODE"
 
+      # The "What's new" text of the Play release, from the commits since the previous release tag.
+      # Release notes never block a deployment: if the generator or its tests fail, the fallback is used.
+      - name: Generate release notes
+        working-directory: .
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          fallback='Bug fixes and improvements.'
+          if ! bash scripts/generate-release-notes.test.sh > "$RUNNER_TEMP/release-notes-tests.log" 2>&1; then
+            cat "$RUNNER_TEMP/release-notes-tests.log"
+            echo "::warning::The release-notes tests failed, so this release gets the fallback notes. See docs/deployment.md#release-notes."
+            notes="$fallback"
+          elif ! notes=$(bash scripts/generate-release-notes.sh "$COMMIT_SHA"); then
+            echo "::warning::Generating the release notes failed, so this release gets the fallback notes. See docs/deployment.md#release-notes."
+            notes="$fallback"
+          fi
+          mkdir -p "$RUNNER_TEMP/whatsnew"
+          # No trailing newline: Play counts it towards the 500-character limit.
+          printf '%s' "$notes" > "$RUNNER_TEMP/whatsnew/whatsnew-en-US"
+          {
+            echo ""
+            echo "#### Release notes (en-US)"
+            echo ""
+            echo '```text'
+            echo "$notes"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "$notes"
+
       - name: Decode upload keystore
         env:
           PLAY_UPLOAD_KEYSTORE_BASE64: ${{ secrets.PLAY_UPLOAD_KEYSTORE_BASE64 }}
@@ -148,6 +178,8 @@ jobs:
           releaseFiles: ${{ env.BUNDLE_PATH }}
           track: ${{ vars.PLAY_TRACK || 'internal' }}
           status: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}
+          # whatsnew-<locale> files, written by "Generate release notes".
+          whatsNewDirectory: ${{ runner.temp }}/whatsnew
 
       # Only after a successful upload: the tag is what makes the next commit on main the next patch.
       - name: Tag the release
@@ -160,7 +192,12 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$tag" -m "Leak Out $VERSION_NAME (version code $VERSION_CODE)" "$GITHUB_SHA"
+          {
+            echo "Leak Out $VERSION_NAME (version code $VERSION_CODE)"
+            echo ""
+            cat "$RUNNER_TEMP/whatsnew/whatsnew-en-US"
+          } > "$RUNNER_TEMP/tag-message.txt"
+          git tag -a "$tag" --cleanup=whitespace -F "$RUNNER_TEMP/tag-message.txt" "$GITHUB_SHA"
           git push origin "refs/tags/$tag"
 
       - name: Remove upload keystore

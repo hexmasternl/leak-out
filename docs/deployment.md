@@ -15,6 +15,7 @@ You only do this setup once. After that, releasing is merging `development` into
 - [7. Set the repository variables](#7-set-the-repository-variables)
 - [8. Run the workflow](#8-run-the-workflow)
 - [Versioning](#versioning)
+- [Release notes](#release-notes)
 - [Troubleshooting](#troubleshooting)
 - [Maintenance](#maintenance)
 - [Reference: every secret and variable](#reference-every-secret-and-variable)
@@ -28,11 +29,12 @@ On each run it:
 1. checks that all five secrets are set (and stops with the names of any that are missing);
 2. runs the JVM unit tests (`:core:test`, `:app:testDebugUnitTest`) and stops if any fail;
 3. works out the **version** with GitVersion (`versionName` `x.y.z`) and the **version code** from it (see [Versioning](#versioning));
-4. decodes the upload keystore and builds `app-release.aab` signed with the **upload key**;
-5. checks that the bundle really is signed;
-6. keeps the bundle as a workflow artifact for 14 days;
-7. uploads it to the Play Console track in `PLAY_TRACK` (default: internal testing), then tags the commit `v<x.y.z>`;
-8. deletes the decoded keystore, whether the run succeeded or not.
+4. writes the **release notes** from the commits since the previous release (see [Release notes](#release-notes));
+5. decodes the upload keystore and builds `app-release.aab` signed with the **upload key**;
+6. checks that the bundle really is signed;
+7. keeps the bundle as a workflow artifact for 14 days;
+8. uploads it with the release notes to the Play Console track in `PLAY_TRACK` (default: internal testing), then tags the commit `v<x.y.z>`;
+9. deletes the decoded keystore, whether the run succeeded or not.
 
 Three keys and accounts are involved. It helps to keep them apart:
 
@@ -298,6 +300,50 @@ Rules that keep this working:
 
 Local builds keep `versionName` `0.1.0` and `versionCode` `1` unless you pass `-PversionName=<x.y.z>` and `-PversionCode=<n>`.
 
+## Release notes
+
+Every release in the Play Console gets a "What's new" text that the workflow writes from the commits it releases. Nobody types them in by hand.
+
+**Where they come from.** [`scripts/generate-release-notes.sh`](../scripts/generate-release-notes.sh) looks at the commits since the previous `v*` release tag (the whole history for the very first release):
+
+| In the range | Becomes |
+| --- | --- |
+| A merged pull request from `feature/<change-name>` | One note: the PR title without the `<change-name>:` prefix, issue references (`(issue #64)`, `(#64)`) and `+semver:` markers, starting with a capital |
+| A `Release-note: <text>` trailer on a commit in that pull request | Replaces the PR title. Several trailers give several notes |
+| `Release-note: none` on a commit in that pull request | Leaves the pull request out |
+| A `Release-note: <text>` trailer on a commit that reached `main` without a feature pull request | A note of its own |
+| Anything else: merges of `development`, `Merge remote-tracking branch …`, commits without a trailer | Nothing |
+
+Notes are listed oldest first and each text only once. The PR title `app-game-more-achievements: 14 new achievements (issue #64)` becomes:
+
+```text
+• 14 new achievements
+```
+
+**Write PR titles for players.** The title after the prefix is what testers and players read, so describe what they will notice: `app-game-pause: pause the game at any time`, not `app-game-pause: add PauseState and wire the overlay`. GitHub's *Create a merge commit* puts the title in the merge commit; squash or rebase merges aren't recognised as pull requests, so they only show up through a trailer.
+
+**Trailers** go in the last paragraph of a commit message, so they can be added at any time before the pull request is merged into `development`:
+
+```sh
+git commit --allow-empty -m "app-game-pause: word the release note" -m "Release-note: Pause the game at any time"
+git commit --allow-empty -m "app-ci: keep out of the release notes" -m "Release-note: none"
+```
+
+`none` is not case-sensitive. A trailer on the merge commit itself counts for its pull request.
+
+**Limits.** The Play Console accepts at most 500 characters per language. When the notes are longer, whole lines are dropped from the end and a final `• …and more improvements` line is added; a note is never cut in half. When nothing qualifies, the notes are `Bug fixes and improvements.`. The notes are written for `en-US`, the app's default language.
+
+**Where to see them.** In the run's summary (*Release notes (en-US)*), in the release in the Play Console, and in the tag's message (`git show v<x.y.z>`). To preview the notes of the next release, run from the repository root:
+
+```sh
+git fetch origin --tags
+bash scripts/generate-release-notes.sh origin/main
+```
+
+That prints the notes of the latest commit on `main` since the release before it; run it on a merge of `development` you haven't pushed yet to see the next one. Its tests: `bash scripts/generate-release-notes.test.sh`.
+
+**Release notes never stop a deployment.** If the tests or the script fail, the run logs a warning and uploads with `Bug fixes and improvements.`. Fix the script on a feature branch; the next release gets proper notes again (they cover everything since the previous tag, so nothing is lost).
+
 ## Troubleshooting
 
 Find the failing step in the run's log. The upload step prints Google's error message, which is usually one of these.
@@ -321,6 +367,14 @@ Every upload needs a version code higher than every earlier one, on any track. T
 ### Version … is below the newest release / does not fit the version code / Tag … already exists on another commit
 
 The *Compute version* step refused the version before anything was built. A `v*` tag was probably added, moved or deleted by hand. Restore the tags so that the newest one is the last release, or bump the version with `+semver: minor` (see [Versioning](#versioning)). When minor or patch would pass 999, bump the next part up.
+
+### The release-notes tests failed / Generating the release notes failed
+
+A warning, not an error: the release went out with `Bug fixes and improvements.` as its notes. The *Generate release notes* step prints the failing test or the script's `::error::`. Reproduce it with `bash scripts/generate-release-notes.test.sh` and fix it on a feature branch (see [Release notes](#release-notes)).
+
+### The upload step rejects the release-notes language
+
+The release notes are uploaded as `whatsnew-en-US`, and Play only accepts languages the store listing has. Check the default language under **Grow users → Store presence → Main store listing**: it must be English (United States) – en-US. If it is another language, either change it there or rename the file in the *Generate release notes* step to `whatsnew-<that language's code>`.
 
 ### Only releases with status draft may be created on draft app
 

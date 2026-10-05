@@ -51,7 +51,7 @@ After *Compute version*:
 
 ## Risks / Trade-offs
 
-- [PR titles written for developers leak into the notes] → The skill that opens PRs writes player-facing titles; `Release-note:` trailers override a title after the fact by adding a commit before merging into `main`; the docs explain both.
+- [PR titles written for developers leak into the notes] → The skill that opens PRs writes player-facing titles; `Release-note:` trailers override a title by adding a commit to the feature branch before it is merged into `development` (a trailer added later on `development` adds a note instead of replacing one); the docs explain both.
 - [A PR merged into `development` but released later] → It is released with the next `main` deploy and its merge commit is in that range, so it is noted then. Correct by construction.
 - [Locale codes] → Play requires the exact listing locale; the app's default listing language must be `en-US`. If it isn't, the action rejects the file. Documented in troubleshooting; the locale is one constant in the workflow.
 - [`whatsNewDirectory` behaviour changes in a newer action version] → The action is pinned by SHA; the pin is reviewed when it's bumped.

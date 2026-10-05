@@ -44,6 +44,9 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
 
         /** The [TipId.key]s of the seen tips. */
         val SeenTips = stringSetPreferencesKey("seen_tips")
+
+        /** True once the player opted out of the exit confirmation dialog. */
+        val SkipExitConfirmation = booleanPreferencesKey("skip_exit_confirmation")
     }
 
     override val settings: Flow<Settings> = dataStore.data
@@ -72,6 +75,13 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
     override suspend fun markTipSeen(tip: TipId) = write { it[Keys.SeenTips] = it[Keys.SeenTips].orEmpty() + tip.key }
 
     override suspend fun resetTips() = write { it.remove(Keys.SeenTips) }
+
+    override val skipExitConfirmation: Flow<Boolean> = dataStore.data
+        .catch { error -> if (error is IOException) emit(emptyPreferences()) else throw error }
+        .map { it[Keys.SkipExitConfirmation] ?: false }
+        .distinctUntilChanged()
+
+    override suspend fun setSkipExitConfirmation(skip: Boolean) = write { it[Keys.SkipExitConfirmation] = skip }
 
     private suspend fun write(change: (MutablePreferences) -> Unit) {
         dataStore.edit(change)

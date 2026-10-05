@@ -56,6 +56,7 @@ import nl.hexmaster.leakout.ui.settings.SettingsScreen
 import nl.hexmaster.leakout.ui.settings.SettingsViewModel
 import nl.hexmaster.leakout.ui.splash.SplashGate
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
+import nl.hexmaster.leakout.ui.title.ExitConfirmation
 import nl.hexmaster.leakout.ui.title.WelcomeScreen
 
 /** The screens, until a navigation library is worth adding. */
@@ -98,6 +99,7 @@ class MainActivity : ComponentActivity() {
 
     // The player's preferences, on the app's one shared settings DataStore (Context.settingsDataStore).
     private val settings: SettingsRepository by lazy { DataStoreSettingsRepository.create(this) }
+    private val exitConfirmation by lazy { ExitConfirmation(settings) }
     private val settingsViewModel: SettingsViewModel by viewModels {
         viewModelFactory {
             initializer {
@@ -248,6 +250,8 @@ class MainActivity : ComponentActivity() {
                             onSettings = { screen = Screen.Settings },
                             onExit = { finishAffinity() },
                             onOpenLevelDesigner = if (FeatureFlags.levelDesigner) openDesigner else null,
+                            shouldConfirmExit = exitConfirmation::shouldAsk,
+                            onExitAnswered = exitConfirmation::answered,
                         )
                     }
                 }

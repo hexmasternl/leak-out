@@ -63,13 +63,21 @@ object WelcomeScreenTags {
  * Launch screen: full-bleed art, the centred logo and the Play / Settings / Exit row below it.
  * Play opens the [PlayMenuDialog]; a choice there reads [resolveNextLevel] once, closes the dialog
  * and then starts a level through [onStartLevel] or opens the library on a page through
- * [onOpenLevelLibrary]. The host decides what Settings and Exit do.
+ * [onOpenLevelLibrary]. The host decides what Settings does.
+ *
+ * Exit asks [shouldConfirmExit] at tap time: when it says so the [ExitConfirmationDialog] opens,
+ * otherwise [onExit] is called straight away. Yes and Cancel hand the "Never show this again" box to
+ * [onExitAnswered]; Yes waits for it to finish before [onExit], so the answer is stored before the
+ * app closes. A tap outside the dialog or Back closes it without an answer.
  *
  * When [onOpenLevelDesigner] is not null (the level designer feature flag is on), a small level
  * designer button sits in the top-right corner; without it the button is not composed at all.
  *
  * @param resolveNextLevel a fresh snapshot of the next level to be played. When it throws, the
  *   dialog stays open and nothing is navigated to.
+ * @param shouldConfirmExit whether Exit shows the dialog first (see [ExitConfirmation.shouldAsk]);
+ *   it must not throw.
+ * @param onExitAnswered stores the player's answer (see [ExitConfirmation.answered]); it must not throw.
  */
 @Composable
 fun WelcomeScreen(
@@ -80,11 +88,52 @@ fun WelcomeScreen(
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenLevelDesigner: (() -> Unit)? = null,
+    shouldConfirmExit: suspend () -> Boolean = { true },
+    onExitAnswered: suspend (neverShowAgain: Boolean) -> Unit = {},
 ) {
     var showPlayMenu by rememberSaveable { mutableStateOf(false) }
     // One choice at a time: a second tap while the history is read is ignored.
     var resolving by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    var showExitDialog by rememberSaveable { mutableStateOf(false) }
+    // One exit at a time: taps while the opt-out is read or the answer is written are ignored.
+    var exiting by remember { mutableStateOf(false) }
+    fun requestExit() {
+        if (exiting) return
+        exiting = true
+        scope.launch {
+            try {
+                if (shouldConfirmExit()) showExitDialog = true else onExit()
+            } finally {
+                exiting = false
+            }
+        }
+    }
+
+    if (showExitDialog) {
+        ExitConfirmationDialog(
+            onConfirm = { neverShowAgain ->
+                if (!exiting) {
+                    exiting = true
+                    scope.launch {
+                        try {
+                            onExitAnswered(neverShowAgain)
+                            showExitDialog = false
+                            onExit()
+                        } finally {
+                            exiting = false
+                        }
+                    }
+                }
+            },
+            onCancel = { neverShowAgain ->
+                showExitDialog = false
+                scope.launch { onExitAnswered(neverShowAgain) }
+            },
+            onDismiss = { showExitDialog = false },
+        )
+    }
     fun choose(action: (NextLevel) -> Unit) {
         if (resolving) return
         resolving = true
@@ -173,7 +222,7 @@ fun WelcomeScreen(
                     )
                     CartoonButton(
                         text = stringResource(R.string.welcome_exit),
-                        onClick = onExit,
+                        onClick = { requestExit() },
                         variant = CartoonButtonVariant.Danger,
                         faceHeight = layout.buttonFaceHeightDp.dp,
                         textStyle = buttonTextStyle,

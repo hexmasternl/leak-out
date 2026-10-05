@@ -19,7 +19,7 @@
 
 ## 4. Rapid taps
 
-- [ ] 4.1 Add tests that two quick taps on "Next" from the start step show the stack step, and that a tap right after "Skip tour" neither reopens the tour nor reaches the game; verify both pass
+- [x] 4.1 Add tests that two quick taps on "Next" from the start step show the stack step, and that a tap right after "Skip tour" neither reopens the tour nor reaches the game; verify both pass
 
 ## 5. Verify
 

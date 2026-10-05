@@ -78,6 +78,9 @@ object TipOverlayTags {
     const val DONE = "tip_done"
     const val HINT_GHOST = "tip_hint_ghost"
     const val HINT_ARROW = "tip_hint_arrow"
+
+    /** The invisible layer that keeps a quick second tap after a tip closes from reaching the game. */
+    const val TAP_GUARD = "tip_tap_guard"
 }
 
 /** Semantics on the overlay: the spotlight rects in root pixels. A test hook only. */

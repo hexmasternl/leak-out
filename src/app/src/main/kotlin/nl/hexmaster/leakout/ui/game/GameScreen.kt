@@ -31,11 +31,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
@@ -45,6 +49,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import kotlin.math.roundToInt
 import kotlin.random.Random
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nl.hexmaster.leakout.achievements.AchievementTracker
 import nl.hexmaster.leakout.audio.GameSound
@@ -64,6 +69,7 @@ import nl.hexmaster.leakout.ui.components.KeepScreenOn
 import nl.hexmaster.leakout.ui.game.onboarding.DragHint
 import nl.hexmaster.leakout.ui.game.onboarding.LocalTipTargets
 import nl.hexmaster.leakout.ui.game.onboarding.TipOverlay
+import nl.hexmaster.leakout.ui.game.onboarding.TipOverlayTags
 import nl.hexmaster.leakout.ui.game.onboarding.TipScheduler
 import nl.hexmaster.leakout.ui.game.onboarding.TipTargets
 import nl.hexmaster.leakout.ui.game.onboarding.TipText
@@ -324,14 +330,33 @@ private fun GameTips(
         if (checked == attempt && activeTip == null && !paused && seen != null && visibleSlots != null) session.offerTips(due(atLevelStart = false))
     }
 
+    // A tap within a double tap of closing a tip was meant for the tip, not for the game under it.
+    var guardingTaps by remember { mutableStateOf(false) }
+    val doubleTapMs = LocalViewConfiguration.current.doubleTapTimeoutMillis
+    LaunchedEffect(guardingTaps) {
+        if (guardingTaps) {
+            delay(doubleTapMs)
+            guardingTaps = false
+        }
+    }
+
     fun close() {
         val tip = session.closeTip() ?: return
+        guardingTaps = true
         scope.launch { tips.markTipSeen(tip) }
         // After the tour and the mandatory tip, which may pan, the field goes back to the view the level starts with.
         if (tip == TipId.Intro || tip == TipId.Mandatory) scope.launch { fieldState.animateTo(fieldState.initialView(), reducedMotion) }
     }
     BackHandler(enabled = activeTip != null && !pauseDialogShown) { close() }
 
+    if (activeTip == null && guardingTaps) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .testTag(TipOverlayTags.TAP_GUARD)
+                .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent().changes.forEach { it.consume() } } },
+        )
+    }
     val tip = activeTip ?: return
     val level = session.state.level
     val hintCell = remember(attempt, stack) { TipScheduler.hintCell(level, session.state.board) }

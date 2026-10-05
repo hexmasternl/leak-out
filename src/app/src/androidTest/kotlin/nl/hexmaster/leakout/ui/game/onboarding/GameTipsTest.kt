@@ -118,6 +118,52 @@ class GameTipsTest {
         stepShown(2)
     }
 
+    /** Runs [taps] on a paused clock, so they come as quickly after each other as the player makes them. */
+    private fun quickly(taps: () -> Unit) {
+        compose.mainClock.autoAdvance = false
+        try {
+            taps()
+            compose.mainClock.advanceTimeBy(1_000)
+        } finally {
+            compose.mainClock.autoAdvance = true
+        }
+        compose.waitForIdle()
+    }
+
+    private fun fingerTapOnCell(cell: Position) {
+        val field = compose.fieldRect()
+        val at = compose.cellRect(cell).center - field.topLeft
+        compose.onNodeWithTag(GameScreenTags.FIELD).performTouchInput { fingerTap(at) }
+    }
+
+    @Test
+    fun twoQuickTapsOnNextMoveTwoSteps() {
+        show(width = s21Width, height = s21Height)
+        val next = compose.onNodeWithTag(TipOverlayTags.NEXT, useUnmergedTree = true)
+        quickly {
+            next.performTouchInput { fingerTap() }
+            compose.mainClock.advanceTimeBy(80)
+            next.performTouchInput { fingerTap() }
+        }
+        stepShown(3)
+    }
+
+    @Test
+    fun aQuickTapRightAfterSkipTourDoesNotReachTheGame() {
+        val session = show(width = s21Width, height = s21Height)
+        quickly {
+            compose.onNodeWithTag(TipOverlayTags.SKIP, useUnmergedTree = true).performTouchInput { fingerTap() }
+            compose.mainClock.advanceTimeBy(80)
+            fingerTapOnCell(Position(1, 0))
+        }
+        assertEquals(null, shownTip())
+        assertTrue(session.state.board.pipes.isEmpty())
+        // Once the double tap is over, a tap places a section as usual.
+        fingerTapOnCell(Position(1, 0))
+        compose.waitForIdle()
+        assertFalse(session.state.board.pipes.isEmpty())
+    }
+
     @Test
     fun aFingerTapOnNextWhileTheFieldPansToTheFinishStillMovesOn() {
         show(FieldTest.large(), width = s21Width, height = s21Height)

@@ -5,8 +5,8 @@
 
 ## 2. Dialog
 
-- [ ] 2.1 Create `ExitConfirmationDialog` in `ui/title/` with question text, "Never show this again" checkbox (unchecked on open), and "Yes" / "Cancel" cartoon buttons per the design system; dismissible via outside tap and back
-- [ ] 2.2 Compose UI tests: dialog content, Yes and Cancel each invoke their callback once with the checkbox state, dismiss invokes the dismiss callback
+- [x] 2.1 Create `ExitConfirmationDialog` in `ui/title/` with question text, "Never show this again" checkbox (unchecked on open), and "Yes" / "Cancel" cartoon buttons per the design system; dismissible via outside tap and back
+- [x] 2.2 Compose UI tests: dialog content, Yes and Cancel each invoke their callback once with the checkbox state, dismiss invokes the dismiss callback
 
 ## 3. Welcome screen wiring
 

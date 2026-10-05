@@ -10,6 +10,11 @@
     <string name="play_menu_title">Play</string>
     <string name="play_menu_continue">Continue</string>
     <string name="play_menu_select_level">Select Level</string>
+    <string name="exit_dialog_title">Leave Leak Out?</string>
+    <string name="exit_dialog_body">Do you want to close the game?</string>
+    <string name="exit_dialog_never_show">Never show this again</string>
+    <string name="exit_dialog_yes">Yes</string>
+    <string name="exit_dialog_cancel">Cancel</string>
     <string name="game_section_h">Horizontal straight</string>
     <string name="game_section_v">Vertical straight</string>
     <string name="game_section_lt">Left-top corner</string>

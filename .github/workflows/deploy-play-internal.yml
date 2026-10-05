@@ -90,7 +90,7 @@ jobs:
           MAJOR_MINOR_PATCH: ${{ steps.gitversion.outputs.majorMinorPatch }}
           FULL_SEMVER: ${{ steps.gitversion.outputs.fullSemVer }}
           PLAY_TRACK: ${{ vars.PLAY_TRACK || 'internal' }}
-          PLAY_RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}
+          PLAY_RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS || 'draft' }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
           # Prints VERSION_NAME=x.y.z and VERSION_CODE=n, or fails with the reason.

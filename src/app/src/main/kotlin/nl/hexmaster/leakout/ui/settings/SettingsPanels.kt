@@ -25,6 +25,7 @@ import nl.hexmaster.leakout.audio.Track
 import nl.hexmaster.leakout.settings.Settings
 import nl.hexmaster.leakout.ui.components.CartoonButton
 import nl.hexmaster.leakout.ui.components.CartoonButtonVariant
+import nl.hexmaster.leakout.ui.components.displayUppercase
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
 
@@ -240,7 +241,7 @@ fun MusicCredits(credits: List<Track>, modifier: Modifier = Modifier) {
     Column(modifier.testTag(SettingsTags.MUSIC_CREDITS)) {
         Spacer(Modifier.height(12.dp))
         Text(
-            text = stringResource(R.string.settings_about_music).uppercase(),
+            text = stringResource(R.string.settings_about_music).displayUppercase(),
             style = LeakOutTextStyles.DisplayXs,
             color = LeakOutColors.TextSecondary,
         )

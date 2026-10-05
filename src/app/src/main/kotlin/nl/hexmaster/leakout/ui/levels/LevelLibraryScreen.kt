@@ -48,6 +48,7 @@ import nl.hexmaster.leakout.core.library.LevelLibraryConfig
 import nl.hexmaster.leakout.core.library.LevelLibraryRules
 import nl.hexmaster.leakout.ui.components.CartoonButton
 import nl.hexmaster.leakout.ui.components.CartoonButtonVariant
+import nl.hexmaster.leakout.ui.components.displayUppercase
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
@@ -182,7 +183,7 @@ private fun Pager(
 
 @Composable
 private fun Header(currentPage: Int) {
-    val title = stringResource(R.string.level_library_title).uppercase()
+    val title = stringResource(R.string.level_library_title).displayUppercase()
     val page = stringResource(R.string.level_library_page, currentPage)
     // Sized in dp like the tiles so large font scaling cannot push the grid off the screen.
     val textSize = with(LocalDensity.current) { HEADER_TEXT_DP.dp.toSp() }

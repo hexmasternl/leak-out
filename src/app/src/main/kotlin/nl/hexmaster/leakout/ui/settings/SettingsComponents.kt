@@ -37,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import nl.hexmaster.leakout.R
+import nl.hexmaster.leakout.ui.components.displayUppercase
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
@@ -76,7 +77,7 @@ fun SettingsPanel(
             .padding(SettingsMetrics.PanelPadding),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = title.uppercase(), style = LeakOutTextStyles.DisplayXs, color = LeakOutColors.TextSecondary)
+            Text(text = title.displayUppercase(), style = LeakOutTextStyles.DisplayXs, color = LeakOutColors.TextSecondary)
             if (note != null) {
                 Spacer(Modifier.weight(1f))
                 Text(

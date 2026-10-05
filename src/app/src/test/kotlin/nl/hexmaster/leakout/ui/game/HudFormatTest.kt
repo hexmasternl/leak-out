@@ -28,5 +28,6 @@ class HudFormatTest {
         assertEquals("150", HudFormat.score(150, dutch))
         assertEquals("1,250", HudFormat.score(1250, english))
         assertEquals("1.250", HudFormat.score(1250, dutch))
+        assertEquals("12.500", HudFormat.score(12500, Locale.GERMANY))
     }
 }

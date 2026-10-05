@@ -140,7 +140,7 @@ class StackPanelTest {
 
         compose.dropOnCell(Position(1, 2))
 
-        compose.cellNode(Position(1, 2)).assertContentDescriptionEquals("Placed H")
+        compose.cellNode(Position(1, 2)).assertContentDescriptionEquals("Placed Horizontal straight")
     }
 
     // 4.3

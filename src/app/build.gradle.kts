@@ -55,6 +55,8 @@ android {
         // Feature flags, fixed per build type and read through FeatureFlags (see openspec/specs/feature-flags).
         debug {
             buildConfigField("boolean", "LEVEL_DESIGNER", "true")
+            // en-XA (long, accented) and ar-XB (right to left) for checking translated layouts; PseudoLocaleLayoutTest uses en-XA.
+            isPseudoLocalesEnabled = true
         }
         release {
             buildConfigField("boolean", "LEVEL_DESIGNER", "false")
@@ -83,6 +85,12 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    // Text reaches players in other languages only through strings.xml (openspec/specs/app-localization).
+    // HardcodedText covers XML; HardcodedTextTest covers the Compose sources.
+    lint {
+        error += "HardcodedText"
     }
 }
 

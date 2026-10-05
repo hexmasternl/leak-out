@@ -57,8 +57,8 @@ class MandatoryShowcaseTest {
     fun theShowcaseLevelHasItsMandatorySectionsOnRedTiles() {
         show()
         assertEquals(listOf(cross, reservoir), level.mandatory.map { it.position })
-        compose.cellNode(cross).assert(SemanticsMatcher.expectValue(MandatoryTile, true)).assertContentDescriptionEquals("Mandatory X, not used yet")
-        compose.cellNode(reservoir).assert(SemanticsMatcher.expectValue(MandatoryTile, true)).assertContentDescriptionEquals("Mandatory RES, not used yet")
+        compose.cellNode(cross).assert(SemanticsMatcher.expectValue(MandatoryTile, true)).assertContentDescriptionEquals("Mandatory Cross section, not used yet")
+        compose.cellNode(reservoir).assert(SemanticsMatcher.expectValue(MandatoryTile, true)).assertContentDescriptionEquals("Mandatory Reservoir, not used yet")
         val field = compose.fieldRect()
         val pixels = compose.onNodeWithTag(GameScreenTags.FIELD).captureToImage().toPixelMap()
         for (cell in listOf(cross, reservoir)) {
@@ -104,7 +104,7 @@ class MandatoryShowcaseTest {
             assertEquals(level.finish.position to Side.LEFT, lost.at to lost.side)
         }
         compose.waitForIdle()
-        compose.cellNode(cross).assertContentDescriptionEquals("Mandatory X, used")
+        compose.cellNode(cross).assertContentDescriptionEquals("Mandatory Cross section, used")
         compose.cellNode(reservoir).assert(SemanticsMatcher.expectValue(MissedMandatory, true))
         tick(1_000)
         compose.onNodeWithText("The liquid missed a mandatory section. Level lost.").assertIsDisplayed()
@@ -120,8 +120,8 @@ class MandatoryShowcaseTest {
             assertTrue(session.state.outcome is Outcome.Won)
         }
         compose.waitForIdle()
-        compose.cellNode(cross).assertContentDescriptionEquals("Mandatory X, used")
-        compose.cellNode(reservoir).assertContentDescriptionEquals("Mandatory RES, used")
+        compose.cellNode(cross).assertContentDescriptionEquals("Mandatory Cross section, used")
+        compose.cellNode(reservoir).assertContentDescriptionEquals("Mandatory Reservoir, used")
     }
 
     /** A straight or corner for every ordinary cell of the solver's route; the mandatory cells are already there. */

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The languages the app offers in Android 13+'s per-app language settings: English plus every
+     language turned on for automatic app-strings translation in Play Console. The translations
+     only exist in the bundle Play builds, so this list is kept by hand and must match
+     SupportedLanguages.TAGS (checked by SupportedLanguagesTest). See docs/deployment.md#translations. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="nl" />
+    <locale android:name="de" />
+    <locale android:name="fr" />
+    <locale android:name="es" />
+    <locale android:name="it" />
+    <locale android:name="pt-BR" />
+</locale-config>

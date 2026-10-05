@@ -17,7 +17,11 @@ import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.settings.TipId
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -52,13 +56,18 @@ class TipOverlayTest {
         compose.onNodeWithTag(TipOverlayTags.HINT_GHOST).assertIsDisplayed()
     }
 
-    private fun showStartStep(onNext: () -> Unit = {}, onSkip: () -> Unit = {}) {
+    private fun showStartStep(
+        onNext: () -> Unit = {},
+        onSkip: () -> Unit = {},
+        spotlight: () -> Rect = { Rect(Offset(40f, 40f), Size(60f, 60f)) },
+    ) {
         compose.setContent {
             LeakOutTheme {
+                // A Samsung Galaxy S21 in landscape.
                 Box(Modifier.size(914.dp, 411.dp)) {
                     TipOverlay(
                         content = TipContent(TipId.Intro, 0, "The Start", "The liquid comes out here.", "start valve"),
-                        spotlights = listOf(Rect(Offset(40f, 40f), Size(60f, 60f))),
+                        spotlights = listOf(spotlight()),
                         hint = null,
                         onNext = onNext, onSkip = onSkip, onDone = {},
                         reducedMotion = false,
@@ -87,6 +96,49 @@ class TipOverlayTest {
         compose.onNodeWithTag(TipOverlayTags.OVERLAY).performTouchInput { fingerTap(Offset(width - 10f, height - 10f)) }
         compose.waitForIdle()
         assertEquals(0, calls)
+    }
+
+    private fun bounds(tag: String) = compose.onNodeWithTag(tag, useUnmergedTree = true).getBoundsInRoot()
+
+    @Test
+    fun onceSettledTheCardStaysWhereItIs() {
+        compose.mainClock.autoAdvance = false
+        showStartStep()
+        compose.mainClock.advanceTimeBy(1_000)
+        val settled = bounds(TipOverlayTags.CARD)
+        repeat(6) {
+            compose.mainClock.advanceTimeBy(250)
+            assertEquals(settled, bounds(TipOverlayTags.CARD))
+        }
+    }
+
+    @Test
+    fun aShownTipDoesNotRecomposeEveryFrame() {
+        compose.mainClock.autoAdvance = false
+        showStartStep()
+        compose.mainClock.advanceTimeBy(1_000)
+        val settled = TipOverlayProbe.compositions
+        // Two whole glow pulses: well over a hundred frames.
+        compose.mainClock.advanceTimeBy(2_000)
+        assertTrue("recomposed ${TipOverlayProbe.compositions - settled} times", TipOverlayProbe.compositions - settled <= 1)
+    }
+
+    @Test
+    fun theCardStaysUnderAFingerWhileTheSpotlightMovesAndTheTapStillCounts() {
+        var spotlight by mutableStateOf(Rect(Offset(40f, 40f), Size(60f, 60f)))
+        var skips = 0
+        showStartStep(onSkip = { skips++ }, spotlight = { spotlight })
+        val skip = compose.onNodeWithTag(TipOverlayTags.SKIP, useUnmergedTree = true)
+        val before = skip.getBoundsInRoot()
+        skip.performTouchInput { down(center) }
+        // Over to the far corner, so the card would go to the other side of it.
+        spotlight = Rect(Offset(1_800f, 800f), Size(60f, 60f))
+        compose.waitForIdle()
+        assertEquals(before, skip.getBoundsInRoot())
+        skip.performTouchInput { up() }
+        compose.waitForIdle()
+        assertEquals(1, skips)
+        assertNotEquals("the card catches up after the release", before, skip.getBoundsInRoot())
     }
 
     @Test

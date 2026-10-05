@@ -8,9 +8,9 @@
 
 ## 2. Stable callout placement
 
-- [ ] 2.1 Remove the layout-phase state write of `pointer` in `CalloutLayer` and derive it in the same pass; verify with a test that the card's bounds do not change between frames once a step has settled
-- [ ] 2.2 Place the card from each step's final target rects and do not move it while a pointer is down on it; verify with an instrumented test that holds "Skip tour" during the spotlight glide and checks that the button's bounds do not change
-- [ ] 2.3 Read the glow and entry animations in the draw phase so `TipOverlay` no longer recomposes every frame; verify with a recomposition-count assertion in `TipOverlayTest`
+- [x] 2.1 Remove the layout-phase state write of `pointer` in `CalloutLayer` and derive it in the same pass; verify with a test that the card's bounds do not change between frames once a step has settled
+- [x] 2.2 Place the card from each step's final target rects and do not move it while a pointer is down on it; verify with an instrumented test that holds "Skip tour" during the spotlight glide and checks that the button's bounds do not change
+- [x] 2.3 Read the glow and entry animations in the draw phase so `TipOverlay` no longer recomposes every frame; verify with a recomposition-count assertion in `TipOverlayTest`
 
 ## 3. Safe area
 

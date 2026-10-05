@@ -78,17 +78,23 @@ data class TipPointer(val side: TipPointerSide, val along: Float)
 /**
  * The `surface.scrim` over the whole area with a rounded cut-out around every target in
  * [spotlights] (in this composable's pixels), each with its `liquid.glow` ring at [glowAlpha].
- * Cut-outs that overlap merge, so neighbouring mandatory cells read as one lit area.
+ * Cut-outs that overlap merge, so neighbouring mandatory cells read as one lit area. Both are read
+ * while drawing, so an animation of either redraws the scrim without recomposing anything.
  */
 @Composable
-fun TipSpotlightScrim(spotlights: List<Rect>, modifier: Modifier = Modifier, glowAlpha: Float = TipOverlayMetrics.RING_GLOW_ALPHA) {
+fun TipSpotlightScrim(
+    spotlights: () -> List<Rect>,
+    modifier: Modifier = Modifier,
+    glowAlpha: () -> Float = { TipOverlayMetrics.RING_GLOW_ALPHA },
+) {
     Canvas(modifier.fillMaxSize()) {
-        val holes = spotlightShapes(spotlights)
+        val holes = spotlightShapes(spotlights())
+        val glow = glowAlpha()
         val scrim = holes.fold(Path().apply { addRect(Rect(Offset.Zero, size)) }) { acc, hole ->
             Path.combine(PathOperation.Difference, acc, Path().apply { addRoundRect(hole) })
         }
         drawPath(scrim, LeakOutColors.Scrim)
-        for (hole in holes) drawRing(hole, glowAlpha)
+        for (hole in holes) drawRing(hole, glow)
     }
 }
 
@@ -116,7 +122,8 @@ private fun DrawScope.drawRing(hole: RoundRect, glowAlpha: Float) {
 /**
  * The callout card of 5.9: a level 3 `surface.base` panel, max 296 dp wide, with the [eyebrow]
  * (step counter or "TIP"), [title], [text] and the [buttons] stacked and right-aligned, and an optional [pointer]
- * towards the target drawn just outside the card edge.
+ * towards the target drawn just outside the card edge. The [pointer] is read while drawing: it is
+ * only known once the card has been placed, after composition.
  */
 @Composable
 fun TipCallout(
@@ -124,7 +131,7 @@ fun TipCallout(
     eyebrowColor: Color,
     title: String,
     text: String,
-    pointer: TipPointer?,
+    pointer: () -> TipPointer?,
     modifier: Modifier = Modifier,
     eyebrowDescription: String? = null,
     textDescription: String? = null,
@@ -135,7 +142,7 @@ fun TipCallout(
     Column(
         modifier
             .widthIn(max = TipOverlayMetrics.CardMaxWidth)
-            .drawBehind { pointer?.let { drawPointer(it) } }
+            .drawBehind { pointer()?.let { drawPointer(it) } }
             .shadow(TipOverlayMetrics.CardShadow, shape, ambientColor = shadow, spotColor = shadow)
             .background(LeakOutColors.SurfaceBase, shape)
             .drawWithContent {

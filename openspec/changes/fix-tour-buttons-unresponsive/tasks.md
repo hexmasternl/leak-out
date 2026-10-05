@@ -14,8 +14,8 @@
 
 ## 3. Safe area
 
-- [ ] 3.1 Feed the display cutout, safe drawing and system gesture insets into `CalloutPlacement`; verify with new JVM tests covering a side cutout, large gesture insets and a 640×360 dp window
-- [ ] 3.2 Add an instrumented test on the S21 profile asserting the "Next" and "Skip tour" bounds lie outside the cutout and gesture insets; verify it passes
+- [x] 3.1 Feed the display cutout, safe drawing and system gesture insets into `CalloutPlacement`; verify with new JVM tests covering a side cutout, large gesture insets and a 640×360 dp window
+- [x] 3.2 Add an instrumented test on the S21 profile asserting the "Next" and "Skip tour" bounds lie outside the cutout and gesture insets; verify it passes
 
 ## 4. Rapid taps
 

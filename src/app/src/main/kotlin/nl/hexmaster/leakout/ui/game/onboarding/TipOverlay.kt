@@ -32,7 +32,12 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.systemGestures
+import androidx.compose.foundation.layout.union
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.PointerInputScope
@@ -171,7 +176,7 @@ fun TipOverlay(
     ) {
         TipSpotlightScrim(shown, Modifier.clearAndSetSemantics { }, glowAlpha = glow)
         hint?.let { DragHintLayer(it.copy(from = it.from.relativeTo(origin), to = it.to.relativeTo(origin)), reducedMotion) }
-        CalloutLayer(spotlights = local, scale = { scale.value }) { pointer -> Callout(content, pointer, onNext, onSkip, onDone) }
+        CalloutLayer(spotlights = local, origin = { origin }, scale = { scale.value }) { pointer -> Callout(content, pointer, onNext, onSkip, onDone) }
     }
 }
 
@@ -230,13 +235,21 @@ private fun Callout(content: TipContent, pointer: () -> TipPointer?, onNext: () 
 }
 
 /**
- * Measures the card and places it with [CalloutPlacement] next to the union of the [spotlights].
- * While a finger is down on the card it keeps its place, even when the spotlights move (the field
- * still panning to a target): a button that slides away under the finger loses its tap.
+ * Measures the card and places it with [CalloutPlacement] next to the union of the [spotlights],
+ * clear of the display cutout and the system gesture areas of the window; [origin] is where this
+ * layer sits in it. While a finger is down on the card it keeps its place, even when the spotlights
+ * move (the field still panning to a target): a button that slides away under the finger loses its tap.
  */
 @Composable
-private fun CalloutLayer(spotlights: List<Rect>, scale: () -> Float, content: @Composable (pointer: () -> TipPointer?) -> Unit) {
+private fun CalloutLayer(
+    spotlights: List<Rect>,
+    origin: () -> Offset,
+    scale: () -> Float,
+    content: @Composable (pointer: () -> TipPointer?) -> Unit,
+) {
     val density = LocalDensity.current
+    val unsafeInsets = WindowInsets.displayCutout.union(WindowInsets.systemGestures)
+    val windowSize = LocalWindowInfo.current.containerSize
     // Known only once the card is placed; read while drawing, so setting it here recomposes nothing.
     var pointer by remember { mutableStateOf<TipPointer?>(null) }
     // A release lays the card out again, so it catches up with spotlights that moved meanwhile.
@@ -255,8 +268,16 @@ private fun CalloutLayer(spotlights: List<Rect>, scale: () -> Float, content: @C
         val padding = with(density) { TipOverlayMetrics.SpotlightPadding.toPx() }
         val union = spotlights.reduceOrNull { a, b -> Rect(minOf(a.left, b.left), minOf(a.top, b.top), maxOf(a.right, b.right), maxOf(a.bottom, b.bottom)) }
             ?.inflate(padding) ?: Rect(Offset(window.width / 2, window.height / 2), Size.Zero)
+        // The insets are the window's; only the part that reaches into this layer counts.
+        val at = origin()
+        val unsafe = UnsafeEdges(
+            left = (unsafeInsets.getLeft(this, layoutDirection) - at.x).coerceAtLeast(0f),
+            top = (unsafeInsets.getTop(this) - at.y).coerceAtLeast(0f),
+            right = (unsafeInsets.getRight(this, layoutDirection) - (windowSize.width - at.x - window.width)).coerceAtLeast(0f),
+            bottom = (unsafeInsets.getBottom(this) - (windowSize.height - at.y - window.height)).coerceAtLeast(0f),
+        )
         val placed = held[0].takeIf { pressed }
-            ?: CalloutPlacement.place(window, union, Size(placeable.width.toFloat(), placeable.height.toFloat()), gutter, TipOverlayMetrics.CardGap.toPx())
+            ?: CalloutPlacement.place(window, union, Size(placeable.width.toFloat(), placeable.height.toFloat()), gutter, TipOverlayMetrics.CardGap.toPx(), unsafe)
         held[0] = placed
         if (pointer != placed.pointer) pointer = placed.pointer
         layout(constraints.maxWidth, constraints.maxHeight) { placeable.place(placed.topLeft.x.toInt(), placed.topLeft.y.toInt()) }

@@ -1,0 +1,25 @@
+{
+  "id": 49,
+  "name": "Third Wave",
+  "grid": { "columns": 17, "rows": 13 },
+  "start": { "x": 0, "y": 3, "openSide": "RIGHT" },
+  "finish": { "x": 11, "y": 12, "openSide": "TOP" },
+  "blocked": [
+    { "x": 6, "y": 0 },
+    { "x": 2, "y": 2 },
+    { "x": 3, "y": 2 },
+    { "x": 2, "y": 4 },
+    { "x": 3, "y": 5 },
+    { "x": 11, "y": 5 },
+    { "x": 12, "y": 7 },
+    { "x": 10, "y": 8 },
+    { "x": 1, "y": 10 },
+    { "x": 7, "y": 10 },
+    { "x": 13, "y": 10 },
+    { "x": 6, "y": 11 },
+    { "x": 16, "y": 11 }
+  ],
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.2 },
+  "stack": { "weights": { "X": 6, "RES": 1 } },
+  "stars": { "one": 1030, "two": 1550, "three": 2060 }
+}

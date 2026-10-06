@@ -91,7 +91,8 @@ import nl.hexmaster.leakout.ui.theme.LeakOutColors
  *
  * Every view shows only what it reads from the [GameSession]'s state, and every action is a
  * command to the engine. [session] owns the running level; tests pass their own to drive it.
- * Placements and the two dialogs play their sound through [soundEffects]; without it the game is silent.
+ * Placements, points popups and the two dialogs play their sound through [soundEffects]; without it
+ * the game is silent.
  */
 @Composable
 fun GameScreen(
@@ -133,6 +134,7 @@ fun GameScreen(
     GameClock(session, paused || waitingForTips)
     ReplacementLandingSound(session, soundEffects)
     GapHeartbeat(session, soundEffects)
+    PointsAwardedSound(session, soundEffects)
     OncePerAttemptSound(session, showWinDialog, attempt, GameSound.LevelComplete, soundEffects)
     OncePerAttemptSound(session, showLostDialog, attempt, GameSound.LevelFailed, soundEffects)
     // Keyed on the attempt: every won attempt is offered to the history, which keeps the best, and

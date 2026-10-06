@@ -1,11 +1,13 @@
 package nl.hexmaster.leakout.ui.game
 
+import android.os.SystemClock
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.Lifecycle
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import nl.hexmaster.leakout.audio.GameSound
 import nl.hexmaster.leakout.audio.SoundEffects
 import nl.hexmaster.leakout.core.board.Cell
+import nl.hexmaster.leakout.core.engine.Award
 import nl.hexmaster.leakout.core.engine.GapDistance
 import nl.hexmaster.leakout.core.engine.GameState
 import nl.hexmaster.leakout.core.engine.Outcome
@@ -78,6 +81,40 @@ internal fun OncePerAttemptSound(session: GameSession, show: Boolean, attempt: I
         if (show && started && playedFor != attempt) {
             playedFor = attempt
             soundEffects?.play(sound)
+        }
+    }
+}
+
+/** The newest award of an attempt. A points popup starts when it changes to another award. */
+data class NewestAward(val attempt: Int, val award: Award?) {
+    companion object {
+        fun of(state: GameState): NewestAward = NewestAward(state.attempt, state.awards.lastOrNull())
+    }
+}
+
+/**
+ * Whether a points popup started on the way from [before] to [after]. Awards are only appended, so a
+ * new newest award means at least one new popup; several in one frame share one drop. A restart
+ * (another attempt) and awards ageing out start none.
+ */
+fun popupStarted(before: NewestAward, after: NewestAward): Boolean =
+    after.attempt == before.attempt && after.award != null && after.award != before.award
+
+/**
+ * Plays the points awarded sound when a points popup starts in [session], at most once per
+ * [DropThrottle.DROP_MIN_INTERVAL_MS] of [nowMs]. It follows the game state rather than the popup
+ * drawing, so popups off-screen in a zoomed field sound as well.
+ */
+@Composable
+internal fun PointsAwardedSound(session: GameSession, soundEffects: SoundEffects?, nowMs: () -> Long = SystemClock::uptimeMillis) {
+    val currentNowMs by rememberUpdatedState(nowMs)
+    LaunchedEffect(session, soundEffects) {
+        val throttle = DropThrottle { currentNowMs() }
+        var before: NewestAward? = null
+        snapshotFlow { NewestAward.of(session.state) }.collect { after ->
+            val started = before?.let { popupStarted(it, after) } == true
+            before = after
+            if (started && throttle.tryDrop()) soundEffects?.play(GameSound.PointsAwarded)
         }
     }
 }

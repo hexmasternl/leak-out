@@ -44,6 +44,7 @@ class BundledSoundEffectsTest {
         assertEquals(listOf("section_placement_failed.mp3"), catalog.variantsOf(GameSound.PlacementFailed))
         assertEquals(listOf("level_complete.mp3"), catalog.variantsOf(GameSound.LevelComplete))
         assertEquals(listOf("level_failed.mp3"), catalog.variantsOf(GameSound.LevelFailed))
+        assertEquals(listOf("drop.mp3"), catalog.variantsOf(GameSound.PointsAwarded))
         assertEquals(listOf("heartbeat.mp3"), catalog.variantsOf(GameSound.Heartbeat))
     }
 }

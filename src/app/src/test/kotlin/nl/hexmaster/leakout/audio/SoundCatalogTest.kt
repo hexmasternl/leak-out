@@ -31,6 +31,12 @@ class SoundCatalogTest {
     }
 
     @Test
+    fun `the drop is the points awarded sound and can gain numbered variants`() {
+        val catalog = SoundCatalog.from(listOf("drop_002.mp3", "drop.mp3", "drop_001.mp3"))
+        assertEquals(listOf("drop.mp3", "drop_001.mp3", "drop_002.mp3"), catalog.variantsOf(GameSound.PointsAwarded))
+    }
+
+    @Test
     fun `variants are in name order`() {
         val catalog = SoundCatalog.from(listOf("section_placement_003.mp3", "section_placement_001.mp3", "section_placement_002.mp3"))
         assertEquals(

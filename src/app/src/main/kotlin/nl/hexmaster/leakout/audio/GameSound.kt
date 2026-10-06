@@ -23,6 +23,9 @@ enum class GameSound(val group: String, val looping: Boolean = false) {
 
     /** Loops while the liquid closes in on a gap (spec `game-play-gap-warning`). */
     Heartbeat("heartbeat", looping = true),
+
+    /** A points popup starts on a section the liquid has left. */
+    PointsAwarded("drop"),
     ;
 
     companion object {

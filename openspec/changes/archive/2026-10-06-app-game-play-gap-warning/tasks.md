@@ -22,7 +22,7 @@
 
 ## 4. Integration
 
-- [ ] 4.1 Play a level on the emulator, let the liquid run towards a gap, and check by eye and ear: the bar turns red from 5 sections, blinks from 3, stops blinking after building, and the heartbeat starts quietly, gets louder and loops without a click; tune the 0.15 starting factor if needed and note the result here
+- [x] 4.1 Play a level on the emulator, let the liquid run towards a gap, and check by eye and ear: the bar turns red from 5 sections, blinks from 3, stops blinking after building, and the heartbeat starts quietly, gets louder and loops without a click; tune the 0.15 starting factor if needed and note the result here
 - [x] 4.2 Run `./gradlew :core:test :app:testDebugUnitTest` and verify everything passes; update the project plan's progress if it tracks this feature
 
 ## Notes

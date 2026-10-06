@@ -23,6 +23,8 @@ import nl.hexmaster.leakout.core.engine.GapDistance
 import nl.hexmaster.leakout.core.engine.GameState
 import nl.hexmaster.leakout.core.engine.Outcome
 import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.haptics.HapticEffect
+import nl.hexmaster.leakout.haptics.Haptics
 
 /**
  * The sound of a placement that did [result]. A refusal only sounds while [state] takes sections:
@@ -40,11 +42,13 @@ fun placementSound(result: PlaceResult, state: GameState): GameSound? = when (re
 /**
  * Places the next section on [at] like [GameSession.place], plays its sound and returns whether it
  * was placed. A replacement without a penalty lands at once, so its placement sound follows the destroy.
+ * Only the destroy of a replacement vibrates through [haptics]; a placement or a refusal does not.
  */
-fun GameSession.placeWithSound(at: Position, soundEffects: SoundEffects?): Boolean {
+fun GameSession.placeWithSound(at: Position, soundEffects: SoundEffects?, haptics: Haptics? = null): Boolean {
     val before = state
     val result = place(at)
     placementSound(result, before)?.let { soundEffects?.play(it) }
+    if (result == PlaceResult.Replaced) haptics?.play(HapticEffect.SectionReplaced)
     if (result == PlaceResult.Replaced && state.replacement == null) soundEffects?.play(GameSound.SectionPlaced)
     return result != PlaceResult.Rejected
 }

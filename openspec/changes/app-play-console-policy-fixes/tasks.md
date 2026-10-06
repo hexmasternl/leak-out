@@ -2,8 +2,8 @@
 
 ## 1. Lift the fragment library (#88)
 
-- [ ] 1.1 Add `fragment = "1.8.9"` and the `androidx-fragment` library to `gradle/libs.versions.toml`, with a comment that it only overrides the 1.1.0 that Play services pulls in (issue #88), and add `implementation(libs.androidx.fragment)` to `app/build.gradle.kts`; verify `./gradlew :app:dependencyInsight --configuration releaseRuntimeClasspath --dependency androidx.fragment:fragment` resolves 1.8.9 and that no other pinned AndroidX version (lifecycle, activity, core) changes in `./gradlew :app:dependencies --configuration releaseRuntimeClasspath` compared to before
-- [ ] 1.2 Add `FragmentVersionTest` in `app/src/test` asserting that a fragment API added after 1.1.0 (`FragmentManager.OnBackStackChangedListener#onBackStackChangeProgressed`) is on the classpath; verify it passes with `./gradlew :app:testDebugUnitTest --tests "*FragmentVersionTest"` and fails when the dependency from 1.1 is temporarily removed
+- [x] 1.1 Add `fragment = "1.8.9"` and the `androidx-fragment` library to `gradle/libs.versions.toml`, with a comment that it only overrides the 1.1.0 that Play services pulls in (issue #88), and add `implementation(libs.androidx.fragment)` to `app/build.gradle.kts`; verify `./gradlew :app:dependencyInsight --configuration releaseRuntimeClasspath --dependency androidx.fragment:fragment` resolves 1.8.9 and that no other pinned AndroidX version (lifecycle, activity, core) changes in `./gradlew :app:dependencies --configuration releaseRuntimeClasspath` compared to before
+- [x] 1.2 Add `FragmentVersionTest` in `app/src/test` asserting that a fragment API added after 1.1.0 (`FragmentManager.OnBackStackChangedListener#onBackStackChangeProgressed`) is on the classpath; verify it passes with `./gradlew :app:testDebugUnitTest --tests "*FragmentVersionTest"` and fails when the dependency from 1.1 is temporarily removed
 
 ## 2. Replace the deprecated cutout mode (#89)
 

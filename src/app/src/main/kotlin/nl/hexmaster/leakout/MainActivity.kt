@@ -39,6 +39,8 @@ import nl.hexmaster.leakout.audio.SoundPoolSoundEffectPlayer
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.library.NextLevel
 import nl.hexmaster.leakout.core.library.NextLevelResolver
+import nl.hexmaster.leakout.haptics.HapticsViewModel
+import nl.hexmaster.leakout.haptics.VibratorHapticPlayer
 import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.settings.DataStoreSettingsRepository
 import nl.hexmaster.leakout.settings.SettingsRepository
@@ -154,6 +156,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // The game's haptic feedback, following the stored vibration setting.
+    private val hapticsViewModel: HapticsViewModel by viewModels {
+        viewModelFactory {
+            initializer { HapticsViewModel(settings, VibratorHapticPlayer(applicationContext)) }
+        }
+    }
+
     // The design being edited, kept across test plays, configuration changes and process death.
     // Created on first use, so it never exists while the level designer flag is off.
     private val designerViewModel: LevelDesignerViewModel by viewModels {
@@ -218,6 +227,7 @@ class MainActivity : ComponentActivity() {
                                 history = history,
                                 achievements = appContainer.tracker,
                                 soundEffects = soundEffectsViewModel.soundEffects,
+                                haptics = hapticsViewModel.haptics,
                                 tips = settings,
                             )
                         }
@@ -225,6 +235,7 @@ class MainActivity : ComponentActivity() {
                             level = current.level,
                             onExit = { screen = Screen.Designer },
                             soundEffects = soundEffectsViewModel.soundEffects,
+                            haptics = hapticsViewModel.haptics,
                         )
                         Screen.Designer -> LevelDesignerScreen(
                             viewModel = designerViewModel,

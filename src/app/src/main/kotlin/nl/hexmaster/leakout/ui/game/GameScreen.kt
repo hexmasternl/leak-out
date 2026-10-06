@@ -54,6 +54,8 @@ import kotlinx.coroutines.launch
 import nl.hexmaster.leakout.achievements.AchievementTracker
 import nl.hexmaster.leakout.audio.GameSound
 import nl.hexmaster.leakout.audio.SoundEffects
+import nl.hexmaster.leakout.haptics.HapticEffect
+import nl.hexmaster.leakout.haptics.Haptics
 import nl.hexmaster.leakout.core.engine.FlowState
 import nl.hexmaster.leakout.core.engine.GapDistance
 import nl.hexmaster.leakout.core.engine.GameCommand
@@ -92,7 +94,8 @@ import nl.hexmaster.leakout.ui.theme.LeakOutColors
  * Every view shows only what it reads from the [GameSession]'s state, and every action is a
  * command to the engine. [session] owns the running level; tests pass their own to drive it.
  * Placements, points popups and the two dialogs play their sound through [soundEffects]; without it
- * the game is silent.
+ * the game is silent. A replacement, the gap warning and a lost attempt vibrate through [haptics]
+ * (spec `game-haptics`); without it nothing vibrates.
  */
 @Composable
 fun GameScreen(
@@ -105,6 +108,7 @@ fun GameScreen(
     soundEffects: SoundEffects? = null,
     tips: SettingsRepository? = null,
     achievements: AchievementTracker? = null,
+    haptics: Haptics? = null,
 ) {
     // The display stays on for the whole game screen, its dialogs included.
     KeepScreenOn()
@@ -135,6 +139,7 @@ fun GameScreen(
     ReplacementLandingSound(session, soundEffects)
     GapHeartbeat(session, soundEffects)
     PointsAwardedSound(session, soundEffects)
+    GameHaptics(session, haptics)
     OncePerAttemptSound(session, showWinDialog, attempt, GameSound.LevelComplete, soundEffects)
     OncePerAttemptSound(session, showLostDialog, attempt, GameSound.LevelFailed, soundEffects)
     // Keyed on the attempt: every won attempt is offered to the history, which keeps the best, and
@@ -191,6 +196,7 @@ fun GameScreen(
                 modifier = Modifier.fillMaxWidth(),
                 gapDistance = { GapDistance.of(session.state) },
                 clockMs = { session.state.clockMs },
+                onWarningShown = { haptics?.play(HapticEffect.GapWarning) },
             )
             // Keyed on the attempt: a new attempt starts the stack and the field fresh, a pause keeps them.
             key(attempt) {
@@ -204,7 +210,9 @@ fun GameScreen(
                             StackLayout.metrics(360.dp - HudLayout.HEIGHT, currentLevel.stack.visibleSize).columnWidth + 16.dp,
                         ),
                     )
-                    val target = remember(session, fieldState, soundEffects) { FieldDropTarget(session, fieldState, soundEffects) }
+                    val target = remember(session, fieldState, soundEffects, haptics) {
+                        FieldDropTarget(session, fieldState, soundEffects, haptics)
+                    }
                     dragState.dropTarget = target
                     val highlighted by remember(dragState, target) {
                         derivedStateOf { dragState.dropPoint?.let(target::hoverCell) }
@@ -230,7 +238,7 @@ fun GameScreen(
                         replacement = session.select { state.replacement },
                         landing = session.select { lastLanding?.takeIf { it.attempt == state.attempt } },
                         // A tap places the next section like a drop; the engine refuses cells that do not accept it.
-                        onTap = { cell -> session.placeWithSound(cell, soundEffects) },
+                        onTap = { cell -> session.placeWithSound(cell, soundEffects, haptics) },
                     )
                 }
             }
@@ -458,6 +466,7 @@ private class FieldDropTarget(
     private val session: GameSession,
     private val field: PlayingFieldState,
     private val soundEffects: SoundEffects?,
+    private val haptics: Haptics?,
 ) : SectionDropTarget {
     fun hoverCell(position: Offset): Position? = field.cellAt(position)?.takeIf(session::canPlace)
 
@@ -465,7 +474,7 @@ private class FieldDropTarget(
 
     override fun tryPlace(section: PipeSection, position: Offset): Boolean {
         val cell = field.cellAt(position) ?: return false
-        return session.placeWithSound(cell, soundEffects)
+        return session.placeWithSound(cell, soundEffects, haptics)
     }
 }
 

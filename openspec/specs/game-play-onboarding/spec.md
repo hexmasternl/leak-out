@@ -2,7 +2,9 @@
 
 ## Purpose
 One-time guided tips during play that teach a new player the start, the finish, the stack, placing, zoom and pan, and the special cross, reservoir and mandatory sections the first time they meet them.
+
 ## Requirements
+
 ### Requirement: Intro tour on the first level played
 When the player starts a level and the intro tour has not been seen, the game SHALL freeze before the countdown runs and show the intro tour. This SHALL apply to whichever level the player starts first, not only to level 1.
 
@@ -55,6 +57,22 @@ Every step except the last SHALL offer "Next" and "Skip tour"; the last step SHA
 #### Scenario: Tour interrupted by closing the app
 - **WHEN** the app is closed while the intro tour is shown and the player later starts a level
 - **THEN** the intro tour is shown again from its first step
+
+#### Scenario: Tap during a tip animation
+- **WHEN** a tour step has just appeared, and its card entry, spotlight glide or field reveal is still animating, and the player taps "Next"
+- **THEN** the tour moves to the next step
+
+#### Scenario: Tap on the first step after a fresh install
+- **WHEN** the app is freshly installed, the first level opens with the start step of the tour and the player taps "Skip tour" once
+- **THEN** the tour closes, the countdown starts running and the intro tour is stored as seen
+
+#### Scenario: Rapid taps on Next
+- **WHEN** the start step is shown and the player taps "Next" twice in quick succession
+- **THEN** the tour shows the stack step: each completed tap advances exactly one step
+
+#### Scenario: Rapid taps after skipping
+- **WHEN** the player taps "Skip tour" and then quickly taps the same spot again
+- **THEN** the tour stays closed and the second tap does not reach the game
 
 ### Requirement: Cross section tip
 The first time a cross (`X`) in the stack is fully visible on screen during play, the game SHALL freeze and show the cross tip, highlighting the cross in the stack. A section is fully visible when its whole stack slot lies within the visible area of the screen; on a small screen the top of the stack can be cut off, and an `X` in a slot that is partly or entirely cut off SHALL NOT trigger the tip. The tip SHALL explain that a cross has two separate channels the liquid passes straight through, that the first pass scores 10 points and the second pass through the other channel 50 points, and that each channel can be used only once.
@@ -159,3 +177,18 @@ A shown tip SHALL be announced by a screen reader with its title and explanation
 #### Scenario: Reduced motion drag hint
 - **WHEN** animations are turned off on the device and the placing step is shown
 - **THEN** a static arrow from the next section to an empty cell is shown and nothing moves
+
+### Requirement: Tip buttons respond on every supported device
+A tip's buttons SHALL lie fully inside the screen area the app can safely take touches in, clear of the display cutout and of the system gesture areas, on every supported screen size and density in landscape. A press on a tip button that shows press feedback SHALL run the button's action when the finger lifts on the button, and the button SHALL not move while it is pressed.
+
+#### Scenario: Buttons on a phone with a punch-hole camera
+- **WHEN** the intro tour is shown on a 2400×1080 phone at about 420 dpi with a display cutout
+- **THEN** "Next" and "Skip tour" lie fully outside the cutout and the system gesture areas, and a tap on either takes effect
+
+#### Scenario: Press feedback means the action runs
+- **WHEN** the player presses "Next", sees its press feedback and lifts the finger on the button
+- **THEN** the tour moves to the next step
+
+#### Scenario: The card stays put during a press
+- **WHEN** the player holds a finger on "Skip tour" while the spotlight still animates
+- **THEN** the button stays under the finger until it is lifted

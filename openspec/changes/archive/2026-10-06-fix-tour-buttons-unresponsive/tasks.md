@@ -24,4 +24,4 @@
 ## 5. Verify
 
 - [x] 5.1 Run `./gradlew :core:test :app:testDebugUnitTest` and the affected instrumented tests (`TipOverlayTest`, `GameTipsTest`), and verify they all pass, including the tests from 1.2 and 1.3 that failed before
-- [ ] 5.2 Install a build on a real Samsung S21 (or through the internal testing track), clear the app data, and confirm "Next", "Skip tour" and "Let's go" respond on the first tap; note the result in the GitHub issue
+- [x] 5.2 Install a build on a real Samsung S21 (or through the internal testing track), clear the app data, and confirm "Next", "Skip tour" and "Let's go" respond on the first tap; note the result in the GitHub issue

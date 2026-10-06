@@ -8,11 +8,11 @@
 ## 2. Replace the deprecated cutout mode (#89)
 
 - [x] 2.1 Add a pure `fullScreenDialogCutoutMode(sdkInt: Int): Int?` next to `PauseDialog` (`ALWAYS` on API 30+, `SHORT_EDGES` with `@Suppress("DEPRECATION")` on API 28–29, `null` below) and use it in `PauseDialog`'s `SideEffect`; add a JVM unit test covering SDK 26, 27, 28, 29, 30, 35 and 37 and verify it passes with `./gradlew :app:testDebugUnitTest`
-- [ ] 2.2 Add a source-scan unit test in the style of `HardcodedTextTest` asserting `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES` appears in `src/main/kotlin` only inside `fullScreenDialogCutoutMode`; verify it passes, and fails on a deliberately added second use
-- [ ] 2.3 Extend `PauseDialogTest` with a check that the pause dialog window's `layoutInDisplayCutoutMode` is `LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS` on the emulator (API 30+); verify with `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=nl.hexmaster.leakout.ui.game.PauseDialogTest` that the new and existing pause tests, including `backdropCoversTheWholeWindow`, pass
+- [x] 2.2 Add a source-scan unit test in the style of `HardcodedTextTest` asserting `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES` appears in `src/main/kotlin` only inside `fullScreenDialogCutoutMode`; verify it passes, and fails on a deliberately added second use
+- [ ] 2.3 Extend `PauseDialogTest` with a check that the pause dialog window's `layoutInDisplayCutoutMode` is `LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS` on the emulator (API 30+); verify with `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=nl.hexmaster.leakout.ui.game.PauseDialogTest` that the new and existing pause tests, including `backdropCoversTheWholeWindow`, pass (test written; not yet run, no emulator was connected)
 
 ## 3. Integration
 
-- [ ] 3.1 Run `./gradlew :core:test :app:testDebugUnitTest` and `./gradlew :app:assembleRelease` and verify both succeed
-- [ ] 3.2 On an emulator with Play Games, sign in and unlock an achievement on a build with the new fragment library and verify both still work, or record that this check is deferred to the internal track build
+- [x] 3.1 Run `./gradlew :core:test :app:testDebugUnitTest` and `./gradlew :app:assembleRelease` and verify both succeed
+- [x] 3.2 On an emulator with Play Games, sign in and unlock an achievement on a build with the new fragment library and verify both still work, or record that this check is deferred to the internal track build (deferred to the internal track build: no emulator with Play Games was available)
 - [ ] 3.3 After the release from `main` is uploaded, verify in the Play Console that the outdated-SDK and edge-to-edge warnings are gone for the new version code, then close #88 and #89; if the `SHORT_EDGES` warning remains, open a follow-up to drop the API 28–29 branch (design.md, decision 2)

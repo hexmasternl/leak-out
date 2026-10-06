@@ -132,6 +132,7 @@ fun GameScreen(
 
     GameClock(session, paused || waitingForTips)
     ReplacementLandingSound(session, soundEffects)
+    GapHeartbeat(session, soundEffects)
     OncePerAttemptSound(session, showWinDialog, attempt, GameSound.LevelComplete, soundEffects)
     OncePerAttemptSound(session, showLostDialog, attempt, GameSound.LevelFailed, soundEffects)
     // Keyed on the attempt: every won attempt is offered to the history, which keeps the best, and

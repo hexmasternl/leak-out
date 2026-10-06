@@ -13,6 +13,7 @@ The app SHALL bundle the sound effects from the repository's `assets/sfx/` folde
 - `level_complete`: level complete
 - `level_failed`: level failed
 - `drop`: points awarded
+- `heartbeat`: gap warning heartbeat, played in a loop with its own volume as described in `game-play-gap-warning`
 
 A file whose group maps to no game sound SHALL be ignored. A game sound without any file SHALL be silent, and the game SHALL keep running.
 
@@ -22,7 +23,7 @@ A file whose group maps to no game sound SHALL be ignored. A game sound without 
 
 #### Scenario: Variants are grouped
 - **WHEN** the bundled effects are read
-- **THEN** the section placed sound has three variants, and the section destroyed, placement failed, level complete, level failed and points awarded sounds have one each
+- **THEN** the section placed sound has three variants, and the section destroyed, placement failed, level complete, level failed, points awarded and heartbeat sounds have one each
 
 #### Scenario: Numbered suffix only
 - **WHEN** the file `section_placement_failed.mp3` is grouped
@@ -31,6 +32,10 @@ A file whose group maps to no game sound SHALL be ignored. A game sound without 
 #### Scenario: Missing sound is silent
 - **WHEN** no file belongs to the level failed sound and the level lost dialog appears
 - **THEN** no sound plays and the dialog works as usual
+
+#### Scenario: Missing heartbeat is silent
+- **WHEN** no file belongs to the heartbeat and the liquid comes within 5 sections of a gap
+- **THEN** no heartbeat plays and the score bar still warns
 
 ### Requirement: Random variant
 When a game sound has more than one file, the system SHALL pick one of its files at random, each with equal chance, every time the sound plays. A game sound with one file SHALL always play that file.

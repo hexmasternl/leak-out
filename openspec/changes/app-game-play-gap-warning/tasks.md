@@ -2,9 +2,9 @@
 
 ## 1. Gap distance in core
 
-- [ ] 1.1 Extract `RouteTracer.trace`'s step loop into an internal walk that takes a start position, exit side and visited set, and call it from `trace`; verify `./gradlew :core:test --tests '*RouteTracer*'` passes unchanged
-- [ ] 1.2 Write `GapDistanceTest` first (design decision 1) with cases for: no gap while `Waiting`, `Ended`, won or lost; `1 - progress` for a gap right after the head's tile; whole sections counted ahead; route into the finish → null; finish with an unused mandatory section → gap at the finish; finish entered from the wrong side; grid edge; blocked tile; section without a matching opening; cross whose other channel was already used; a tile with a running replacement counts as empty; verify it fails to compile because `GapDistance` doesn't exist yet
-- [ ] 1.3 Implement `GapDistance.of(state): Double?` on the shared walk; verify `./gradlew :core:test` passes
+- [x] 1.1 Extract `RouteTracer.trace`'s step loop into an internal walk that takes a start position, exit side and visited set, and call it from `trace`; verify `./gradlew :core:test --tests '*RouteTracer*'` passes unchanged
+- [x] 1.2 Write `GapDistanceTest` first (design decision 1) with cases for: no gap while `Waiting`, `Ended`, won or lost; `1 - progress` for a gap right after the head's tile; whole sections counted ahead; route into the finish → null; finish with an unused mandatory section → gap at the finish; finish entered from the wrong side; grid edge; blocked tile; section without a matching opening; cross whose other channel was already used; a tile with a running replacement counts as empty; verify it fails to compile because `GapDistance` doesn't exist yet
+- [x] 1.3 Implement `GapDistance.of(state): Double?` on the shared walk; verify `./gradlew :core:test` passes
 
 ## 2. Score bar warning
 

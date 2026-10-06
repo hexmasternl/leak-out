@@ -7,6 +7,7 @@ import nl.hexmaster.leakout.core.flow.MandatoryProgress
 import nl.hexmaster.leakout.core.flow.channelFor
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.level.exitFor
 
 /** Whether the placed sections connect the start to the finish. */
@@ -29,30 +30,47 @@ sealed interface Route {
  */
 object RouteTracer {
     fun trace(board: Board, level: Level): Route {
+        val walk = walk(board, level, level.start.position, level.start.openSide, emptySet())
+        return walk.open ?: Route.Complete(walk.cells)
+    }
+
+    /**
+     * The sections a walk entered, in order, and where it stopped. [open] is null when the walk
+     * entered the finish and the liquid would win there.
+     */
+    internal class Walk(val cells: List<Position>, val open: Route.Open?)
+
+    /**
+     * Walks on from the tile [from], which the liquid leaves through [exit], with the channels in
+     * [used] already run through. [trace] and the gap distance both take this walk, so they share
+     * one set of leak rules.
+     */
+    internal fun walk(board: Board, level: Level, from: Position, exit: Side, used: Set<ChannelUse>): Walk {
         val cells = mutableListOf<Position>()
         // A cross has a channel per axis, so it can be passed once each way. Channels are reversible
         // and the start cannot be entered, so the walk never comes back to one; the set guarantees
         // that the walk ends and tells which mandatory channels the route runs through.
-        val visited = mutableSetOf<ChannelUse>()
-        var current = level.start.position
-        var exit = level.start.openSide
+        val visited = used.toMutableSet()
+        var current = from
+        var side = exit
+        fun open(at: Position, reason: Route.Reason) = Walk(cells, Route.Open(at, reason))
         while (true) {
-            val next = current.neighbour(exit)
-            val entry = exit.opposite()
-            if (next !in board.grid) return Route.Open(next, Route.Reason.OFF_GRID)
+            val next = current.neighbour(side)
+            val entry = side.opposite()
+            if (next !in board.grid) return open(next, Route.Reason.OFF_GRID)
             when (val cell = board[next]) {
                 is Cell.Finish -> return when {
-                    entry != cell.openSide -> Route.Open(next, Route.Reason.WRONG_SIDE)
+                    entry != cell.openSide -> open(next, Route.Reason.WRONG_SIDE)
                     MandatoryProgress.unused(level.mandatory, visited).isNotEmpty() ->
-                        Route.Open(next, Route.Reason.MANDATORY_MISSED)
-                    else -> Route.Complete(cells)
+                        open(next, Route.Reason.MANDATORY_MISSED)
+                    else -> Walk(cells, null)
                 }
-                Cell.Empty -> return Route.Open(next, Route.Reason.EMPTY)
-                Cell.Blocked, is Cell.Start -> return Route.Open(next, Route.Reason.BLOCKED)
+                Cell.Empty -> return open(next, Route.Reason.EMPTY)
+                Cell.Blocked, is Cell.Start -> return open(next, Route.Reason.BLOCKED)
                 is Cell.Pipe -> {
-                    exit = cell.section.exitFor(entry) ?: return Route.Open(next, Route.Reason.NO_OPENING)
+                    side = cell.section.exitFor(entry) ?: return open(next, Route.Reason.NO_OPENING)
                     if (!visited.add(ChannelUse(next, cell.section.channelFor(entry)))) {
-                        return Route.Open(next, Route.Reason.LOOP)
+                        return open(next, Route.Reason.LOOP)
                     }
                     cells += next
                     current = next

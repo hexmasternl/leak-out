@@ -6,7 +6,7 @@
 
 ## 2. Play it with each popup
 
-- [ ] 2.1 Write a JVM unit test for `DropThrottle` first (first drop plays, a drop 99 ms later is skipped, one 100 ms later plays, the injected clock is used), then implement it (design decision 2); verify `./gradlew :app:testDebugUnitTest --tests '*DropThrottle*'` passes
+- [x] 2.1 Write a JVM unit test for `DropThrottle` first (first drop plays, a drop 99 ms later is skipped, one 100 ms later plays, the injected clock is used), then implement it (design decision 2); verify `./gradlew :app:testDebugUnitTest --tests '*DropThrottle*'` passes
 - [ ] 2.2 Add `PointsAwardedSound(session, soundEffects)` to `GameSounds.kt` (design decision 1) and call it from `GameScreen` and `TestPlayScreen`; verify with an instrumented test using `RecordingSoundEffectPlayer`: one drop per award, one drop for two awards in one frame, a cross scoring twice drops twice, no drop on restart or while paused, and no drop with sound off; run only that test class on the emulator
 
 ## 3. Integration

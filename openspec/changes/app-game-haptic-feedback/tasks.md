@@ -16,9 +16,10 @@
 
 ## 3. Specs and docs
 
-- [ ] 3.1 Update `docs/project-plan.md` where it describes the Settings screen or Milestone 5, so it says the Vibration switch now drives the game's haptics (the "Haptic tick on placement" item stays open); verify `openspec validate app-game-haptic-feedback --strict` passes
+- [x] 3.1 Update `docs/project-plan.md` where it describes the Settings screen or Milestone 5, so it says the Vibration switch now drives the game's haptics (the "Haptic tick on placement" item stays open); verify `openspec validate app-game-haptic-feedback --strict` passes
 
 ## 4. Integration
 
 - [ ] 4.1 Play a level on a real device with vibration on and check by feel: a soft buzz on a replacement, a short buzz with each "WARNING", a one-second buzz on the leak, nothing with the Vibration switch off; tune the amplitudes in `HapticEffect` if needed and note the result here
-- [ ] 4.2 Run `./gradlew :core:test :app:testDebugUnitTest` and verify everything passes
+  - Not done yet: needs a real device (the emulator has no vibrator). The amplitudes are still the first guesses (60, 140, 255).
+- [x] 4.2 Run `./gradlew :core:test :app:testDebugUnitTest` and verify everything passes

@@ -21,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -60,7 +61,8 @@ private val CountdownMinWidth = 96.dp
  * [pauseEnabled] is false, for example once the level is lost.
  *
  * [gapDistance] and [clockMs] are read lambdas, the gap distance in sections (null without a gap) and
- * the game time, so their per-frame changes only reach the score bar's warning.
+ * the game time, so their per-frame changes only reach the score bar's warning. [onWarningShown] is
+ * called each time the blinking bar switches to "Warning", from the same value that shows the text.
  */
 @Composable
 fun GameHud(
@@ -77,6 +79,7 @@ fun GameHud(
     reducedMotion: Boolean = rememberReducedMotion(),
     gapDistance: () -> Double? = { null },
     clockMs: () -> Long = { 0L },
+    onWarningShown: () -> Unit = {},
 ) {
     val locale = LocalConfiguration.current.locales[0]
     val levelText = stringResource(R.string.hud_level, HudFormat.level(levelId))
@@ -132,7 +135,7 @@ fun GameHud(
         ) {
             CountdownBar(countdownRemainingMs, initialDelayMs, reducedMotion = reducedMotion)
         }
-        GapWarningScoreBar(score, stars, attempt, reducedMotion, gapDistance, clockMs)
+        GapWarningScoreBar(score, stars, attempt, reducedMotion, gapDistance, clockMs, onWarningShown)
         // The 48 dp touch target is wider than the 24 dp cog; the 4 dp end padding puts the cog's
         // edge 16 dp from the panel's edge, like the level on the left.
         IconButton(
@@ -166,6 +169,7 @@ private fun GapWarningScoreBar(
     reducedMotion: Boolean,
     gapDistance: () -> Double?,
     clockMs: () -> Long,
+    onWarningShown: () -> Unit,
 ) {
     val readDistance by rememberUpdatedState(gapDistance)
     // Measured once per frame; the warning values below are derived from it.
@@ -177,6 +181,15 @@ private fun GapWarningScoreBar(
     val leakIn by remember { derivedStateOf { distance.value?.takeIf(GapWarning::blinking)?.let(GapWarning::sectionsToLeak) } }
     val warningText by remember { derivedStateOf { GapWarning.showWarningText(distance.value, clock(), blinkSince) } }
     LaunchedEffect(blinking, attempt) { blinkSince = if (blinking) clock() else null }
+    // Every switch to "Warning" is reported once; switching back to the score is not.
+    val currentOnWarningShown by rememberUpdatedState(onWarningShown)
+    LaunchedEffect(Unit) {
+        var shown = false
+        snapshotFlow { warningText }.collect { now ->
+            if (now && !shown) currentOnWarningShown()
+            shown = now
+        }
+    }
     ScoreBar(
         score = score,
         stars = stars,

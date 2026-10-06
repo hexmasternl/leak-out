@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Haptic feedback. A normal permission: granted at install, so there is no prompt. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <!-- appCategory="game" exempts the app from Android 16's large-screen override that would
          otherwise ignore the landscape lock on tablets and foldables. -->
     <application

@@ -18,7 +18,10 @@ class BundledSoundEffectsTest {
 
     @Test
     fun `bundled effects equal the design source`() {
-        assertEquals(names(sourceDir), names(bundledDir))
+        // A design source file lands in the repository with its change's proposal, before the game
+        // has a sound for it (heartbeat.mp3, #80). Only the files a game sound uses must be bundled.
+        val used = names(sourceDir).filter { GameSound.ofGroup(SoundCatalog.groupOf(it)) != null }.toSet()
+        assertEquals(used, names(bundledDir))
         for (name in names(bundledDir)) {
             assertArrayEquals("content of $name", File(sourceDir, name).readBytes(), File(bundledDir, name).readBytes())
         }
@@ -27,7 +30,7 @@ class BundledSoundEffectsTest {
     @Test
     fun `every bundled effect belongs to a game sound`() {
         val catalog = SoundCatalog.from(names(bundledDir))
-        assertEquals(names(bundledDir), catalog.files.toSet())
+        assertEquals(names(bundledDir), GameSound.entries.flatMap(catalog::variantsOf).toSet())
     }
 
     @Test
@@ -41,5 +44,6 @@ class BundledSoundEffectsTest {
         assertEquals(listOf("section_placement_failed.mp3"), catalog.variantsOf(GameSound.PlacementFailed))
         assertEquals(listOf("level_complete.mp3"), catalog.variantsOf(GameSound.LevelComplete))
         assertEquals(listOf("level_failed.mp3"), catalog.variantsOf(GameSound.LevelFailed))
+        assertEquals(listOf("heartbeat.mp3"), catalog.variantsOf(GameSound.Heartbeat))
     }
 }

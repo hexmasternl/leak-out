@@ -1,6 +1,7 @@
 package nl.hexmaster.leakout.ui.game
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import nl.hexmaster.leakout.audio.GameSound
 import nl.hexmaster.leakout.audio.SoundEffects
 import nl.hexmaster.leakout.core.board.Cell
+import nl.hexmaster.leakout.core.engine.GapDistance
 import nl.hexmaster.leakout.core.engine.GameState
 import nl.hexmaster.leakout.core.engine.Outcome
 import nl.hexmaster.leakout.core.level.Position
@@ -78,4 +80,30 @@ internal fun OncePerAttemptSound(session: GameSession, show: Boolean, attempt: I
             soundEffects?.play(sound)
         }
     }
+}
+
+/**
+ * The heartbeat's volume factor for [state] (spec `game-play-gap-warning`): from the gap distance,
+ * and null while paused. [GapDistance] is null after a win or a loss and before the flow starts.
+ */
+fun heartbeatFactor(state: GameState): Float? =
+    if (state.paused) null else GapWarning.heartbeatFactor(GapDistance.of(state))
+
+/**
+ * Loops the heartbeat through [soundEffects] while the liquid closes in on a gap, following the
+ * distance every frame. It stops when the app leaves the foreground and when the screen goes away.
+ */
+@Composable
+internal fun GapHeartbeat(session: GameSession, soundEffects: SoundEffects?) {
+    if (soundEffects == null) return
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    val started = lifecycleState.isAtLeast(Lifecycle.State.STARTED)
+    LaunchedEffect(session, soundEffects, started) {
+        if (!started) {
+            soundEffects.heartbeat(null)
+            return@LaunchedEffect
+        }
+        snapshotFlow { heartbeatFactor(session.state) }.collect(soundEffects::heartbeat)
+    }
+    DisposableEffect(session, soundEffects) { onDispose { soundEffects.heartbeat(null) } }
 }

@@ -9,8 +9,8 @@ class SoundCatalog(private val variants: Map<GameSound, List<String>>) {
     /** The files of [sound], in name order; empty when none are bundled. */
     fun variantsOf(sound: GameSound): List<String> = variants[sound].orEmpty()
 
-    /** Every file in the catalogue, for loading them up front. */
-    val files: List<String> get() = variants.values.flatten()
+    /** Every one-shot file in the catalogue, for loading them up front. Looped sounds stream instead. */
+    val files: List<String> get() = variants.filterKeys { !it.looping }.values.flatten()
 
     companion object {
         /** The folder under `assets/` the effects ship in. */

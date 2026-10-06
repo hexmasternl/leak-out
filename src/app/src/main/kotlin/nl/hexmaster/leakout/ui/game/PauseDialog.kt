@@ -116,15 +116,29 @@ fun PauseDialog(onResume: () -> Unit, onRestart: () -> Unit, onExit: () -> Unit)
                 // The backdrop is opaque by itself; the platform dim would darken it off its tokens.
                 setDimAmount(0f)
                 setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                // The explicit gate keeps lint aware that the cutout attribute is only set on API 28+.
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    attributes = attributes.apply {
-                        layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                    fullScreenDialogCutoutMode(Build.VERSION.SDK_INT)?.let { mode ->
+                        attributes = attributes.apply { layoutInDisplayCutoutMode = mode }
                     }
                 }
             }
         }
         PauseDialogContent(onResume, onRestart, onExit, entry = remember(reducedMotion) { PauseDialogEntry.select(reducedMotion) })
     }
+}
+
+/**
+ * The display cutout mode that lets a full-screen dialog window reach into the cutout, so its backdrop
+ * covers it too, chosen as AndroidX `enableEdgeToEdge` does: "always" on API 30+, short edges on API
+ * 28–29 where "always" does not exist, and none below 28, which has no cutout modes. Short edges is
+ * deprecated in Android 15 and reported by the Play Console (issue #89), so it stays behind this gate.
+ */
+fun fullScreenDialogCutoutMode(sdkInt: Int): Int? = when {
+    sdkInt >= Build.VERSION_CODES.R -> WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+    @Suppress("DEPRECATION")
+    sdkInt >= Build.VERSION_CODES.P -> WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+    else -> null
 }
 
 /** The backdrop and the centred panel, with the entry motion; the dialog window around it is [PauseDialog]. */

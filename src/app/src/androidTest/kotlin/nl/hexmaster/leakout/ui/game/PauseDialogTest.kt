@@ -1,5 +1,6 @@
 package nl.hexmaster.leakout.ui.game
 
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -22,7 +23,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso
+import androidx.test.espresso.matcher.RootMatchers.isDialog
+import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.SdkSuppress
 import kotlin.math.roundToInt
 import kotlin.random.Random
 import nl.hexmaster.leakout.core.level.Level
@@ -53,6 +57,20 @@ class PauseDialogTest {
         val decor = compose.activity.window.decorView
         assertEquals(decor.width, backdrop.size.width)
         assertEquals(decor.height, backdrop.size.height)
+    }
+
+    // Issue #89: the window reaches into the display cutout without the deprecated short-edges mode.
+    @Test
+    @SdkSuppress(minSdkVersion = 30)
+    fun windowUsesTheAlwaysCutoutMode() {
+        show()
+        pause()
+
+        var mode = -1
+        Espresso.onView(isRoot()).inRoot(isDialog()).check { view, _ ->
+            mode = (view.rootView.layoutParams as WindowManager.LayoutParams).layoutInDisplayCutoutMode
+        }
+        assertEquals(WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS, mode)
     }
 
     // 3.1

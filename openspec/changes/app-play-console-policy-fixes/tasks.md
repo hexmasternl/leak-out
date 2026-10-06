@@ -7,7 +7,7 @@
 
 ## 2. Replace the deprecated cutout mode (#89)
 
-- [ ] 2.1 Add a pure `fullScreenDialogCutoutMode(sdkInt: Int): Int?` next to `PauseDialog` (`ALWAYS` on API 30+, `SHORT_EDGES` with `@Suppress("DEPRECATION")` on API 28–29, `null` below) and use it in `PauseDialog`'s `SideEffect`; add a JVM unit test covering SDK 26, 27, 28, 29, 30, 35 and 37 and verify it passes with `./gradlew :app:testDebugUnitTest`
+- [x] 2.1 Add a pure `fullScreenDialogCutoutMode(sdkInt: Int): Int?` next to `PauseDialog` (`ALWAYS` on API 30+, `SHORT_EDGES` with `@Suppress("DEPRECATION")` on API 28–29, `null` below) and use it in `PauseDialog`'s `SideEffect`; add a JVM unit test covering SDK 26, 27, 28, 29, 30, 35 and 37 and verify it passes with `./gradlew :app:testDebugUnitTest`
 - [ ] 2.2 Add a source-scan unit test in the style of `HardcodedTextTest` asserting `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES` appears in `src/main/kotlin` only inside `fullScreenDialogCutoutMode`; verify it passes, and fails on a deliberately added second use
 - [ ] 2.3 Extend `PauseDialogTest` with a check that the pause dialog window's `layoutInDisplayCutoutMode` is `LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS` on the emulator (API 30+); verify with `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=nl.hexmaster.leakout.ui.game.PauseDialogTest` that the new and existing pause tests, including `backdropCoversTheWholeWindow`, pass
 

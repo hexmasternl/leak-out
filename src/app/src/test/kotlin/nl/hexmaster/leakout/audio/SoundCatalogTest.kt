@@ -56,4 +56,11 @@ class SoundCatalogTest {
         val catalog = SoundCatalog.from(listOf("level_complete.mp3"))
         assertTrue(catalog.variantsOf(GameSound.LevelFailed).isEmpty())
     }
+
+    @Test
+    fun `the heartbeat is grouped but not preloaded as a one-shot effect`() {
+        val catalog = SoundCatalog.from(listOf("heartbeat.mp3", "level_complete.mp3"))
+        assertEquals(listOf("heartbeat.mp3"), catalog.variantsOf(GameSound.Heartbeat))
+        assertEquals(listOf("level_complete.mp3"), catalog.files)
+    }
 }

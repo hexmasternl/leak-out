@@ -30,6 +30,7 @@ import nl.hexmaster.leakout.achievements.playgames.showPlayGamesAchievements
 import nl.hexmaster.leakout.audio.AudioManagerAudioFocus
 import nl.hexmaster.leakout.audio.BundledMusic
 import nl.hexmaster.leakout.audio.DataStoreMusicRotationStore
+import nl.hexmaster.leakout.audio.MediaPlayerLoopingSoundPlayer
 import nl.hexmaster.leakout.audio.MediaPlayerMusicEngine
 import nl.hexmaster.leakout.audio.MusicViewModel
 import nl.hexmaster.leakout.audio.SoundCatalog
@@ -143,7 +144,12 @@ class MainActivity : ComponentActivity() {
         viewModelFactory {
             initializer {
                 val catalog = SoundCatalog.from(assets.list(SoundCatalog.ASSET_DIR).orEmpty().asList())
-                SoundEffectsViewModel(settings, catalog, SoundPoolSoundEffectPlayer(assets, catalog.files))
+                SoundEffectsViewModel(
+                    settings,
+                    catalog,
+                    SoundPoolSoundEffectPlayer(assets, catalog.files),
+                    MediaPlayerLoopingSoundPlayer(assets),
+                )
             }
         }
     }

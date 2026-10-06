@@ -13,8 +13,9 @@ class SoundEffectsViewModel(
     settings: SettingsRepository,
     catalog: SoundCatalog,
     player: SoundEffectPlayer,
+    loopPlayer: LoopingSoundPlayer? = null,
 ) : ViewModel() {
-    val soundEffects = SoundEffects(catalog, player)
+    val soundEffects = SoundEffects(catalog, player, loopPlayer = loopPlayer)
 
     init {
         viewModelScope.launch { settings.settings.collect(soundEffects::apply) }

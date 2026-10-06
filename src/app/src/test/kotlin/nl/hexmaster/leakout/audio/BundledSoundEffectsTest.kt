@@ -30,7 +30,7 @@ class BundledSoundEffectsTest {
     @Test
     fun `every bundled effect belongs to a game sound`() {
         val catalog = SoundCatalog.from(names(bundledDir))
-        assertEquals(names(bundledDir), catalog.files.toSet())
+        assertEquals(names(bundledDir), GameSound.entries.flatMap(catalog::variantsOf).toSet())
     }
 
     @Test
@@ -45,5 +45,6 @@ class BundledSoundEffectsTest {
         assertEquals(listOf("level_complete.mp3"), catalog.variantsOf(GameSound.LevelComplete))
         assertEquals(listOf("level_failed.mp3"), catalog.variantsOf(GameSound.LevelFailed))
         assertEquals(listOf("drop.mp3"), catalog.variantsOf(GameSound.PointsAwarded))
+        assertEquals(listOf("heartbeat.mp3"), catalog.variantsOf(GameSound.Heartbeat))
     }
 }

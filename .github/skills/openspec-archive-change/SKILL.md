@@ -65,7 +65,17 @@ Archive a completed change in the experimental workflow.
 
    If user chooses sync, use Task tool (subagent_type: "general-purpose", prompt: "Use Skill tool to invoke openspec-sync-specs for change '<name>'. Delta spec analysis: <include the analyzed delta spec summary>"). Proceed to archive regardless of choice.
 
-5. **Perform the archive**
+5. **Find a linked GitHub issue**
+
+   Before moving anything, look for a GitHub issue the change links to. Search the change's artifacts (`proposal.md` first, then `design.md`, `tasks.md` and any other markdown in `openspec/changes/<name>/`) for:
+   - a `Tracking issue:` line, the convention in this repo, e.g. `Tracking issue: [#36 First time user experience](https://github.com/hexmasternl/leak-out/issues/36)`
+   - otherwise, any GitHub issue URL (`https://github.com/<owner>/<repo>/issues/<number>`)
+
+   Take the issue number and `<owner>/<repo>` from the URL. A bare `#<number>` without a URL refers to this repository. Only treat an issue as *the* linked issue when it is the change's tracking issue: an issue merely mentioned in passing (a related or coordinating change) is not closed. If several candidates remain and it is unclear which one this change tracks, use the **AskUserQuestion tool** to let the user pick (or none).
+
+   Remember the issue for step 7. If no issue is linked, skip step 7.
+
+6. **Perform the archive**
 
    Create the archive directory if it doesn't exist:
    ```bash
@@ -82,7 +92,25 @@ Archive a completed change in the experimental workflow.
    mv openspec/changes/<name> openspec/changes/archive/YYYY-MM-DD-<name>
    ```
 
-6. **Display summary**
+7. **Close the linked GitHub issue**
+
+   Only when step 5 found a linked issue.
+
+   **The change counts as completed** when all artifacts are `done` and all tasks are complete. If the archive went ahead with warnings (incomplete artifacts or tasks), do NOT close the issue automatically: use the **AskUserQuestion tool** to ask whether to close it anyway, and leave it open unless the user confirms.
+
+   Check the issue's state first:
+   ```bash
+   gh issue view <number> --repo <owner>/<repo> --json state,title
+   ```
+   - Already `CLOSED`: do nothing, just report it.
+   - `OPEN`: close it as completed, referencing the archive:
+     ```bash
+     gh issue close <number> --repo <owner>/<repo> --reason completed --comment "Completed by OpenSpec change <name>, archived to openspec/changes/archive/YYYY-MM-DD-<name>/."
+     ```
+
+   If `gh` is missing, not authenticated, or the call fails, do not undo the archive: report the failure and the command the user can run themselves.
+
+8. **Display summary**
 
    Show archive completion summary including:
    - Change name
@@ -90,6 +118,7 @@ Archive a completed change in the experimental workflow.
    - Archive location
    - Whether specs were synced (if applicable)
    - Note about any warnings (incomplete artifacts/tasks)
+   - The linked GitHub issue and what happened to it (closed / already closed / left open / failed), if any
 
 **Output On Success**
 
@@ -100,11 +129,15 @@ Archive a completed change in the experimental workflow.
 **Schema:** <schema-name>
 **Archived to:** openspec/changes/archive/YYYY-MM-DD-<name>/
 **Specs:** ✓ Synced to main specs (or "No delta specs" or "Sync skipped")
+**Issue:** #<number> closed (or "already closed", "left open", "No linked issue")
 
 All artifacts complete. All tasks complete.
 ```
 
 **Guardrails**
+- Only close the change's own tracking issue, never issues merely mentioned in the artifacts
+- Never close a linked issue automatically when the archive had incomplete artifacts or tasks; ask first
+- A failure to close the issue never blocks or reverts the archive
 - Always prompt for change selection if not provided
 - Use artifact graph (openspec status --json) for completion checking
 - Don't block archive on warnings - just inform and confirm

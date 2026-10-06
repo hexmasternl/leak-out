@@ -2,9 +2,10 @@ package nl.hexmaster.leakout.audio
 
 /**
  * The moments in a game that play a sound effect. [group] is the file name stem the effects in
- * `assets/sfx/` share, without their `_NNN` variant number.
+ * `assets/sfx/` share, without their `_NNN` variant number. A [looping] sound plays through
+ * [SoundEffects.heartbeat]'s looping player instead of as a one-shot effect.
  */
-enum class GameSound(val group: String) {
+enum class GameSound(val group: String, val looping: Boolean = false) {
     /** A section placed on an empty tile. */
     SectionPlaced("section_placement"),
 
@@ -19,6 +20,12 @@ enum class GameSound(val group: String) {
 
     /** The level lost dialog appears. */
     LevelFailed("level_failed"),
+
+    /** Loops while the liquid closes in on a gap (spec `game-play-gap-warning`). */
+    Heartbeat("heartbeat", looping = true),
+
+    /** A points popup starts on a section the liquid has left. */
+    PointsAwarded("drop"),
     ;
 
     companion object {

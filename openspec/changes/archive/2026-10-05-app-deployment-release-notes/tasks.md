@@ -20,4 +20,4 @@
 
 ## 4. Integration
 
-- [ ] 4.1 After merging into `main`, verify the deployment run's summary shows the notes, the Play Console release shows them under "What's new" (`en-US`), and `git show v<x.y.z>` contains them
+- [x] 4.1 After merging into `main`, verify the deployment run's summary shows the notes, the Play Console release shows them under "What's new" (`en-US`), and `git show v<x.y.z>` contains them

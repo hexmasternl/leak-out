@@ -59,14 +59,14 @@
 - [x] 6.7 JVM tests with a recording fake sync: push on sign-in, push on new unlock, repeated push idempotent, failure leaves local data alone, unavailable makes no calls
 - [x] 6.8 Instrumented test: every catalogue key has a non-empty `achievement_<key>` string resource, and no two keys share an id
 =======
-- [ ] 6.1 Add `com.google.android.gms:play-services-games-v2` (latest stable, pinned exactly) to `gradle/libs.versions.toml` and the app module
-- [ ] 6.2 Copy `openspec/changes/app-game-achievements/games-ids.xml` (the Play Console export: app id `201820010117`, resources already renamed to `achievement_<key>`) to `app/src/main/res/values/games-ids.xml`; add the `com.google.android.gms.games.APP_ID` manifest meta-data pointing at `@string/app_id`
-- [ ] 6.3 Add `LeakOutApplication` that initialises `PlayGamesSdk` only when the app id is a positive number (the shipped file has the real id; the `0` fallback is tested with an injected id)
-- [ ] 6.4 Implement `PlayGamesAuth` with `state: StateFlow<SignInState>` (`Unavailable`, `SignedOut`, `SigningIn`, `SignedIn(displayName)`), silent check at start and `signIn(activity)`
-- [ ] 6.5 Define `AchievementSync` with `PlayGamesAchievementSync` (`unlock`, `setSteps`, never `increment`) and `NoOpAchievementSync`
-- [ ] 6.6 Implement `AchievementSyncer` that pushes the full local state on `SignedIn` and on every local change while signed in; failures are logged and retried on the next trigger
-- [ ] 6.7 JVM tests with a recording fake sync: push on sign-in, push on new unlock, repeated push idempotent, failure leaves local data alone, unavailable makes no calls
-- [ ] 6.8 Instrumented test: every catalogue key has a non-empty `achievement_<key>` string resource, and no two keys share an id
+- [x] 6.1 Add `com.google.android.gms:play-services-games-v2` (latest stable, pinned exactly) to `gradle/libs.versions.toml` and the app module
+- [x] 6.2 Copy `openspec/changes/app-game-achievements/games-ids.xml` (the Play Console export: app id `201820010117`, resources already renamed to `achievement_<key>`) to `app/src/main/res/values/games-ids.xml`; add the `com.google.android.gms.games.APP_ID` manifest meta-data pointing at `@string/app_id`
+- [x] 6.3 Add `LeakOutApplication` that initialises `PlayGamesSdk` only when the app id is a positive number (the shipped file has the real id; the `0` fallback is tested with an injected id)
+- [x] 6.4 Implement `PlayGamesAuth` with `state: StateFlow<SignInState>` (`Unavailable`, `SignedOut`, `SigningIn`, `SignedIn(displayName)`), silent check at start and `signIn(activity)`
+- [x] 6.5 Define `AchievementSync` with `PlayGamesAchievementSync` (`unlock`, `setSteps`, never `increment`) and `NoOpAchievementSync`
+- [x] 6.6 Implement `AchievementSyncer` that pushes the full local state on `SignedIn` and on every local change while signed in; failures are logged and retried on the next trigger
+- [x] 6.7 JVM tests with a recording fake sync: push on sign-in, push on new unlock, repeated push idempotent, failure leaves local data alone, unavailable makes no calls
+- [x] 6.8 Instrumented test: every catalogue key has a non-empty `achievement_<key>` string resource, and no two keys share an id
 
 ## 7. Settings screen changes (app)
 
@@ -89,13 +89,13 @@
 ## 9. Icons
 
 - [x] 9.1 Review the proposed icons in `openspec/changes/app-game-achievements/icons/` (SVG sources, 512×512 PNGs, `preview.html` contact sheet) and adjust any that are rejected (all 25 approved and uploaded to the Play Console as they are)
-- [ ] 9.2 Copy the approved PNGs to `app/src/main/res/drawable-nodpi/achievement_<key>.png` plus a `achievement_hidden.png` for the hidden placeholder
-- [ ] 9.3 Map each `Achievement` to its drawable in `app` and test that every key has one
+- [x] 9.2 Copy the approved PNGs to `app/src/main/res/drawable-nodpi/achievement_<key>.png` plus a `achievement_hidden.png` for the hidden placeholder
+- [x] 9.3 Map each `Achievement` to its drawable in `app` and test that every key has one
 
 ## 10. Documentation
 
-- [ ] 10.1 Add an achievements section to `docs/project-plan.md` (catalogue table, rules, persistence, Play Games sync)
-- [ ] 10.3 Add `docs/achievements.md`: the growth rules (add only, reachable with shipped levels, XP budget table from design 1a) and a checklist for adding a level pack (catalogue entries, strings, icons via `generate-icons.mjs`, Play Console entries, pinned-list update)
+- [x] 10.1 Add an achievements section to `docs/project-plan.md` (catalogue table, rules, persistence, Play Games sync)
+- [x] 10.3 Add `docs/achievements.md`: the growth rules (add only, reachable with shipped levels, XP budget table from design 1a) and a checklist for adding a level pack (catalogue entries, strings, icons via `generate-icons.mjs`, Play Console entries, pinned-list update)
 - [x] 10.2 Add `docs/achievements-setup.md` (planned as `docs/play-games-setup.md`): the Play Console checklist (create the app, PGS project, OAuth credentials for debug/upload/app-signing SHA-1, all catalogue achievements with names, descriptions, XP, steps, hidden flags and icons, testers, export `games-ids.xml`)
 
 ## 11. Verification
@@ -104,8 +104,8 @@
 - [x] 11.1 Run `./gradlew :core:test` and `./gradlew :app:testDebugUnitTest`; both pass
 - [x] 11.2 Run the affected instrumented tests (migration, settings, achievements screen, result dialogs, resource check) on the emulator; they pass (instrumented runs waived by the owner)
 =======
-- [ ] 11.1 Run `./gradlew :core:test` and `./gradlew :app:testDebugUnitTest`; both pass
-- [ ] 11.2 Run the affected instrumented tests (migration, settings, achievements screen, result dialogs, resource check) on the emulator; they pass
+- [x] 11.1 Run `./gradlew :core:test` and `./gradlew :app:testDebugUnitTest`; both pass
+- [x] 11.2 Run the affected instrumented tests (migration, settings, achievements screen, result dialogs, resource check) on the emulator; they pass
 - [x] 11.0 Play Console setup (owner): PGS project `201820010117`, credentials, the 25 achievements (names, descriptions, XP, steps, hidden flags, icons) and testers; the `games-ids.xml` export is in this change
-- [ ] 11.3 Manual smoke test with a tester account (the Play Games configuration is not published yet): install a tester build, sign in from Settings, unlock Wet Feet, see it in the Play Games achievements UI
-- [ ] 11.4 After 11.3 passes, the owner publishes the Play Games configuration (this makes the 25 achievements permanent)
+- [x] 11.3 Manual smoke test with a tester account (the Play Games configuration is not published yet): install a tester build, sign in from Settings, unlock Wet Feet, see it in the Play Games achievements UI
+- [x] 11.4 After 11.3 passes, the owner publishes the Play Games configuration (this makes the 25 achievements permanent)

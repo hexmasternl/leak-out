@@ -2,9 +2,11 @@
 
 ## Purpose
 TBD - created by syncing change app-game-play-game-engine. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: One game state per attempt
-The system SHALL keep all data of the running attempt in one game state owned by the game engine. The game state SHALL hold the level, the board with the start, finish, blocked tiles and every placed pipe section, the stack, the flow state, the score and the points awarded so far, the replace lock, the game clock, whether the game is paused, whether fast forward is on, whether the route is complete, the outcome of the attempt (playing, won or lost) and an attempt number. The game state SHALL NOT be changed in place: every change SHALL produce a new game state.
+The system SHALL keep all data of the running attempt in one game state owned by the game engine. The game state SHALL hold the level, the board with the start, finish, blocked tiles and every placed pipe section, the stack, the flow state, the score and the points awarded so far, the replace lock, the game clock, whether the game is paused, whether fast forward is on, whether the route is complete, the outcome of the attempt (playing, won or lost), an attempt number, and the attempt facts: the number of accepted placements, the number of replacements, whether the game was ever paused, whether the route was completed before the flow started, and whether the route was completed with a photo finish. The game state SHALL NOT be changed in place: every change SHALL produce a new game state.
 
 #### Scenario: State after a placement
 - **WHEN** the player places an `H` section on an empty tile
@@ -33,7 +35,7 @@ When a level is started, the engine SHALL build a new game state from that level
 - **THEN** the board has no placed sections, the stack holds 5 sections, the countdown shows 12,000 ms, the score is 0 and the game is playing and not paused
 
 ### Requirement: Restart resets the whole attempt
-When restart is sent, the engine SHALL replace the whole game state with a fresh state for the same level, exactly as when the level is started, with a new stack drawn from the random source and the attempt number increased by one. Restart SHALL be accepted while playing, while paused, after a win and after a loss. Nothing of the previous attempt SHALL remain: no placed section, used channel, awarded points, replace lock, fast forward or outcome.
+When restart is sent, the engine SHALL replace the whole game state with a fresh state for the same level, exactly as when the level is started, with a new stack drawn from the random source and the attempt number increased by one. Restart SHALL be accepted while playing, while paused, after a win and after a loss. Nothing of the previous attempt SHALL remain: no placed section, used channel, awarded points, replace lock, fast forward, outcome or attempt fact.
 
 #### Scenario: Restart after a loss
 - **WHEN** the level is lost with 4 placed sections and a score of 55, and restart is sent
@@ -42,6 +44,10 @@ When restart is sent, the engine SHALL replace the whole game state with a fresh
 #### Scenario: Restart from the pause dialog
 - **WHEN** the game is paused and restart is sent
 - **THEN** the new attempt is not paused
+
+#### Scenario: Restart clears the attempt facts
+- **WHEN** an attempt with 6 placements, 1 replacement and one pause is restarted
+- **THEN** the new attempt has 0 placements, 0 replacements and was never paused
 
 ### Requirement: Pause freezes the game
 When pause is sent while the outcome is playing, the engine SHALL mark the game as paused. While paused, a tick SHALL change nothing: the game clock, the countdown, the liquid, the score, the points popups and the replace lock SHALL stay where they are, and a place or fast forward command SHALL be refused. Pause SHALL be refused after a win or a loss. Sending pause while already paused SHALL change nothing.
@@ -157,3 +163,65 @@ The pause dialog SHALL be shown exactly while the game state is paused and the o
 #### Scenario: Background
 - **WHEN** the app goes to the background during a level and the player comes back
 - **THEN** the game state is paused and the pause dialog is shown
+
+### Requirement: Attempt facts are recorded
+The engine SHALL record the attempt facts as it handles commands:
+- Every accepted place command SHALL add one to the placements; an accepted place command that replaces a section SHALL also add one to the replacements.
+- An accepted pause command SHALL mark the attempt as ever paused, and resume SHALL NOT clear it.
+- When a placement makes the route complete while the flow is still waiting, the route SHALL be marked as completed before the flow.
+- When a placement makes the route complete while the liquid is flowing and the placed tile is the tile the liquid head's current channel exits into, the attempt SHALL be marked as a photo finish.
+A refused command SHALL NOT change any attempt fact.
+
+#### Scenario: Placements and replacements
+- **WHEN** the player places sections on 3 empty tiles and then replaces one of them
+- **THEN** the attempt has 4 placements and 1 replacement
+
+#### Scenario: Refused placement
+- **WHEN** a place command is refused because the tile's section is filled
+- **THEN** the placements stay the same
+
+#### Scenario: Pause is remembered
+- **WHEN** the game is paused and then resumed
+- **THEN** the attempt is marked as ever paused
+
+#### Scenario: Route ready during the countdown
+- **WHEN** a placement completes the route while the countdown is running
+- **THEN** the route is marked as completed before the flow
+
+#### Scenario: Photo finish
+- **WHEN** the liquid head runs through a section whose exit points at an empty tile and a placement on that tile completes the route
+- **THEN** the attempt is marked as a photo finish
+
+#### Scenario: No photo finish further ahead
+- **WHEN** a placement completes the route on a tile two or more tiles ahead of the liquid head
+- **THEN** the attempt is not marked as a photo finish
+
+### Requirement: The liquid's path is recorded
+The engine SHALL record, in order, every exit of the liquid from a section: the tile and the section on it. A cross the liquid leaves twice SHALL be recorded twice. Sections that are removed from the board after a win SHALL NOT change the record, and restart SHALL clear it.
+
+#### Scenario: Path in flow order
+- **WHEN** the liquid leaves an `H`, then an `LT`, then a `V`
+- **THEN** the recorded path is the `H`, the `LT` and the `V` on their tiles, in that order
+
+#### Scenario: Cross passed twice
+- **WHEN** the liquid leaves a cross horizontally and later leaves it again vertically
+- **THEN** the cross appears twice in the recorded path
+
+#### Scenario: Restart clears the path
+- **WHEN** an attempt in which the liquid left 5 sections is restarted
+- **THEN** the new attempt's recorded path is empty
+
+### Requirement: Taps on a running replacement are counted
+The engine SHALL accept a tap on a tile while a replacement runs. A tap on the tile being replaced SHALL add one to that replacement's tap count; a tap on any other tile, or with no replacement running, SHALL change nothing. The attempt SHALL keep the highest tap count of any of its replacements. A tap SHALL NOT place a section, change the stack, play a sound or end the replacement early, and restart SHALL clear the counts.
+
+#### Scenario: Taps on the replaced tile
+- **WHEN** a replacement runs on tile (3, 2) and the player taps (3, 2) four times
+- **THEN** the replacement's tap count is 4, the tile is still empty and the stack is unchanged
+
+#### Scenario: Highest count is kept
+- **WHEN** one replacement gets 6 taps and a later one gets 2
+- **THEN** the attempt's highest replacement tap count is 6
+
+#### Scenario: Tap without a replacement
+- **WHEN** no replacement runs and a tap on a tile is sent
+- **THEN** the game state is unchanged

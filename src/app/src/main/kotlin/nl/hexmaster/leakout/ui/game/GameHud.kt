@@ -14,6 +14,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -51,6 +58,9 @@ private val CountdownMinWidth = 96.dp
  * its slot, so nothing moves when it disappears. [stars] are the level's thresholds and [attempt]
  * empties the score bar at once when it changes. The cog wheel stays visible but does nothing while
  * [pauseEnabled] is false, for example once the level is lost.
+ *
+ * [gapDistance] and [clockMs] are read lambdas, the gap distance in sections (null without a gap) and
+ * the game time, so their per-frame changes only reach the score bar's warning.
  */
 @Composable
 fun GameHud(
@@ -65,6 +75,8 @@ fun GameHud(
     attempt: Int = 0,
     pauseEnabled: Boolean = true,
     reducedMotion: Boolean = rememberReducedMotion(),
+    gapDistance: () -> Double? = { null },
+    clockMs: () -> Long = { 0L },
 ) {
     val locale = LocalConfiguration.current.locales[0]
     val levelText = stringResource(R.string.hud_level, HudFormat.level(levelId))
@@ -120,7 +132,7 @@ fun GameHud(
         ) {
             CountdownBar(countdownRemainingMs, initialDelayMs, reducedMotion = reducedMotion)
         }
-        ScoreBar(score = score, stars = stars, attempt = attempt, reducedMotion = reducedMotion)
+        GapWarningScoreBar(score, stars, attempt, reducedMotion, gapDistance, clockMs)
         // The 48 dp touch target is wider than the 24 dp cog; the 4 dp end padding puts the cog's
         // edge 16 dp from the panel's edge, like the level on the left.
         IconButton(
@@ -138,6 +150,42 @@ fun GameHud(
             )
         }
     }
+}
+
+/**
+ * The score bar with the gap warning (spec `game-play-gap-warning`). Each value is derived, so the
+ * bar recomposes when the warning changes, not on every frame the distance does. The blink is timed
+ * on the game clock from the moment it starts, so it stands still while paused; a new [attempt]
+ * forgets it.
+ */
+@Composable
+private fun GapWarningScoreBar(
+    score: Int,
+    stars: StarBenchmarks,
+    attempt: Int,
+    reducedMotion: Boolean,
+    gapDistance: () -> Double?,
+    clockMs: () -> Long,
+) {
+    val readDistance by rememberUpdatedState(gapDistance)
+    // Measured once per frame; the warning values below are derived from it.
+    val distance = remember { derivedStateOf { readDistance() } }
+    val clock by rememberUpdatedState(clockMs)
+    var blinkSince by remember(attempt) { mutableStateOf<Long?>(null) }
+    val blinking by remember { derivedStateOf { GapWarning.blinking(distance.value) } }
+    val warning by remember { derivedStateOf { GapWarning.redness(distance.value) } }
+    val leakIn by remember { derivedStateOf { distance.value?.takeIf(GapWarning::blinking)?.let(GapWarning::sectionsToLeak) } }
+    val warningText by remember { derivedStateOf { GapWarning.showWarningText(distance.value, clock(), blinkSince) } }
+    LaunchedEffect(blinking, attempt) { blinkSince = if (blinking) clock() else null }
+    ScoreBar(
+        score = score,
+        stars = stars,
+        attempt = attempt,
+        reducedMotion = reducedMotion,
+        warning = warning,
+        warningText = warningText,
+        leakInSections = leakIn,
+    )
 }
 
 private val PreviewStars = StarBenchmarks(100, 200, 350)

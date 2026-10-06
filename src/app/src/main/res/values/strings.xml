@@ -56,6 +56,13 @@
     <!-- Screen reader text for the score bar. %1$s: the score, already formatted. %2$d: the stars earned so far (0 to 3). -->
     <string name="hud_score_description">Score %1$s, %2$d of 3 stars</string>
     <string name="hud_pause_menu">Pause menu</string>
+    <!-- Shown on the score bar in turns with the score while the liquid is about to leak. Shown in capitals, so keep it short. -->
+    <string name="game_hud_warning">Warning</string>
+    <!-- Screen reader text for the score bar while the liquid is about to leak. %1$s: the score description, for example "Score 150, 1 of 3 stars". %2$d: whole sections until the liquid leaks. -->
+    <plurals name="game_hud_score_warning">
+        <item quantity="one">%1$s. Warning: leak in %2$d section</item>
+        <item quantity="other">%1$s. Warning: leak in %2$d sections</item>
+    </plurals>
 
     <!-- Pause dialog -->
     <string name="pause_title">Paused</string>

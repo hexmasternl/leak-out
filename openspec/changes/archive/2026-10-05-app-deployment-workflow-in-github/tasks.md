@@ -48,6 +48,6 @@
 
 ## 5. First deployment (after merge into `main`, with the repository owner)
 
-- [ ] 5.1 The owner completes `docs/deployment.md` steps for the keystore, Play Console, service account, environment, secrets and variables, and confirms they are done
-- [ ] 5.2 After `development` is merged into `main`, check the run: tests pass, the version code is in the summary, the bundle is signed and uploaded, and the keystore cleanup step ran
-- [ ] 5.3 Confirm in the Play Console that the release is on the chosen track and installable by a tester; if the app is still a draft app, confirm `PLAY_RELEASE_STATUS=draft` was used and record when to switch it to `completed`
+- [x] 5.1 The owner completes `docs/deployment.md` steps for the keystore, Play Console, service account, environment, secrets and variables, and confirms they are done
+- [x] 5.2 After `development` is merged into `main`, check the run: tests pass, the version code is in the summary, the bundle is signed and uploaded, and the keystore cleanup step ran
+- [x] 5.3 Confirm in the Play Console that the release is on the chosen track and installable by a tester; if the app is still a draft app, confirm `PLAY_RELEASE_STATUS=draft` was used and record when to switch it to `completed`

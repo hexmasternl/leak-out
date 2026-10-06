@@ -2,7 +2,7 @@
 
 ## 0. Prerequisites
 
-- [ ] 0.1 Make sure `app-game-achievements` and `app-game-first-time-user-experience` are archived (this change modifies the `game-achievements`, `game-engine` and `achievement-persistence` specs the first introduces, and builds on the "Show tips again" button of the second), or archive them before this change; verify with `openspec list --specs` that `game-achievements` exists
+- [x] 0.1 Make sure `app-game-achievements` and `app-game-first-time-user-experience` are archived (this change modifies the `game-achievements`, `game-engine` and `achievement-persistence` specs the first introduces, and builds on the "Show tips again" button of the second), or archive them before this change; verify with `openspec list --specs` that `game-achievements` exists
 
 ## 1. Engine facts (core)
 
@@ -33,9 +33,9 @@
 ## 5. Icons and Play Console
 
 - [x] 5.1 Add the 14 icons to `assets/achievements/generate-icons.mjs` (tier template for the II/III/IV tiers, hidden placeholder for the two hidden ones), render the 512 × 512 PNGs and copy them to `app/src/main/res/drawable-nodpi/achievement_<key>.png`; verify they stay inside the radius-200 safe disc in `preview.html`
-- [ ] 5.2 Owner: create the 14 achievements in the Play Console with the same names, descriptions, XP, hidden flags and icons, following `docs/achievements-setup.md#adding-achievements-later`
+- [x] 5.2 Owner: create the 14 achievements in the Play Console with the same names, descriptions, XP, hidden flags and icons, following `docs/achievements-setup.md#adding-achievements-later`
 - [x] 5.3 Replace `app/src/main/res/values/games-ids.xml` with the new export (existing ids unchanged) and empty the awaiting-export lists in `AchievementResourcesTest` and `AchievementResourcesInstrumentedTest`; verify `AchievementResourcesInstrumentedTest` passes on the emulator
-- [ ] 5.4 Owner: smoke test with a tester account (unlock Tips Addict and one skill achievement), then publish the Play Games configuration
+- [x] 5.4 Owner: smoke test with a tester account (unlock Tips Addict and one skill achievement), then publish the Play Games configuration
 
 ## 6. Docs
 
@@ -46,4 +46,4 @@
 
 - [x] 7.1 Run `./gradlew :core:test` and `./gradlew :app:testDebugUnitTest` and make sure both pass; run only the affected instrumented tests (migration, achievement resources, settings)
 - [x] 7.2 Check that the achievements screen lists 39 entries in catalogue order and the settings count shows the new total
-- [ ] 7.3 Comment on GitHub issue #64 with what shipped and what is deferred (Star Collector 500 / 1000), and close it when the PR merges into `development`
+- [x] 7.3 Comment on GitHub issue #64 with what shipped and what is deferred (Star Collector 500 / 1000), and close it when the PR merges into `development`

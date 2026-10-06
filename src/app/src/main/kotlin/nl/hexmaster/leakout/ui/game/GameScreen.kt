@@ -55,6 +55,7 @@ import nl.hexmaster.leakout.achievements.AchievementTracker
 import nl.hexmaster.leakout.audio.GameSound
 import nl.hexmaster.leakout.audio.SoundEffects
 import nl.hexmaster.leakout.core.engine.FlowState
+import nl.hexmaster.leakout.core.engine.GapDistance
 import nl.hexmaster.leakout.core.engine.GameCommand
 import nl.hexmaster.leakout.core.engine.LossReason
 import nl.hexmaster.leakout.core.engine.Outcome
@@ -90,7 +91,8 @@ import nl.hexmaster.leakout.ui.theme.LeakOutColors
  *
  * Every view shows only what it reads from the [GameSession]'s state, and every action is a
  * command to the engine. [session] owns the running level; tests pass their own to drive it.
- * Placements and the two dialogs play their sound through [soundEffects]; without it the game is silent.
+ * Placements, points popups and the two dialogs play their sound through [soundEffects]; without it
+ * the game is silent.
  */
 @Composable
 fun GameScreen(
@@ -131,6 +133,8 @@ fun GameScreen(
 
     GameClock(session, paused || waitingForTips)
     ReplacementLandingSound(session, soundEffects)
+    GapHeartbeat(session, soundEffects)
+    PointsAwardedSound(session, soundEffects)
     OncePerAttemptSound(session, showWinDialog, attempt, GameSound.LevelComplete, soundEffects)
     OncePerAttemptSound(session, showLostDialog, attempt, GameSound.LevelFailed, soundEffects)
     // Keyed on the attempt: every won attempt is offered to the history, which keeps the best, and
@@ -185,6 +189,8 @@ fun GameScreen(
                 onPause = { session.pauseByUser() },
                 pauseEnabled = outcome is Outcome.Playing,
                 modifier = Modifier.fillMaxWidth(),
+                gapDistance = { GapDistance.of(session.state) },
+                clockMs = { session.state.clockMs },
             )
             // Keyed on the attempt: a new attempt starts the stack and the field fresh, a pause keeps them.
             key(attempt) {

@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by syncing change app-game-play-level-lost. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: A leak loses the level
 When the liquid leaks, the system SHALL mark the current attempt as **lost**. A level SHALL be lost at most once per attempt. When the liquid leaks from a section, the points for that section SHALL be awarded before the level is lost.
 
@@ -37,7 +39,7 @@ When the level is lost, the playing field SHALL show liquid spurting out of the 
 - **THEN** liquid spurts out of the right side of that tile for 1 second
 
 ### Requirement: Level lost dialog appears after the leak
-One second after the level is lost, the system SHALL show the level lost dialog: a modal dialog above the dimmed game screen. The dialog SHALL show the level number, a title that clearly says the level is lost ("Leaked!"), a short message, the score of the attempt, and two buttons: **Restart** and **Exit**. The message SHALL be "The pipe is leaking. Level lost." after a leak, and "The liquid missed a mandatory section. Level lost." when a mandatory section was missed. The dialog SHALL NOT show a Resume button.
+One second after the level is lost, the system SHALL show the level lost dialog: a modal dialog above the dimmed game screen. The dialog SHALL show the level number, a title that clearly says the level is lost ("Leaked!"), a short message, the score of the attempt, and two buttons: **Restart** and **Exit**. The message SHALL be "The pipe is leaking. Level lost." after a leak, and "The liquid missed a mandatory section. Level lost." when a mandatory section was missed. The dialog SHALL NOT show a Resume button. When the loss unlocked achievements, the dialog SHALL also show an "Achievement unlocked" row below the score with the names of the unlocked achievements: at most two names, followed by "+N more" when there are more.
 
 #### Scenario: Dialog content
 - **WHEN** level 7 is lost by a leak with a score of 85 and 1 second has passed
@@ -50,6 +52,10 @@ One second after the level is lost, the system SHALL show the level lost dialog:
 #### Scenario: Dialog waits for the leak effect
 - **WHEN** the level has been lost for less than 1 second
 - **THEN** the level lost dialog is not shown yet
+
+#### Scenario: First loss unlocks Wet Feet
+- **WHEN** the player loses for the first time and the dialog is shown
+- **THEN** the dialog shows "Achievement unlocked" with "Wet Feet"
 
 ### Requirement: Restart starts the level again
 Tapping **Restart** in the level lost dialog SHALL close the dialog and start the same level again from the beginning: the board SHALL hold no placed sections, a new stack SHALL be drawn, the score SHALL be 0, fast forward SHALL be off, the flow speed SHALL be the level's `flow.cellsPerSecond` and the countdown SHALL start again from the level's `flow.initialDelayMs`. The attempt SHALL no longer be lost and the player SHALL be able to place sections again.
@@ -88,11 +94,15 @@ When the app goes to the background after the level is lost, the game SHALL NOT 
 - **THEN** the level lost dialog is shown and the pause dialog is not
 
 ### Requirement: Level lost dialog is accessible
-Each button in the level lost dialog SHALL have a touch target of at least 48 dp high and SHALL be read by its label. When the dialog opens, a screen reader SHALL announce that the level is lost.
+Each button in the level lost dialog SHALL have a touch target of at least 48 dp high and SHALL be read by its label. When the dialog opens, a screen reader SHALL announce that the level is lost. The achievement row SHALL be read as "Achievement unlocked" followed by the names of all unlocked achievements.
 
 #### Scenario: Screen reader announces the loss
 - **WHEN** the level lost dialog opens while a screen reader is on
 - **THEN** the screen reader announces that the level is lost and can move through the score, Restart and Exit
+
+#### Scenario: Screen reader reads the achievements
+- **WHEN** the loss unlocked Wet Feet and Instant Flood and a screen reader focuses the achievement row
+- **THEN** it reads "Achievement unlocked", "Wet Feet" and "Instant Flood"
 
 ### Requirement: Level lost dialog follows the design system
 The level lost dialog SHALL look as the design system's leak dialog prescribes: a floating panel in the base surface colour with large rounded corners and no outline over the 72 % scrim, the level number as an eyebrow in the leak colour, a splash that animates once (a still image when animations are turned off), the headline in the large display style, the message in body text, the score, a brass primary **Restart** button and a text-only **Exit** button. The scrim SHALL keep the field and the leak visible behind the dialog.

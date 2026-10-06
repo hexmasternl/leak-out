@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by syncing change app-game-play-level-complete. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Reaching the finish wins the level
 When the liquid leaves a section and enters the finish tile through the finish's open side, and every mandatory section of the level is used, the system SHALL mark the current attempt as **won**. A level SHALL be won at most once per attempt, and a won attempt SHALL NOT become lost. The points for the section the liquid just left SHALL be awarded before the level is won.
 
@@ -49,7 +51,7 @@ When the level is won, the playing field SHALL show the finish tile flashing in 
 - **THEN** the finish tile flashes in the success colour for 1 second
 
 ### Requirement: Level complete dialog appears after the finish flash
-One second after the level is won, the system SHALL show the level complete dialog: a modal dialog above the dimmed game screen. The dialog SHALL show the level number, a title that celebrates the win ("Level Complete!") with a short cheerful line, three stars, the score rows **Points** (the points earned during play), **Penalty** (the unused-section penalty) and **Score** (the total), and three buttons: **Next Level**, **Restart** and **Exit**.
+One second after the level is won, the system SHALL show the level complete dialog: a modal dialog above the dimmed game screen. The dialog SHALL show the level number, a title that celebrates the win ("Level Complete!") with a short cheerful line, three stars, the score rows **Points** (the points earned during play), **Penalty** (the unused-section penalty) and **Score** (the total), and three buttons: **Next Level**, **Restart** and **Exit**. When the win unlocked achievements, the dialog SHALL also show an "Achievement unlocked" row below the score rows with the names of the unlocked achievements: at most two names, followed by "+N more" when there are more. The row SHALL appear once the score tally is done and SHALL NOT delay enabling the buttons.
 
 #### Scenario: Dialog content
 - **WHEN** level 7 is won and 1 second has passed
@@ -62,6 +64,18 @@ One second after the level is won, the system SHALL show the level complete dial
 #### Scenario: Dialog waits for the finish flash
 - **WHEN** the level has been won for less than 1 second
 - **THEN** the level complete dialog is not shown yet
+
+#### Scenario: Achievement unlocked by the win
+- **WHEN** the win unlocks Zero Waste and the score tally is done
+- **THEN** the dialog shows "Achievement unlocked" with "Zero Waste"
+
+#### Scenario: Many achievements
+- **WHEN** the win unlocks Zero Waste, Measure Twice, Steady Hands and Personal Best
+- **THEN** the row shows "Zero Waste · Measure Twice +2 more"
+
+#### Scenario: No achievement
+- **WHEN** the win unlocks no achievement
+- **THEN** the dialog shows no achievement row
 
 ### Requirement: Buttons are disabled until the animations are done
 The three buttons SHALL be visible from the moment the dialog opens and SHALL be disabled while the score and star animations run. When the score and star animations are done, **Restart** and **Exit** SHALL be enabled, and **Next level** SHALL be enabled when a next level exists.
@@ -126,7 +140,7 @@ When the app goes to the background after the level is won, the game SHALL NOT o
 - **THEN** the level complete dialog is shown with the final total, the earned stars lit and the buttons enabled, and the pause dialog is not
 
 ### Requirement: Level complete dialog is accessible
-Each button in the level complete dialog SHALL have a touch target of at least 48 dp high and SHALL be read by its label and whether it is enabled. When the dialog opens, a screen reader SHALL announce that the level is complete. Each score row SHALL be read as one item with its label and value ("Points 120", "Penalty minus 12", "Score 108"), and the stars SHALL be read as the number of stars earned out of 3.
+Each button in the level complete dialog SHALL have a touch target of at least 48 dp high and SHALL be read by its label and whether it is enabled. When the dialog opens, a screen reader SHALL announce that the level is complete. Each score row SHALL be read as one item with its label and value ("Points 120", "Penalty minus 12", "Score 108"), and the stars SHALL be read as the number of stars earned out of 3. The achievement row SHALL be read as "Achievement unlocked" followed by the names of all unlocked achievements.
 
 #### Scenario: Screen reader announces the win
 - **WHEN** the level complete dialog opens while a screen reader is on
@@ -135,6 +149,10 @@ Each button in the level complete dialog SHALL have a touch target of at least 4
 #### Scenario: Score rows are read with the new labels
 - **WHEN** the tally is done with 120 earned points and a penalty of 12, and a screen reader moves through the score rows
 - **THEN** it reads "Points 120", "Penalty minus 12" and "Score 108"
+
+#### Scenario: Screen reader reads the achievements
+- **WHEN** the win unlocked three achievements and a screen reader focuses the achievement row
+- **THEN** it reads "Achievement unlocked" and all three names
 
 ### Requirement: Level complete dialog follows the design system
 The level complete dialog SHALL look as the design system's win dialog prescribes: a floating panel in the base surface colour with large rounded corners and no outline over the 72 % scrim, the level number as an eyebrow in the success colour, the headline in the large display style, earned stars in brass, the Penalty value in the leak colour and the Score value in brass, a success-coloured **Next Level** button, a glass **Restart** button and a text-only **Exit** button. The scrim SHALL keep the field visible behind the dialog.

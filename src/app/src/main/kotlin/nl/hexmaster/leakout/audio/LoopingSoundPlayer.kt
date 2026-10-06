@@ -79,8 +79,9 @@ class MediaPlayerLoopingSoundPlayer(private val assets: AssetManager) : LoopingS
     override fun start(file: String, volume: Float) {
         if (released) return
         this.volume = volume
-        wantsPlaying = true
+        // Opening closes the old player, which clears the wish to play: so ask for it after.
         if (file != this.file) open(file)
+        wantsPlaying = true
         val player = player?.takeIf { prepared } ?: return
         player.setVolume(volume, volume)
         player.seekTo(0)

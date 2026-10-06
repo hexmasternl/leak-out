@@ -55,6 +55,7 @@ import nl.hexmaster.leakout.achievements.AchievementTracker
 import nl.hexmaster.leakout.audio.GameSound
 import nl.hexmaster.leakout.audio.SoundEffects
 import nl.hexmaster.leakout.core.engine.FlowState
+import nl.hexmaster.leakout.core.engine.GapDistance
 import nl.hexmaster.leakout.core.engine.GameCommand
 import nl.hexmaster.leakout.core.engine.LossReason
 import nl.hexmaster.leakout.core.engine.Outcome
@@ -185,6 +186,8 @@ fun GameScreen(
                 onPause = { session.pauseByUser() },
                 pauseEnabled = outcome is Outcome.Playing,
                 modifier = Modifier.fillMaxWidth(),
+                gapDistance = { GapDistance.of(session.state) },
+                clockMs = { session.state.clockMs },
             )
             // Keyed on the attempt: a new attempt starts the stack and the field fresh, a pause keeps them.
             key(attempt) {

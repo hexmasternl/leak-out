@@ -19,6 +19,9 @@ enum class GameSound(val group: String) {
 
     /** The level lost dialog appears. */
     LevelFailed("level_failed"),
+
+    /** A points popup starts on a section the liquid has left. */
+    PointsAwarded("drop"),
     ;
 
     companion object {

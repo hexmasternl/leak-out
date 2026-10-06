@@ -2,7 +2,7 @@
 
 ## 1. Bundle the drop sound
 
-- [ ] 1.1 Copy `assets/sfx/drop.mp3` unchanged to `app/src/main/assets/sfx/` and add `GameSound.PointsAwarded("drop")`; update the catalogue tests ("Variants are grouped": points awarded has one variant; bundled copies match) and verify `./gradlew :app:testDebugUnitTest --tests '*Sound*'` passes
+- [x] 1.1 Copy `assets/sfx/drop.mp3` unchanged to `app/src/main/assets/sfx/` and add `GameSound.PointsAwarded("drop")`; update the catalogue tests ("Variants are grouped": points awarded has one variant; bundled copies match) and verify `./gradlew :app:testDebugUnitTest --tests '*Sound*'` passes
 
 ## 2. Play it with each popup
 

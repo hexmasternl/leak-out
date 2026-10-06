@@ -11,5 +11,5 @@
 
 ## 3. Integration
 
-- [ ] 3.1 Play a level on the emulator at normal speed and in fast forward and check by ear that the drop starts with each popup and does not buzz in fast forward; adjust `DROP_MIN_INTERVAL_MS` if needed and note the result here
+- [x] 3.1 Play a level on the emulator at normal speed and in fast forward and check by ear that the drop starts with each popup and does not buzz in fast forward; adjust `DROP_MIN_INTERVAL_MS` if needed and note the result here
 - [x] 3.2 Run `./gradlew :core:test :app:testDebugUnitTest` and verify everything passes

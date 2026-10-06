@@ -134,6 +134,8 @@ dependencies {
 
     // Play Games Services v2: silent and manual sign-in, and pushing the local achievements to Play Games.
     implementation(libs.play.services.games.v2)
+    // The app uses no fragments: this only overrides the outdated fragment 1.1.0 that Play services asks for (issue #88).
+    implementation(libs.androidx.fragment)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

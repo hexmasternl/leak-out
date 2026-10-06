@@ -5,7 +5,7 @@
 - [x] 1.1 Write `HapticsTest` first (design decision 1) with the recording fake: no vibration before `apply` with vibration off, each `HapticEffect` passes its duration and amplitude, nothing while `vibrationEnabled` is off, turning the setting off cancels a running vibration, turning it back on applies to the next effect, `stop()` cancels, and a null player is silent; verify it fails to compile because `Haptics` doesn't exist yet
 - [x] 1.2 Add `HapticEffect`, `HapticPlayer`, `RecordingHapticPlayer` and `Haptics` in `app/.../haptics`; verify `./gradlew :app:testDebugUnitTest --tests '*Haptics*'` passes
 - [x] 1.3 Add `HapticsViewModel` (collects the settings into `haptics.apply`, stops on clear) with a JVM test using a fake `SettingsRepository`; verify `./gradlew :app:testDebugUnitTest --tests '*HapticsViewModel*'` passes
-- [ ] 1.4 Add `VibratorHapticPlayer` (design decision 2: `VibratorManager` on API 31+, no-op without a vibrator, amplitude only with amplitude control, `SecurityException` ignored) and the `android.permission.VIBRATE` permission in `AndroidManifest.xml`; verify with an instrumented `VibratorHapticPlayerTest` that `vibrate` and `cancel` do not throw on the emulator, running only that test class
+- [x] 1.4 Add `VibratorHapticPlayer` (design decision 2: `VibratorManager` on API 31+, no-op without a vibrator, amplitude only with amplitude control, `SecurityException` ignored) and the `android.permission.VIBRATE` permission in `AndroidManifest.xml`; verify with an instrumented `VibratorHapticPlayerTest` that `vibrate` and `cancel` do not throw on the emulator, running only that test class
 
 ## 2. Triggers in the game
 

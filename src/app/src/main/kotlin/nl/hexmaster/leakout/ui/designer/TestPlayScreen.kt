@@ -10,7 +10,8 @@ import nl.hexmaster.leakout.ui.game.GameSession
 /**
  * A test play of a design on the normal game screen. It records nothing in the level history, offers
  * no next level and shows no tips, so trying a design never touches the player's progress. Leaving
- * the game calls [onExit], which returns to the designer.
+ * the game calls [onExit], which returns to the designer. Its sounds, the points drop included, are
+ * the game screen's own.
  */
 @Composable
 fun TestPlayScreen(

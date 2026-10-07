@@ -4,7 +4,7 @@
 
 - [x] 1.1 Add `Core/HexMaster.LeakOut.Core`, the four `Players/*` and the four `Scores/*` projects to `src/leak-out-server.slnx` and verify `dotnet build src/leak-out-server.slnx` succeeds
 - [x] 1.2 Add `ICommandHandler<TCommand, TResult>`, `ICommandHandler<TCommand>`, `IQueryHandler<TQuery, TResult>`, `IClock`, `SystemClock` and `DomainException` to `HexMaster.LeakOut.Core` (no web or EF references) and verify the solution builds
-- [ ] 1.3 Remove the `/weatherforecast` endpoint and `WeatherForecast` record from `Program.cs` and its sample from `HexMaster.LeakOut.Api.http`, and verify the API starts and `GET /weatherforecast` returns 404
+- [x] 1.3 Remove the `/weatherforecast` endpoint and `WeatherForecast` record from `Program.cs` and its sample from `HexMaster.LeakOut.Api.http`, and verify the API starts and `GET /weatherforecast` returns 404
 
 ## 2. Players domain
 

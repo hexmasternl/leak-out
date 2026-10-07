@@ -1,6 +1,3 @@
 @HexMaster.LeakOut.Api_HostAddress = http://localhost:5090
 
-GET {{HexMaster.LeakOut.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
 ###

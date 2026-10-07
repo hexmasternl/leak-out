@@ -28,10 +28,10 @@ jobs:
   publish:
     needs: build-test
     runs-on: ubuntu-latest
+    # Only the version crosses jobs: the registry name equals the ACR admin user name (a secret),
+    # so GitHub drops any job output that contains it. The deploy job reads it again.
     outputs:
       version: ${{ steps.gitversion.outputs.semVer }}
-      registry: ${{ steps.container.outputs.registry }}
-      image: ${{ steps.container.outputs.image }}
     steps:
       # GitVersion needs the full history to calculate the version.
       - uses: actions/checkout@v7
@@ -106,6 +106,26 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Read container settings from the API project
+        id: container
+        env:
+          VERSION: ${{ needs.publish.outputs.version }}
+        run: |
+          properties=$(dotnet msbuild src/HexMaster.LeakOut.Api \
+            -getProperty:ContainerRegistry -getProperty:ContainerRepository)
+          registry=$(jq -r '.Properties.ContainerRegistry' <<< "$properties")
+          repository=$(jq -r '.Properties.ContainerRepository' <<< "$properties")
+          if [[ -z "$registry" || -z "$repository" || -z "$VERSION" ]]; then
+            echo "::error::Container registry, repository or version is empty"
+            exit 1
+          fi
+          echo "registry=$registry" >> "$GITHUB_OUTPUT"
+          echo "image=$registry/$repository:$VERSION" >> "$GITHUB_OUTPUT"
+
       # The API refuses to start without the Google settings, and an empty registry or database
       # credential would only fail inside Azure. Fail here, before anything changes.
       - name: Check required secrets
@@ -138,8 +158,8 @@ jobs:
       - name: Deploy infrastructure and API
         id: deployment
         env:
-          API_IMAGE: ${{ needs.publish.outputs.image }}
-          ACR_LOGIN_SERVER: ${{ needs.publish.outputs.registry }}
+          API_IMAGE: ${{ steps.container.outputs.image }}
+          ACR_LOGIN_SERVER: ${{ steps.container.outputs.registry }}
           ACR_LOGIN_USERNAME: ${{ secrets.ACR_LOGIN_USERNAME }}
           ACR_LOGIN_PASSWORD: ${{ secrets.ACR_LOGIN_PASSWORD }}
           POSTGRES_ADMIN_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}

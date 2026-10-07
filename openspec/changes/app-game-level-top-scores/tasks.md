@@ -13,8 +13,8 @@ Tracking issue: [#110 Show the global top 10 of a level](https://github.com/hexm
 
 ## 2. Score server client
 
-- [ ] 2.1 Add `LevelLeaderboard` / `LeaderboardEntry` (position, display name, score, isCurrentPlayer) and `ScoreServerJson.leaderboard(body)` that ignores unknown fields and throws `Unavailable` on an unreadable body; verify JVM unit tests for a full list, an empty list, an unknown field and a broken body
-- [ ] 2.2 Add `topScores(accessToken, level)` to `ScoreServerApi` and `HttpScoreServerApi` (`GET /api/levels/{level}/scores/top`, bearer token, same timeouts and error mapping as `submitScore`); verify JVM unit tests against a local HTTP test server for 200, 401, 404 and 500
+- [x] 2.1 Add `LevelLeaderboard` / `LeaderboardEntry` (position, display name, score, isCurrentPlayer) and `ScoreServerJson.leaderboard(body)` that ignores unknown fields and throws `Unavailable` on an unreadable body; verify JVM unit tests for a full list, an empty list, an unknown field and a broken body
+- [x] 2.2 Add `topScores(accessToken, level)` to `ScoreServerApi` and `HttpScoreServerApi` (`GET /api/levels/{level}/scores/top`, bearer token, same timeouts and error mapping as `submitScore`); verify JVM unit tests against a local HTTP test server for 200, 401, 404 and 500
 - [ ] 2.3 Add `TopScoresLoader` returning `TopScoresState` (`Loading`, `Loaded`, `Empty`, `SignedOut`, `Failed`): signed out → `SignedOut` without a request, 401 → invalidate session and retry once, other failures → `Failed`; wire it in `AppContainer`; verify JVM unit tests with fake API, session and auth for every state and the single retry
 
 ## 3. Top 10 dialog

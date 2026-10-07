@@ -24,7 +24,7 @@
 
 ## 5. User resolver
 
-- [ ] 5.1 Add `IUserResolver` to `HexMaster.LeakOut.Players.Abstractions/Services` and implement `UserResolver` with `IMemoryCache` (sliding 10 minutes, no negative caching), with `UserResolverTests` (hit, miss, cached second call), and verify the tests pass
+- [x] 5.1 Add `IUserResolver` to `HexMaster.LeakOut.Players.Abstractions/Services` and implement `UserResolver` with `IMemoryCache` (sliding 10 minutes, no negative caching), with `UserResolverTests` (hit, miss, cached second call), and verify the tests pass
 - [ ] 5.2 Add `PlayersModuleRegistration.AddPlayersModule()` registering handler, ports, options, `HttpClient` and resolver, and verify a registration test resolves `ICommandHandler<SignInPlayerCommand, SessionDto>` and `IUserResolver`
 
 ## 6. Persistence

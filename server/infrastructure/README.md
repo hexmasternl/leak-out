@@ -5,14 +5,14 @@ Bicep templates that host the Leak Out server in Azure. One subscription-scope d
 | File | Scope | Contents |
 | --- | --- | --- |
 | `main.bicep` | subscription | Creates the resource group `resourceGroupName` in `location` and deploys `resources.bicep` into it |
-| `main.bicepparam` | | Non-secret defaults (resource group, region, name prefix, max replicas) |
+| `main.bicepparam` | | Non-secret defaults (resource group, region, max replicas) |
 | `resources.bicep` | resource group | Wires the modules and builds the database connection strings |
 | `modules/monitoring.bicep` | resource group | Log Analytics workspace (`PerGB2018`, 30 days retention, 1 GB daily cap) and workspace-based Application Insights |
 | `modules/postgres.bicep` | resource group | PostgreSQL Flexible Server 17, `Standard_B1ms` Burstable, 32 GiB, no HA, no geo backup, TLS required, firewall rule `AllowAllAzureServices`, databases `playersdb` and `scoresdb` |
 | `modules/containerapps-env.bicep` | resource group | Consumption-only Container Apps environment that sends logs to the workspace |
-| `modules/api.bicep` | resource group | Container app `hexmaster-leakout-api`: external HTTPS ingress on port 8080, 0 to `maxReplicas` replicas on the `http-concurrency` rule (20 concurrent requests), `/alive` startup and liveness probes, `/health` readiness probe |
+| `modules/api.bicep` | resource group | Container app `<resource group>-api` (container and OpenTelemetry service `hexmaster-leakout-api`, like the Aspire resource): external HTTPS ingress on port 8080, 0 to `maxReplicas` replicas on the `http-concurrency` rule (20 concurrent requests), `/alive` startup and liveness probes, `/health` readiness probe |
 
-Resource names are `<namePrefix>-<kind>-<uniqueString(resourceGroup().id)>`, so they stay the same across redeploys. The container app is named `hexmaster-leakout-api`, like the Aspire resource.
+Every resource is named `<resource group name>-<kind>`, so with the default resource group `rg-leakout-prod-swe` they are `rg-leakout-prod-swe-log`, `-appi`, `-psql`, `-cae` and `-api`. The names stay the same across redeploys. The PostgreSQL server name is also its host name and must be unique across Azure; the resource group name makes it so. Keep the resource group name at most 28 characters, because Container Apps and their environments allow at most 32.
 
 ## Parameters
 
@@ -20,9 +20,8 @@ Resource names are `<namePrefix>-<kind>-<uniqueString(resourceGroup().id)>`, so 
 
 | Parameter | Secure | Value in `main.bicepparam` |
 | --- | --- | --- |
-| `resourceGroupName` | | `rg-leakout` |
+| `resourceGroupName` | | `rg-leakout-prod-swe` |
 | `location` | | `swedencentral` |
-| `namePrefix` | | `leakout` |
 | `maxReplicas` | | `3` |
 | `imageName` | | `API_IMAGE`: full image reference with tag, e.g. `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>` |
 | `registryServer` | | `ACR_LOGIN_SERVER` |
@@ -108,8 +107,8 @@ Redeploying with the same parameters changes nothing. A new image tag creates a 
 The API only applies EF Core migrations in Development, so the Azure databases are empty after the first deployment. Until the pipeline runs migrations, apply them once by hand. The firewall only allows Azure services, so open it temporarily for your own IP address:
 
 ```bash
-RG=rg-leakout
-SERVER=$(az postgres flexible-server list -g $RG --query "[0].name" -o tsv)
+RG=rg-leakout-prod-swe
+SERVER=$RG-psql
 HOST=$(az postgres flexible-server show -g $RG -n $SERVER --query fullyQualifiedDomainName -o tsv)
 MY_IP=$(curl -s https://api.ipify.org)
 
@@ -129,5 +128,5 @@ az postgres flexible-server firewall-rule delete -g $RG -n $SERVER --rule-name m
 ## Removing everything
 
 ```bash
-az group delete --name rg-leakout
+az group delete --name rg-leakout-prod-swe
 ```

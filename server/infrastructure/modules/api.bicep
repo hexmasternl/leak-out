@@ -1,11 +1,14 @@
-// The hexmaster-leakout-api container app: pulls the API image from the existing registry,
-// receives its configuration as secrets and scales on HTTP traffic from 0 replicas.
+// The API container app: pulls the API image from the existing registry, receives its
+// configuration as secrets and scales on HTTP traffic from 0 replicas.
 
 @description('Azure region of the container app.')
 param location string
 
-@description('Name of the container app; matches the Aspire resource name.')
-param containerAppName string = 'hexmaster-leakout-api'
+@description('Name of the container app.')
+param containerAppName string
+
+@description('Name of the container and the OpenTelemetry service; matches the Aspire resource name.')
+param serviceName string = 'hexmaster-leakout-api'
 
 @description('Resource id of the Container Apps environment.')
 param environmentId string
@@ -108,7 +111,7 @@ resource containerApp 'Microsoft.App/containerApps@2025-01-01' = {
     template: {
       containers: [
         {
-          name: containerAppName
+          name: serviceName
           image: imageName
           resources: {
             cpu: json('0.25')
@@ -121,7 +124,7 @@ resource containerApp 'Microsoft.App/containerApps@2025-01-01' = {
             }
             {
               name: 'OTEL_SERVICE_NAME'
-              value: containerAppName
+              value: serviceName
             }
             {
               name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'

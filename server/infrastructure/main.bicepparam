@@ -4,9 +4,8 @@
 // A missing environment variable fails the deployment before anything changes.
 using 'main.bicep'
 
-param resourceGroupName = 'rg-leakout'
+param resourceGroupName = 'rg-leakout-prod-swe'
 param location = 'swedencentral'
-param namePrefix = 'leakout'
 param maxReplicas = 3
 
 param imageName = readEnvironmentVariable('API_IMAGE')

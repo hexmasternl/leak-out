@@ -4,8 +4,8 @@
 @description('Azure region of the resources.')
 param location string = resourceGroup().location
 
-@description('Prefix of the resource names.')
-param namePrefix string = 'leakout'
+@description('Prefix of the resource names; the resource group name, so every resource is recognisable as part of it.')
+param namePrefix string = resourceGroup().name
 
 @description('Full image reference of the API including the tag.')
 param imageName string
@@ -41,15 +41,14 @@ param authSigningKey string
 @minValue(1)
 param maxReplicas int = 3
 
-var suffix = uniqueString(resourceGroup().id)
 var postgresAdministratorLogin = 'leakoutadmin'
 
 module monitoring 'modules/monitoring.bicep' = {
   name: 'monitoring'
   params: {
     location: location
-    workspaceName: '${namePrefix}-log-${suffix}'
-    applicationInsightsName: '${namePrefix}-appi-${suffix}'
+    workspaceName: '${namePrefix}-log'
+    applicationInsightsName: '${namePrefix}-appi'
   }
 }
 
@@ -57,7 +56,7 @@ module postgres 'modules/postgres.bicep' = {
   name: 'postgres'
   params: {
     location: location
-    serverName: '${namePrefix}-psql-${suffix}'
+    serverName: '${namePrefix}-psql'
     administratorLogin: postgresAdministratorLogin
     administratorPassword: postgresAdminPassword
   }
@@ -67,7 +66,7 @@ module containerAppsEnvironment 'modules/containerapps-env.bicep' = {
   name: 'containerapps-env'
   params: {
     location: location
-    environmentName: '${namePrefix}-cae-${suffix}'
+    environmentName: '${namePrefix}-cae'
     workspaceCustomerId: monitoring.outputs.workspaceCustomerId
     workspaceSharedKey: monitoring.outputs.workspaceSharedKey
   }
@@ -77,6 +76,7 @@ module api 'modules/api.bicep' = {
   name: 'api'
   params: {
     location: location
+    containerAppName: '${namePrefix}-api'
     environmentId: containerAppsEnvironment.outputs.environmentId
     imageName: imageName
     registryServer: registryServer

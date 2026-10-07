@@ -28,6 +28,7 @@ public sealed class PlayersModuleRegistrationTests
         Assert.IsType<SignInPlayerCommandHandler>(
             scope.ServiceProvider.GetRequiredService<ICommandHandler<SignInPlayerCommand, SessionDto>>());
         Assert.IsType<UserResolver>(scope.ServiceProvider.GetRequiredService<IUserResolver>());
+        Assert.IsType<PlayerProfileService>(scope.ServiceProvider.GetRequiredService<IPlayerProfileService>());
         Assert.IsType<GooglePlayGamesClient>(scope.ServiceProvider.GetRequiredService<IGooglePlayGamesClient>());
         Assert.IsType<SystemClock>(scope.ServiceProvider.GetRequiredService<IClock>());
     }

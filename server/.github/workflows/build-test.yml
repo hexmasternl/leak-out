@@ -1,0 +1,80 @@
+# Shared build, test and 80% coverage gate, called by pull-request.yml and deploy.yml.
+# The job name is part of the required status check "build-test / build-test"; do not rename it.
+name: build-test
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Build.props', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore src/leak-out-server.slnx
+
+      - name: Build
+        run: dotnet build src/leak-out-server.slnx --no-restore -c Release
+
+      # Each test project runs on its own with its own results directory: a single --solution
+      # run writes every project's coverage.cobertura.xml to the same place. The Scores tests
+      # start PostgreSQL with Testcontainers on the runner's Docker. Exit code 8 ("zero tests
+      # ran") only tolerates a test project without tests.
+      - name: Test with coverage
+        run: |
+          failed=0
+          while IFS= read -r project; do
+            echo "::group::$project"
+            dotnet test --project "$project" --no-build -c Release --ignore-exit-code 8 \
+              --coverage --coverage-settings "$GITHUB_WORKSPACE/CodeCoverage.settings.xml" \
+              --coverage-output-format cobertura --coverage-output coverage.cobertura.xml \
+              --report-xunit-trx \
+              --results-directory "$GITHUB_WORKSPACE/$(dirname "$project")/TestResults" \
+              || { echo "::error::Tests failed in $project"; failed=1; }
+            echo "::endgroup::"
+          done < <(find src -name '*.Tests.csproj' | sort)
+          exit "$failed"
+
+      - name: Merge coverage reports
+        run: |
+          dotnet tool install --global dotnet-coverage
+          dotnet-coverage merge --output coverage/merged.cobertura.xml --output-format cobertura \
+            "src/**/TestResults/**/coverage.cobertura.xml"
+
+      - name: Coverage gate (80%)
+        run: bash .github/scripts/coverage-gate.sh coverage/merged.cobertura.xml 8000
+
+      - name: Upload coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage/merged.cobertura.xml
+          if-no-files-found: warn
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results
+          path: src/**/TestResults/**/*.trx
+          if-no-files-found: warn

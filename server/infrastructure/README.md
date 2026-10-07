@@ -24,7 +24,7 @@ Resource names are `<namePrefix>-<kind>-<uniqueString(resourceGroup().id)>`, so 
 | `location` | | `westeurope` |
 | `namePrefix` | | `leakout` |
 | `maxReplicas` | | `3` |
-| `imageName` | | `API_IMAGE`: full image reference with tag, e.g. `<registry>.azurecr.io/hexmaster-leakout-api:<sha>` |
+| `imageName` | | `API_IMAGE`: full image reference with tag, e.g. `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>` |
 | `registryServer` | | `ACR_LOGIN_SERVER` |
 | `registryUsername` | | `ACR_LOGIN_USERNAME` |
 | `registryPassword` | yes | `ACR_LOGIN_PASSWORD` |
@@ -66,9 +66,9 @@ The container app gets its configuration as container app secrets, exposed as en
 3. **Container image.** Push the API image to the existing registry (the GitHub Actions workflow of #8 does this on every push to `main`):
 
    ```bash
-   az acr login --name <registry>   # or: docker login <registry>.azurecr.io
+   az acr login --name nvv54gsk4pteu   # or: docker login nvv54gsk4pteu.azurecr.io
    dotnet publish src/HexMaster.LeakOut.Api -c Release -t:PublishContainer \
-     -p:ContainerRegistry=<registry>.azurecr.io -p:ContainerImageTags=<tag>
+     -p:ContainerImageTags=<version>   # registry, repository and non-root user come from the project
    ```
 
 ## Manual deployment
@@ -78,8 +78,8 @@ From the repository root, logged in with `az login` to the target subscription. 
 ```bash
 az account set --subscription <subscription-id>
 
-export API_IMAGE="<registry>.azurecr.io/hexmaster-leakout-api:<tag>"
-export ACR_LOGIN_SERVER="<registry>.azurecr.io"
+export API_IMAGE="nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>"
+export ACR_LOGIN_SERVER="nvv54gsk4pteu.azurecr.io"
 export ACR_LOGIN_USERNAME="<registry-user>"
 read -rsp "Registry password: " ACR_LOGIN_PASSWORD; echo; export ACR_LOGIN_PASSWORD
 read -rsp "PostgreSQL admin password: " POSTGRES_ADMIN_PASSWORD; echo; export POSTGRES_ADMIN_PASSWORD

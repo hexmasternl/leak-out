@@ -7,7 +7,7 @@
 
 ## 2. Documentation
 
-- [ ] 2.1 Update `CLAUDE.md` (Players data project: "migrations applied at startup in every environment"), `docs/auth-setup.md` and `infrastructure/README.md`. Replace the manual "First database migration" section with a short note that the API migrates on startup and a failed migration keeps the previous revision. Verify that `grep -rn -i "migrat" CLAUDE.md docs infrastructure src --include=*.md --include=*.cs` finds no remaining claim that migrations only run in Development or are a deployment step.
+- [x] 2.1 Update `CLAUDE.md` (Players data project: "migrations applied at startup in every environment"), `docs/auth-setup.md` and `infrastructure/README.md`. Replace the manual "First database migration" section with a short note that the API migrates on startup and a failed migration keeps the previous revision. Verify that `grep -rn -i "migrat" CLAUDE.md docs infrastructure src --include=*.md --include=*.cs` finds no remaining claim that migrations only run in Development or are a deployment step.
 
 ## 3. Integration check
 

@@ -52,7 +52,7 @@ Each class that logs becomes `partial` and declares `[LoggerMessage]` methods, a
 - `UserResolver`: Debug "Subject did not resolve to a registered player" (without the subject).
 
 Trace correlation comes for free: the OpenTelemetry logging provider attaches the current `Activity`'s trace and span id.
-The Scores module gets an explicit `Microsoft.Extensions.Logging.Abstractions` reference for the source generator and `ILogger<T>`. Players already receives it transitively through `Microsoft.Extensions.Http`. Add it explicitly if the build shows otherwise.
+The Scores module gets an explicit `Microsoft.Extensions.Logging` reference for the source generator, `ILogger<T>` and `AddLogging()`, which `AddScoresModule()` calls next to `AddMetrics()`. Players already receives it transitively through `Microsoft.Extensions.Http`. Add it explicitly if the build shows otherwise.
 
 ### Probe filter and exception recording via options
 Replace the callback on `AddAspNetCoreInstrumentation(...)` with `builder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(o => { o.Filter = ...; o.RecordException = true; })` and a plain `AddAspNetCoreInstrumentation()`. Every registration of the instrumentation, including the one inside `UseAzureMonitor()`, reads the same default named options, so the filter and exception recording hold whichever exporter is active. A `ServiceDefaults.Tests` test resolves `IOptionsMonitor<AspNetCoreTraceInstrumentationOptions>` with and without the Application Insights connection string, and asserts that the filter rejects `/alive` and `/health`, accepts `/api/scores`, and that `RecordException` is true.

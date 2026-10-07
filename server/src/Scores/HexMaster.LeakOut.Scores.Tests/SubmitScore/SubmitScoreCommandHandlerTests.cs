@@ -4,6 +4,8 @@ using HexMaster.LeakOut.Scores.Features.SubmitScore;
 using HexMaster.LeakOut.Scores.Observability;
 using HexMaster.LeakOut.Scores.Tests.Factories;
 using HexMaster.LeakOut.Scores.Tests.Helpers;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 using Moq;
 
 namespace HexMaster.LeakOut.Scores.Tests.SubmitScore;
@@ -16,6 +18,7 @@ public sealed class SubmitScoreCommandHandlerTests : IDisposable
     private readonly Mock<ILevelScoreRepository> _repository = new();
     private readonly Mock<IClock> _clock = new();
     private readonly TelemetryCollector _telemetry = new();
+    private readonly FakeLogger<SubmitScoreCommandHandler> _logger = new();
 
     public SubmitScoreCommandHandlerTests()
     {
@@ -56,6 +59,10 @@ public sealed class SubmitScoreCommandHandlerTests : IDisposable
         Assert.Equal(new(4, 540, true), result);
         _repository.Verify(r => r.SubmitAsync(stored.UserId, 4, 540, Now, It.IsAny<CancellationToken>()), Times.Once);
         AssertSubmissionRecorded(ScoresMetrics.OutcomeNewBest);
+
+        var log = Assert.Single(_logger.Collector.GetSnapshot());
+        Assert.Equal(LogLevel.Information, log.Level);
+        Assert.Equal($"Player {stored.UserId} set a new best score 540 on level 4", log.Message);
     }
 
     [Theory]
@@ -72,6 +79,7 @@ public sealed class SubmitScoreCommandHandlerTests : IDisposable
         _repository.Verify(r => r.SubmitAsync(stored.UserId, 4, score, Now, It.IsAny<CancellationToken>()), Times.Once);
         AssertSubmissionRecorded(ScoresMetrics.OutcomeNotImproved);
         Assert.Equal(false, Assert.Single(_telemetry.Activities).GetTagItem("score.new_best"));
+        Assert.Empty(_logger.Collector.GetSnapshot());
     }
 
     [Fact]
@@ -86,8 +94,9 @@ public sealed class SubmitScoreCommandHandlerTests : IDisposable
     [Fact]
     public async Task Handle_RepositoryFails_RecordsErrorAndRethrows()
     {
+        var failure = new InvalidOperationException("database down");
         _repository.Setup(r => r.SubmitAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("database down"));
+            .ThrowsAsync(failure);
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => CreateHandler().Handle(new SubmitScoreCommand(Guid.CreateVersion7(), 1, 10), TestContext.Current.CancellationToken));
@@ -96,6 +105,11 @@ public sealed class SubmitScoreCommandHandlerTests : IDisposable
         var activity = Assert.Single(_telemetry.Activities);
         Assert.Equal(ActivityStatusCode.Error, activity.Status);
         Assert.Equal("database down", activity.StatusDescription);
+        Assert.Contains(activity.Events, e => e.Name == "exception");
+
+        var log = Assert.Single(_logger.Collector.GetSnapshot());
+        Assert.Equal(LogLevel.Error, log.Level);
+        Assert.Same(failure, log.Exception);
     }
 
     [Fact]
@@ -108,6 +122,9 @@ public sealed class SubmitScoreCommandHandlerTests : IDisposable
             () => CreateHandler().Handle(new SubmitScoreCommand(Guid.CreateVersion7(), 1, 10), TestContext.Current.CancellationToken));
 
         Assert.Empty(_telemetry.Measurements);
+        Assert.Empty(_telemetry.DoubleMeasurements);
+        Assert.NotEqual(ActivityStatusCode.Error, Assert.Single(_telemetry.Activities).Status);
+        Assert.Empty(_logger.Collector.GetSnapshot());
     }
 
     public void Dispose() => _telemetry.Dispose();
@@ -121,8 +138,14 @@ public sealed class SubmitScoreCommandHandlerTests : IDisposable
         var measurement = Assert.Single(_telemetry.Measurements);
         Assert.Equal(ScoresMetrics.SubmissionsInstrumentName, measurement.Instrument);
         Assert.Equal(1, measurement.Value);
-        Assert.Equal(outcome, measurement.Tags["outcome"]);
+        // The outcome is the only attribute: no player id, level or score.
+        Assert.Equal(outcome, Assert.Single(measurement.Tags).Value);
+
+        var duration = Assert.Single(_telemetry.DoubleMeasurements);
+        Assert.Equal(ScoresMetrics.SubmissionDurationInstrumentName, duration.Instrument);
+        Assert.True(duration.Value >= 0);
+        Assert.Equal(outcome, Assert.Single(duration.Tags).Value);
     }
 
-    private SubmitScoreCommandHandler CreateHandler() => new(_repository.Object, _clock.Object, _telemetry.Metrics);
+    private SubmitScoreCommandHandler CreateHandler() => new(_repository.Object, _clock.Object, _telemetry.Metrics, _logger);
 }

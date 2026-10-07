@@ -23,4 +23,4 @@ The GitHub Actions workflows that publish and deploy are delivered by `platform-
 - [ ] 3.1 Deploy at subscription scope with a resource group name that does not exist yet and verify the resource group is created, every resource from the spec exists inside it, `/health` returns 200 over HTTPS, `POST /api/players/sessions` with a valid Google Play Games server auth code returns an access token, and a request appears in Application Insights
 - [ ] 3.2 Redeploy with the same parameters and verify `what-if` reports no changes
 - [ ] 3.3 Leave the app idle and verify it scales to 0 replicas, then verify a request starts a replica and is answered
-- [ ] 3.4 Search the repository for the secret values used in the deployment and verify none are committed
+- [x] 3.4 Search the repository for the secret values used in the deployment and verify none are committed

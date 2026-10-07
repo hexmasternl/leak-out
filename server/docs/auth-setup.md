@@ -125,7 +125,7 @@ Changing the signing key invalidates every issued access token; players then sig
    dotnet run --project HexMaster.LeakOut.Aspire/HexMaster.LeakOut.Aspire.AppHost
    ```
 
-   In the Aspire dashboard, `postgres` and `playersdb` become healthy first, then `hexmaster-leakout-api` starts. In Development, the API applies the database migrations itself.
+   In the Aspire dashboard, `postgres` and `playersdb` become healthy first, then `hexmaster-leakout-api` starts. The API applies the database migrations itself when it starts, in every environment.
 
 2. Get a server auth code from a debug build of the game (log it once while testing; never log codes in release builds) and send it within a few minutes, using `src/HexMaster.LeakOut.Api/HexMaster.LeakOut.Api.http` or:
 

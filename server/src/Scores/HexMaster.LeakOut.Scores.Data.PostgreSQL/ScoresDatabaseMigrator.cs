@@ -6,7 +6,8 @@ namespace HexMaster.LeakOut.Scores.Data.PostgreSQL;
 
 /// <summary>
 /// Applies pending migrations of the scores database when the host starts. Registered in
-/// Development only; production migrations are a deployment step.
+/// every environment; hosted services start before the server listens, so the API serves no
+/// request against an out-of-date schema, and a failed migration stops the host.
 /// </summary>
 public sealed class ScoresDatabaseMigrator(IServiceScopeFactory scopeFactory) : IHostedService
 {

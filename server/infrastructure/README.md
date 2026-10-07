@@ -106,28 +106,9 @@ az deployment sub create --location northeurope --name "leakout-$(date +%Y%m%d%H
 
 Redeploying with the same parameters changes nothing. A new image tag creates a new revision of the container app.
 
-## First database migration
+## Database migrations
 
-The API only applies EF Core migrations in Development, so the Azure databases are empty after the first deployment. Until the pipeline runs migrations, apply them once by hand. The firewall only allows Azure services, so open it temporarily for your own IP address:
-
-```bash
-RG=rg-leakout-prod-swe
-SERVER=$RG-psql
-HOST=$(az postgres flexible-server show -g $RG -n $SERVER --query fullyQualifiedDomainName -o tsv)
-MY_IP=$(curl -s https://api.ipify.org)
-
-az postgres flexible-server firewall-rule create -g $RG -n $SERVER --rule-name migration \
-  --start-ip-address $MY_IP --end-ip-address $MY_IP
-
-cd src
-dotnet ef database update --project Players/HexMaster.LeakOut.Players.Data.PostgreSQL \
-  --connection "Host=$HOST;Database=playersdb;Username=leakoutadmin;Password=$POSTGRES_ADMIN_PASSWORD;Ssl Mode=Require"
-dotnet ef database update --project Scores/HexMaster.LeakOut.Scores.Data.PostgreSQL \
-  --connection "Host=$HOST;Database=scoresdb;Username=leakoutadmin;Password=$POSTGRES_ADMIN_PASSWORD;Ssl Mode=Require"
-cd ..
-
-az postgres flexible-server firewall-rule delete -g $RG -n $SERVER --rule-name migration --yes
-```
+The API applies pending EF Core migrations of `playersdb` and `scoresdb` when it starts, in every environment, before it answers `/alive`. A new deployment therefore needs no manual migration step. If a migration fails, the new revision never passes its startup probe and the previous revision keeps serving; the container app's console logs show the error. Migrations must stay backwards-compatible with the previous release, because the old revision briefly runs against the new schema during a rollout.
 
 ## Removing everything
 

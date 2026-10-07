@@ -6,7 +6,7 @@
 
 ## 2. Test helpers
 
-- [ ] 2.1 Extend both `TelemetryCollector` helpers (Players.Tests, Scores.Tests) with a `double` measurement callback and a `DoubleMeasurements` bag. Add `Microsoft.Extensions.Diagnostics.Testing` (for `FakeLogger<T>`) to both test projects. Verify the existing tests still pass.
+- [x] 2.1 Extend both `TelemetryCollector` helpers (Players.Tests, Scores.Tests) with a `double` measurement callback and a `DoubleMeasurements` bag. Add `Microsoft.Extensions.Diagnostics.Testing` (for `FakeLogger<T>`) to both test projects. Verify the existing tests still pass.
 
 ## 3. Players module
 

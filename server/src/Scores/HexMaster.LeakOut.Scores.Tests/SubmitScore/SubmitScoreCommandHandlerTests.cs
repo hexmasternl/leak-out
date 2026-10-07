@@ -8,6 +8,7 @@ using Moq;
 
 namespace HexMaster.LeakOut.Scores.Tests.SubmitScore;
 
+[Collection(TelemetryCollection.Name)]
 public sealed class SubmitScoreCommandHandlerTests : IDisposable
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 7, 12, 0, 0, TimeSpan.Zero);

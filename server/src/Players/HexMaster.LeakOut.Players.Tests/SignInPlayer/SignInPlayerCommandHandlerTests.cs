@@ -10,6 +10,7 @@ using Moq;
 
 namespace HexMaster.LeakOut.Players.Tests.SignInPlayer;
 
+[Collection(TelemetryCollection.Name)]
 public sealed class SignInPlayerCommandHandlerTests : IDisposable
 {
     private const string Code = "server-auth-code";

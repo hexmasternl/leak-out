@@ -31,6 +31,8 @@ public sealed class TelemetryCollector : IDisposable
         };
         _meterListener.SetMeasurementEventCallback<long>((instrument, value, tags, _) =>
             Measurements.Add(new Measurement(instrument.Name, value, tags.ToArray().ToDictionary(t => t.Key, t => t.Value))));
+        _meterListener.SetMeasurementEventCallback<double>((instrument, value, tags, _) =>
+            DoubleMeasurements.Add(new DoubleMeasurement(instrument.Name, value, tags.ToArray().ToDictionary(t => t.Key, t => t.Value))));
         _meterListener.Start();
 
         _activityListener = new ActivityListener
@@ -46,6 +48,9 @@ public sealed class TelemetryCollector : IDisposable
 
     public ConcurrentBag<Measurement> Measurements { get; } = [];
 
+    /// <summary>Measurements of <c>double</c> instruments, such as the duration histograms.</summary>
+    public ConcurrentBag<DoubleMeasurement> DoubleMeasurements { get; } = [];
+
     public ConcurrentBag<Activity> Activities { get; } = [];
 
     public void Dispose()
@@ -56,4 +61,16 @@ public sealed class TelemetryCollector : IDisposable
     }
 
     public sealed record Measurement(string Instrument, long Value, IReadOnlyDictionary<string, object?> Tags);
+
+    public sealed record DoubleMeasurement(string Instrument, double Value, IReadOnlyDictionary<string, object?> Tags);
+}
+
+/// <summary>
+/// The activity listener of <see cref="TelemetryCollector"/> sees every activity of the module in the
+/// process, so test classes that run instrumented code join this collection and never run in parallel.
+/// </summary>
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class TelemetryCollection
+{
+    public const string Name = "Telemetry";
 }

@@ -35,5 +35,5 @@
 ## 7. Verification
 
 - [x] 7.1 Run all tests with coverage (git-workflow A3) and verify they pass with at least 80% line coverage.
-- [ ] 7.2 Run the API through Aspire, sign in, submit a score and request both leaderboards. Verify in the dashboard that a leaderboard trace shows the HTTP span, `players.resolve_user`, the handler span and nested database spans, that the custom metrics appear, and that no `/alive` or `/health` traces appear.
+- [x] 7.2 Run the API through Aspire, sign in, submit a score and request both leaderboards. Verify in the dashboard that a leaderboard trace shows the HTTP span, `players.resolve_user`, the handler span and nested database spans, that the custom metrics appear, and that no `/alive` or `/health` traces appear.
 - [ ] 7.3 After the first deployment, verify in Application Insights that requests, dependencies, custom spans, custom metrics and logs arrive under role `hexmaster-leakout-api` with the deployed version, and that no `/alive` or `/health` requests are recorded.

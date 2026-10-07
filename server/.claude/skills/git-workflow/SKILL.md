@@ -88,10 +88,16 @@ Rules:
 When the implementation is complete (all tasks of the change done, or the issue's acceptance criteria met), run all unit tests with code coverage from the worktree root. The repository uses xUnit v3 on Microsoft.Testing.Platform (`global.json`) with `Microsoft.Testing.Extensions.CodeCoverage`:
 
 ```bash
-find src -type d -name TestResults -prune -exec rm -rf {} +; rm -rf coverage
-dotnet test --solution src/leak-out-server.slnx \
-  --coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
+find src -type d -name TestResults -prune -exec rm -rf {} +; rm -rf coverage TestResults
+for p in $(find src -name "*.Tests.csproj"); do
+  dotnet test --project "$p" --ignore-exit-code 8 \
+    --coverage --coverage-settings "$PWD/CodeCoverage.settings.xml" \
+    --coverage-output-format cobertura --coverage-output coverage.cobertura.xml \
+    --results-directory "$PWD/$(dirname "$p")/TestResults" || echo "TESTS FAILED: $p"
+done
 ```
+
+Run each test project on its own with its own results directory: a single `dotnet test --solution` run writes every project's `coverage.cobertura.xml` to the same folder, so they overwrite each other. `--ignore-exit-code 8` only tolerates a test project that has no tests yet ("zero tests ran"). `CodeCoverage.settings.xml` at the repository root excludes nothing but tool-generated code marked `[GeneratedCode]` (for example the OpenAPI XML comment support that `AddOpenApi()` generates); do not add other exclusions to it.
 
 Every test must pass. Then merge the per-project reports and read the total line coverage:
 
@@ -109,7 +115,7 @@ The line rate must be **0.80 (80%) or higher**. If tests fail or coverage is bel
 
 Never lower the threshold, skip, disable or delete tests, or exclude production code from coverage to pass the gate. If the gate cannot be met (for example the build is broken by something outside this change), stop and report it instead of opening a pull request.
 
-Delete the coverage output afterwards (`find src -type d -name TestResults -prune -exec rm -rf {} +; rm -rf coverage`); it is never committed.
+Delete the coverage output afterwards (`find src -type d -name TestResults -prune -exec rm -rf {} +; rm -rf coverage TestResults`); it is never committed.
 
 ### A4. Commit, push and open the pull request
 

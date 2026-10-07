@@ -8,7 +8,7 @@
 
 ## 2. Players domain
 
-- [ ] 2.1 Add `DomainModels/Player.cs` (`Id`, `DisplayName`, `CreatedAt`, `LastSignedInAt`, `Register`, `RecordSignIn`) with `PlayerTests` and a Bogus `PlayerFaker` in `HexMaster.LeakOut.Players.Tests`, and verify the tests pass
+- [x] 2.1 Add `DomainModels/Player.cs` (`Id`, `DisplayName`, `CreatedAt`, `LastSignedInAt`, `Register`, `RecordSignIn`) with `PlayerTests` and a Bogus `PlayerFaker` in `HexMaster.LeakOut.Players.Tests`, and verify the tests pass
 - [ ] 2.2 Add the ports `IPlayerRepository`, `IGooglePlayGamesClient` (with `GooglePlayGamesPlayer`, `GooglePlayGamesAuthenticationException`, `GooglePlayGamesUnavailableException`) and `IAccessTokenIssuer` to `HexMaster.LeakOut.Players` and verify the project builds
 
 ## 3. Google Play Games client and access tokens

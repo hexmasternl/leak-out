@@ -22,6 +22,7 @@ public sealed class SignInPlayerCommandHandler(
     {
         ArgumentNullException.ThrowIfNull(command);
 
+        var started = Stopwatch.GetTimestamp();
         using var activity = PlayersMetrics.ActivitySource.StartActivity(PlayersMetrics.SignInActivityName);
         try
         {
@@ -46,7 +47,7 @@ public sealed class SignInPlayerCommandHandler(
             activity?.SetTag("player.id", player.Id);
             activity?.SetTag("player.new", isNewPlayer);
             activity?.SetStatus(ActivityStatusCode.Ok);
-            metrics.SignInSucceeded(isNewPlayer);
+            metrics.SignInSucceeded(isNewPlayer, Stopwatch.GetElapsedTime(started));
 
             return new SessionDto(accessToken.Token, accessToken.ExpiresAt, player.Id, player.DisplayName);
         }
@@ -54,12 +55,13 @@ public sealed class SignInPlayerCommandHandler(
         {
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             activity?.AddException(ex);
-            metrics.SignInFailed(ex switch
+            var outcome = ex switch
             {
                 GooglePlayGamesAuthenticationException => PlayersMetrics.OutcomeRejected,
                 GooglePlayGamesUnavailableException => PlayersMetrics.OutcomeUnavailable,
                 _ => PlayersMetrics.OutcomeError,
-            });
+            };
+            metrics.SignInFailed(outcome, Stopwatch.GetElapsedTime(started));
             throw;
         }
     }

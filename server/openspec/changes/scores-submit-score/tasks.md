@@ -7,7 +7,7 @@
 
 ## 2. Domain model
 
-- [ ] 2.1 Add `DomainModels/LevelScore.cs` with `Create(userId, level, score, achievedAt)` (rejects level < 1 and score < 0 with `DomainException`) and `TryImprove(score, achievedAt)`; verify `LevelScoreTests` cover valid and invalid creation and higher, equal and lower scores
+- [x] 2.1 Add `DomainModels/LevelScore.cs` with `Create(userId, level, score, achievedAt)` (rejects level < 1 and score < 0 with `DomainException`) and `TryImprove(score, achievedAt)`; verify `LevelScoreTests` cover valid and invalid creation and higher, equal and lower scores
 - [ ] 2.2 Add `Factories/LevelScoreFaker.cs` (Bogus) to the test project and verify it is used by the domain and handler tests
 
 ## 3. SubmitScore feature slice

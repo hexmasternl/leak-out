@@ -8,8 +8,8 @@ Tracking issue: [#110 Show the global top 10 of a level](https://github.com/hexm
 - [x] 1.2 Add the Top 10 button to the pause dialog (glass Secondary sharing Restart's row) and to the win and leak dialogs (Tertiary sharing Exit's row, Regular and Compact) in §5.6 and §5.1's "Use" column; verify the pause and Compact result dialogs still fit within 328 dp on 640 × 360 dp
 - [x] 1.3 Add the dialog entry, the list's appearance and their reduced-motion variants to §7.2 and §7.4; verify durations use existing motion tokens
 - [x] 1.4 Add mock-ups of the top 10 dialog (list with own entry, loading, empty, signed out, error) and the updated pause and result dialogs to `docs/design-system.html`; verify the page renders in a browser with no layout break
-- [ ] 1.5 Build static Compose `@Preview` mock-ups of the top 10 dialog states and the dialogs with the Top 10 button at 640 × 360 dp and 1280 × 800 dp, plus the list at 130 % font, and attach screenshots to issue #110; verify the previews render
-- [ ] 1.6 Get the product owner's approval of the design on issue #110 and record any requested changes back into the design system, the specs and these tasks (including design decision 2, the during-play entry point); verify approval is noted on the issue before starting group 2
+- [x] 1.5 Build static Compose `@Preview` mock-ups of the top 10 dialog states and the dialogs with the Top 10 button at 640 × 360 dp and 1280 × 800 dp, plus the list at 130 % font, and attach screenshots to issue #110; verify the previews render _(skipped: the user approved the design from the design system page without previews or screenshots)_
+- [x] 1.6 Get the product owner's approval of the design on issue #110 and record any requested changes back into the design system, the specs and these tasks (including design decision 2, the during-play entry point); verify approval is noted on the issue before starting group 2 _(approved by the user in the session, 2026-10-07)_
 
 ## 2. Score server client
 

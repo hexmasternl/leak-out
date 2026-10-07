@@ -18,11 +18,10 @@ builder.Services.AddPlayersModule();
 builder.AddPlayersPostgreSqlData();
 builder.Services.AddScoresModule();
 builder.AddScoresPostgreSqlData();
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.AddHostedService<PlayersDatabaseMigrator>();
-    builder.Services.AddHostedService<ScoresDatabaseMigrator>();
-}
+// Every environment: the API does not listen until both schemas are up to date, so a failed
+// migration keeps a new revision from taking traffic.
+builder.Services.AddHostedService<PlayersDatabaseMigrator>();
+builder.Services.AddHostedService<ScoresDatabaseMigrator>();
 
 builder.Services.AddAccessTokenAuthentication();
 

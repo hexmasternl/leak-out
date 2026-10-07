@@ -2,11 +2,11 @@
 
 ## 1. Prerequisites
 
-- [ ] 1.1 Confirm `players-google-play-auth` (#1), `scores-submit-score` (#2) and `scores-level-top-ten` (#3) are implemented on `development`, and note the actual names of `ILevelScoreRepository`, `LevelLeaderboardDto`, `LeaderboardEntryDto`, `IPlayerProfileService` and the leaderboard endpoint file; verify `dotnet build src/leak-out-server.slnx` succeeds
+- [x] 1.1 Confirm `players-google-play-auth` (#1), `scores-submit-score` (#2) and `scores-level-top-ten` (#3) are implemented on `development`, and note the actual names of `ILevelScoreRepository`, `LevelLeaderboardDto`, `LeaderboardEntryDto`, `IPlayerProfileService` and the leaderboard endpoint file; verify `dotnet build src/leak-out-server.slnx` succeeds
 
 ## 2. Window computation
 
-- [ ] 2.1 Add `LeaderboardWindow.Compute(int position, int total)` in `HexMaster.LeakOut.Scores/Features/GetLevelScoresAroundPlayer/` returning the start position and the number of entries; verify `LeaderboardWindowTests` cover position 128 of 200 (→ 123, 10), position 3 of 50 (→ 1, 10), position 49 of 50 (→ 41, 10), position 4 of 6 (→ 1, 6), position 1 of 1 (→ 1, 1)
+- [x] 2.1 Add `LeaderboardWindow.Compute(int position, int total)` in `HexMaster.LeakOut.Scores/Features/GetLevelScoresAroundPlayer/` returning the start position and the number of entries; verify `LeaderboardWindowTests` cover position 128 of 200 (→ 123, 10), position 3 of 50 (→ 1, 10), position 49 of 50 (→ 41, 10), position 4 of 6 (→ 1, 6), position 1 of 1 (→ 1, 1)
 
 ## 3. Repository reads
 

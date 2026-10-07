@@ -12,11 +12,15 @@ import kotlinx.coroutines.withTimeout
 /**
  * [ScoreServerApi] over `HttpURLConnection`: a few small JSON calls do not need an HTTP library. Every
  * call gives up after [timeoutMs]; a failure is mapped to a [ScoreServerException] so the caller
- * knows whether to keep the score.
+ * knows whether to keep the score. The server scales to zero and its ingress holds a request while it
+ * starts, so a cold start shows up as a slow answer: [readTimeoutMs] is long enough to wait it out,
+ * while [connectTimeoutMs] stays short so an unreachable server fails fast.
  */
 class HttpScoreServerApi(
     baseUrl: String,
     private val timeoutMs: Long = TIMEOUT_MS,
+    private val connectTimeoutMs: Int = CONNECT_TIMEOUT_MS,
+    private val readTimeoutMs: Int = READ_TIMEOUT_MS,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ScoreServerApi {
     private val base = baseUrl.trim().trimEnd('/')
@@ -41,8 +45,8 @@ class HttpScoreServerApi(
         val connection = try {
             (URL(base + path).openConnection() as HttpURLConnection).apply {
                 requestMethod = method
-                connectTimeout = CONNECT_TIMEOUT_MS
-                readTimeout = CONNECT_TIMEOUT_MS
+                connectTimeout = connectTimeoutMs
+                readTimeout = readTimeoutMs
                 doOutput = body != null
                 if (body != null) setRequestProperty("Content-Type", "application/json")
                 setRequestProperty("Accept", "application/json")
@@ -69,7 +73,12 @@ class HttpScoreServerApi(
 
     companion object {
         /** A whole call, including the connect; the spec's upper limit. */
-        const val TIMEOUT_MS = 15_000L
-        private const val CONNECT_TIMEOUT_MS = 10_000
+        const val TIMEOUT_MS = 35_000L
+
+        /** Opening the connection; a cold start does not slow this down. */
+        const val CONNECT_TIMEOUT_MS = 10_000
+
+        /** Waiting for the answer once connected; covers a cold start of the server (about 15 s). */
+        const val READ_TIMEOUT_MS = 30_000
     }
 }

@@ -5,10 +5,7 @@
 using 'main.bicep'
 
 param resourceGroupName = 'rg-leakout'
-param location = 'westeurope'
-// The subscription may not provision PostgreSQL Flexible Server in westeurope; there the
-// server fails with "The value of the 'Version' should be in: []".
-param postgresLocation = 'northeurope'
+param location = 'swedencentral'
 param namePrefix = 'leakout'
 param maxReplicas = 3
 

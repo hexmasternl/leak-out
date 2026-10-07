@@ -21,8 +21,7 @@ Resource names are `<namePrefix>-<kind>-<uniqueString(resourceGroup().id)>`, so 
 | Parameter | Secure | Value in `main.bicepparam` |
 | --- | --- | --- |
 | `resourceGroupName` | | `rg-leakout` |
-| `location` | | `westeurope` |
-| `postgresLocation` | | `northeurope`: the subscription may not provision PostgreSQL Flexible Server in `westeurope` (the server fails with `The value of the 'Version' should be in: []`) |
+| `location` | | `swedencentral` |
 | `namePrefix` | | `leakout` |
 | `maxReplicas` | | `3` |
 | `imageName` | | `API_IMAGE`: full image reference with tag, e.g. `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>` |
@@ -89,12 +88,12 @@ read -rsp "Google client secret: " GOOGLE_CLIENT_SECRET; echo; export GOOGLE_CLI
 read -rsp "Signing key (>= 32 chars): " GOOGLE_SIGNING_KEY; echo; export GOOGLE_SIGNING_KEY
 
 # Preview the changes
-az deployment sub what-if --location westeurope \
+az deployment sub what-if --location swedencentral \
   --template-file infrastructure/main.bicep \
   --parameters infrastructure/main.bicepparam
 
 # Deploy
-az deployment sub create --location westeurope --name "leakout-$(date +%Y%m%d%H%M%S)" \
+az deployment sub create --location swedencentral --name "leakout-$(date +%Y%m%d%H%M%S)" \
   --template-file infrastructure/main.bicep \
   --parameters infrastructure/main.bicepparam \
   --query properties.outputs

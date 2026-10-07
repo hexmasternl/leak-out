@@ -11,7 +11,7 @@
 - [x] 2.1 Add `LevelLeaderboardDto` and `LeaderboardEntryDto` as `sealed record` types in `HexMaster.LeakOut.Scores.Abstractions/DataTransferObjects` and verify the project builds
 - [x] 2.2 Add `RankedLevelScore` and `GetTopAsync(int level, int count, CancellationToken ct)` to `ILevelScoreRepository`, implement it in `HexMaster.LeakOut.Scores.Data.PostgreSQL` ordering by score desc, achieved_at asc, user_id asc with 1-based positions; verify a test covers ties and the count limit
 - [x] 2.3 Add a project reference from `HexMaster.LeakOut.Scores` to `HexMaster.LeakOut.Players.Abstractions` and verify `dotnet build src/leak-out-server.slnx` succeeds
-- [ ] 2.4 Add `Features/GetLevelTopScores/GetLevelTopScoresQuery` and `GetLevelTopScoresQueryHandler` (maps ranked rows to entries, sets `IsCurrentPlayer`, falls back to "Unknown player"), register it in `AddScoresModule`; verify `GetLevelTopScoresQueryHandlerTests` cover ordering with ties, fewer than 10 rows, an empty level, `IsCurrentPlayer`, the name fallback and a null query
+- [x] 2.4 Add `Features/GetLevelTopScores/GetLevelTopScoresQuery` and `GetLevelTopScoresQueryHandler` (maps ranked rows to entries, sets `IsCurrentPlayer`, falls back to "Unknown player"), register it in `AddScoresModule`; verify `GetLevelTopScoresQueryHandlerTests` cover ordering with ties, fewer than 10 rows, an empty level, `IsCurrentPlayer`, the name fallback and a null query
 
 ## 3. Endpoint
 

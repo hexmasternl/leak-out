@@ -14,4 +14,15 @@ Accept: application/json
 ### Protected endpoints take the returned access token as a bearer token, for example:
 # Authorization: Bearer {{signIn.response.body.$.accessToken}}
 
+### Submit the signed-in player's score on a level. Only a higher score replaces the stored best.
+POST {{HexMaster.LeakOut.Api_HostAddress}}/api/scores
+Authorization: Bearer {{signIn.response.body.$.accessToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "level": 4,
+  "score": 520
+}
+
 ###

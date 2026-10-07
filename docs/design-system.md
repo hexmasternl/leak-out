@@ -212,8 +212,8 @@ Buttons keep a hint of the old "juicy" press physics without outlines. A **lip**
 | Variant | Fill | Label | Lip | Glow | Use |
 |---------|------|-------|-----|------|-----|
 | Primary | gradient `brass.300 → brass.500` | `text.onBrass`, `display.sm` | `brass.700` | brass | One per screen: Play, Restart on the leak dialog |
-| Secondary (glass) | `surface.overlay`, 1 dp `line.strong` | `text.primary` | `surface.abyss` | none | Level Select, Settings, Restart on the win dialog |
-| Tertiary | none | `liquid.300` | none | none | Skip, Not now, Exit on the win and leak dialogs |
+| Secondary (glass) | `surface.overlay`, 1 dp `line.strong` | `text.primary` | `surface.abyss` | none | Level Select, Settings, Restart on the win dialog, Restart and Top 10 on the pause dialog |
+| Tertiary | none | `liquid.300` | none | none | Skip, Not now, Top 10 and Exit on the win and leak dialogs |
 | Destructive | gradient `leak.500 → leak.700` | `text.onStatus` | `leak.700` | none | Give up, Reset progress |
 | Success | gradient `success.500 → success.700` | `text.onStatus` | `success.700` | success | Next Level on the win dialog (replaces primary there) |
 
@@ -286,7 +286,8 @@ A vertical level 1 panel (`surface.deep` at 90 %, 24 dp radius, `line.strong` ed
 Level 3 floating panel, `radius.lg`, `surface.base`, 1 dp `line.highlight` top edge, no outline, 24 dp padding, max width 360 dp, centred over `surface.scrim` with a 16 dp gutter to the window edge. Entry: scale 0.92 → 1 with `motion.pop`; scrim fades in over `motion.quick` (see 7.2 and 7.4).
 
 - **Win** and **Leak**: the result dialogs, specified below.
-- **Pause**: the panel sits on an **opaque backdrop** instead of the scrim: a diagonal linear gradient from `surface.abyss` (top left) to `surface.deep` (bottom right) covering the whole screen, system bar and cutout areas included, so nothing of the frozen board, stack or HUD can be studied while paused. The backdrop fades in over `motion.quick` and disappears at once when the dialog closes; a tap on it does nothing. Title "Paused" in Title Case, `display.lg`, `text.primary`. Medium buttons (48 dp face + 4 dp lip) 12 dp apart, so the panel fits a 360 dp high screen: brass Primary "Resume" (the one main action), glass Secondary "Restart", a 1 dp `line.subtle` separator, Destructive "Exit" (back to the main menu). Back works as Resume.
+- **Pause**: the panel sits on an **opaque backdrop** instead of the scrim: a diagonal linear gradient from `surface.abyss` (top left) to `surface.deep` (bottom right) covering the whole screen, system bar and cutout areas included, so nothing of the frozen board, stack or HUD can be studied while paused. The backdrop fades in over `motion.quick` and disappears at once when the dialog closes; a tap on it does nothing. Title "Paused" in Title Case, `display.lg`, `text.primary`. Medium buttons (48 dp face + 4 dp lip) 12 dp apart, so the panel fits a 360 dp high screen: brass Primary "Resume" (the one main action), a row of two equal glass Secondary buttons "Restart" and "Top 10" 12 dp apart, a 1 dp `line.subtle` separator, Destructive "Exit" (back to the main menu). Back works as Resume. "Top 10" shares Restart's row so the panel keeps its height (48 padding + 31 title + 16 + 52 + 12 + 52 + 12 + 1 + 12 + 52 ≈ 288 dp, within the 328 dp of a 360 dp screen; a third stacked button would need ≈ 352 dp). When the top 10 is not available (a test play from the level designer, no score server in the build), Restart fills the row alone.
+- **Top 10**: the global top 10 of the level, opened from the pause, win and leak dialogs; specified below.
 - **Play menu**: the choice shown after Play on the welcome screen, over the see-through `surface.scrim` (drawn by the dialog, platform dim off). Title "Play" in Title Case, `display.lg`, `text.primary`. Medium buttons (48 dp face + 4 dp lip), full panel width, 12 dp apart: brass Primary "Continue" (the one main action) and glass Secondary "Select Level". A tap on the scrim outside the panel or Back closes it without navigating; a tap inside the panel does nothing.
 
 #### Result dialogs: Win and Leak
@@ -302,7 +303,7 @@ The two dialogs shown when an attempt ends. Both sit over the see-through `surfa
 | Message | `body.md` `text.secondary` | "You kept the water flowing." When the win beat the stored best, "New best!" in `display.sm` `brass.300` takes its place once the tally is done, so the panel does not grow |
 | Stars | 40 dp, 12 dp apart | Earned in `brass.300` with a pop-in stagger of 80 ms and a small brass burst, missed in `line.strong` |
 | Score row | three equal columns | See below |
-| Buttons | stacked | Success "Next Level", glass "Restart", tertiary "Exit" |
+| Buttons | stacked | Success "Next Level", glass "Restart", then one row of two equal tertiary buttons "Top 10" and "Exit" (Exit alone, centred, when the top 10 is not available) |
 
 The **score row** follows the game's scoring (the points earned during play, minus 3 per unused section, never below 0). Three equal columns, each a `label.md` caption in `text.secondary` above its value:
 
@@ -323,7 +324,7 @@ Values use the device's digit grouping. Each column is one screen-reader item. P
 | Headline | `display.xl` `text.primary` | "Leaked!" |
 | Message | `body.md` `text.secondary` | "The pipe is leaking. Level lost." |
 | Score | one centred column | "SCORE" caption in `label.md` `text.secondary`, value in `numeric.lg` `brass.300` |
-| Buttons | stacked | Primary "Restart", tertiary "Exit" |
+| Buttons | stacked | Primary "Restart", then one row of two equal tertiary buttons "Top 10" and "Exit" (Exit alone, centred, when the top 10 is not available) |
 
 "Restart" and "Exit" are named after what they do in the game (Exit goes to the main menu). Exit is tertiary, not destructive: leaving after a finished attempt loses nothing.
 
@@ -335,7 +336,7 @@ The game is landscape only and runs down to 640 × 360 dp, where one tall column
 2. If that height fits in the window height minus 2 × 16 dp gutter, use **Regular**; otherwise use **Compact**. The choice holds for the dialog's lifetime, so the tally never flips the layout.
 3. In Compact, if the information column is still taller than the space it has (for example 130 % font on a 360 dp screen), that column scrolls vertically and the buttons column stays fully visible.
 
-**Regular**: one centred column, max 360 dp wide, 24 dp padding, the elements in the order of the tables above, large buttons (56 dp face + 4 dp lip) stacked full width with 12 dp spacing, the tertiary Exit a 48 dp text button.
+**Regular**: one centred column, max 360 dp wide, 24 dp padding, the elements in the order of the tables above, large buttons (56 dp face + 4 dp lip) stacked full width with 12 dp spacing, the tertiary Top 10 and Exit two 48 dp text buttons side by side in the last row. Sharing that row keeps every height in the table below unchanged.
 
 ```
             Win                                Leak
@@ -350,9 +351,9 @@ The game is landscape only and runs down to 640 × 360 dp, where one tall column
 │ │       Next Level       │ │    │ ┌────────────────────────┐ │
 │ └────────────────────────┘ │    │ │        Restart         │ │
 │ ┌────────────────────────┐ │    │ └────────────────────────┘ │
-│ │        Restart         │ │    │            Exit            │
+│ │        Restart         │ │    │    Top 10        Exit      │
 │ └────────────────────────┘ │    └────────────────────────────┘
-│            Exit            │
+│    Top 10        Exit      │
 └────────────────────────────┘
 ```
 
@@ -360,7 +361,7 @@ The game is landscape only and runs down to 640 × 360 dp, where one tall column
 
 - Left, the information (weight 1, content centred, scrolls if needed): the eyebrow; the headline in `display.lg` instead of `display.xl`. Win: "New best!" in the message's place or nothing (the message line is dropped), stars 32 dp. Leak: the splash at 48 dp beside the headline, the message in `body.sm`. Then the score row.
 - A 1 dp `line.subtle` vertical divider, 24 dp from each column.
-- Right, the buttons (fixed 200 dp wide, vertically centred): the same buttons stacked, medium (48 dp face + 4 dp lip) with 12 dp spacing, Exit a 48 dp text button.
+- Right, the buttons (fixed 200 dp wide, vertically centred): the same buttons stacked, medium (48 dp face + 4 dp lip) with 12 dp spacing, Top 10 and Exit two 48 dp text buttons of 100 dp each in the last row.
 
 ```
                                Win
@@ -371,14 +372,14 @@ The game is landscape only and runs down to 640 × 360 dp, where one tall column
 │  POINTS     PENALTY     SCORE    │  ┌───────────────┐  │
 │   120         −12        108     │  │    Restart    │  │
 │                                  │  └───────────────┘  │
-│                                  │        Exit         │
+│                                  │   Top 10    Exit    │
 └──────────────────────────────────┴─────────────────────┘
                                Leak
 ┌──────────────────────────────────┬─────────────────────┐
 │             LEVEL 7              │  ┌───────────────┐  │
 │        (splash) Leaked!          │  │    Restart    │  │
 │ The pipe is leaking. Level lost. │  └───────────────┘  │
-│              SCORE               │        Exit         │
+│              SCORE               │   Top 10    Exit    │
 │               85                 │                     │
 └──────────────────────────────────┴─────────────────────┘
 ```
@@ -395,6 +396,86 @@ Heights at 100 % font (a text box is its size × line height; a button is face +
 | Compact leak, buttons | 48 + 52 + 12 + 48 | ≈ 160 dp |
 
 On a 640 × 360 dp screen there is 360 − 32 = 328 dp: both Regular layouts are too tall, so phones in landscape get Compact, and every Compact column fits within 328 dp. On a 1280 × 800 dp tablet (768 dp available) both dialogs use Regular.
+
+#### Top 10 dialog
+
+The global top 10 of the level, from the Leak Out score server. It opens from the pause dialog during play and from the win and leak dialogs after an attempt.
+
+**Backdrop.** The opaque pause backdrop (the `surface.abyss` → `surface.deep` diagonal gradient over the whole screen), so neither the game nor the dialog it came from shows through. Opened from the pause dialog, the backdrop is already there and stays put; opened from a result dialog, it fades in over `motion.quick`. A tap on it does nothing. Closing returns to the dialog it came from at once.
+
+**Panel.** Level 3 floating panel, `radius.lg`, `surface.base`, 1 dp `line.highlight` top edge, no outline, 24 dp padding.
+
+| Element | Style | Notes |
+|---------|-------|-------|
+| Eyebrow | `display.xs` `liquid.300` | "LEVEL 7" |
+| Title | `display.lg` `text.primary`, 24 dp `trophy` icon in `brass.300` before it, 8 dp apart | "Top 10" |
+| Close | icon button (5.1): 48 dp glass circle, 24 dp `close` icon | Top right, aligned with the title block. Screen reader "Close" |
+| List | rows, 12 dp below the header | See below; the header stays fixed when the list scrolls |
+
+**Rows.** 40 dp high, 12 dp horizontal padding, separated by 1 dp `line.subtle` lines.
+
+| Column | Style | Notes |
+|--------|-------|-------|
+| Rank | 32 dp wide, `numeric.md`, left aligned | Ranks 1–3 in `brass.300`, 4–10 in `text.secondary` |
+| Name | `body.md` `text.primary`, one line, ellipsized | The display name from the server. The player's own row adds "YOU" in `display.xs` `liquid.300`, 8 dp after the name, which never ellipsizes |
+| Score | `numeric.md` `text.primary`, right aligned, fixed-width digits | Uses the device's digit grouping ("1,450") |
+
+The player's own row has a `liquid.tint` fill, a 1 dp `liquid.500` border and `radius.sm`, and no separator lines touching it. Each row is one screen-reader item: "Rank 4, Ada, 1,450 points", with ", your score" added on the own row.
+
+**States.** Loading, empty, signed out and error replace the rows in the same space, so the panel does not change size when the scores arrive. Each is a centred column: a 40 dp icon or indicator, 12 dp, a message in `body.md` `text.secondary` (centred, max 280 dp wide, up to two lines), and for some a medium glass button 16 dp below.
+
+| State | Indicator | Message | Button |
+|-------|-----------|---------|--------|
+| Loading | 32 dp indeterminate ring, 3 dp stroke, `liquid.500` on a `line.subtle` track | "Loading scores…" | none |
+| Empty | `trophy` in `text.muted` | "No scores yet. Win this level to be the first on the board." | none |
+| Signed out | `trophy` in `text.muted` | "Sign in to Google Play Games to see the top 10." | glass "Sign In"; left out when Play Games is not available, the message stays |
+| Error | `warning` in `leak.500` | "Couldn't load the scores. Check your connection and try again." | glass "Try Again" |
+
+A level with fewer than 10 scores shows only those rows, top aligned; the list space keeps its size.
+
+**Layouts.** Like the result dialogs, the top 10 picks a layout by measuring the Regular panel against the window height minus 2 × 16 dp, once per window size and font scale.
+
+- **Regular**: max 360 dp wide, one column of 10 rows.
+- **Compact**: max 600 dp wide, two columns of 5 rows (ranks 1–5 left, 6–10 right), 24 dp apart with a 1 dp `line.subtle` vertical divider between them. The screen reader still reads 1 to 10 in order. When the rows still do not fit (a large font scale), both columns scroll together under the fixed header.
+
+The own row is marked `▐ ▌` in the sketches.
+
+```
+              Regular
+┌──────────────────────────────────┐
+│ LEVEL 7                      (×) │
+│ (trophy) Top 10                  │
+│  1  Ada                    2,140 │
+│  2  Pipewizard             1,980 │
+│  3  Sam                    1,450 │
+│▐ 4  Jamie  YOU             1,300▌│
+│  5  Fleur                  1,210 │
+│  6  Mo                     1,120 │
+│  7  Linde                    990 │
+│  8  Kees                     870 │
+│  9  Joy                      640 │
+│ 10  Ravi                     510 │
+└──────────────────────────────────┘
+
+                          Compact
+┌─────────────────────────────────────────────────────────┐
+│ LEVEL 7                                             (×) │
+│ (trophy) Top 10                                         │
+│  1  Ada              2,140  │   6  Mo               1,120 │
+│  2  Pipewizard       1,980  │   7  Linde              990 │
+│  3  Sam              1,450  │   8  Kees               870 │
+│▐ 4  Jamie  YOU       1,300▌ │   9  Joy                640 │
+│  5  Fleur            1,210  │  10  Ravi               510 │
+└─────────────────────────────────────────────────────────┘
+```
+
+| Layout | Sum (dp) | Height |
+|--------|----------|--------|
+| Regular | 48 padding + 52 header (17 eyebrow + 4 + 31 title) + 12 + 10 × 40 rows | ≈ 512 dp |
+| Compact | 48 + 52 + 12 + 5 × 40 rows | ≈ 312 dp |
+| A state, in either layout | 40 indicator + 12 + 48 message + 16 + 52 button | ≈ 168 dp, inside the 200 dp (Compact) or 400 dp (Regular) list space |
+
+On a 640 × 360 dp screen (328 dp available) the top 10 uses Compact and all ten rows are visible without scrolling; on a 1280 × 800 dp tablet it uses Regular.
 
 ### 5.7 Toast
 
@@ -573,6 +654,8 @@ At the 44 dp minimum cell a square is about 3.2 dp; the 6 × 6 checker was check
 - **Leak**: droplet burst, board shakes 2 dp for 200 ms, then the dialog pops in after 500 ms so the player sees where it went wrong.
 - **Missed mandatory section**: when the liquid reaches the finish with a mandatory section unused, the leak spurt comes out of the finish's open side, and every unused mandatory tile pulses twice in `leak.500` during the 1 s before the dialog: a fill at up to 35 % and a 3 dp edge, alpha `(1 − cos(4π t / 1 s)) / 2`. Game time, so it freezes on pause.
 - **Dialog entry** (win, leak and play menu, 5.6): the scrim fades from 0 to its 72 % over `motion.quick` (160 ms ease-out) while the panel scales 0.92 → 1 with `motion.pop`. Closing is immediate.
+- **Top 10 entry** (5.6): the panel scales 0.92 → 1 with `motion.pop`. Opened from a result dialog, the opaque backdrop fades in over `motion.quick` at the same time; opened from the pause dialog it is already shown and does not change. Closing is immediate.
+- **Top 10 rows** (5.6): when the scores arrive, the loading state is replaced and the rows fade in from 0 to 100 % while rising 8 dp, each over `motion.quick`, starting 30 ms apart in rank order (the last starts 270 ms after the first). A state that replaces the list (empty, signed out, error) cross-fades over `motion.quick`.
 - **Leak splash** (leak dialog, 5.6): when the dialog opens, 6 droplets in `liquid.500` with `liquid.glow` highlights fly out of a `leak.500` centre blob towards the edge of the splash box over 600 ms ease-out, once, and rest there. It does not loop.
 - **Tip entry** (5.9): the scrim with its spotlight fades from 0 to 72 % over `motion.quick` while the callout card scales 0.92 → 1 with `motion.pop`, as a dialog does. The glow ring fades in with the scrim, then pulses on `motion.pulse`. Closing the last tip fades the scrim and card out over `motion.quick`.
 - **Tip step change** (5.9): the spotlight cut-out and glow ring move and resize from the old target to the new one with `motion.settle`; the card moves to its new place with `motion.settle` while its content cross-fades over `motion.quick`. When the field has to pan to show the target, the pan runs first with `motion.settle`, then the spotlight moves.
@@ -584,7 +667,7 @@ Progress is a 0–1 value per segment from the engine. The renderer clips the li
 
 ### 7.4 Reduced motion
 
-When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs and the play menu fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). The pause backdrop appears at full opacity at once and the pause panel fades in over 160 ms without the scale. The stack pieces do not accelerate, bounce or stagger: they all slide to their new slot together over 160 ms ease-out, and the new top piece fades in in its slot over 160 ms. Liquid fill and the win tally are gameplay, so they are unaffected.
+When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs and the play menu fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). The pause backdrop appears at full opacity at once and the pause panel fades in over 160 ms without the scale. The top 10 backdrop also appears at once and its panel fades in over 160 ms without the scale; its rows all fade in together over 160 ms without rising or staggering, and the loading ring is a still quarter arc instead of spinning. The stack pieces do not accelerate, bounce or stagger: they all slide to their new slot together over 160 ms ease-out, and the new top piece fades in in its slot over 160 ms. Liquid fill and the win tally are gameplay, so they are unaffected.
 
 ---
 

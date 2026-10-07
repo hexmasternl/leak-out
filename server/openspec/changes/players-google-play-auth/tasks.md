@@ -14,7 +14,7 @@
 ## 3. Google Play Games client and access tokens
 
 - [x] 3.1 Implement `GooglePlayGamesClient` as a typed `HttpClient` (token exchange at `oauth2.googleapis.com/token`, then `games/v1/players/me`) bound to `GooglePlayGamesOptions` (`ClientId`, `ClientSecret`), with `GooglePlayGamesClientTests` using a fake `HttpMessageHandler` for success, `invalid_grant` and 5xx, and verify the tests pass
-- [ ] 3.2 Implement `JwtAccessTokenIssuer` bound to `AccessTokenOptions` (`Issuer` `leak-out-server`, `Audience` `leak-out-game`, `SigningKey` ≥ 32 bytes, `Lifetime` 1 hour, validated on start) with `JwtAccessTokenIssuerTests` checking claims and expiry, and verify the tests pass
+- [x] 3.2 Implement `JwtAccessTokenIssuer` bound to `AccessTokenOptions` (`Issuer` `leak-out-server`, `Audience` `leak-out-game`, `SigningKey` ≥ 32 bytes, `Lifetime` 1 hour, validated on start) with `JwtAccessTokenIssuerTests` checking claims and expiry, and verify the tests pass
 
 ## 4. Sign-in feature slice
 

@@ -29,7 +29,7 @@
 
 ## 6. Documentation
 
-- [ ] 6.1 Add an "Observability" section to `README.md`: where traces, metrics and logs appear locally (Aspire dashboard) and in Azure (Application Insights, role `hexmaster-leakout-api`, `application_Version`), the custom span and metric names, and the privacy rule. Verify every name in it matches the constants in `PlayersMetrics` and `ScoresMetrics`.
+- [x] 6.1 Add an "Observability" section to `README.md`: where traces, metrics and logs appear locally (Aspire dashboard) and in Azure (Application Insights, role `hexmaster-leakout-api`, `application_Version`), the custom span and metric names, and the privacy rule. Verify every name in it matches the constants in `PlayersMetrics` and `ScoresMetrics`.
 
 ## 7. Verification
 

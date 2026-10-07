@@ -3,7 +3,7 @@
 ## 1. Migrate at startup in every environment
 
 - [x] 1.1 In `src/HexMaster.LeakOut.Api/Program.cs`, register `PlayersDatabaseMigrator` and `ScoresDatabaseMigrator` without the `IsDevelopment()` guard, and update both migrators' XML comments so they no longer say production migrations are a deployment step. Verify with a new `HexMaster.LeakOut.Api.Tests` test that hosts `Program` in `Production` (and in `Development`), captures the registered `IHostedService` descriptors before they are removed, and finds both migrators. The test must fail with the guard still in place.
-- [ ] 1.2 Verify locally against empty databases: delete the `postgres` data volume (or point the API at a fresh database), start the API with `ASPNETCORE_ENVIRONMENT=Production` and the Aspire connection strings, and check that `players`, `level_scores` and both `__EFMigrationsHistory` tables exist before `/alive` answers.
+- [x] 1.2 Verify locally against empty databases: delete the `postgres` data volume (or point the API at a fresh database), start the API with `ASPNETCORE_ENVIRONMENT=Production` and the Aspire connection strings, and check that `players`, `level_scores` and both `__EFMigrationsHistory` tables exist before `/alive` answers.
 
 ## 2. Documentation
 

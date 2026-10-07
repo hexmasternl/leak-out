@@ -16,22 +16,24 @@ Resource names are `<namePrefix>-<kind>-<uniqueString(resourceGroup().id)>`, so 
 
 ## Parameters
 
-| Parameter | Secure | Default | Source in the pipeline |
-| --- | --- | --- | --- |
-| `resourceGroupName` | | `rg-leakout` | `main.bicepparam` |
-| `location` | | `westeurope` (in `main.bicepparam`) | `main.bicepparam` |
-| `namePrefix` | | `leakout` | `main.bicepparam` |
-| `maxReplicas` | | `3` | `main.bicepparam` |
-| `imageName` | | | Full image reference with tag, e.g. `<registry>.azurecr.io/hexmaster-leakout-api:<sha>` |
-| `registryServer` | | | `ACR_LOGIN_SERVER` |
-| `registryUsername` | | | `ACR_LOGIN_USERNAME` |
-| `registryPassword` | yes | | `ACR_LOGIN_PASSWORD` |
-| `postgresAdminPassword` | yes | | PostgreSQL admin password (login `leakoutadmin`) |
-| `googleClientId` | yes | | `GOOGLE_CLIENT_ID`: the **web** OAuth client id of the Google Cloud project linked to the game (the game's `serverClientId`) |
-| `googleClientSecret` | yes | | `GOOGLE_CLIENT_SECRET` |
-| `authSigningKey` | yes | | `GOOGLE_SIGNING_KEY`: the API's own JWT signing key, at least 32 characters; a shorter key fails the deployment before anything changes |
+`main.bicepparam` sets the non-secret values and reads everything else from environment variables named after the GitHub secrets, so no value is stored in the repository or passed on the command line:
 
-`main.bicepparam` holds no secrets and does not assign the parameters without a default, so it only compiles together with the inline `--parameters` of the deployment command below. To check the templates on their own, build `main.bicep` (`az bicep build --file infrastructure/main.bicep`).
+| Parameter | Secure | Value in `main.bicepparam` |
+| --- | --- | --- |
+| `resourceGroupName` | | `rg-leakout` |
+| `location` | | `westeurope` |
+| `namePrefix` | | `leakout` |
+| `maxReplicas` | | `3` |
+| `imageName` | | `API_IMAGE`: full image reference with tag, e.g. `<registry>.azurecr.io/hexmaster-leakout-api:<sha>` |
+| `registryServer` | | `ACR_LOGIN_SERVER` |
+| `registryUsername` | | `ACR_LOGIN_USERNAME` |
+| `registryPassword` | yes | `ACR_LOGIN_PASSWORD` |
+| `postgresAdminPassword` | yes | `POSTGRES_ADMIN_PASSWORD`: PostgreSQL admin password (login `leakoutadmin`) |
+| `googleClientId` | yes | `GOOGLE_CLIENT_ID`: the **web** OAuth client id of the Google Cloud project linked to the game (the game's `serverClientId`) |
+| `googleClientSecret` | yes | `GOOGLE_CLIENT_SECRET` |
+| `authSigningKey` | yes | `GOOGLE_SIGNING_KEY`: the API's own JWT signing key, at least 32 characters |
+
+A missing environment variable (`BCP427`) or a signing key shorter than 32 characters fails the deployment while the parameters are compiled, before anything is sent to Azure. To check the templates without the variables, build `main.bicep` (`az bicep build --file infrastructure/main.bicep`).
 
 The container app gets its configuration as container app secrets, exposed as environment variables with the same keys the Aspire AppHost uses locally:
 
@@ -71,39 +73,29 @@ The container app gets its configuration as container app secrets, exposed as en
 
 ## Manual deployment
 
-From the repository root, logged in with `az login` to the target subscription. Keep the secrets in shell variables so they do not end up in the shell history:
+From the repository root, logged in with `az login` to the target subscription. Export the environment variables `main.bicepparam` reads; `read -s` keeps the secrets out of the shell history:
 
 ```bash
 az account set --subscription <subscription-id>
 
-read -rsp "Registry password: " ACR_LOGIN_PASSWORD; echo
-read -rsp "PostgreSQL admin password: " POSTGRES_ADMIN_PASSWORD; echo
-read -rsp "Google client id: " GOOGLE_CLIENT_ID; echo
-read -rsp "Google client secret: " GOOGLE_CLIENT_SECRET; echo
-read -rsp "Signing key (>= 32 chars): " GOOGLE_SIGNING_KEY; echo
-
-PARAMS=(
-  imageName="<registry>.azurecr.io/hexmaster-leakout-api:<tag>"
-  registryServer="<registry>.azurecr.io"
-  registryUsername="<registry-user>"
-  registryPassword="$ACR_LOGIN_PASSWORD"
-  postgresAdminPassword="$POSTGRES_ADMIN_PASSWORD"
-  googleClientId="$GOOGLE_CLIENT_ID"
-  googleClientSecret="$GOOGLE_CLIENT_SECRET"
-  authSigningKey="$GOOGLE_SIGNING_KEY"
-)
+export API_IMAGE="<registry>.azurecr.io/hexmaster-leakout-api:<tag>"
+export ACR_LOGIN_SERVER="<registry>.azurecr.io"
+export ACR_LOGIN_USERNAME="<registry-user>"
+read -rsp "Registry password: " ACR_LOGIN_PASSWORD; echo; export ACR_LOGIN_PASSWORD
+read -rsp "PostgreSQL admin password: " POSTGRES_ADMIN_PASSWORD; echo; export POSTGRES_ADMIN_PASSWORD
+read -rsp "Google client id: " GOOGLE_CLIENT_ID; echo; export GOOGLE_CLIENT_ID
+read -rsp "Google client secret: " GOOGLE_CLIENT_SECRET; echo; export GOOGLE_CLIENT_SECRET
+read -rsp "Signing key (>= 32 chars): " GOOGLE_SIGNING_KEY; echo; export GOOGLE_SIGNING_KEY
 
 # Preview the changes
 az deployment sub what-if --location westeurope \
   --template-file infrastructure/main.bicep \
-  --parameters infrastructure/main.bicepparam \
-  --parameters "${PARAMS[@]}"
+  --parameters infrastructure/main.bicepparam
 
 # Deploy
 az deployment sub create --location westeurope --name "leakout-$(date +%Y%m%d%H%M%S)" \
   --template-file infrastructure/main.bicep \
   --parameters infrastructure/main.bicepparam \
-  --parameters "${PARAMS[@]}" \
   --query properties.outputs
 ```
 

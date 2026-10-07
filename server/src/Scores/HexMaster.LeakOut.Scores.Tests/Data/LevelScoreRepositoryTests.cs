@@ -107,6 +107,84 @@ public sealed class LevelScoreRepositoryTests(PostgreSqlFixture database)
         await Assert.ThrowsAsync<DbUpdateException>(() => dbContext.SaveChangesAsync(TestContext.Current.CancellationToken));
     }
 
+    [Fact]
+    public async Task GetTopAsync_RanksByScoreThenEarliestThenPlayer()
+    {
+        var level = UniqueLevel();
+        var low = PlayerId(1);
+        var high = PlayerId(2);
+        var tieLater = PlayerId(3);
+        var tieEarlierB = PlayerId(5);
+        var tieEarlierA = PlayerId(4);
+        await SubmitAsync(low, level, 100, Now);
+        await SubmitAsync(high, level, 900, Now);
+        await SubmitAsync(tieLater, level, 500, Now.AddDays(1));
+        await SubmitAsync(tieEarlierB, level, 500, Now);
+        await SubmitAsync(tieEarlierA, level, 500, Now);
+
+        var top = await GetTopAsync(level, 10);
+
+        Assert.Equal(
+            [
+                new RankedLevelScore(1, high, 900),
+                new RankedLevelScore(2, tieEarlierA, 500),
+                new RankedLevelScore(3, tieEarlierB, 500),
+                new RankedLevelScore(4, tieLater, 500),
+                new RankedLevelScore(5, low, 100),
+            ],
+            top);
+    }
+
+    [Fact]
+    public async Task GetTopAsync_MoreScoresThanCount_ReturnsOnlyTheFirstCount()
+    {
+        var level = UniqueLevel();
+        for (var i = 1; i <= 25; i++)
+        {
+            await SubmitAsync(PlayerId(i), level, i * 10, Now);
+        }
+
+        var top = await GetTopAsync(level, 10);
+
+        Assert.Equal(Enumerable.Range(1, 10), top.Select(s => s.Position));
+        Assert.Equal(Enumerable.Range(16, 10).Reverse().Select(i => i * 10), top.Select(s => s.Score));
+    }
+
+    [Fact]
+    public async Task GetTopAsync_LevelWithoutScores_ReturnsEmpty()
+    {
+        await SubmitAsync(PlayerId(1), UniqueLevel(), 100, Now);
+
+        Assert.Empty(await GetTopAsync(UniqueLevel(), 10));
+    }
+
+    [Fact]
+    public async Task GetTopAsync_NegativeCount_ThrowsArgumentOutOfRangeException()
+    {
+        await using var dbContext = database.CreateDbContext();
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => new LevelScoreRepository(dbContext).GetTopAsync(1, -1, TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>A level no other test writes to, since rankings span all players of a level.</summary>
+    private static int UniqueLevel() => Random.Shared.Next(1_000, int.MaxValue);
+
+    /// <summary>Player ids whose order is the same in .NET and in PostgreSQL's uuid comparison.</summary>
+    private static Guid PlayerId(int n) => Guid.Parse($"00000000-0000-0000-0000-{n:D12}");
+
+    private async Task SubmitAsync(Guid userId, int level, int score, DateTimeOffset achievedAt)
+    {
+        await using var dbContext = database.CreateDbContext();
+        await new LevelScoreRepository(dbContext).SubmitAsync(userId, level, score, achievedAt, TestContext.Current.CancellationToken);
+    }
+
+    private async Task<IReadOnlyList<RankedLevelScore>> GetTopAsync(int level, int count)
+    {
+        await using var dbContext = database.CreateDbContext();
+        return await new LevelScoreRepository(dbContext).GetTopAsync(level, count, TestContext.Current.CancellationToken);
+    }
+
     private async Task<LevelScoreSubmission> SubmitAsync(int level, int score, DateTimeOffset achievedAt)
     {
         await using var dbContext = database.CreateDbContext();

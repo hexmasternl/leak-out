@@ -16,12 +16,12 @@
 ## 3. Deploy workflow
 
 - [x] 3.0 Add `GitVersion.yml` (`workflow: TrunkBased/preview1`) and set `ContainerRegistry` (`nvv54gsk4pteu.azurecr.io`), `ContainerRepository` (`leak-out/game-server-api`) and `ContainerUser` (`app`) in `HexMaster.LeakOut.Api.csproj`; verify GitVersion yields a release version on `main`, and a local `dotnet publish /t:PublishContainer` to an archive produces an image whose user is `app`
-- [ ] 3.1 Add `.github/workflows/deploy.yml` (push to `main`, `workflow_dispatch`, `concurrency: deploy-production`) with `build-test` and a `publish` job that runs GitVersion, logs in to `nvv54gsk4pteu.azurecr.io` with `ACR_LOGIN_USERNAME` and `ACR_LOGIN_PASSWORD`, runs `dotnet publish /t:PublishContainer` tagged with the GitVersion `SemVer`, and fails when the pushed image's user is root; verify with `workflow_dispatch` that `leak-out/game-server-api:<version>` appears in the registry
-- [ ] 3.2 Add the `deploy` job (environment `production`, OIDC `azure/login` with `AZURE_PROD_CLIENT_ID`, `AZURE_PROD_TENANT_ID` and `AZURE_PROD_SUBSCRIPTION_ID`, `az deployment sub create` of `infrastructure/main.bicep` with the image and secure parameters, `/alive` smoke test); verify a manual run creates or updates the resource group and the container app serves the new tag
+- [x] 3.1 Add `.github/workflows/deploy.yml` (push to `main`, `workflow_dispatch`, `concurrency: deploy-production`) with `build-test` and a `publish` job that runs GitVersion, logs in to `nvv54gsk4pteu.azurecr.io` with `ACR_LOGIN_USERNAME` and `ACR_LOGIN_PASSWORD`, runs `dotnet publish /t:PublishContainer` tagged with the GitVersion `SemVer`, and fails when the pushed image's user is root; verify with `workflow_dispatch` that `leak-out/game-server-api:<version>` appears in the registry
+- [x] 3.2 Add the `deploy` job (environment `production`, OIDC `azure/login` with `AZURE_PROD_CLIENT_ID`, `AZURE_PROD_TENANT_ID` and `AZURE_PROD_SUBSCRIPTION_ID`, `az deployment sub create` of `infrastructure/main.bicep` with the image and secure parameters, `/alive` smoke test); verify a manual run creates or updates the resource group and the container app serves the new tag
 - [ ] 3.3 Pass `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and `GOOGLE_SIGNING_KEY` to the deployment as `googleClientId`, `googleClientSecret` and `authSigningKey` (as step `env:` variables that `main.bicepparam` reads), with a guard that fails the job when one is empty; verify the container app shows the three secrets and `POST /api/players/sessions` with a real server auth code returns a token
 - [x] 3.4 Document the secrets (the existing `ACR_LOGIN_USERNAME`/`ACR_LOGIN_PASSWORD`, `AZURE_PROD_*` and `GOOGLE_*` secrets, and the PostgreSQL admin password still to be created), the `production` environment and the federated credential subject in `README.md`; verify every secret the workflow reads is listed
 
 ## 4. Integration checks
 
 - [ ] 4.1 Verify a failing test on `main` stops the run before `publish` and `deploy`
-- [ ] 4.2 Verify no secret value appears in the logs of a full deploy run
+- [x] 4.2 Verify no secret value appears in the logs of a full deploy run

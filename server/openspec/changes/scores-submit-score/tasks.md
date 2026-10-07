@@ -19,9 +19,9 @@
 
 ## 4. Persistence
 
-- [ ] 4.1 Add `ScoresDbContext` with the `level_scores` configuration (columns, check constraints, unique `(user_id, level)`, index `(level, score DESC, achieved_at)`) and verify the model builds
-- [ ] 4.2 Add the initial EF Core migration and verify the generated SQL creates the table, the constraints and both indexes
-- [ ] 4.3 Implement `LevelScoreRepository.SubmitAsync` with the `INSERT ... ON CONFLICT (user_id, level) DO UPDATE ... WHERE level_scores.score < EXCLUDED.score` upsert and the fallback read; verify with an integration test against PostgreSQL (first, higher, equal, lower, and two concurrent submissions leaving one row with the highest score)
+- [x] 4.1 Add `ScoresDbContext` with the `level_scores` configuration (columns, check constraints, unique `(user_id, level)`, index `(level, score DESC, achieved_at)`) and verify the model builds
+- [x] 4.2 Add the initial EF Core migration and verify the generated SQL creates the table, the constraints and both indexes
+- [x] 4.3 Implement `LevelScoreRepository.SubmitAsync` with the `INSERT ... ON CONFLICT (user_id, level) DO UPDATE ... WHERE level_scores.score < EXCLUDED.score` upsert and the fallback read; verify with an integration test against PostgreSQL (first, higher, equal, lower, and two concurrent submissions leaving one row with the highest score)
 - [ ] 4.4 Add `AddScoresPostgreSql()` (`AddNpgsqlDbContext<ScoresDbContext>("scoresdb")` plus the repository) and apply migrations at startup in Development; verify the API starts against an empty database and creates `level_scores`
 
 ## 5. Endpoint and orchestration

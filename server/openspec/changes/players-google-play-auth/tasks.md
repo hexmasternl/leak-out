@@ -47,4 +47,4 @@
 
 ## 9. Integration check
 
-- [ ] 9.1 Run all tests with coverage (`dotnet test --solution src/leak-out-server.slnx --coverage`) and verify every test passes and merged line coverage is at least 80%
+- [x] 9.1 Run all tests with coverage (`dotnet test --solution src/leak-out-server.slnx --coverage`) and verify every test passes and merged line coverage is at least 80%

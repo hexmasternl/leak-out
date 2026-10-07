@@ -3,19 +3,25 @@ using HexMaster.LeakOut.Api.Endpoints;
 using HexMaster.LeakOut.Players;
 using HexMaster.LeakOut.Players.Data.PostgreSQL;
 using HexMaster.LeakOut.Players.Observability;
+using HexMaster.LeakOut.Scores;
+using HexMaster.LeakOut.Scores.Data.PostgreSQL;
+using HexMaster.LeakOut.Scores.Observability;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 builder.Services.AddOpenTelemetry()
-    .WithMetrics(metrics => metrics.AddMeter(PlayersMetrics.Name))
-    .WithTracing(tracing => tracing.AddSource(PlayersMetrics.Name));
+    .WithMetrics(metrics => metrics.AddMeter(PlayersMetrics.Name, ScoresMetrics.Name))
+    .WithTracing(tracing => tracing.AddSource(PlayersMetrics.Name, ScoresMetrics.Name));
 
 builder.Services.AddPlayersModule();
 builder.AddPlayersPostgreSqlData();
+builder.Services.AddScoresModule();
+builder.AddScoresPostgreSqlData();
 if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddHostedService<PlayersDatabaseMigrator>();
+    builder.Services.AddHostedService<ScoresDatabaseMigrator>();
 }
 
 builder.Services.AddAccessTokenAuthentication();
@@ -41,6 +47,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapPlayerEndpoints();
+app.MapScoreEndpoints();
 
 app.Run();
 

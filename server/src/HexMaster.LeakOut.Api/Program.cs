@@ -48,6 +48,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapPlayerEndpoints();
 app.MapScoreEndpoints();
+app.MapLevelScoreEndpoints();
 
 app.Run();
 

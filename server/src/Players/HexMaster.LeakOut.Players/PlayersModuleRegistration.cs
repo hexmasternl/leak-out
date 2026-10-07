@@ -13,7 +13,7 @@ public static class PlayersModuleRegistration
 {
     /// <summary>
     /// Registers the Players module: its handlers, the Google Play Games client, the access token
-    /// issuer and the user resolver. The <see cref="IPlayerRepository"/> is registered by the data project.
+    /// issuer, the user resolver and the player profile service. The <see cref="IPlayerRepository"/> is registered by the data project.
     /// </summary>
     public static IServiceCollection AddPlayersModule(this IServiceCollection services)
     {
@@ -34,6 +34,7 @@ public static class PlayersModuleRegistration
         services.AddHttpClient<IGooglePlayGamesClient, GooglePlayGamesClient>();
         services.AddSingleton<IAccessTokenIssuer, JwtAccessTokenIssuer>();
         services.AddScoped<IUserResolver, UserResolver>();
+        services.AddScoped<IPlayerProfileService, PlayerProfileService>();
 
         services.AddScoped<ICommandHandler<SignInPlayerCommand, SessionDto>, SignInPlayerCommandHandler>();
 

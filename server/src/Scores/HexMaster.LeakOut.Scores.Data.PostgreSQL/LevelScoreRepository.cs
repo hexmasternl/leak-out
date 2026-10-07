@@ -41,4 +41,25 @@ public sealed class LevelScoreRepository(ScoresDbContext dbContext) : ILevelScor
 
         return new LevelScoreSubmission(bestScore, IsNewBest: false);
     }
+
+    /// <remarks>
+    /// Served by the <c>(level, score desc, achieved_at)</c> index. For the top N, numbering the
+    /// rows in memory equals <c>ROW_NUMBER() OVER (ORDER BY score DESC, achieved_at, user_id)</c>.
+    /// </remarks>
+    public async Task<IReadOnlyList<RankedLevelScore>> GetTopAsync(int level, int count, CancellationToken ct)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
+
+        var rows = await dbContext.LevelScores
+            .AsNoTracking()
+            .Where(s => s.Level == level)
+            .OrderByDescending(s => s.Score)
+            .ThenBy(s => s.AchievedAt)
+            .ThenBy(s => s.UserId)
+            .Take(count)
+            .Select(s => new { s.UserId, s.Score })
+            .ToListAsync(ct);
+
+        return rows.Select((row, index) => new RankedLevelScore(index + 1, row.UserId, row.Score)).ToList();
+    }
 }

@@ -107,6 +107,37 @@ public sealed class PlayerRepositoryTests : IAsyncLifetime
             () => new PlayerRepository(dbContext).AddAsync(SubjectId, new PlayerFaker().Generate(), TestContext.Current.CancellationToken));
     }
 
+    [Fact]
+    public async Task GetDisplayNamesAsync_ReturnsNamesOfKnownPlayersOnly()
+    {
+        var ann = new PlayerFaker("Ann").Generate();
+        var bob = new PlayerFaker("Bob").Generate();
+        await AddAsync("g-ann", ann);
+        await AddAsync("g-bob", bob);
+        await AddAsync("g-cy", new PlayerFaker("Cy").Generate());
+        var unknownId = Guid.CreateVersion7();
+
+        await using var dbContext = CreateDbContext();
+        var names = await new PlayerRepository(dbContext)
+            .GetDisplayNamesAsync([ann.Id, bob.Id, unknownId], TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, names.Count);
+        Assert.Equal("Ann", names[ann.Id]);
+        Assert.Equal("Bob", names[bob.Id]);
+        Assert.False(names.ContainsKey(unknownId));
+    }
+
+    [Fact]
+    public async Task GetDisplayNamesAsync_NoIds_ReturnsEmpty()
+    {
+        await AddAsync(SubjectId, new PlayerFaker().Generate());
+
+        await using var dbContext = CreateDbContext();
+        var names = await new PlayerRepository(dbContext).GetDisplayNamesAsync([], TestContext.Current.CancellationToken);
+
+        Assert.Empty(names);
+    }
+
     private async Task AddAsync(string subjectId, Player player)
     {
         await using var dbContext = CreateDbContext();

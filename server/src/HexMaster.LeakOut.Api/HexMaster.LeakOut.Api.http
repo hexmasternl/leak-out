@@ -25,4 +25,9 @@ Accept: application/json
   "score": 520
 }
 
+### Get the top 10 scores of a level, highest first; the signed-in player's entry has isCurrentPlayer = true.
+GET {{HexMaster.LeakOut.Api_HostAddress}}/api/levels/4/scores/top
+Authorization: Bearer {{signIn.response.body.$.accessToken}}
+Accept: application/json
+
 ###

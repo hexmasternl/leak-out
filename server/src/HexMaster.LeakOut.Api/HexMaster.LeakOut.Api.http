@@ -1,6 +1,17 @@
 @HexMaster.LeakOut.Api_HostAddress = http://localhost:5090
 
-GET {{HexMaster.LeakOut.Api_HostAddress}}/weatherforecast/
+### Sign in with a Google Play Games server auth code.
+# Get a fresh code from the game (GamesSignInClient.requestServerSideAccess); codes are single-use.
+# @name signIn
+POST {{HexMaster.LeakOut.Api_HostAddress}}/api/players/sessions
+Content-Type: application/json
 Accept: application/json
+
+{
+  "serverAuthCode": "4/0A...replace-with-a-fresh-server-auth-code"
+}
+
+### Protected endpoints take the returned access token as a bearer token, for example:
+# Authorization: Bearer {{signIn.response.body.$.accessToken}}
 
 ###

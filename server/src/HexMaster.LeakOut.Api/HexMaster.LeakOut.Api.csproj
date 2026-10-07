@@ -7,11 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\HexMaster.LeakOut.Aspire\HexMaster.LeakOut.Aspire.ServiceDefaults\HexMaster.LeakOut.Aspire.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Players\HexMaster.LeakOut.Players\HexMaster.LeakOut.Players.csproj" />
+    <ProjectReference Include="..\Players\HexMaster.LeakOut.Players.Data.PostgreSQL\HexMaster.LeakOut.Players.Data.PostgreSQL.csproj" />
   </ItemGroup>
 
 </Project>

@@ -3,7 +3,7 @@
 ## 1. ServiceDefaults: probe filter and exception recording
 
 - [x] 1.1 In `ServiceDefaults/Extensions.cs`, configure `AspNetCoreTraceInstrumentationOptions` through `builder.Services.Configure<...>`: `Filter` excludes `/health` and `/alive`, and `RecordException = true`. Switch to plain `AddAspNetCoreInstrumentation()`. Verify with new `ServiceDefaults.Tests` tests, with and without `APPLICATIONINSIGHTS_CONNECTION_STRING`, that the resolved options reject `/alive` and `/health`, accept `/api/scores` and have `RecordException` true.
-- [ ] 1.2 Add `DropOrphanDatabaseSpansProcessor` to ServiceDefaults and register it in `ConfigureOpenTelemetry()`, so the health checks' database spans (Npgsql spans without a parent) are not exported. Verify with `ServiceDefaults.Tests`: unit tests for root and child Npgsql spans and for other sources, and an in-memory-exporter test through `ConfigureOpenTelemetry()` showing a root Npgsql span is not exported while a child one is.
+- [x] 1.2 Add `DropOrphanDatabaseSpansProcessor` to ServiceDefaults and register it in `ConfigureOpenTelemetry()`, so the health checks' database spans (Npgsql spans without a parent) are not exported. Verify with `ServiceDefaults.Tests`: unit tests for root and child Npgsql spans and for other sources, and an in-memory-exporter test through `ConfigureOpenTelemetry()` showing a root Npgsql span is not exported while a child one is.
 
 ## 2. Test helpers
 

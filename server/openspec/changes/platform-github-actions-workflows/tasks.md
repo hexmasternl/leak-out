@@ -4,13 +4,13 @@
 
 - [ ] 1.1 Add `.github/workflows/build-test.yml` (reusable): setup .NET from `global.json`, restore, build, `dotnet test --solution` with Cobertura coverage and `CodeCoverage.settings.xml`; verify with `actionlint` and a run that all four test projects execute
 - [ ] 1.2 Provide PostgreSQL to the tests that need it (Testcontainers on the runner's Docker or a `postgres:17` service container, matching how the tests connect); verify the repository and migration tests run instead of being skipped
-- [ ] 1.3 Add the merge with `dotnet-coverage` and the gate step that writes the coverage percentage to the job summary and fails below 80% (exactly 80% passes); verify by running the step against a sample report at 0.7999 (fails) and 0.8000 (passes)
+- [x] 1.3 Add the merge with `dotnet-coverage` and the gate step that writes the coverage percentage to the job summary and fails below 80% (exactly 80% passes); verify by running the step against a sample report at 0.7999 (fails) and 0.8000 (passes)
 - [ ] 1.4 Upload the merged coverage report and test results as artifacts; verify they are attached to a run
 
 ## 2. Pull request workflow
 
 - [ ] 2.1 Add `.github/workflows/pull-request.yml` (`pull_request` into `development`, per-PR concurrency) calling `build-test.yml`; verify on a test pull request that the check `build-test / build-test` succeeds, and fails when a test is broken on purpose
-- [ ] 2.2 Add the `bicep` job (`az bicep build --file infrastructure/main.bicep`, success when `infrastructure/` does not exist yet); verify it fails on a broken template
+- [x] 2.2 Add the `bicep` job (`az bicep build --file infrastructure/main.bicep`, success when `infrastructure/` does not exist yet); verify it fails on a broken template
 - [ ] 2.3 Document the required checks and how to enable branch protection on `development` in `README.md`; verify the documented check names match the jobs
 
 ## 3. Deploy workflow

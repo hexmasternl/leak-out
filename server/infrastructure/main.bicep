@@ -3,13 +3,10 @@
 targetScope = 'subscription'
 
 @description('Name of the resource group that holds every resource; created when it does not exist.')
-param resourceGroupName string = 'rg-leakout'
+param resourceGroupName string = 'rg-leakout-prod-swe'
 
 @description('Azure region of the resource group and its resources.')
 param location string
-
-@description('Prefix of the resource names.')
-param namePrefix string = 'leakout'
 
 @description('Full image reference of the API including the tag.')
 param imageName string
@@ -55,7 +52,6 @@ module resources 'resources.bicep' = {
   scope: resourceGroup
   params: {
     location: location
-    namePrefix: namePrefix
     imageName: imageName
     registryServer: registryServer
     registryUsername: registryUsername

@@ -98,7 +98,9 @@ import nl.hexmaster.leakout.ui.theme.LeakOutColors
  * the game is silent. A replacement, the gap warning and a lost attempt vibrate through [haptics]
  * (spec `game-haptics`); without it nothing vibrates. Once the level complete dialog shows, the won
  * score goes to [scores] (spec `online-score-submission`) and the dialog shows how sending it goes;
- * without it nothing is sent (test play).
+ * without it nothing is sent (test play). With [topScores], the pause, level complete and level lost
+ * dialogs offer the level's global top 10 (spec `level-top-scores`); without it they show no Top 10
+ * button (test play, or a build without a score server).
  */
 @Composable
 fun GameScreen(
@@ -113,6 +115,7 @@ fun GameScreen(
     achievements: AchievementTracker? = null,
     haptics: Haptics? = null,
     scores: ScoreSubmissions? = null,
+    topScores: TopScoresAccess? = null,
 ) {
     // The display stays on for the whole game screen, its dialogs included.
     KeepScreenOn()
@@ -131,6 +134,8 @@ fun GameScreen(
     val showPauseDialog = session.select { showPauseDialog }
     val showLostDialog = session.select { showLostDialog }
     val showWinDialog = session.select { showWinDialog }
+    // Which dialog opened the top 10, or null while it is closed; a new attempt closes it.
+    var topScoresFrom by remember(session, attempt) { mutableStateOf<TopScoresOrigin?>(null) }
 
     // A new attempt starts the field fresh, a pause keeps it. The tips point at its cells.
     val fieldState = remember(attempt, currentLevel) { PlayingFieldState(currentLevel.grid, currentLevel.start.position) }
@@ -281,6 +286,7 @@ fun GameScreen(
                 session.abandonAttempt(achievements)
                 onExit()
             },
+            onTopScores = topScores?.let { { topScoresFrom = TopScoresOrigin.Pause } },
         )
     }
     if (showLostDialog) {
@@ -291,6 +297,7 @@ fun GameScreen(
             onExit = onExit,
             reason = session.select { (state.outcome as? Outcome.Lost)?.reason ?: LossReason.LEAK },
             unlocked = session.select { unlockedThisAttempt },
+            onTopScores = topScores?.let { { topScoresFrom = TopScoresOrigin.Result } },
         )
     }
     if (showWinDialog) {
@@ -308,10 +315,24 @@ fun GameScreen(
                 newBest = session.select { recordResult is RecordResult.NewHighscore },
                 unlocked = session.select { unlockedThisAttempt },
                 scorePost = session.select { scorePost },
+                onTopScores = topScores?.let { { topScoresFrom = TopScoresOrigin.Result } },
             )
         }
     }
+    // Last, so its window is above the dialog that opened it; closing returns to that dialog unchanged.
+    val origin = topScoresFrom
+    if (topScores != null && origin != null) {
+        TopScoresDialog(
+            level = currentLevel.id,
+            access = topScores,
+            fromPause = origin == TopScoresOrigin.Pause,
+            onClose = { topScoresFrom = null },
+        )
+    }
 }
+
+/** The dialog the top 10 was opened from: the pause dialog, or the level complete or level lost dialog. */
+private enum class TopScoresOrigin { Pause, Result }
 
 /**
  * The one-time tips (spec `game-play-onboarding`): looks at which are due at level start (once the

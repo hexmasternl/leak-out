@@ -40,6 +40,7 @@ object LevelCompleteTags {
     const val NEXT = "win_next"
     const val RESTART = "win_restart"
     const val EXIT = "win_exit"
+    const val TOP10 = "win_top10"
     const val NEW_BEST = "win_new_best"
     const val ACHIEVEMENTS = "win_achievements"
     const val LAYOUT_PREFIX = "win"
@@ -59,7 +60,8 @@ private typealias Tagger = Modifier.(String) -> Modifier
  * takes the place of the message once the tally is done. The achievements the win [unlocked] pop in
  * under the score row once the tally is done; the buttons never wait for them. The dialog uses the
  * Regular layout when it fits the window height and the Compact one otherwise. While the score is
- * sent to the score server ([scorePost]), the status dot shows in the top-left corner.
+ * sent to the score server ([scorePost]), the status dot shows in the top-left corner. With
+ * [onTopScores], a Top 10 button shares Exit's row and is enabled together with the other buttons.
  */
 @Composable
 fun LevelCompleteDialog(
@@ -73,6 +75,7 @@ fun LevelCompleteDialog(
     newBest: Boolean = false,
     unlocked: List<Achievement> = emptyList(),
     scorePost: StateFlow<ScorePostStatus>? = null,
+    onTopScores: (() -> Unit)? = null,
 ) {
     val paneName = stringResource(R.string.win_pane_title)
     ResultDialogWindow(
@@ -85,7 +88,7 @@ fun LevelCompleteDialog(
         measureKey = unlocked.isNotEmpty(),
         cornerOverlay = { scorePost?.let { ScorePostIndicator(it) } },
     ) { layout ->
-        LevelCompleteContent(layout, level, score, frame, hasNextLevel, onNextLevel, onRestart, onExit, newBest, unlocked)
+        LevelCompleteContent(layout, level, score, frame, hasNextLevel, onNextLevel, onRestart, onExit, newBest, unlocked, onTopScores = onTopScores)
     }
 }
 
@@ -109,6 +112,7 @@ private fun LevelCompleteContent(
     newBest: Boolean,
     unlocked: List<Achievement>,
     measuring: Boolean = false,
+    onTopScores: (() -> Unit)? = null,
 ) {
     val tag: Tagger = { if (measuring) this else testTag(it) }
     val showNewBest = newBest && frame.buttonsEnabled
@@ -131,7 +135,7 @@ private fun LevelCompleteContent(
                 AchievementUnlockedRow(unlocked, Modifier.tag(LevelCompleteTags.ACHIEVEMENTS), animate = !measuring)
             }
             Spacer(Modifier.height(24.dp))
-            WinButtons(FlowButtonSize.Large, frame, hasNextLevel, onNextLevel, onRestart, onExit, tag)
+            WinButtons(FlowButtonSize.Large, frame, hasNextLevel, onNextLevel, onRestart, onExit, onTopScores, tag)
         }
         ResultDialogLayout.Compact -> CompactColumns(
             info = {
@@ -150,7 +154,7 @@ private fun LevelCompleteContent(
                     AchievementUnlockedRow(unlocked, Modifier.tag(LevelCompleteTags.ACHIEVEMENTS), animate = !measuring)
                 }
             },
-            buttons = { WinButtons(FlowButtonSize.Medium, frame, hasNextLevel, onNextLevel, onRestart, onExit, tag) },
+            buttons = { WinButtons(FlowButtonSize.Medium, frame, hasNextLevel, onNextLevel, onRestart, onExit, onTopScores, tag) },
         )
     }
 }
@@ -217,7 +221,7 @@ private fun WinScoreRow(score: FinalScore, frame: WinFrame, tag: Tagger) {
     }
 }
 
-/** Success Next Level, glass Restart and tertiary Exit, stacked 12 dp apart. */
+/** Success Next Level, glass Restart and tertiary Exit (with Top 10 beside it), stacked 12 dp apart. */
 @Composable
 private fun ColumnScope.WinButtons(
     size: FlowButtonSize,
@@ -226,6 +230,7 @@ private fun ColumnScope.WinButtons(
     onNextLevel: () -> Unit,
     onRestart: () -> Unit,
     onExit: () -> Unit,
+    onTopScores: (() -> Unit)?,
     tag: Tagger,
 ) {
     // CompactColumns already spaces its buttons; the Regular column does not.
@@ -248,12 +253,13 @@ private fun ColumnScope.WinButtons(
         modifier = Modifier.fillMaxWidth().tag(LevelCompleteTags.RESTART),
     )
     gap()
-    FlowButton(
-        text = stringResource(R.string.win_exit),
-        onClick = onExit,
-        variant = FlowButtonVariant.Tertiary,
+    TopScoresAndExitRow(
+        onTopScores = onTopScores,
+        onExit = onExit,
+        exitText = stringResource(R.string.win_exit),
         enabled = frame.buttonsEnabled,
-        modifier = Modifier.fillMaxWidth().tag(LevelCompleteTags.EXIT),
+        topScoresModifier = Modifier.tag(LevelCompleteTags.TOP10),
+        exitModifier = Modifier.tag(LevelCompleteTags.EXIT),
     )
 }
 
@@ -264,7 +270,7 @@ private val PreviewScore = FinalScore(earned = 120, unusedSections = List(4) { P
 private fun LevelCompletePreview(frame: WinFrame, newBest: Boolean = false, unlocked: List<Achievement> = emptyList()) {
     LeakOutTheme {
         ResultDialogFrame(measureRegular = { LevelCompleteMeasured(7, PreviewScore, frame, newBest, unlocked) }, measureKey = unlocked.isNotEmpty()) { layout ->
-            ResultDialogPanel(layout) { LevelCompleteContent(layout, 7, PreviewScore, frame, true, {}, {}, {}, newBest, unlocked) }
+            ResultDialogPanel(layout) { LevelCompleteContent(layout, 7, PreviewScore, frame, true, {}, {}, {}, newBest, unlocked, onTopScores = {}) }
         }
     }
 }

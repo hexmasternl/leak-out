@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\HexMaster.LeakOut.Players.Abstractions\HexMaster.LeakOut.Players.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Core\HexMaster.LeakOut.Core\HexMaster.LeakOut.Core.csproj" />
+  </ItemGroup>
+</Project>

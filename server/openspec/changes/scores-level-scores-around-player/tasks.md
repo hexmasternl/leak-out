@@ -24,4 +24,4 @@
 
 ## 6. Integration check
 
-- [ ] 6.1 Run all tests with coverage per the `git-workflow` skill; verify every test passes and line coverage is at least 80%
+- [x] 6.1 Run all tests with coverage per the `git-workflow` skill; verify every test passes and line coverage is at least 80%

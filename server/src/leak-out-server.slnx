@@ -2,6 +2,9 @@
   <Folder Name="/Core/">
     <Project Path="Core/HexMaster.LeakOut.Core/HexMaster.LeakOut.Core.csproj" />
   </Folder>
+  <Folder Name="/HexMaster.LeakOut.Aspire/">
+    <Project Path="HexMaster.LeakOut.Aspire/HexMaster.LeakOut.Aspire.ServiceDefaults.Tests/HexMaster.LeakOut.Aspire.ServiceDefaults.Tests.csproj" />
+  </Folder>
   <Folder Name="/Players/">
     <Project Path="Players/HexMaster.LeakOut.Players.Abstractions/HexMaster.LeakOut.Players.Abstractions.csproj" />
     <Project Path="Players/HexMaster.LeakOut.Players.Data.PostgreSQL/HexMaster.LeakOut.Players.Data.PostgreSQL.csproj" />

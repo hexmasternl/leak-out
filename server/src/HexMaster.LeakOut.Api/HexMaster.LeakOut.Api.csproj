@@ -7,9 +7,14 @@
     <UserSecretsId>e419bfa5-547a-45d8-b3fd-c669af68899a</UserSecretsId>
   </PropertyGroup>
 
-  <!-- Container image for Azure Container Apps: dotnet publish -c Release /t:PublishContainer (no Dockerfile). -->
+  <!-- Container image for Azure Container Apps: dotnet publish -c Release /t:PublishContainer (no Dockerfile).
+       The deploy workflow sets the tag (ContainerImageTags) to the GitVersion semantic version.
+       ContainerUser pins the non-root 'app' user of the .NET base image, which listens on the
+       unprivileged port 8080, so the API never runs as root. -->
   <PropertyGroup>
-    <ContainerRepository>hexmaster-leakout-api</ContainerRepository>
+    <ContainerRegistry>nvv54gsk4pteu.azurecr.io</ContainerRegistry>
+    <ContainerRepository>leak-out/game-server-api</ContainerRepository>
+    <ContainerUser>app</ContainerUser>
   </PropertyGroup>
 
   <ItemGroup>

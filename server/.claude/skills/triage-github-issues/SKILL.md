@@ -26,10 +26,10 @@ Process issues in ascending number order, so later issues can refer to the chang
 gh auth status
 openspec --version
 git fetch origin
-git ls-tree --name-only origin/main openspec/config.yaml   # OpenSpec must be committed on main
+git ls-tree --name-only origin/development openspec/config.yaml   # OpenSpec must be committed on development
 ```
 
-If `openspec/config.yaml` is not on `origin/main`, triage still runs (labels, type, body), but no OpenSpec change is created: say so in the report and tell the user to commit the `openspec/` folder to `main` first.
+If `openspec/config.yaml` is not on `origin/development`, triage still runs (labels, type, body), but no OpenSpec change is created: say so in the report and tell the user to commit the `openspec/` folder to `development` first.
 
 Make sure every label used below exists; create the missing ones once:
 
@@ -141,7 +141,7 @@ Write in plain English, short sentences, and concrete names from the code and th
 
 ## OpenSpec change
 
-Planned in [`<change-name>`](https://github.com/hexmasternl/leak-out-server/tree/feature/<change-name>/openspec/changes/<change-name>).
+Planned in [`<change-name>`](https://github.com/hexmasternl/leak-out-server/tree/development/openspec/changes/<change-name>).
 
 ---
 
@@ -163,28 +163,29 @@ If the issue was triaged before (it already follows this format), update it in p
 
 ## 6. Create the OpenSpec change (clear issues that will be implemented)
 
-Skip this step when step 0 found no OpenSpec on `main`.
+Skip this step when step 0 found no OpenSpec on `development`.
+
+Creating a change is OpenSpec bookkeeping: it is committed directly to `development`, one change per commit, following flow B of the `git-workflow` skill (`.claude/skills/git-workflow/SKILL.md`). No worktree or feature branch is created now; that happens when the change is implemented (`/opsx:apply`).
 
 1. **Look for an existing change first.** A change is linked to an issue when its `proposal.md` says `Tracked in #<n>` (or the issue URL):
 
    ```bash
    grep -rlE "(#|issues/)<n>\b" openspec/changes --include=proposal.md
-   git ls-remote --heads origin "feature/*"
-   git grep -lE "(#|issues/)<n>\b" $(git for-each-ref --format='%(refname)' refs/remotes/origin/feature) -- 'openspec/changes/*/proposal.md'
+   git grep -lE "(#|issues/)<n>\b" origin/development -- 'openspec/changes/*/proposal.md' 'openspec/changes/archive/*/proposal.md'
    ```
 
    Found one → do not create a second change; link the existing one (an archived change means it is implemented: suggest closing the issue in the report).
 
-2. **Create a worktree and branch** for the change. Derive a kebab-case change name from the issue (`scores-submit-score`, `players-google-play-auth`), prefixed with the area:
+2. **Switch to an up-to-date `development`** in the main working tree; stop and report if `git status` shows uncommitted changes. Derive a kebab-case change name from the issue (`scores-submit-score`, `players-google-play-auth`), prefixed with the area.
 
    ```bash
-   git worktree add -b feature/<change-name> ../leak-out-server-worktrees/<change-name> origin/main
+   git status --porcelain
+   git switch development
+   git pull --ff-only origin development
    ```
 
-   Run every following OpenSpec command from inside that worktree, so the change is written to the branch and not to the user's working tree.
-
 3. **Write the change** by following the `openspec-propose` skill (`.claude/skills/openspec-propose/SKILL.md`) for the change name, with the triaged issue as the request. Two overrides apply because this skill is autonomous:
-   - Do not ask the user about ambiguities. Make reasonable assumptions and record them in `design.md`. If an ambiguity is so material that you cannot write the specs, the issue was not clear: remove the worktree and branch (`git worktree remove`, `git branch -D`) and treat the issue as unclear (step 2).
+   - Do not ask the user about ambiguities. Make reasonable assumptions and record them in `design.md`. If an ambiguity is so material that you cannot write the specs, the issue was not clear: delete the uncommitted change folder (`rm -rf openspec/changes/<change-name>`) and treat the issue as unclear (step 2).
    - The planning boundary of `openspec-propose` still applies: artifacts only, no project code.
 
    The proposal's `## Why` section must start with: `Tracked in [#<n>](https://github.com/hexmasternl/leak-out-server/issues/<n>).` Mention dependencies on other issues as `Depends on #<m>`, never as `Tracked in`. The design must comply with the HexMaster coding standards (step 1).
@@ -192,15 +193,15 @@ Skip this step when step 0 found no OpenSpec on `main`.
 4. **Validate, commit and push** only the change folder:
 
    ```bash
-   (cd ../leak-out-server-worktrees/<change-name> && openspec validate <change-name> --type change --strict)
-   git -C ../leak-out-server-worktrees/<change-name> add openspec/changes/<change-name>
-   git -C ../leak-out-server-worktrees/<change-name> commit -m "Propose <change-name> for #<n>"
-   git -C ../leak-out-server-worktrees/<change-name> push -u origin feature/<change-name>
+   openspec validate <change-name> --type change --strict
+   git add openspec/changes/<change-name>
+   git commit -m "Propose <change-name> for #<n>"
+   git push origin development
    ```
 
-   Keep the worktree: the branch is where the change will be implemented (`/opsx:apply`).
+   One commit per change: when triaging several issues, commit each change separately.
 
-5. **Link the issue to the change** through the `## OpenSpec change` section of the body (step 5), pointing at the folder on the `feature/<change-name>` branch. The proposal links back to the issue through its `Tracked in` line.
+5. **Link the issue to the change** through the `## OpenSpec change` section of the body (step 5), pointing at the folder on the `development` branch. The proposal links back to the issue through its `Tracked in` line.
 
 ## 7. Apply to GitHub
 
@@ -226,10 +227,10 @@ Never close, lock, assign or transfer an issue, and never apply `wontfix`. Those
 
 ## 8. Verify and report
 
-Re-read every issue (`gh issue view <n> --json title,labels,issueType,body`) and confirm the edits landed and the OpenSpec link resolves (`git ls-remote --heads origin feature/<change-name>`). Then report one line per issue:
+Re-read every issue (`gh issue view <n> --json title,labels,issueType,body`) and confirm the edits landed and the OpenSpec link resolves (`git ls-tree --name-only origin/development openspec/changes/<change-name>/proposal.md`). Then report one line per issue:
 
 ```
-#1 Set up Google Play Games authentication — Task · feature, area:players, area:platform · change players-google-play-auth (feature/players-google-play-auth)
+#1 Set up Google Play Games authentication — Task · feature, area:players, area:platform · change players-google-play-auth
 #2 Submit a level score — Feature · feature, area:scores · change scores-submit-score · depends on #1
 #4 Show the scores around a player — Feature · feature, area:scores · triage: 2 questions for the reporter
 ```

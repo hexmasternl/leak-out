@@ -138,9 +138,9 @@ There is no `.github/` workflow. Milestone 0 calls for a GitHub Actions workflow
 ### 3.3 Google Play
 
 - Store listing: app icon, feature graphic, screenshots, short and full description.
-- Data safety form (no data collected, no network).
+- Data safety form: declare the user ID (Play Games player, via the score server) and the game scores (app activity) that are sent over HTTPS when the player is signed in to Play Games, for app functionality. See [deployment.md](deployment.md#score-server).
 - Content rating questionnaire and target audience.
-- A privacy policy URL. Easy to publish even though no data is collected.
+- A privacy policy URL, covering the scores sent to the score server.
 
 ### 3.4 Testing
 

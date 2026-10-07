@@ -449,6 +449,22 @@ A JSON key is a long-lived secret. With Workload Identity Federation, GitHub ins
 
 This is a change to the workflow, so make it as its own OpenSpec change.
 
+## Score server
+
+The app sends the scores of won levels to the Leak Out score server ([leak-out-server](https://github.com/hexmasternl/leak-out-server)) when the player is signed in to Play Games (spec `online-score-submission`). Two build settings point it at the server. Neither is secret, so the defaults live in `src/app/build.gradle.kts` and CI needs nothing until they change:
+
+| Setting | Gradle property | Environment variable | Default |
+| --- | --- | --- | --- |
+| Server base URL | `leakout.scoreServerUrl` | `LEAKOUT_SCORE_SERVER_URL` | `https://api.leak-out.com` (a placeholder until the real endpoint is known) |
+| Web OAuth client id | `leakout.scoreServerClientId` | `LEAKOUT_SCORE_SERVER_CLIENT_ID` | `201820010117-uteqrtu77v48c9ovd8d9k9qan0sktcj4.apps.googleusercontent.com` |
+
+- The client id must be the **same web client id** the server uses as `GooglePlayGames:ClientId` (see the server's `docs/auth-setup.md`). With another id every sign-in to the server fails, and scores stay queued.
+- The URL must start with `https://`. A blank value, or one that is not https, turns score posting off: nothing is queued or sent and the level complete dialog shows no status dot.
+- Scores won offline wait in a queue on the device (one per level, the highest) and are sent when the device is online again, the player signs in, the app starts or the next level is won. So until the placeholder URL is replaced, scores pile up in the queue and are sent by the first build that has the real URL.
+- To change the URL without a code change, set `LEAKOUT_SCORE_SERVER_URL` for the release build step of the workflow, or pass `-Pleakout.scoreServerUrl=...`.
+
+**Data safety form.** With score posting on, the Play Console's Data safety form must declare that the app collects a **user ID** (the Play Games player, through the score server) and **game scores** (app activity), sent encrypted in transit over HTTPS, for app functionality, and only when the player signs in to Play Games.
+
 ## Reference: every secret and variable
 
 Environment secrets (`play-store`):
@@ -478,3 +494,5 @@ Gradle inputs (set by the workflow, or by you for a local signed build):
 | `LEAKOUT_UPLOAD_KEY_PASSWORD` | environment variable | Key password |
 | `versionCode` | Gradle property (`-PversionCode=<n>`) | Overrides the version code; must be a positive whole number |
 | `versionName` | Gradle property (`-PversionName=<x.y.z>`) | Overrides the version name (default `0.1.0`); must be `<major>.<minor>.<patch>` |
+| `leakout.scoreServerUrl` / `LEAKOUT_SCORE_SERVER_URL` | Gradle property / environment variable | The score server base URL (see [Score server](#score-server)); blank turns score posting off |
+| `leakout.scoreServerClientId` / `LEAKOUT_SCORE_SERVER_CLIENT_ID` | Gradle property / environment variable | The web OAuth client id for the score server sign-in |

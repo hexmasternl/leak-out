@@ -240,7 +240,7 @@ class SettingsScreenTest {
         compose.onNodeWithTag(SettingsTags.MUSIC_CREDITS).assertDoesNotExist()
         compose.onNodeWithTag(musicCreditTag(0)).assertDoesNotExist()
         compose.onNodeWithTag(SettingsTags.ABOUT_VERSION).performScrollTo().assertIsDisplayed().assertTextEquals("Version 0.1.0 (1)")
-        compose.onNodeWithText("No account needed. If you sign in to Google Play Games, your achievements are shared with Google Play.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("No account needed. If you sign in to Google Play Games, your achievements are shared with Google Play and the scores of the levels you win are sent to the Leak Out score server.").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -361,7 +361,7 @@ class SettingsScreenTest {
         compose.onNodeWithTag(SettingsTags.ABOUT_VERSION).performScrollTo().assertIsDisplayed().assertTextEquals("Version 0.1.0 (1)")
         compose.onNodeWithText("Leak Out").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Made by HexMaster").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("No account needed. If you sign in to Google Play Games, your achievements are shared with Google Play.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("No account needed. If you sign in to Google Play Games, your achievements are shared with Google Play and the scores of the levels you win are sent to the Leak Out score server.").performScrollTo().assertIsDisplayed()
     }
 
     @Test

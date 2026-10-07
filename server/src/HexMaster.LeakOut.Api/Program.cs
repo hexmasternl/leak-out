@@ -1,3 +1,4 @@
+using HexMaster.LeakOut.Api.Authentication;
 using HexMaster.LeakOut.Players;
 using HexMaster.LeakOut.Players.Data.PostgreSQL;
 using HexMaster.LeakOut.Players.Observability;
@@ -16,20 +17,29 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddHostedService<PlayersDatabaseMigrator>();
 }
 
-// Add services to the container.
+builder.Services.AddAccessTokenAuthentication();
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<BearerSecurityTransformer>();
+    options.AddOperationTransformer<BearerSecurityTransformer>();
+});
 
 var app = builder.Build();
 
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapDefaultEndpoints();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
 }
 
-app.UseHttpsRedirection();
-
 app.Run();
+
+/// <summary>Exposed for <c>WebApplicationFactory&lt;Program&gt;</c> in the API tests.</summary>
+public partial class Program;

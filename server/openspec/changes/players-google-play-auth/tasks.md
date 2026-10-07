@@ -29,7 +29,7 @@
 
 ## 6. Persistence
 
-- [ ] 6.1 Add `PlayersDbContext`, `PlayerEntity` (table `players`, unique index on `subject_id`) and `PlayerRepository` to `HexMaster.LeakOut.Players.Data.PostgreSQL` using `Aspire.Npgsql.EntityFrameworkCore.PostgreSQL`, and verify repository tests (EF Core in-memory SQLite or Testcontainers) cover insert, lookup by subject id and update
+- [x] 6.1 Add `PlayersDbContext`, `PlayerEntity` (table `players`, unique index on `subject_id`) and `PlayerRepository` to `HexMaster.LeakOut.Players.Data.PostgreSQL` using `Aspire.Npgsql.EntityFrameworkCore.PostgreSQL`, and verify repository tests (EF Core in-memory SQLite or Testcontainers) cover insert, lookup by subject id and update
 - [ ] 6.2 Add the initial EF Core migration and apply migrations at startup in Development, and verify `dotnet ef migrations list` shows it and the `players` table exists after `aspire run`
 
 ## 7. Aspire orchestration and configuration

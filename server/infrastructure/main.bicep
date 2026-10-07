@@ -12,12 +12,14 @@ param location string
 param locationAbbreviation string = 'neu'
 
 @description('Full image reference of the API including the tag.')
+@minLength(1)
 param imageName string
 
 @description('Version of the deployed release (SERVICE_VERSION), reported as the OpenTelemetry service.version.')
 param serviceVersion string
 
 @description('Login server of the existing container registry (ACR_LOGIN_SERVER).')
+@minLength(1)
 param registryServer string
 
 @description('User name for the container registry (ACR_LOGIN_USERNAME).')

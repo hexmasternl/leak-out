@@ -22,13 +22,13 @@
 - [x] 4.1 Add `ScoresDbContext` with the `level_scores` configuration (columns, check constraints, unique `(user_id, level)`, index `(level, score DESC, achieved_at)`) and verify the model builds
 - [x] 4.2 Add the initial EF Core migration and verify the generated SQL creates the table, the constraints and both indexes
 - [x] 4.3 Implement `LevelScoreRepository.SubmitAsync` with the `INSERT ... ON CONFLICT (user_id, level) DO UPDATE ... WHERE level_scores.score < EXCLUDED.score` upsert and the fallback read; verify with an integration test against PostgreSQL (first, higher, equal, lower, and two concurrent submissions leaving one row with the highest score)
-- [ ] 4.4 Add `AddScoresPostgreSql()` (`AddNpgsqlDbContext<ScoresDbContext>("scoresdb")` plus the repository) and apply migrations at startup in Development; verify the API starts against an empty database and creates `level_scores`
+- [x] 4.4 Add `AddScoresPostgreSql()` (`AddNpgsqlDbContext<ScoresDbContext>("scoresdb")` plus the repository) and apply migrations at startup in Development; verify the API starts against an empty database and creates `level_scores`
 
 ## 5. Endpoint and orchestration
 
 - [x] 5.1 Add `src/HexMaster.LeakOut.Api/Endpoints/ScoreEndpoints.cs` with `MapScoreEndpoints()`: group `/api/scores`, `.RequireAuthorization()`, `POST /` named `SubmitScore` that validates, resolves the `sub` claim with `IUserResolver`, dispatches the command and returns `200` with `SubmitScoreResult`; call `AddScoresModule()`, `AddScoresPostgreSql()` and `MapScoreEndpoints()` from `Program.cs`
 - [x] 5.2 Add endpoint tests with `WebApplicationFactory<Program>` and mocked handler and resolver: 401 without a token, 401 for an unknown player, 400 for level 0 and for a negative score, 200 with the handler result
-- [ ] 5.3 Add `scoresdb` to `AppHost.cs` (`postgres.AddDatabase("scoresdb")`, `.WithReference(scoresDb).WaitFor(scoresDb)` on the API) and verify `aspire run` shows the database and the API healthy
+- [x] 5.3 Add `scoresdb` to `AppHost.cs` (`postgres.AddDatabase("scoresdb")`, `.WithReference(scoresDb).WaitFor(scoresDb)` on the API) and verify `aspire run` shows the database and the API healthy
 - [ ] 5.4 Add a `POST /api/scores` sample to `HexMaster.LeakOut.Api.http` and verify it returns `200` with a token from the sign-in endpoint of #1
 
 ## 6. Verification

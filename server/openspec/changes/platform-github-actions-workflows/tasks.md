@@ -11,7 +11,7 @@
 
 - [ ] 2.1 Add `.github/workflows/pull-request.yml` (`pull_request` into `development`, per-PR concurrency) calling `build-test.yml`; verify on a test pull request that the check `build-test / build-test` succeeds, and fails when a test is broken on purpose
 - [x] 2.2 Add the `bicep` job (`az bicep build --file infrastructure/main.bicep`, success when `infrastructure/` does not exist yet); verify it fails on a broken template
-- [ ] 2.3 Document the required checks and how to enable branch protection on `development` in `README.md`; verify the documented check names match the jobs
+- [x] 2.3 Document the required checks and how to enable branch protection on `development` in `README.md`; verify the documented check names match the jobs
 
 ## 3. Deploy workflow
 
@@ -19,7 +19,7 @@
 - [ ] 3.1 Add `.github/workflows/deploy.yml` (push to `main`, `workflow_dispatch`, `concurrency: deploy-production`) with `build-test` and a `publish` job that runs GitVersion, logs in to `nvv54gsk4pteu.azurecr.io` with `ACR_LOGIN_USERNAME` and `ACR_LOGIN_PASSWORD`, runs `dotnet publish /t:PublishContainer` tagged with the GitVersion `SemVer`, and fails when the pushed image's user is root; verify with `workflow_dispatch` that `leak-out/game-server-api:<version>` appears in the registry
 - [ ] 3.2 Add the `deploy` job (environment `production`, OIDC `azure/login` with `AZURE_PROD_CLIENT_ID`, `AZURE_PROD_TENANT_ID` and `AZURE_PROD_SUBSCRIPTION_ID`, `az deployment sub create` of `infrastructure/main.bicep` with the image and secure parameters, `/alive` smoke test); verify a manual run creates or updates the resource group and the container app serves the new tag
 - [ ] 3.3 Pass `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and `GOOGLE_SIGNING_KEY` to the deployment as `googleClientId`, `googleClientSecret` and `authSigningKey` (as step `env:` variables that `main.bicepparam` reads), with a guard that fails the job when one is empty; verify the container app shows the three secrets and `POST /api/players/sessions` with a real server auth code returns a token
-- [ ] 3.4 Document the secrets (the existing `ACR_LOGIN_USERNAME`/`ACR_LOGIN_PASSWORD`, `AZURE_PROD_*` and `GOOGLE_*` secrets, and the PostgreSQL admin password still to be created), the `production` environment and the federated credential subject in `README.md`; verify every secret the workflow reads is listed
+- [x] 3.4 Document the secrets (the existing `ACR_LOGIN_USERNAME`/`ACR_LOGIN_PASSWORD`, `AZURE_PROD_*` and `GOOGLE_*` secrets, and the PostgreSQL admin password still to be created), the `production` environment and the federated credential subject in `README.md`; verify every secret the workflow reads is listed
 
 ## 4. Integration checks
 

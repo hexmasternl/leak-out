@@ -6,6 +6,7 @@ using 'main.bicep'
 
 param resourceGroupName = 'rg-leakout-prod-swe'
 param location = 'swedencentral'
+param locationAbbreviation = 'swc'
 param maxReplicas = 3
 
 param imageName = readEnvironmentVariable('API_IMAGE')

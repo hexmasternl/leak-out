@@ -9,7 +9,7 @@ param workspaceName string
 @description('Name of the Application Insights component.')
 param applicationInsightsName string
 
-resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
+resource workspace 'Microsoft.OperationalInsights/workspaces@2026-03-01' = {
   name: workspaceName
   location: location
   properties: {

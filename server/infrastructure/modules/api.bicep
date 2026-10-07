@@ -57,7 +57,7 @@ param maxReplicas int = 3
 
 var targetPort = 8080
 
-resource containerApp 'Microsoft.App/containerApps@2025-01-01' = {
+resource containerApp 'Microsoft.App/containerApps@2026-07-01' = {
   name: containerAppName
   location: location
   properties: {

@@ -20,7 +20,7 @@ param databaseNames string[] = [
   'scoresdb'
 ]
 
-resource server 'Microsoft.DBforPostgreSQL/flexibleServers@2024-08-01' = {
+resource server 'Microsoft.DBforPostgreSQL/flexibleServers@2026-04-01-preview' = {
   name: serverName
   location: location
   sku: {
@@ -54,7 +54,7 @@ resource server 'Microsoft.DBforPostgreSQL/flexibleServers@2024-08-01' = {
 
 // Consumption Container Apps have no fixed outbound IP, so all Azure services are allowed;
 // access stays protected by the password and the required TLS (require_secure_transport is on by default).
-resource allowAllAzureServices 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2024-08-01' = {
+resource allowAllAzureServices 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2026-04-01-preview' = {
   parent: server
   name: 'AllowAllAzureServices'
   properties: {
@@ -64,7 +64,7 @@ resource allowAllAzureServices 'Microsoft.DBforPostgreSQL/flexibleServers/firewa
 }
 
 @batchSize(1)
-resource databases 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2024-08-01' = [
+resource databases 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2026-04-01-preview' = [
   for databaseName in databaseNames: {
     parent: server
     name: databaseName

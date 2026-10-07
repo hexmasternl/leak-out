@@ -5,5 +5,6 @@
   <ItemGroup>
     <ProjectReference Include="..\HexMaster.LeakOut.Scores.Abstractions\HexMaster.LeakOut.Scores.Abstractions.csproj" />
     <ProjectReference Include="..\..\Core\HexMaster.LeakOut.Core\HexMaster.LeakOut.Core.csproj" />
+    <ProjectReference Include="..\..\Players\HexMaster.LeakOut.Players.Abstractions\HexMaster.LeakOut.Players.Abstractions.csproj" />
   </ItemGroup>
 </Project>

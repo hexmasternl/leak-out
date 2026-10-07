@@ -35,7 +35,7 @@ infrastructure/
 ```
 `main.bicep` declares `targetScope = 'subscription'`, creates `Microsoft.Resources/resourceGroups` named `resourceGroupName` in `location`, and deploys `resources.bicep` as a module with `scope: resourceGroup`. Splitting into a subscription-scope entry point and a resource-group-scope module is required because Bicep resources other than the resource group itself cannot be declared directly at subscription scope.
 
-Parameters: `resourceGroupName` (default `rg-leakout`), `location` (required; default `westeurope` in `main.bicepparam`, because a subscription deployment has no resource group location to inherit), `namePrefix` (default `leakout`), `imageName` (full image reference including tag), `registryServer`, `registryUsername`, secure `registryPassword`, secure `postgresAdminPassword`, secure `googleClientId`, `googleClientSecret`, `authSigningKey`, `maxReplicas` (default `3`). Resource names are `${namePrefix}-<kind>-${uniqueString(resourceGroup().id)}` so they are stable across redeploys and unique where Azure requires it.
+Parameters: `resourceGroupName` (default `rg-leakout`), `location` (required; default `westeurope` in `main.bicepparam`, because a subscription deployment has no resource group location to inherit), `namePrefix` (default `leakout`), `imageName` (full image reference including tag), `registryServer`, `registryUsername`, secure `registryPassword`, secure `postgresAdminPassword`, secure `googleClientId`, secure `googleClientSecret`, secure `authSigningKey`, `maxReplicas` (default `3`). The three Google sign-in parameters have no default in `main.bicepparam` and are supplied by the pipeline from the GitHub secrets `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and `GOOGLE_SIGNING_KEY` (#8); `authSigningKey` has `@minLength(32)`, matching the API's startup check, so a too-short key fails the deployment instead of the container. Resource names are `${namePrefix}-<kind>-${uniqueString(resourceGroup().id)}` so they are stable across redeploys and unique where Azure requires it.
 
 *Alternative considered*: Aspire's own Azure publishing (`aspire publish`/`azd`), which generates Bicep from the AppHost. Rejected for now: the issue asks for Bicep that is owned in the repository, the existing registry with username/password does not fit the azd default of a managed registry, and generated templates are harder to review and tune for cost. ADR 0003 still holds: Aspire remains the local orchestrator and the hosted configuration uses the same resource names and connection string keys, so no deviation ADR is needed for local orchestration.
 
@@ -55,6 +55,15 @@ Consumption-only managed environment. Container app `hexmaster-leakout-api` (mat
 - Registry: `registries: [{ server, username, passwordSecretRef: 'registry-password' }]`.
 - Secrets: `registry-password`, `playersdb-connection`, `scoresdb-connection`, `google-client-id`, `google-client-secret`, `auth-signing-key`, `appinsights-connection`.
 - Environment variables: `ConnectionStrings__playersdb`, `ConnectionStrings__scoresdb` (Npgsql format: `Host=<fqdn>;Database=<db>;Username=leakoutadmin;Password=...;Ssl Mode=Require`), `GooglePlayGames__ClientId`, `GooglePlayGames__ClientSecret`, `Authentication__SigningKey`, `APPLICATIONINSIGHTS_CONNECTION_STRING`, `OTEL_SERVICE_NAME=hexmaster-leakout-api`, `ASPNETCORE_ENVIRONMENT=Production`.
+- Google Play Games sign-in: the secure parameters flow through `resources.bicep` into `api.bicep` and are stored only as container app secrets, never as plain environment values:
+
+  | GitHub secret | Bicep parameter | Container app secret | Environment variable | API configuration key |
+  |---|---|---|---|---|
+  | `GOOGLE_CLIENT_ID` | `googleClientId` | `google-client-id` | `GooglePlayGames__ClientId` (`secretRef`) | `GooglePlayGames:ClientId` |
+  | `GOOGLE_CLIENT_SECRET` | `googleClientSecret` | `google-client-secret` | `GooglePlayGames__ClientSecret` (`secretRef`) | `GooglePlayGames:ClientSecret` |
+  | `GOOGLE_SIGNING_KEY` | `authSigningKey` | `auth-signing-key` | `Authentication__SigningKey` (`secretRef`) | `Authentication:SigningKey` |
+
+  These are the same keys the AppHost sets locally from `Parameters:google-client-id`, `Parameters:google-client-secret` and `Parameters:authentication-signing-key`, so the API needs no production-specific code. The client id must be the **web** OAuth client of the Google Cloud project linked to the game (the game's `serverClientId`). Without any of the three the API fails at startup, so a revision deployed without them never becomes ready.
 - Scale: `minReplicas: 0`, `maxReplicas: maxReplicas`, rule `http-concurrency` with `concurrentRequests: '20'`.
 - Probes: liveness `GET /alive`, readiness `GET /health`, startup `GET /alive` with a generous failure threshold for cold starts.
 

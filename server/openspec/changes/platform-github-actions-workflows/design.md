@@ -39,21 +39,42 @@ See proposal.md - Why. There is no `.github/workflows` folder yet. The solution 
 Tests that need PostgreSQL use the same mechanism they use locally. When they use Testcontainers, the Ubuntu runner's Docker is enough. When they expect a connection string, `build-test.yml` adds a `services: postgres` container (`postgres:17`) and passes the connection string as an environment variable. The implementer picks the one matching the existing tests; the workflow must not skip them.
 
 ### D3. Publish job
-`docker/login-action` with `registry: ${{ secrets.ACR_ENDPOINT }}`, `ACR_USERNAME`, `ACR_PASSWORD`, then `dotnet publish src/HexMaster.LeakOut.Api -c Release /t:PublishContainer -p:ContainerRegistry=${{ secrets.ACR_ENDPOINT }} -p:ContainerImageTags=${{ github.sha }}`. Outputs the full image reference for the deploy job.
+`docker/login-action` with `registry: ${{ secrets.ACR_LOGIN_SERVER }}`, `username: ${{ secrets.ACR_LOGIN_USERNAME }}`, `password: ${{ secrets.ACR_LOGIN_PASSWORD }}`, then `dotnet publish src/HexMaster.LeakOut.Api -c Release /t:PublishContainer -p:ContainerRegistry=${{ secrets.ACR_LOGIN_SERVER }} -p:ContainerImageTags=${{ github.sha }}`. Outputs the full image reference for the deploy job.
 
 ### D4. Deploy job
-`permissions: id-token: write, contents: read`. `azure/login` with `client-id`, `tenant-id`, `subscription-id` (OIDC). Then:
+`permissions: id-token: write, contents: read`. `azure/login` (OIDC) with `client-id: ${{ secrets.AZURE_PROD_CLIENT_ID }}`, `tenant-id: ${{ secrets.AZURE_PROD_TENANT_ID }}`, `subscription-id: ${{ secrets.AZURE_PROD_SUBSCRIPTION_ID }}`. Then:
 ```
 az deployment sub create --name leakout-${{ github.run_id }} --location <location from main.bicepparam>
   --template-file infrastructure/main.bicep --parameters infrastructure/main.bicepparam
-  --parameters imageName=<image> registryServer=... registryUsername=... registryPassword=...
-               postgresAdminPassword=... googleClientId=... googleClientSecret=... authSigningKey=...
+  --parameters imageName=<image> registryServer=${{ secrets.ACR_LOGIN_SERVER }}
+               registryUsername=${{ secrets.ACR_LOGIN_USERNAME }} registryPassword=${{ secrets.ACR_LOGIN_PASSWORD }}
+               googleClientId=${{ secrets.GOOGLE_CLIENT_ID }} googleClientSecret=${{ secrets.GOOGLE_CLIENT_SECRET }}
+               authSigningKey=${{ secrets.GOOGLE_SIGNING_KEY }} postgresAdminPassword=...
 ```
-Secret parameters are passed only as `@secure()` Bicep parameters and are masked by GitHub. After deployment the job prints the container app FQDN and calls `/alive` with retries as a smoke test.
+The secrets are passed to the step through `env:` (for example `GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}`) and referenced as quoted shell variables (`googleClientSecret="$GOOGLE_CLIENT_SECRET"`), so values containing shell metacharacters are not interpreted and do not appear in the command line. Secret parameters are passed only as `@secure()` Bicep parameters and are masked by GitHub. The step fails before calling `az` when one of the Google secrets is empty, because the API refuses to start without them (see `CLAUDE.md`, Secrets and configuration) and the deployment would otherwise only fail on the container app's health probes. After deployment the job prints the container app FQDN and calls `/alive` with retries as a smoke test.
 
 The `production` environment lets the maintainer add required reviewers or wait timers later without changing the workflow, and the federated credential is bound to `environment:production`.
 
-### D5. Permissions
+### D5. GitHub secrets
+These repository secrets already exist; the workflows use them to push the image, to log in to Azure and to configure Google Play Games sign-in on the API:
+
+| Secret | Used by | Purpose |
+|---|---|---|
+| `ACR_LOGIN_SERVER` | `publish`, `deploy` | Registry host name (`<name>.azurecr.io`): `docker/login-action` `registry`, `ContainerRegistry`, and the `registryServer` Bicep parameter |
+| `ACR_LOGIN_USERNAME` | `publish`, `deploy` | Registry user: `docker/login-action` `username` and the `registryUsername` Bicep parameter |
+| `ACR_LOGIN_PASSWORD` | `publish`, `deploy` | Registry password: `docker/login-action` `password` and the `@secure()` `registryPassword` Bicep parameter |
+| `AZURE_PROD_CLIENT_ID` | `deploy` | Client id of the app registration with the federated credential (`azure/login` `client-id`) |
+| `AZURE_PROD_TENANT_ID` | `deploy` | Entra tenant id (`azure/login` `tenant-id`) |
+| `AZURE_PROD_SUBSCRIPTION_ID` | `deploy` | Subscription of the subscription-scope deployment (`azure/login` `subscription-id`) |
+| `GOOGLE_CLIENT_ID` | `deploy` | Client id of the **web** OAuth client of the Google Cloud project linked to the game (the game's `serverClientId`): the `@secure()` `googleClientId` Bicep parameter, which becomes `GooglePlayGames:ClientId` on the API |
+| `GOOGLE_CLIENT_SECRET` | `deploy` | Secret of that web OAuth client: the `@secure()` `googleClientSecret` Bicep parameter, which becomes `GooglePlayGames:ClientSecret` |
+| `GOOGLE_SIGNING_KEY` | `deploy` | Key (≥ 32 bytes) the API signs its own access tokens with after a Google sign-in: the `@secure()` `authSigningKey` Bicep parameter, which becomes `Authentication:SigningKey` |
+
+There is no Azure client secret: the login is OIDC, so the app registration behind `AZURE_PROD_CLIENT_ID` needs a federated credential for this repository and environment `production`. The only application secret of the deployment that does not exist yet is the PostgreSQL admin password; its name is fixed when `deploy.yml` is written and listed in the README.
+
+`GOOGLE_SIGNING_KEY` is not a Google credential despite its name: it is the API's own JWT signing key and corresponds to the AppHost parameter `authentication-signing-key`. Rotating it invalidates every issued access token, so players sign in again.
+
+### D6. Permissions
 Every workflow sets top-level `permissions: contents: read`; only the deploy job adds `id-token: write`. Actions are pinned to major versions from GitHub and Azure (`actions/*`, `azure/login`, `docker/login-action`).
 
 ## Risks / Trade-offs

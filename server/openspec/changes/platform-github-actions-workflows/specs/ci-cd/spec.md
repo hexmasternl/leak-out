@@ -47,7 +47,7 @@ The pull request check SHALL compile the Bicep templates and fail when they do n
 - **THEN** the check fails
 
 ### Requirement: Merges to main are built, tested and published
-Every push to `main` SHALL build the solution, run all tests with the same coverage gate, and, only when that succeeds, publish the API container image tagged with the commit SHA to the existing container registry.
+Every push to `main` SHALL build the solution, run all tests with the same coverage gate, and, only when that succeeds, publish the API container image tagged with the commit SHA to the existing container registry, authenticating with the `ACR_LOGIN_SERVER`, `ACR_LOGIN_USERNAME` and `ACR_LOGIN_PASSWORD` secrets.
 
 #### Scenario: Successful publish
 - **WHEN** a merge to `main` builds and passes the tests and the coverage gate
@@ -58,7 +58,7 @@ Every push to `main` SHALL build the solution, run all tests with the same cover
 - **THEN** no image is published and no deployment starts
 
 ### Requirement: Merges to main are deployed to Azure at subscription scope
-After the image is published, the workflow SHALL run a subscription-scope deployment of the infrastructure templates that creates the resource group if needed and deploys the published image tag. Azure login SHALL use OpenID Connect, without a stored Azure client secret.
+After the image is published, the workflow SHALL run a subscription-scope deployment of the infrastructure templates that creates the resource group if needed and deploys the published image tag. Azure login SHALL use OpenID Connect with the `AZURE_PROD_CLIENT_ID`, `AZURE_PROD_TENANT_ID` and `AZURE_PROD_SUBSCRIPTION_ID` secrets, without a stored Azure client secret.
 
 #### Scenario: Deployment of a new image
 - **WHEN** the image for a commit on `main` has been published
@@ -67,6 +67,17 @@ After the image is published, the workflow SHALL run a subscription-scope deploy
 #### Scenario: Manual redeploy
 - **WHEN** the maintainer starts the deploy workflow manually
 - **THEN** the same build, publish and deploy steps run for the selected commit
+
+### Requirement: The deployment configures Google Play Games sign-in
+The deploy workflow SHALL pass the `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and `GOOGLE_SIGNING_KEY` secrets to the subscription-scope deployment as the secure parameters `googleClientId`, `googleClientSecret` and `authSigningKey`, and SHALL fail before deploying when one of them is empty.
+
+#### Scenario: Sign-in works after a deployment
+- **WHEN** the deploy workflow completes and a player signs in with a valid Google Play Games server auth code on the hosted API
+- **THEN** the API exchanges the code with Google using the configured web client and returns an access token signed with the configured key
+
+#### Scenario: Missing Google secret
+- **WHEN** the deploy workflow runs and `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` or `GOOGLE_SIGNING_KEY` is not set
+- **THEN** the deploy job fails before the Azure deployment starts and names the missing secret
 
 ### Requirement: Secrets stay out of the repository and logs
 The workflows SHALL take all credentials from GitHub secrets and SHALL NOT print secret values in logs.

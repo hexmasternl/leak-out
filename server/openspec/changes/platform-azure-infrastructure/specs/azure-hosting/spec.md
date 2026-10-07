@@ -22,7 +22,7 @@ All Azure resources the server needs SHALL be defined in Bicep templates in the 
 - **THEN** the deployment succeeds and no resources are added, removed or recreated
 
 ### Requirement: The API runs from the existing container registry
-The API SHALL be packageable as a container image without a Dockerfile, and the container app SHALL pull the image given as a deployment parameter from the existing container registry identified by `ACR_ENDPOINT`, authenticating with `ACR_USERNAME` and `ACR_PASSWORD`. The infrastructure SHALL NOT create a container registry.
+The API SHALL be packageable as a container image without a Dockerfile, and the container app SHALL pull the image given as a deployment parameter from the existing container registry identified by `ACR_LOGIN_SERVER`, authenticating with `ACR_LOGIN_USERNAME` and `ACR_LOGIN_PASSWORD`. The infrastructure SHALL NOT create a container registry.
 
 #### Scenario: Image can be built from the project
 - **WHEN** the API project is published as a container
@@ -60,6 +60,14 @@ The container app SHALL receive its connection strings and application secrets a
 #### Scenario: Connection strings use the Aspire names
 - **WHEN** the API starts in the container app
 - **THEN** it finds connection strings named `playersdb` and `scoresdb` and connects to the Azure PostgreSQL databases
+
+#### Scenario: Google Play Games sign-in is configured
+- **WHEN** the templates are deployed with the secure parameters `googleClientId`, `googleClientSecret` and `authSigningKey`
+- **THEN** the container app holds them as the secrets `google-client-id`, `google-client-secret` and `auth-signing-key`, exposes them as `GooglePlayGames__ClientId`, `GooglePlayGames__ClientSecret` and `Authentication__SigningKey`, and the API starts and accepts `POST /api/players/sessions`
+
+#### Scenario: Signing key too short
+- **WHEN** the templates are deployed with an `authSigningKey` shorter than 32 characters
+- **THEN** the deployment is rejected before any resource changes
 
 #### Scenario: No secrets in source control
 - **WHEN** the repository is searched for the registry password, the database password and the application secrets

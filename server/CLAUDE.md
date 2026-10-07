@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-Early scaffold: a .NET 10 ASP.NET Core minimal API orchestrated by .NET Aspire. `Program.cs` still contains only the template `/weatherforecast` endpoint; no domain code or test projects exist yet. The solution file is `src/leak-out-server.slnx` (the new XML `.slnx` format, not `.sln`).
+A .NET 10 ASP.NET Core minimal API orchestrated by .NET Aspire, organised as a modular monolith (`src/Core`, `src/Players`, `src/Scores`). Players sign in with Google Play Games (`POST /api/players/sessions`); the Scores module is still empty. The solution file is `src/leak-out-server.slnx` (the new XML `.slnx` format, not `.sln`).
 
 ## Commands
 
@@ -15,17 +15,24 @@ dotnet build leak-out-server.slnx                                   # build ever
 dotnet run --project HexMaster.LeakOut.Aspire/HexMaster.LeakOut.Aspire.AppHost   # run via Aspire (dashboard + API)
 aspire run                                                          # alternative, from src/HexMaster.LeakOut.Aspire (aspire.config.json points at the AppHost)
 dotnet run --project HexMaster.LeakOut.Api                          # run the API standalone on http://localhost:5090
-dotnet test leak-out-server.slnx                                    # once test projects exist
-dotnet test --filter "FullyQualifiedName~SomeTestName"              # single test
+dotnet test --solution leak-out-server.slnx                         # all tests (xUnit v3 on Microsoft.Testing.Platform)
+dotnet test --project Players/HexMaster.LeakOut.Players.Tests --filter-method "*SomeTestName*"   # single test
+dotnet ef migrations add <Name> --project Players/HexMaster.LeakOut.Players.Data.PostgreSQL --output-dir Migrations
 ```
 
 `HexMaster.LeakOut.Api/HexMaster.LeakOut.Api.http` holds sample requests against the standalone API.
 
+## Secrets and configuration
+
+The AppHost needs three parameters in its user secrets: `Parameters:google-client-id` and `Parameters:google-client-secret` (the **web** OAuth client of the Google Cloud project linked to the game) and `Parameters:authentication-signing-key` (≥ 32 bytes). It passes them to the API as `GooglePlayGames:ClientId`, `GooglePlayGames:ClientSecret` and `Authentication:SigningKey`; the API fails at startup when one is missing. The game's `serverClientId` must be the same web client id. Set them with `dotnet user-secrets set "Parameters:<name>" "<value>" --project HexMaster.LeakOut.Aspire/HexMaster.LeakOut.Aspire.AppHost`. Full setup in `docs/auth-setup.md`.
+
 ## Architecture
 
-- **HexMaster.LeakOut.Api** — the web API (minimal APIs + `Microsoft.AspNetCore.OpenApi`). Calls `builder.AddServiceDefaults()` and `app.MapDefaultEndpoints()` from ServiceDefaults. The OpenAPI document is only mapped in Development.
-- **HexMaster.LeakOut.Aspire.AppHost** (Aspire SDK 13.x) — local orchestration. Registers the API as resource `hexmaster-leakout-api` in `AppHost.cs`. New services, databases, caches, etc. are added here and referenced into the API with `.WithReference(...)`.
-- **HexMaster.LeakOut.Aspire.ServiceDefaults** — shared cross-cutting setup (`Extensions.cs`): OpenTelemetry (logs/metrics/traces, OTLP exporter when `OTEL_EXPORTER_OTLP_ENDPOINT` is set), service discovery, standard HTTP resilience on all `HttpClient`s, and health checks. `/health` and `/alive` are mapped **only in Development**. Any new service project should reference this project and call the same two extension methods.
+- **HexMaster.LeakOut.Api** — the single API host (minimal APIs + `Microsoft.AspNetCore.OpenApi`). `Program.cs` only composes: ServiceDefaults, `AddPlayersModule()`, `AddPlayersPostgreSqlData()`, JWT bearer authentication with a fallback policy that requires an authenticated user, and `Map{Feature}Endpoints()` from `Endpoints/`. Anonymous endpoints opt out with `AllowAnonymous()`. Protected endpoints that act for a player add `.RequirePlayer()` and read the internal id with `httpContext.GetPlayerId()` (`Authentication/PlayerIdentityExtensions.cs`); the token's `sub` (the Google Play Games player id) never reaches commands, queries or other modules. The OpenAPI document is only mapped in Development.
+- **Core** (`HexMaster.LeakOut.Core`) — `ICommandHandler<,>`, `ICommandHandler<>`, `IQueryHandler<,>`, `IClock`, `DomainException`. No web or EF references.
+- **Players** — `HexMaster.LeakOut.Players` (domain `Player`, `Features/SignInPlayer`, `GooglePlayGamesClient`, `JwtAccessTokenIssuer`, `UserResolver`, `PlayersModuleRegistration`), `.Abstractions` (DTOs, `IUserResolver`), `.Data.PostgreSQL` (EF Core `PlayersDbContext`, `players` table, migrations applied at startup in Development only), `.Tests`.
+- **HexMaster.LeakOut.Aspire.AppHost** (Aspire SDK 13.x) — local orchestration. Registers PostgreSQL (`postgres`, data volume) with database `playersdb`, the auth parameters, and the API as resource `hexmaster-leakout-api` in `AppHost.cs`. New services, databases, caches, etc. are added here and referenced into the API with `.WithReference(...)`.
+- **HexMaster.LeakOut.Aspire.ServiceDefaults** — shared cross-cutting setup (`Extensions.cs`): OpenTelemetry (logs/metrics/traces, OTLP exporter when `OTEL_EXPORTER_OTLP_ENDPOINT` is set), service discovery, standard HTTP resilience on all `HttpClient`s, and health checks. `/health` and `/alive` are mapped **only in Development**, as anonymous endpoints. Any new service project should reference this project and call the same two extension methods.
 
 ## Git workflow
 

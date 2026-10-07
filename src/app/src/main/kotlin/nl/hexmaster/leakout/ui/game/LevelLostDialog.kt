@@ -36,6 +36,7 @@ object LevelLostTags {
     const val SCORE = "lost_score"
     const val RESTART = "lost_restart"
     const val EXIT = "lost_exit"
+    const val TOP10 = "lost_top10"
     const val SPLASH = "lost_splash"
     const val ACHIEVEMENTS = "lost_achievements"
     const val LAYOUT_PREFIX = "lost"
@@ -47,8 +48,8 @@ object LevelLostTags {
  * Modal level lost dialog (design-system.md 5.6): the [level] number, the splash, "Leaked!", the
  * message for the [reason], the [score] of the attempt, then Restart and Exit. Back works as Exit; a
  * tap outside does nothing. There is no Resume. The achievements the loss [unlocked] pop in under the
- * score. The dialog uses the Regular layout when it fits the window height and the Compact one
- * otherwise.
+ * score. With [onTopScores], a Top 10 button shares Exit's row. The dialog uses the Regular layout
+ * when it fits the window height and the Compact one otherwise.
  */
 @Composable
 fun LevelLostDialog(
@@ -58,6 +59,7 @@ fun LevelLostDialog(
     onExit: () -> Unit,
     reason: LossReason = LossReason.LEAK,
     unlocked: List<Achievement> = emptyList(),
+    onTopScores: (() -> Unit)? = null,
 ) {
     val paneName = stringResource(R.string.lost_pane_title)
     ResultDialogWindow(
@@ -69,7 +71,7 @@ fun LevelLostDialog(
         // The tracker can answer after the dialog opened; the row's height then counts too.
         measureKey = unlocked.isNotEmpty(),
     ) { layout ->
-        LevelLostContent(layout, level, score, reason, unlocked, onRestart, onExit)
+        LevelLostContent(layout, level, score, reason, unlocked, onRestart, onExit, onTopScores = onTopScores)
     }
 }
 
@@ -83,6 +85,7 @@ private fun LevelLostContent(
     onRestart: () -> Unit,
     onExit: () -> Unit,
     measuring: Boolean = false,
+    onTopScores: (() -> Unit)? = null,
 ) {
     // Tags only on the shown content, never on the copy that is only measured.
     val tag: Modifier.(String) -> Modifier = { if (measuring) this else testTag(it) }
@@ -102,7 +105,7 @@ private fun LevelLostContent(
                 AchievementUnlockedRow(unlocked, Modifier.tag(LevelLostTags.ACHIEVEMENTS), animate = !measuring)
             }
             Spacer(Modifier.height(24.dp))
-            LostButtons(FlowButtonSize.Large, onRestart, onExit, tag)
+            LostButtons(FlowButtonSize.Large, onRestart, onExit, onTopScores, tag)
         }
         ResultDialogLayout.Compact -> CompactColumns(
             info = {
@@ -121,7 +124,7 @@ private fun LevelLostContent(
                     AchievementUnlockedRow(unlocked, Modifier.tag(LevelLostTags.ACHIEVEMENTS), animate = !measuring)
                 }
             },
-            buttons = { LostButtons(FlowButtonSize.Medium, onRestart, onExit, tag) },
+            buttons = { LostButtons(FlowButtonSize.Medium, onRestart, onExit, onTopScores, tag) },
         )
     }
 }
@@ -163,9 +166,15 @@ private fun LostScore(score: Int, modifier: Modifier) {
     )
 }
 
-/** Brass primary Restart and tertiary Exit, stacked 12 dp apart. */
+/** Brass primary Restart and tertiary Exit (with Top 10 beside it), stacked 12 dp apart. */
 @Composable
-private fun ColumnScope.LostButtons(size: FlowButtonSize, onRestart: () -> Unit, onExit: () -> Unit, tag: Modifier.(String) -> Modifier) {
+private fun ColumnScope.LostButtons(
+    size: FlowButtonSize,
+    onRestart: () -> Unit,
+    onExit: () -> Unit,
+    onTopScores: (() -> Unit)?,
+    tag: Modifier.(String) -> Modifier,
+) {
     FlowButton(
         text = stringResource(R.string.lost_restart),
         onClick = onRestart,
@@ -175,11 +184,14 @@ private fun ColumnScope.LostButtons(size: FlowButtonSize, onRestart: () -> Unit,
     )
     // CompactColumns already spaces its buttons; the Regular column does not.
     if (size == FlowButtonSize.Large) Spacer(Modifier.height(ResultDialogMetrics.ButtonSpacing))
-    FlowButton(
-        text = stringResource(R.string.lost_exit),
-        onClick = onExit,
-        variant = FlowButtonVariant.Tertiary,
-        modifier = Modifier.fillMaxWidth().tag(LevelLostTags.EXIT),
+    TopScoresAndExitRow(
+        onTopScores = onTopScores,
+        onExit = onExit,
+        exitText = stringResource(R.string.lost_exit),
+        enabled = true,
+        topScoresTag = LevelLostTags.TOP10,
+        exitTag = LevelLostTags.EXIT,
+        tag = tag,
     )
 }
 
@@ -191,7 +203,7 @@ private fun LevelLostPreview(unlocked: List<Achievement> = emptyList()) {
             measureRegular = { LevelLostContent(ResultDialogLayout.Regular, 7, 85, LossReason.LEAK, unlocked, {}, {}, measuring = true) },
             measureKey = unlocked.isNotEmpty(),
         ) { layout ->
-            ResultDialogPanel(layout) { LevelLostContent(layout, 7, 85, LossReason.LEAK, unlocked, {}, {}) }
+            ResultDialogPanel(layout) { LevelLostContent(layout, 7, 85, LossReason.LEAK, unlocked, {}, {}, onTopScores = {}) }
         }
     }
 }

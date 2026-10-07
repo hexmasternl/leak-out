@@ -131,11 +131,15 @@ Each entry SHALL be read by a screen reader as one item with its rank, name and 
 - **THEN** it says that this is the player's own score
 
 ### Requirement: Top 10 dialog follows the design system and fits the screen
-The top 10 dialog SHALL follow the approved Top 10 dialog design in `docs/design-system.md`. On a 640 × 360 dp landscape screen, the title and the Close button SHALL be fully visible; when the 10 entries do not fit, the list SHALL scroll while the title and the Close button stay in place.
+The top 10 dialog SHALL follow the approved Top 10 dialog design in `docs/design-system.md`. When the one-column list does not fit the available height, the dialog SHALL show the entries in two columns (ranks 1–5 and 6–10). The title and the Close button SHALL always be fully visible; when the entries still do not fit, the list SHALL scroll under them.
 
 #### Scenario: Small landscape screen
-- **WHEN** the top 10 dialog shows 10 entries on a 640 × 360 dp screen
-- **THEN** the title and Close are fully visible and every entry can be reached by scrolling the list
+- **WHEN** the top 10 dialog shows 10 entries on a 640 × 360 dp screen at 100 % font
+- **THEN** the entries are shown in two columns, ranks 1–5 and 6–10, and all 10 are visible without scrolling
+
+#### Scenario: Tall screen
+- **WHEN** the top 10 dialog shows 10 entries on a 1280 × 800 dp screen
+- **THEN** the entries are shown in one column from rank 1 to rank 10
 
 #### Scenario: Large font
 - **WHEN** the top 10 dialog shows 10 entries on a 640 × 360 dp screen with a 130 % font scale

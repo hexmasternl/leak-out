@@ -10,7 +10,7 @@ import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withTimeout
 
 /**
- * [ScoreServerApi] over `HttpURLConnection`: two small JSON posts do not need an HTTP library. Every
+ * [ScoreServerApi] over `HttpURLConnection`: a few small JSON calls do not need an HTTP library. Every
  * call gives up after [timeoutMs]; a failure is mapped to a [ScoreServerException] so the caller
  * knows whether to keep the score.
  */
@@ -22,26 +22,29 @@ class HttpScoreServerApi(
     private val base = baseUrl.trim().trimEnd('/')
 
     override suspend fun createSession(serverAuthCode: String): Session =
-        ScoreServerJson.session(post("/api/players/sessions", ScoreServerJson.sessionRequest(serverAuthCode), accessToken = null))
+        ScoreServerJson.session(call("POST", "/api/players/sessions", ScoreServerJson.sessionRequest(serverAuthCode), accessToken = null))
 
     override suspend fun submitScore(accessToken: String, level: Int, score: Int) {
-        post("/api/scores", ScoreServerJson.scoreRequest(level, score), accessToken)
+        call("POST", "/api/scores", ScoreServerJson.scoreRequest(level, score), accessToken)
     }
 
-    private suspend fun post(path: String, body: String, accessToken: String?): String = try {
-        withTimeout(timeoutMs) { runInterruptible(dispatcher) { exchange(path, body, accessToken) } }
+    override suspend fun topScores(accessToken: String, level: Int): LevelLeaderboard =
+        ScoreServerJson.leaderboard(call("GET", "/api/levels/$level/scores/top", body = null, accessToken))
+
+    private suspend fun call(method: String, path: String, body: String?, accessToken: String?): String = try {
+        withTimeout(timeoutMs) { runInterruptible(dispatcher) { exchange(method, path, body, accessToken) } }
     } catch (timeout: TimeoutCancellationException) {
         throw ScoreServerException.Unavailable("$path timed out", timeout)
     }
 
-    private fun exchange(path: String, body: String, accessToken: String?): String {
+    private fun exchange(method: String, path: String, body: String?, accessToken: String?): String {
         val connection = try {
             (URL(base + path).openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
+                requestMethod = method
                 connectTimeout = CONNECT_TIMEOUT_MS
                 readTimeout = CONNECT_TIMEOUT_MS
-                doOutput = true
-                setRequestProperty("Content-Type", "application/json")
+                doOutput = body != null
+                if (body != null) setRequestProperty("Content-Type", "application/json")
                 setRequestProperty("Accept", "application/json")
                 accessToken?.let { setRequestProperty("Authorization", "Bearer $it") }
             }
@@ -49,7 +52,7 @@ class HttpScoreServerApi(
             throw ScoreServerException.Unavailable("$path could not be opened", error)
         }
         try {
-            connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+            if (body != null) connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
             val status = connection.responseCode
             return when (status) {
                 in 200..299 -> connection.inputStream.use { it.readBytes().toString(Charsets.UTF_8) }

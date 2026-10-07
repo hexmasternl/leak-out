@@ -104,6 +104,24 @@
     <string name="win_pane_title">Level complete</string>
     <string name="win_new_best">New best!</string>
 
+    <!-- Top 10 dialog: the global top 10 of the level, opened from the pause, level complete and level lost dialogs -->
+    <string name="top10_open">Top 10</string>
+    <string name="top10_title">Top 10</string>
+    <string name="top10_pane_title">Top 10 scores</string>
+    <string name="top10_close">Close</string>
+    <!-- Shown after the player's own name in the list, in capitals. -->
+    <string name="top10_you">You</string>
+    <!-- Screen reader text for one row. %1$d: the rank (1 to 10). %2$s: the player's name. %3$s: the score, already formatted. -->
+    <string name="top10_row_description">Rank %1$d, %2$s, %3$s points</string>
+    <!-- Screen reader text for the player's own row. %1$d: the rank (1 to 10). %2$s: the player's name. %3$s: the score, already formatted. -->
+    <string name="top10_row_own_description">Rank %1$d, %2$s, %3$s points, your score</string>
+    <string name="top10_loading">Loading scores…</string>
+    <string name="top10_empty">No scores yet. Win this level to be the first on the board.</string>
+    <string name="top10_signed_out">Sign in to Google Play Games to see the top 10.</string>
+    <string name="top10_sign_in">Sign In</string>
+    <string name="top10_error">Couldn\'t load the scores. Check your connection and try again.</string>
+    <string name="top10_retry">Try Again</string>
+
     <!-- Fast forward -->
     <string name="fast_forward">Fast forward</string>
     <string name="fast_forward_on">Fast forward on</string>

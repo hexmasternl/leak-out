@@ -416,6 +416,48 @@ section.block > header p{color:var(--text-2)}
 .dialog.compact .splash{width:48px; height:48px; margin:0}
 .dialog.compact .msg{font-size:14px; margin:8px 0 12px}
 @media (max-width:640px){ .dialog.compact{flex-direction:column} .dialog.compact .divider{display:none} .dialog.compact .actions{width:100%} }
+/* Two buttons sharing one row: Restart + Top 10 (pause), Top 10 + Exit (win, leak) */
+.dialog .actions .pair{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.dialog .actions .pair .btn{min-width:0; padding:0 8px}
+/* Top 10 dialog (design-system.md 5.6) */
+.scrimbox.opaque{background:linear-gradient(to bottom right, var(--abyss), var(--deep))}
+.scrimbox.opaque::before{display:none}
+.top10{width:100%; max-width:360px; position:relative; text-align:left}
+.top10.compact{max-width:600px}
+.top10 .head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px}
+.top10 .head .eyebrow{margin-bottom:4px}
+.top10 .head h2{font-size:28px; line-height:1.1; display:flex; align-items:center; gap:8px}
+.top10 .head h2 svg{width:24px; height:24px; color:var(--brass-300)}
+.iconbtn{width:48px; height:48px; flex:none; border-radius:50%; display:grid; place-items:center; background:var(--overlay); border:1px solid var(--line-strong); color:var(--text-1); box-shadow:0 4px 0 var(--abyss), inset 0 1px 0 var(--line-hi); cursor:pointer}
+.iconbtn svg{width:24px; height:24px}
+.top10 .cols{display:grid; grid-template-columns:minmax(0,1fr)}
+.top10.compact .cols{grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr); gap:0 24px}
+.top10 .cols .vline{background:var(--line-subtle)}
+.top10 ol{list-style:none; margin:0; padding:0}
+.top10 li{height:40px; display:flex; align-items:center; gap:8px; padding:0 12px; border-top:1px solid var(--line-subtle)}
+.top10 li:first-child{border-top-color:transparent}
+.top10 li .rk{width:32px; flex:none; font-family:var(--font-display); font-size:20px; color:var(--text-2)}
+.top10 li .rk.podium{color:var(--brass-300)}
+.top10 li .nm{flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:16px}
+.top10 li .you{flex:none; font-family:var(--font-display); font-size:14px; letter-spacing:.06em; text-transform:uppercase; color:var(--liquid-300)}
+.top10 li .sc{flex:none; font-family:var(--font-display); font-size:20px; font-variant-numeric:tabular-nums; text-align:right}
+.top10 li.me{background:var(--liquid-tint); border:1px solid var(--liquid-500); border-radius:10px}
+.top10 li.me + li{border-top-color:transparent}
+.top10 li{animation:rowIn .16s var(--ease-out) both}
+.top10 li:nth-child(2){animation-delay:.03s} .top10 li:nth-child(3){animation-delay:.06s} .top10 li:nth-child(4){animation-delay:.09s} .top10 li:nth-child(5){animation-delay:.12s}
+.top10 ol + .vline + ol li{animation-delay:.15s}
+@keyframes rowIn{0%{opacity:0; transform:translateY(8px)} 100%{opacity:1; transform:none}}
+@media (prefers-reduced-motion:reduce){ .top10 li{animation:none} }
+.top10 .state{height:200px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:12px}
+.top10 .state p{max-width:280px; margin:0; color:var(--text-2); font-size:16px; line-height:1.5}
+.top10 .state .ico{width:40px; height:40px; color:var(--text-3)}
+.top10 .state .ico.err{color:var(--leak-500)}
+.top10 .state .btn{margin-top:4px}
+.t10-spinner{width:32px; height:32px; border-radius:50%; border:3px solid var(--line-subtle); border-top-color:var(--liquid-500); animation:t10spin 1s linear infinite}
+@keyframes t10spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){ .t10-spinner{animation:none} }
+@media (max-width:820px){ .t10grid{grid-template-columns:minmax(0,1fr)} }
+@media (max-width:640px){ .top10.compact .cols{grid-template-columns:minmax(0,1fr)} .top10.compact .cols .vline{display:none} }
 
 /* ===================================================================
    TABLES
@@ -808,7 +850,7 @@ td:first-child{color:var(--text-1)}
             <div class="actions" style="margin-top:24px">
               <button class="btn btn-success">Next Level</button>
               <button class="btn btn-glass">Restart</button>
-              <button class="btn btn-tertiary">Exit</button>
+              <div class="pair"><button class="btn btn-tertiary">Top 10</button><button class="btn btn-tertiary">Exit</button></div>
             </div>
           </div>
         </div>
@@ -829,7 +871,7 @@ td:first-child{color:var(--text-1)}
             <div class="scorerow cols one"><div><div class="k">Score</div><div class="v tot">85</div></div></div>
             <div class="actions" style="margin-top:24px">
               <button class="btn btn-primary">Restart</button>
-              <button class="btn btn-tertiary">Exit</button>
+              <div class="pair"><button class="btn btn-tertiary">Top 10</button><button class="btn btn-tertiary">Exit</button></div>
             </div>
           </div>
         </div>
@@ -838,7 +880,7 @@ td:first-child{color:var(--text-1)}
             <h2>Paused</h2>
             <div class="actions">
               <button class="btn btn-primary md">Resume</button>
-              <button class="btn btn-glass md">Restart</button>
+              <div class="pair"><button class="btn btn-glass md">Restart</button><button class="btn btn-glass md">Top 10</button></div>
               <hr style="border:0; border-top:1px solid var(--line-subtle); margin:0; width:100%">
               <button class="btn btn-danger md">Exit</button>
             </div>
@@ -860,7 +902,7 @@ td:first-child{color:var(--text-1)}
             <div class="actions">
               <button class="btn btn-success md">Next Level</button>
               <button class="btn btn-glass md">Restart</button>
-              <button class="btn btn-tertiary">Exit</button>
+              <div class="pair"><button class="btn btn-tertiary">Top 10</button><button class="btn btn-tertiary">Exit</button></div>
             </div>
           </div>
         </div>
@@ -886,7 +928,82 @@ td:first-child{color:var(--text-1)}
             <div class="divider"></div>
             <div class="actions">
               <button class="btn btn-primary md">Restart</button>
-              <button class="btn btn-tertiary">Exit</button>
+              <div class="pair"><button class="btn btn-tertiary">Top 10</button><button class="btn btn-tertiary">Exit</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin:32px 0 6px">Top 10</h3>
+      <p class="muted" style="margin:0 0 16px">The global top 10 of the level, opened from the pause, win and leak dialogs, always on the opaque backdrop. One column (<b>Regular</b>) where it fits, two columns of five (<b>Compact</b>) on phones. The player's own row is washed in <code>liquid.tint</code> with a <code>liquid.500</code> edge and "YOU". The loading, empty, signed-out and error states take the list's place, so the panel keeps its size.</p>
+      <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <symbol id="ic-trophy" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></symbol>
+        <symbol id="ic-close" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></symbol>
+        <symbol id="ic-warning" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3.5l9.5 16.5h-19zM12 10v4.5M12 17.5v.01"/></symbol>
+      </svg>
+      <div class="grid g2 t10grid">
+        <div class="scrimbox opaque">
+          <div class="floating top10">
+            <div class="head">
+              <div><div class="eyebrow">Level 7</div><h2><svg><use href="#ic-trophy"/></svg>Top 10</h2></div>
+              <button class="iconbtn" aria-label="Close"><svg><use href="#ic-close"/></svg></button>
+            </div>
+            <div class="cols">
+              <ol>
+                <li><span class="rk podium">1</span><span class="nm">Ada</span><span class="sc">2,140</span></li>
+                <li><span class="rk podium">2</span><span class="nm">Pipewizard</span><span class="sc">1,980</span></li>
+                <li><span class="rk podium">3</span><span class="nm">Sam</span><span class="sc">1,450</span></li>
+                <li class="me"><span class="rk">4</span><span class="nm">Jamie</span><span class="you">You</span><span class="sc">1,300</span></li>
+                <li><span class="rk">5</span><span class="nm">Fleur</span><span class="sc">1,210</span></li>
+                <li><span class="rk">6</span><span class="nm">Mo</span><span class="sc">1,120</span></li>
+                <li><span class="rk">7</span><span class="nm">Linde van der Waterleiding-Smit</span><span class="sc">990</span></li>
+                <li><span class="rk">8</span><span class="nm">Kees</span><span class="sc">870</span></li>
+                <li><span class="rk">9</span><span class="nm">Joy</span><span class="sc">640</span></li>
+                <li><span class="rk">10</span><span class="nm">Ravi</span><span class="sc">510</span></li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div style="display:grid; gap:16px; align-content:start">
+          <div class="scrimbox opaque" style="min-height:0">
+            <div class="floating top10"><div class="head"><div><div class="eyebrow">Level 7 · Loading</div><h2><svg><use href="#ic-trophy"/></svg>Top 10</h2></div><button class="iconbtn" aria-label="Close"><svg><use href="#ic-close"/></svg></button></div>
+              <div class="state"><div class="t10-spinner" role="progressbar" aria-label="Loading scores"></div><p>Loading scores…</p></div></div>
+          </div>
+          <div class="scrimbox opaque" style="min-height:0">
+            <div class="floating top10"><div class="head"><div><div class="eyebrow">Level 7 · Empty</div><h2><svg><use href="#ic-trophy"/></svg>Top 10</h2></div><button class="iconbtn" aria-label="Close"><svg><use href="#ic-close"/></svg></button></div>
+              <div class="state"><svg class="ico"><use href="#ic-trophy"/></svg><p>No scores yet. Win this level to be the first on the board.</p></div></div>
+          </div>
+        </div>
+        <div class="scrimbox opaque" style="min-height:0">
+          <div class="floating top10"><div class="head"><div><div class="eyebrow">Level 7 · Signed out</div><h2><svg><use href="#ic-trophy"/></svg>Top 10</h2></div><button class="iconbtn" aria-label="Close"><svg><use href="#ic-close"/></svg></button></div>
+            <div class="state"><svg class="ico"><use href="#ic-trophy"/></svg><p>Sign in to Google Play Games to see the top 10.</p><button class="btn btn-glass md">Sign In</button></div></div>
+        </div>
+        <div class="scrimbox opaque" style="min-height:0">
+          <div class="floating top10"><div class="head"><div><div class="eyebrow">Level 7 · Error</div><h2><svg><use href="#ic-trophy"/></svg>Top 10</h2></div><button class="iconbtn" aria-label="Close"><svg><use href="#ic-close"/></svg></button></div>
+            <div class="state"><svg class="ico err"><use href="#ic-warning"/></svg><p>Couldn't load the scores. Check your connection and try again.</p><button class="btn btn-glass md">Try Again</button></div></div>
+        </div>
+        <div class="scrimbox opaque wide">
+          <div class="floating top10 compact">
+            <div class="head">
+              <div><div class="eyebrow">Level 7 · Compact</div><h2><svg><use href="#ic-trophy"/></svg>Top 10</h2></div>
+              <button class="iconbtn" aria-label="Close"><svg><use href="#ic-close"/></svg></button>
+            </div>
+            <div class="cols">
+              <ol>
+                <li><span class="rk podium">1</span><span class="nm">Ada</span><span class="sc">2,140</span></li>
+                <li><span class="rk podium">2</span><span class="nm">Pipewizard</span><span class="sc">1,980</span></li>
+                <li><span class="rk podium">3</span><span class="nm">Sam</span><span class="sc">1,450</span></li>
+                <li class="me"><span class="rk">4</span><span class="nm">Jamie</span><span class="you">You</span><span class="sc">1,300</span></li>
+                <li><span class="rk">5</span><span class="nm">Fleur</span><span class="sc">1,210</span></li>
+              </ol>
+              <div class="vline"></div>
+              <ol start="6">
+                <li><span class="rk">6</span><span class="nm">Mo</span><span class="sc">1,120</span></li>
+                <li><span class="rk">7</span><span class="nm">Linde van der Waterleiding-Smit</span><span class="sc">990</span></li>
+                <li><span class="rk">8</span><span class="nm">Kees</span><span class="sc">870</span></li>
+                <li><span class="rk">9</span><span class="nm">Joy</span><span class="sc">640</span></li>
+                <li><span class="rk">10</span><span class="nm">Ravi</span><span class="sc">510</span></li>
+              </ol>
             </div>
           </div>
         </div>

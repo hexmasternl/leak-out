@@ -51,6 +51,7 @@ import nl.hexmaster.leakout.ui.designer.LevelDesignerScreen
 import nl.hexmaster.leakout.ui.designer.LevelDesignerViewModel
 import nl.hexmaster.leakout.ui.designer.TestPlayScreen
 import nl.hexmaster.leakout.ui.game.GameScreen
+import nl.hexmaster.leakout.ui.game.TopScoresAccess
 import nl.hexmaster.leakout.ui.levels.LevelLibraryScreen
 import nl.hexmaster.leakout.ui.levels.LevelLibraryViewModel
 import nl.hexmaster.leakout.ui.levels.asHistoryReader
@@ -200,6 +201,10 @@ class MainActivity : ComponentActivity() {
         )
         // Play Games clients need an activity: the silent sign-in check and the achievement sync run on this one.
         val playGames = appContainer.playGames
+        // Only levels from the library offer the top 10; a test play never does.
+        val topScores = TopScoresAccess.forLibraryLevel(appContainer.scoreServerConfig, appContainer.topScores, playGames.auth.state) {
+            playGames.auth.signIn(this@MainActivity)
+        }
         playGames.attach(this)
         lifecycle.addObserver(
             object : DefaultLifecycleObserver {
@@ -230,6 +235,7 @@ class MainActivity : ComponentActivity() {
                                 haptics = hapticsViewModel.haptics,
                                 tips = settings,
                                 scores = appContainer.scores,
+                                topScores = topScores,
                             )
                         }
                         is Screen.TestPlay -> TestPlayScreen(

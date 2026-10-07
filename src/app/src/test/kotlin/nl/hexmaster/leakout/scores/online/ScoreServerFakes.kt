@@ -28,6 +28,20 @@ class FakeScoreServerApi(var expiresAt: Instant = Instant.parse("2999-01-01T00:0
         gate?.await()
         scoreAnswers.removeFirstOrNull()?.let { throw it }
     }
+
+    /** The token and level of every top scores call. */
+    val topScoreCalls = mutableListOf<Pair<String, Int>>()
+
+    /** Thrown (or not, for null) one per top scores call, after which every call answers [leaderboard]. */
+    val topScoreAnswers = ArrayDeque<ScoreServerException?>()
+
+    var leaderboard: (Int) -> LevelLeaderboard = { LevelLeaderboard(it, emptyList()) }
+
+    override suspend fun topScores(accessToken: String, level: Int): LevelLeaderboard {
+        topScoreCalls += accessToken to level
+        topScoreAnswers.removeFirstOrNull()?.let { throw it }
+        return leaderboard(level)
+    }
 }
 
 /** Hands out numbered codes, or throws when [failing]. */

@@ -75,6 +75,7 @@ object LeakOutColors {
     val Liquid500 = Color(0xFF19C6F2)
     val Liquid700 = Color(0xFF0A8DC2)
     val Liquid900 = Color(0xFF065A82)
+    val LiquidTint = Color(0x2419C6F2)
 
     // 2.5 reservoir: the tank is violet, the liquid inside it stays aqua
     val Reservoir300 = Color(0xFFC7B5FF)

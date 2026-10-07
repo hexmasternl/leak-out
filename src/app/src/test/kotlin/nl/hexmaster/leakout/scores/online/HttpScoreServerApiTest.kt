@@ -78,6 +78,40 @@ class HttpScoreServerApiTest {
     }
 
     @Test
+    fun `the top scores are fetched with the bearer token`() = runBlocking {
+        var method = ""
+        server.createContext("/api/levels/7/scores/top") { exchange ->
+            method = exchange.requestMethod
+            requests += Triple(exchange.requestURI.path, exchange.requestHeaders.getFirst("Authorization"), exchange.requestBody.readBytes().decodeToString())
+            val bytes = """{"level":7,"entries":[{"position":1,"displayName":"Ada","score":2140,"isCurrentPlayer":true}]}""".toByteArray()
+            exchange.sendResponseHeaders(200, bytes.size.toLong())
+            exchange.responseBody.use { it.write(bytes) }
+        }
+        val board = HttpScoreServerApi(base).topScores("tok", 7)
+        assertEquals(LevelLeaderboard(7, listOf(LeaderboardEntry(1, "Ada", 2140, isCurrentPlayer = true))), board)
+        assertEquals("GET", method)
+        assertEquals(Triple("/api/levels/7/scores/top", "Bearer tok", ""), requests.single())
+    }
+
+    @Test
+    fun `top scores 401 is unauthorized`() = runBlocking {
+        answer("/api/levels/7/scores/top", 401)
+        assertFails<ScoreServerException.Unauthorized> { HttpScoreServerApi(base).topScores("old", 7) }
+    }
+
+    @Test
+    fun `top scores 404 is a rejection`() = runBlocking {
+        answer("/api/levels/7/scores/top", 404)
+        assertFails<ScoreServerException.Rejected> { HttpScoreServerApi(base).topScores("tok", 7) }
+    }
+
+    @Test
+    fun `top scores 500 is unavailable`() = runBlocking {
+        answer("/api/levels/7/scores/top", 500)
+        assertFails<ScoreServerException.Unavailable> { HttpScoreServerApi(base).topScores("tok", 7) }
+    }
+
+    @Test
     fun `an unreadable session is unavailable`() = runBlocking {
         answer("/api/players/sessions", 200, "<html>")
         assertFails<ScoreServerException.Unavailable> { HttpScoreServerApi(base).createSession("code") }

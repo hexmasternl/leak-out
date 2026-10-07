@@ -1,6 +1,9 @@
+using System.Diagnostics;
 using HexMaster.LeakOut.Core;
 using HexMaster.LeakOut.Players.Abstractions.Services;
 using HexMaster.LeakOut.Scores.Abstractions.DataTransferObjects;
+using HexMaster.LeakOut.Scores.Observability;
+using Microsoft.Extensions.Logging;
 
 namespace HexMaster.LeakOut.Scores.Features.GetLevelScoresAroundPlayer;
 
@@ -9,9 +12,11 @@ namespace HexMaster.LeakOut.Scores.Features.GetLevelScoresAroundPlayer;
 /// the player's own and 4 below, shifted at the edges of the ranking. Empty when the player has no
 /// score on the level.
 /// </summary>
-public sealed class GetLevelScoresAroundPlayerQueryHandler(
+public sealed partial class GetLevelScoresAroundPlayerQueryHandler(
     ILevelScoreRepository repository,
-    IPlayerProfileService playerProfiles) : IQueryHandler<GetLevelScoresAroundPlayerQuery, LevelLeaderboardDto>
+    IPlayerProfileService playerProfiles,
+    ScoresMetrics metrics,
+    ILogger<GetLevelScoresAroundPlayerQueryHandler> logger) : IQueryHandler<GetLevelScoresAroundPlayerQuery, LevelLeaderboardDto>
 {
     public const string UnknownPlayerName = "Unknown player";
 
@@ -19,7 +24,35 @@ public sealed class GetLevelScoresAroundPlayerQueryHandler(
     {
         ArgumentNullException.ThrowIfNull(query);
 
+        var started = Stopwatch.GetTimestamp();
+        using var activity = ScoresMetrics.ActivitySource.StartActivity(ScoresMetrics.GetLevelScoresAroundPlayerActivityName);
+        activity?.SetTag("player.id", query.UserId);
+        activity?.SetTag("score.level", query.Level);
+        activity?.SetTag("leaderboard.kind", ScoresMetrics.LeaderboardKindAroundPlayer);
+        try
+        {
+            var leaderboard = await BuildLeaderboardAsync(query, activity, cancellationToken);
+
+            activity?.SetTag("leaderboard.entries", leaderboard.Entries.Count);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            metrics.LeaderboardServed(ScoresMetrics.LeaderboardKindAroundPlayer, Stopwatch.GetElapsedTime(started));
+            return leaderboard;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.AddException(ex);
+            metrics.LeaderboardFailed(ScoresMetrics.LeaderboardKindAroundPlayer, Stopwatch.GetElapsedTime(started));
+            LogLeaderboardFailed(ex, ScoresMetrics.LeaderboardKindAroundPlayer);
+            throw;
+        }
+    }
+
+    private async Task<LevelLeaderboardDto> BuildLeaderboardAsync(
+        GetLevelScoresAroundPlayerQuery query, Activity? activity, CancellationToken cancellationToken)
+    {
         var best = await repository.GetBestAsync(query.UserId, query.Level, cancellationToken);
+        activity?.SetTag("player.has_score", best is not null);
         if (best is null)
         {
             return new LevelLeaderboardDto(query.Level, []);
@@ -46,4 +79,7 @@ public sealed class GetLevelScoresAroundPlayerQueryHandler(
 
         return new LevelLeaderboardDto(query.Level, entries);
     }
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "{LeaderboardKind} leaderboard request failed unexpectedly")]
+    private partial void LogLeaderboardFailed(Exception exception, string leaderboardKind);
 }

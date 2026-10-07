@@ -19,7 +19,7 @@ public sealed class GetLevelTopScoresQueryHandler(
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var ranked = await repository.GetTopAsync(query.Level, TopCount, cancellationToken);
+        var ranked = await repository.GetRankedAsync(query.Level, 0, TopCount, cancellationToken);
         if (ranked.Count == 0)
         {
             return new LevelLeaderboardDto(query.Level, []);

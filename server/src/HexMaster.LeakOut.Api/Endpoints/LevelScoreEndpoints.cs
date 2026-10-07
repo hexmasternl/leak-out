@@ -1,6 +1,7 @@
 using HexMaster.LeakOut.Api.Authentication;
 using HexMaster.LeakOut.Core;
 using HexMaster.LeakOut.Scores.Abstractions.DataTransferObjects;
+using HexMaster.LeakOut.Scores.Features.GetLevelScoresAroundPlayer;
 using HexMaster.LeakOut.Scores.Features.GetLevelTopScores;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -22,6 +23,13 @@ public static class LevelScoreEndpoints
             .Produces<LevelLeaderboardDto>()
             .Produces(StatusCodes.Status401Unauthorized);
 
+        group.MapGet("/around-me", GetLevelScoresAroundPlayer)
+            .WithName("GetLevelScoresAroundPlayer")
+            .WithSummary("Returns up to 10 scores of a level around the signed-in player's best score: 5 above, the player's own and 4 below.")
+            .Produces<LevelLeaderboardDto>()
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status401Unauthorized);
+
         return app;
     }
 
@@ -40,6 +48,24 @@ public static class LevelScoreEndpoints
         }
 
         var query = new GetLevelTopScoresQuery(httpContext.GetPlayerId(), level);
+        return TypedResults.Ok(await handler.Handle(query, cancellationToken));
+    }
+
+    private static async Task<Results<Ok<LevelLeaderboardDto>, ValidationProblem>> GetLevelScoresAroundPlayer(
+        int level,
+        HttpContext httpContext,
+        IQueryHandler<GetLevelScoresAroundPlayerQuery, LevelLeaderboardDto> handler,
+        CancellationToken cancellationToken)
+    {
+        if (level < 1)
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["level"] = ["The level must be at least 1."],
+            });
+        }
+
+        var query = new GetLevelScoresAroundPlayerQuery(httpContext.GetPlayerId(), level);
         return TypedResults.Ok(await handler.Handle(query, cancellationToken));
     }
 }

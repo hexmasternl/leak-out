@@ -1,5 +1,6 @@
 using HexMaster.LeakOut.Core;
 using HexMaster.LeakOut.Scores.Abstractions.DataTransferObjects;
+using HexMaster.LeakOut.Scores.Features.GetLevelScoresAroundPlayer;
 using HexMaster.LeakOut.Scores.Features.GetLevelTopScores;
 using HexMaster.LeakOut.Scores.Features.SubmitScore;
 using HexMaster.LeakOut.Scores.Observability;
@@ -22,6 +23,7 @@ public static class ScoresModuleRegistration
 
         services.AddScoped<ICommandHandler<SubmitScoreCommand, SubmitScoreResult>, SubmitScoreCommandHandler>();
         services.AddScoped<IQueryHandler<GetLevelTopScoresQuery, LevelLeaderboardDto>, GetLevelTopScoresQueryHandler>();
+        services.AddScoped<IQueryHandler<GetLevelScoresAroundPlayerQuery, LevelLeaderboardDto>, GetLevelScoresAroundPlayerQueryHandler>();
 
         return services;
     }

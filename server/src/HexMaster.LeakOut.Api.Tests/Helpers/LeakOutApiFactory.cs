@@ -4,6 +4,7 @@ using HexMaster.LeakOut.Players.Abstractions.DataTransferObjects;
 using HexMaster.LeakOut.Players.Abstractions.Services;
 using HexMaster.LeakOut.Players.Features.SignInPlayer;
 using HexMaster.LeakOut.Scores.Abstractions.DataTransferObjects;
+using HexMaster.LeakOut.Scores.Features.GetLevelScoresAroundPlayer;
 using HexMaster.LeakOut.Scores.Features.GetLevelTopScores;
 using HexMaster.LeakOut.Scores.Features.SubmitScore;
 using Microsoft.AspNetCore.Builder;
@@ -35,6 +36,8 @@ public sealed class LeakOutApiFactory : WebApplicationFactory<Program>
 
     public Mock<IQueryHandler<GetLevelTopScoresQuery, LevelLeaderboardDto>> GetLevelTopScoresHandler { get; } = new();
 
+    public Mock<IQueryHandler<GetLevelScoresAroundPlayerQuery, LevelLeaderboardDto>> GetLevelScoresAroundPlayerHandler { get; } = new();
+
     public Mock<IUserResolver> UserResolver { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -56,6 +59,8 @@ public sealed class LeakOutApiFactory : WebApplicationFactory<Program>
             services.AddSingleton(SubmitScoreHandler.Object);
             services.RemoveAll<IQueryHandler<GetLevelTopScoresQuery, LevelLeaderboardDto>>();
             services.AddSingleton(GetLevelTopScoresHandler.Object);
+            services.RemoveAll<IQueryHandler<GetLevelScoresAroundPlayerQuery, LevelLeaderboardDto>>();
+            services.AddSingleton(GetLevelScoresAroundPlayerHandler.Object);
             services.RemoveAll<IUserResolver>();
             services.AddSingleton(UserResolver.Object);
             services.AddSingleton<IStartupFilter, ProtectedTestEndpointStartupFilter>();

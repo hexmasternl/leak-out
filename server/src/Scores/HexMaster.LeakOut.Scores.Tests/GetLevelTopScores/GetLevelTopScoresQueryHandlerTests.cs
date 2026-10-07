@@ -42,7 +42,7 @@ public sealed class GetLevelTopScoresQueryHandlerTests
 
         await CreateHandler().Handle(new GetLevelTopScoresQuery(_requestingPlayer, Level), TestContext.Current.CancellationToken);
 
-        _repository.Verify(r => r.GetTopAsync(Level, 10, It.IsAny<CancellationToken>()), Times.Once);
+        _repository.Verify(r => r.GetRankedAsync(Level, 0, 10, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -138,7 +138,7 @@ public sealed class GetLevelTopScoresQueryHandlerTests
     {
         names ??= ranked.ToDictionary(s => s.UserId, _ => _faker.Internet.UserName());
         _repository
-            .Setup(r => r.GetTopAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetRankedAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ranked);
         _playerProfiles
             .Setup(p => p.GetDisplayNamesAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))

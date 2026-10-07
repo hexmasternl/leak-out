@@ -30,4 +30,10 @@ GET {{HexMaster.LeakOut.Api_HostAddress}}/api/levels/4/scores/top
 Authorization: Bearer {{signIn.response.body.$.accessToken}}
 Accept: application/json
 
+### Get up to 10 scores of a level around the signed-in player: 5 above, the player and 4 below.
+# The list is empty when the player has no score on the level yet.
+GET {{HexMaster.LeakOut.Api_HostAddress}}/api/levels/4/scores/around-me
+Authorization: Bearer {{signIn.response.body.$.accessToken}}
+Accept: application/json
+
 ###

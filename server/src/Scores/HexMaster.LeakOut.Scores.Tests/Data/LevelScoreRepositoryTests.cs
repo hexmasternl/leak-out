@@ -108,21 +108,12 @@ public sealed class LevelScoreRepositoryTests(PostgreSqlFixture database)
     }
 
     [Fact]
-    public async Task GetTopAsync_RanksByScoreThenEarliestThenPlayer()
+    public async Task GetRankedAsync_RanksByScoreThenEarliestThenPlayer()
     {
         var level = UniqueLevel();
-        var low = PlayerId(1);
-        var high = PlayerId(2);
-        var tieLater = PlayerId(3);
-        var tieEarlierB = PlayerId(5);
-        var tieEarlierA = PlayerId(4);
-        await SubmitAsync(low, level, 100, Now);
-        await SubmitAsync(high, level, 900, Now);
-        await SubmitAsync(tieLater, level, 500, Now.AddDays(1));
-        await SubmitAsync(tieEarlierB, level, 500, Now);
-        await SubmitAsync(tieEarlierA, level, 500, Now);
+        var (low, high, tieLater, tieEarlierB, tieEarlierA) = await SubmitTiedRankingAsync(level);
 
-        var top = await GetTopAsync(level, 10);
+        var ranked = await GetRankedAsync(level, 0, 10);
 
         Assert.Equal(
             [
@@ -132,39 +123,113 @@ public sealed class LevelScoreRepositoryTests(PostgreSqlFixture database)
                 new RankedLevelScore(4, tieLater, 500),
                 new RankedLevelScore(5, low, 100),
             ],
-            top);
+            ranked);
     }
 
     [Fact]
-    public async Task GetTopAsync_MoreScoresThanCount_ReturnsOnlyTheFirstCount()
+    public async Task GetRankedAsync_MoreScoresThanCount_ReturnsOnlyTheFirstCount()
     {
         var level = UniqueLevel();
-        for (var i = 1; i <= 25; i++)
-        {
-            await SubmitAsync(PlayerId(i), level, i * 10, Now);
-        }
+        await SubmitAscendingScoresAsync(level, 25);
 
-        var top = await GetTopAsync(level, 10);
+        var ranked = await GetRankedAsync(level, 0, 10);
 
-        Assert.Equal(Enumerable.Range(1, 10), top.Select(s => s.Position));
-        Assert.Equal(Enumerable.Range(16, 10).Reverse().Select(i => i * 10), top.Select(s => s.Score));
+        Assert.Equal(Enumerable.Range(1, 10), ranked.Select(s => s.Position));
+        Assert.Equal(Enumerable.Range(16, 10).Reverse().Select(i => i * 10), ranked.Select(s => s.Score));
     }
 
     [Fact]
-    public async Task GetTopAsync_LevelWithoutScores_ReturnsEmpty()
+    public async Task GetRankedAsync_WithOffset_NumbersPositionsFromTheOffset()
+    {
+        var level = UniqueLevel();
+        await SubmitAscendingScoresAsync(level, 25);
+
+        var ranked = await GetRankedAsync(level, 5, 10);
+
+        Assert.Equal(Enumerable.Range(6, 10), ranked.Select(s => s.Position));
+        Assert.Equal(Enumerable.Range(11, 10).Reverse().Select(i => i * 10), ranked.Select(s => s.Score));
+    }
+
+    [Fact]
+    public async Task GetRankedAsync_OffsetNearTheEnd_ReturnsTheRemainingEntries()
+    {
+        var level = UniqueLevel();
+        await SubmitAscendingScoresAsync(level, 12);
+
+        var ranked = await GetRankedAsync(level, 10, 10);
+
+        Assert.Equal([new RankedLevelScore(11, PlayerId(2), 20), new RankedLevelScore(12, PlayerId(1), 10)], ranked);
+    }
+
+    [Fact]
+    public async Task GetRankedAsync_LevelWithoutScores_ReturnsEmpty()
     {
         await SubmitAsync(PlayerId(1), UniqueLevel(), 100, Now);
 
-        Assert.Empty(await GetTopAsync(UniqueLevel(), 10));
+        Assert.Empty(await GetRankedAsync(UniqueLevel(), 0, 10));
     }
 
-    [Fact]
-    public async Task GetTopAsync_NegativeCount_ThrowsArgumentOutOfRangeException()
+    [Theory]
+    [InlineData(0, -1)]
+    [InlineData(-1, 10)]
+    public async Task GetRankedAsync_NegativeOffsetOrCount_ThrowsArgumentOutOfRangeException(int offset, int count)
     {
         await using var dbContext = database.CreateDbContext();
 
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => new LevelScoreRepository(dbContext).GetTopAsync(1, -1, TestContext.Current.CancellationToken));
+            () => new LevelScoreRepository(dbContext).GetRankedAsync(1, offset, count, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task GetBestAsync_StoredScore_ReturnsScoreAndMoment()
+    {
+        await SubmitAsync(4, 520, Now);
+
+        Assert.Equal(new BestLevelScore(520, Now), await GetBestAsync(_userId, 4));
+    }
+
+    [Fact]
+    public async Task GetBestAsync_NoScoreOnTheLevel_ReturnsNull()
+    {
+        await SubmitAsync(4, 520, Now);
+
+        Assert.Null(await GetBestAsync(_userId, 5));
+    }
+
+    [Fact]
+    public async Task CountRankedAboveAsync_TiesOnScoreAndMoment_CountsLikeTheRanking()
+    {
+        var level = UniqueLevel();
+        var (low, high, tieLater, tieEarlierB, tieEarlierA) = await SubmitTiedRankingAsync(level);
+
+        Assert.Equal(0, await CountRankedAboveAsync(level, high));
+        Assert.Equal(1, await CountRankedAboveAsync(level, tieEarlierA));
+        Assert.Equal(2, await CountRankedAboveAsync(level, tieEarlierB));
+        Assert.Equal(3, await CountRankedAboveAsync(level, tieLater));
+        Assert.Equal(4, await CountRankedAboveAsync(level, low));
+    }
+
+    [Fact]
+    public async Task CountRankedAboveAsync_MatchesThePositionsOfGetRankedAsync()
+    {
+        var level = UniqueLevel();
+        await SubmitTiedRankingAsync(level);
+
+        foreach (var entry in await GetRankedAsync(level, 0, 10))
+        {
+            Assert.Equal(entry.Position - 1, await CountRankedAboveAsync(level, entry.UserId));
+        }
+    }
+
+    [Fact]
+    public async Task CountAsync_CountsOnlyTheScoresOfTheLevel()
+    {
+        var level = UniqueLevel();
+        await SubmitAscendingScoresAsync(level, 7);
+        await SubmitAsync(PlayerId(1), UniqueLevel(), 100, Now);
+
+        await using var dbContext = database.CreateDbContext();
+        Assert.Equal(7, await new LevelScoreRepository(dbContext).CountAsync(level, TestContext.Current.CancellationToken));
     }
 
     /// <summary>A level no other test writes to, since rankings span all players of a level.</summary>
@@ -179,10 +244,50 @@ public sealed class LevelScoreRepositoryTests(PostgreSqlFixture database)
         await new LevelScoreRepository(dbContext).SubmitAsync(userId, level, score, achievedAt, TestContext.Current.CancellationToken);
     }
 
-    private async Task<IReadOnlyList<RankedLevelScore>> GetTopAsync(int level, int count)
+    /// <summary>Stores 5 scores on <paramref name="level"/>, three of them tied on 500.</summary>
+    private async Task<(Guid Low, Guid High, Guid TieLater, Guid TieEarlierB, Guid TieEarlierA)> SubmitTiedRankingAsync(int level)
+    {
+        var low = PlayerId(1);
+        var high = PlayerId(2);
+        var tieLater = PlayerId(3);
+        var tieEarlierB = PlayerId(5);
+        var tieEarlierA = PlayerId(4);
+        await SubmitAsync(low, level, 100, Now);
+        await SubmitAsync(high, level, 900, Now);
+        await SubmitAsync(tieLater, level, 500, Now.AddDays(1));
+        await SubmitAsync(tieEarlierB, level, 500, Now);
+        await SubmitAsync(tieEarlierA, level, 500, Now);
+        return (low, high, tieLater, tieEarlierB, tieEarlierA);
+    }
+
+    /// <summary>Stores <paramref name="count"/> scores: player <c>i</c> scores <c>i * 10</c>.</summary>
+    private async Task SubmitAscendingScoresAsync(int level, int count)
+    {
+        for (var i = 1; i <= count; i++)
+        {
+            await SubmitAsync(PlayerId(i), level, i * 10, Now);
+        }
+    }
+
+    private async Task<IReadOnlyList<RankedLevelScore>> GetRankedAsync(int level, int offset, int count)
     {
         await using var dbContext = database.CreateDbContext();
-        return await new LevelScoreRepository(dbContext).GetTopAsync(level, count, TestContext.Current.CancellationToken);
+        return await new LevelScoreRepository(dbContext).GetRankedAsync(level, offset, count, TestContext.Current.CancellationToken);
+    }
+
+    private async Task<BestLevelScore?> GetBestAsync(Guid userId, int level)
+    {
+        await using var dbContext = database.CreateDbContext();
+        return await new LevelScoreRepository(dbContext).GetBestAsync(userId, level, TestContext.Current.CancellationToken);
+    }
+
+    /// <summary>Counts what ranks above <paramref name="userId"/>'s stored score, as the handler does.</summary>
+    private async Task<int> CountRankedAboveAsync(int level, Guid userId)
+    {
+        var best = await GetBestAsync(userId, level) ?? throw new InvalidOperationException("No stored score.");
+        await using var dbContext = database.CreateDbContext();
+        return await new LevelScoreRepository(dbContext).CountRankedAboveAsync(
+            level, best.Score, best.AchievedAt, userId, TestContext.Current.CancellationToken);
     }
 
     private async Task<LevelScoreSubmission> SubmitAsync(int level, int score, DateTimeOffset achievedAt)

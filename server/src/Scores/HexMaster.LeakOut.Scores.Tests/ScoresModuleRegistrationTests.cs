@@ -1,6 +1,7 @@
 using HexMaster.LeakOut.Core;
 using HexMaster.LeakOut.Players.Abstractions.Services;
 using HexMaster.LeakOut.Scores.Abstractions.DataTransferObjects;
+using HexMaster.LeakOut.Scores.Features.GetLevelScoresAroundPlayer;
 using HexMaster.LeakOut.Scores.Features.GetLevelTopScores;
 using HexMaster.LeakOut.Scores.Features.SubmitScore;
 using HexMaster.LeakOut.Scores.Observability;
@@ -25,6 +26,8 @@ public sealed class ScoresModuleRegistrationTests
             scope.ServiceProvider.GetRequiredService<ICommandHandler<SubmitScoreCommand, SubmitScoreResult>>());
         Assert.IsType<GetLevelTopScoresQueryHandler>(
             scope.ServiceProvider.GetRequiredService<IQueryHandler<GetLevelTopScoresQuery, LevelLeaderboardDto>>());
+        Assert.IsType<GetLevelScoresAroundPlayerQueryHandler>(
+            scope.ServiceProvider.GetRequiredService<IQueryHandler<GetLevelScoresAroundPlayerQuery, LevelLeaderboardDto>>());
         Assert.IsType<SystemClock>(scope.ServiceProvider.GetRequiredService<IClock>());
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<ScoresMetrics>());
     }

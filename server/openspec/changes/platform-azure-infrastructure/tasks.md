@@ -2,7 +2,7 @@
 
 ## 1. Telemetry and container image in the code
 
-- [ ] 1.1 Add `Azure.Monitor.OpenTelemetry.AspNetCore` to `HexMaster.LeakOut.Aspire.ServiceDefaults` and enable `UseAzureMonitor()` when `APPLICATIONINSIGHTS_CONNECTION_STRING` is set; verify a ServiceDefaults test shows the exporter is registered only when the setting is present
+- [x] 1.1 Add `Azure.Monitor.OpenTelemetry.AspNetCore` to `HexMaster.LeakOut.Aspire.ServiceDefaults` and enable `UseAzureMonitor()` when `APPLICATIONINSIGHTS_CONNECTION_STRING` is set; verify a ServiceDefaults test shows the exporter is registered only when the setting is present
 - [ ] 1.2 Add the container properties (`ContainerRepository` `hexmaster-leakout-api`) to `HexMaster.LeakOut.Api.csproj` and verify `dotnet publish src/HexMaster.LeakOut.Api -c Release /t:PublishContainer` produces a local image that serves `/alive` on port 8080
 
 ## 2. Bicep templates

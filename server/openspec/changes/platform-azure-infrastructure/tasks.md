@@ -7,7 +7,7 @@
 
 ## 2. Bicep templates
 
-- [ ] 2.1 Add `infrastructure/modules/monitoring.bicep` (Log Analytics `PerGB2018`, 30 days, 1 GB daily cap; workspace-based Application Insights) with outputs for the workspace id/key and the connection string; verify `az bicep build` succeeds
+- [x] 2.1 Add `infrastructure/modules/monitoring.bicep` (Log Analytics `PerGB2018`, 30 days, 1 GB daily cap; workspace-based Application Insights) with outputs for the workspace id/key and the connection string; verify `az bicep build` succeeds
 - [ ] 2.2 Add `infrastructure/modules/postgres.bicep` (Flexible Server 17, `Standard_B1ms` Burstable, 32 GiB, no HA, no geo backup, `AllowAllAzureServices` rule, databases `playersdb` and `scoresdb`) with the FQDN as output; verify `az bicep build` succeeds
 - [ ] 2.3 Add `infrastructure/modules/containerapps-env.bicep` (Consumption environment logging to the workspace); verify `az bicep build` succeeds
 - [ ] 2.4 Add `infrastructure/modules/api.bicep` (container app `hexmaster-leakout-api`: registry credentials, secrets, environment variables including the Google sign-in secrets `google-client-id`, `google-client-secret` and `auth-signing-key` as `secretRef`s for `GooglePlayGames__ClientId`, `GooglePlayGames__ClientSecret` and `Authentication__SigningKey`, external HTTPS ingress on 8080, 0..`maxReplicas` with the `http-concurrency` rule, `/alive` and `/health` probes); verify `az bicep build` succeeds

@@ -69,8 +69,8 @@ public static class Extensions
                     // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
                     //.AddGrpcClientInstrumentation()
                     .AddHttpClientInstrumentation()
-                    // The /health checks' database spans have no parent; drop them like the probe requests.
-                    .AddProcessor(new DropOrphanDatabaseSpansProcessor());
+                    // Children of the filtered probe requests (the health checks' database calls) are dropped too.
+                    .AddProcessor(new DropChildrenOfUnrecordedSpansProcessor());
             });
 
         // Configured as options rather than in the AddAspNetCoreInstrumentation callback, so they also

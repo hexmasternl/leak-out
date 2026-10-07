@@ -3,10 +3,13 @@
 targetScope = 'subscription'
 
 @description('Name of the resource group that holds every resource; created when it does not exist.')
-param resourceGroupName string = 'rg-leakout-prod-swe'
+param resourceGroupName string = 'rg-leakout-prod'
 
 @description('Azure region of the resource group and its resources.')
 param location string
+
+@description('Abbreviation of the Azure region, used for naming resources.')
+param locationAbbreviation string = 'swc'
 
 @description('Full image reference of the API including the tag.')
 param imageName string
@@ -42,8 +45,10 @@ param authSigningKey string
 @minValue(1)
 param maxReplicas int = 3
 
+var targetResourcegroupName = '${resourceGroupName}-${locationAbbreviation}'
+
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = {
-  name: resourceGroupName
+  name: targetResourcegroupName
   location: location
 }
 

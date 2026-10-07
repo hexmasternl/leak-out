@@ -16,6 +16,9 @@ param environmentId string
 @description('Full image reference including the tag, for example myregistry.azurecr.io/hexmaster-leakout-api:<sha>.')
 param imageName string
 
+@description('Version of the deployed release, reported as the OpenTelemetry service.version.')
+param serviceVersion string
+
 @description('Login server of the existing container registry.')
 param registryServer string
 
@@ -125,6 +128,10 @@ resource containerApp 'Microsoft.App/containerApps@2026-07-01' = {
             {
               name: 'OTEL_SERVICE_NAME'
               value: serviceName
+            }
+            {
+              name: 'OTEL_RESOURCE_ATTRIBUTES'
+              value: 'service.version=${serviceVersion}'
             }
             {
               name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'

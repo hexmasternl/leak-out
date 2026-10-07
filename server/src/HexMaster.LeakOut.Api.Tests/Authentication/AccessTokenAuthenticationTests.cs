@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using HexMaster.LeakOut.Api.Tests.Helpers;
+using Microsoft.AspNetCore.Hosting;
 using Moq;
 
 namespace HexMaster.LeakOut.Api.Tests.Authentication;
@@ -110,6 +111,30 @@ public sealed class AccessTokenAuthenticationTests : IClassFixture<LeakOutApiFac
         var response = await _factory.CreateClient().GetAsync(path, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    // Azure Container Apps probes /alive (startup, liveness) and /health (readiness) in Production;
+    // without them every revision would be marked unhealthy.
+    [Theory]
+    [InlineData("/health")]
+    [InlineData("/alive")]
+    public async Task ProbeEndpoints_InProduction_Return200WithoutToken(string path)
+    {
+        using var production = _factory.WithWebHostBuilder(builder => builder.UseEnvironment("Production"));
+
+        var response = await production.CreateClient().GetAsync(path, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task OpenApiDocument_InProduction_IsNotServedAnonymously()
+    {
+        using var production = _factory.WithWebHostBuilder(builder => builder.UseEnvironment("Production"));
+
+        var response = await production.CreateClient().GetAsync("/openapi/v1.json", TestContext.Current.CancellationToken);
+
+        Assert.NotEqual(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]

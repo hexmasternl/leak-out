@@ -38,6 +38,47 @@ See [docs/auth-setup.md](docs/auth-setup.md) for the full Google Cloud / Play Co
 
 `src/HexMaster.LeakOut.Api/HexMaster.LeakOut.Api.http` has a sign-in sample.
 
+## Observability
+
+The API emits OpenTelemetry traces, metrics and logs (`HexMaster.LeakOut.Aspire.ServiceDefaults`). ASP.NET Core requests, outgoing HTTP calls (Google) and EF Core / Npgsql database calls are instrumented automatically. Every operation adds its own span, metrics and logs on top.
+
+**Locally**, open the Aspire dashboard (its URL is printed when the AppHost starts) and select the `hexmaster-leakout-api` resource:
+
+- **Traces**: a leaderboard request shows the HTTP span, `players.resolve_user`, the handler span (for example `scores.get_level_top_scores`), `players.get_display_names` and the database spans nested under them.
+- **Metrics**: the `HexMaster.LeakOut.Players` and `HexMaster.LeakOut.Scores` meters, next to the ASP.NET Core, HttpClient and runtime meters.
+- **Structured logs**: filter by trace to see the logs of one request.
+
+**In Azure**, everything goes to the Application Insights component `<resource group>-appi`, under cloud role `hexmaster-leakout-api`. The deployed version (`service.version`, the image tag) appears as `application_Version`. Requests and dependencies show in **Transaction search** and **Application map**. Custom spans are in the `dependencies` table, custom metrics in `customMetrics` and logs in `traces`:
+
+```kusto
+dependencies | where name in ("players.resolve_user", "scores.get_level_top_scores", "scores.get_level_scores_around_player")
+customMetrics | where name startswith "leakout."
+requests | summarize count() by application_Version, bin(timestamp, 1h)
+```
+
+| Span | Operation |
+| --- | --- |
+| `players.sign_in` | Sign-in with a Google Play Games server auth code |
+| `players.resolve_user` | Resolving the access token's subject to the internal player id (every authenticated request) |
+| `players.get_display_names` | Looking up display names for a leaderboard |
+| `scores.submit_score` | Submitting a score |
+| `scores.get_level_top_scores` | Top 10 of a level |
+| `scores.get_level_scores_around_player` | The scores around the player's own score |
+
+| Metric | Type | Attributes |
+| --- | --- | --- |
+| `leakout.players.sign_ins` | counter | `outcome` (`success`, `rejected`, `unavailable`, `error`), `new_player` |
+| `leakout.players.sign_in.duration` | histogram (s) | `outcome` |
+| `leakout.players.user_resolutions` | counter | `outcome` (`cache_hit`, `cache_miss`, `unknown`, `error`) |
+| `leakout.scores.submissions` | counter | `outcome` (`new_best`, `not_improved`, `error`) |
+| `leakout.scores.submission.duration` | histogram (s) | `outcome` |
+| `leakout.scores.leaderboard.requests` | counter | `leaderboard.kind` (`top`, `around_player`), `outcome` (`success`, `error`) |
+| `leakout.scores.leaderboard.duration` | histogram (s) | `leaderboard.kind`, `outcome` |
+
+Logs record a new player, a rejected sign-in, a new best score and unexpected failures, and carry the trace id of their request.
+
+**Privacy**: no span attribute, metric attribute or log contains the Google Play Games player id, a server auth code, an access token or a display name. Spans and logs identify a player by the internal player id only. Metric attributes never contain player ids, levels or scores. `/alive` and `/health` are not traced, so platform probes don't count against the 1 GB daily ingestion cap.
+
 ## Continuous integration
 
 Every pull request into `development` runs [`.github/workflows/pull-request.yml`](.github/workflows/pull-request.yml) with two checks:

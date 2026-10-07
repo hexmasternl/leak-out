@@ -1,12 +1,18 @@
+using System.Diagnostics;
 using Bogus;
 using HexMaster.LeakOut.Players.Abstractions.Services;
 using HexMaster.LeakOut.Scores.Abstractions.DataTransferObjects;
 using HexMaster.LeakOut.Scores.Features.GetLevelTopScores;
+using HexMaster.LeakOut.Scores.Observability;
+using HexMaster.LeakOut.Scores.Tests.Helpers;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 using Moq;
 
 namespace HexMaster.LeakOut.Scores.Tests.GetLevelTopScores;
 
-public sealed class GetLevelTopScoresQueryHandlerTests
+[Collection(TelemetryCollection.Name)]
+public sealed class GetLevelTopScoresQueryHandlerTests : IDisposable
 {
     private const int Level = 3;
 
@@ -14,6 +20,8 @@ public sealed class GetLevelTopScoresQueryHandlerTests
     private readonly Mock<ILevelScoreRepository> _repository = new();
     private readonly Mock<IPlayerProfileService> _playerProfiles = new();
     private readonly Guid _requestingPlayer = Guid.CreateVersion7();
+    private readonly TelemetryCollector _telemetry = new();
+    private readonly FakeLogger<GetLevelTopScoresQueryHandler> _logger = new();
 
     [Fact]
     public async Task Handle_RankedScoresWithTies_KeepsRankingOrderAndPositions()
@@ -134,6 +142,94 @@ public sealed class GetLevelTopScoresQueryHandlerTests
         _playerProfiles.VerifyNoOtherCalls();
     }
 
+    [Fact]
+    public async Task Handle_FilledLeaderboard_RecordsSpanAndMetrics()
+    {
+        var ranked = new[]
+        {
+            new RankedLevelScore(1, Guid.CreateVersion7(), 900),
+            new RankedLevelScore(2, _requestingPlayer, 800),
+        };
+        var names = RepositoryReturns(ranked);
+
+        await CreateHandler().Handle(new GetLevelTopScoresQuery(_requestingPlayer, Level), TestContext.Current.CancellationToken);
+
+        var activity = Assert.Single(_telemetry.Activities);
+        Assert.Equal(ScoresMetrics.GetLevelTopScoresActivityName, activity.OperationName);
+        Assert.Equal(ActivityStatusCode.Ok, activity.Status);
+        Assert.Equal(_requestingPlayer, activity.GetTagItem("player.id"));
+        Assert.Equal(Level, activity.GetTagItem("score.level"));
+        Assert.Equal(ScoresMetrics.LeaderboardKindTop, activity.GetTagItem("leaderboard.kind"));
+        Assert.Equal(2, activity.GetTagItem("leaderboard.entries"));
+        Assert.DoesNotContain(activity.TagObjects, t => t.Value is string value && names.ContainsValue(value));
+        AssertLeaderboardRecorded(ScoresMetrics.OutcomeSuccess);
+        Assert.Empty(_logger.Collector.GetSnapshot());
+    }
+
+    [Fact]
+    public async Task Handle_LevelWithoutScores_RecordsZeroEntries()
+    {
+        RepositoryReturns([]);
+
+        await CreateHandler().Handle(new GetLevelTopScoresQuery(_requestingPlayer, Level), TestContext.Current.CancellationToken);
+
+        Assert.Equal(0, Assert.Single(_telemetry.Activities).GetTagItem("leaderboard.entries"));
+        AssertLeaderboardRecorded(ScoresMetrics.OutcomeSuccess);
+    }
+
+    [Fact]
+    public async Task Handle_RepositoryFails_RecordsErrorLogsAndRethrows()
+    {
+        var failure = new InvalidOperationException("database down");
+        _repository
+            .Setup(r => r.GetRankedAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(failure);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => CreateHandler().Handle(new GetLevelTopScoresQuery(_requestingPlayer, Level), TestContext.Current.CancellationToken));
+
+        var activity = Assert.Single(_telemetry.Activities);
+        Assert.Equal(ActivityStatusCode.Error, activity.Status);
+        Assert.Contains(activity.Events, e => e.Name == "exception");
+        AssertLeaderboardRecorded(ScoresMetrics.OutcomeError);
+
+        var log = Assert.Single(_logger.Collector.GetSnapshot());
+        Assert.Equal(LogLevel.Error, log.Level);
+        Assert.Same(failure, log.Exception);
+        Assert.Equal("top leaderboard request failed unexpectedly", log.Message);
+    }
+
+    [Fact]
+    public async Task Handle_Cancelled_RecordsNoFailure()
+    {
+        _repository
+            .Setup(r => r.GetRankedAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new OperationCanceledException());
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => CreateHandler().Handle(new GetLevelTopScoresQuery(_requestingPlayer, Level), TestContext.Current.CancellationToken));
+
+        Assert.NotEqual(ActivityStatusCode.Error, Assert.Single(_telemetry.Activities).Status);
+        Assert.Empty(_telemetry.Measurements);
+        Assert.Empty(_telemetry.DoubleMeasurements);
+        Assert.Empty(_logger.Collector.GetSnapshot());
+    }
+
+    private void AssertLeaderboardRecorded(string outcome)
+    {
+        // Only the kind and the outcome: no player id, level or score.
+        var expectedTags = new Dictionary<string, object?> { ["leaderboard.kind"] = ScoresMetrics.LeaderboardKindTop, ["outcome"] = outcome };
+
+        var count = Assert.Single(_telemetry.Measurements);
+        Assert.Equal(ScoresMetrics.LeaderboardRequestsInstrumentName, count.Instrument);
+        Assert.Equal(expectedTags, count.Tags);
+
+        var duration = Assert.Single(_telemetry.DoubleMeasurements);
+        Assert.Equal(ScoresMetrics.LeaderboardDurationInstrumentName, duration.Instrument);
+        Assert.True(duration.Value >= 0);
+        Assert.Equal(expectedTags, duration.Tags);
+    }
+
     private Dictionary<Guid, string> RepositoryReturns(RankedLevelScore[] ranked, Dictionary<Guid, string>? names = null)
     {
         names ??= ranked.ToDictionary(s => s.UserId, _ => _faker.Internet.UserName());
@@ -146,5 +242,7 @@ public sealed class GetLevelTopScoresQueryHandlerTests
         return names;
     }
 
-    private GetLevelTopScoresQueryHandler CreateHandler() => new(_repository.Object, _playerProfiles.Object);
+    private GetLevelTopScoresQueryHandler CreateHandler() => new(_repository.Object, _playerProfiles.Object, _telemetry.Metrics, _logger);
+
+    public void Dispose() => _telemetry.Dispose();
 }

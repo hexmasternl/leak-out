@@ -10,6 +10,9 @@ param namePrefix string = resourceGroup().name
 @description('Full image reference of the API including the tag.')
 param imageName string
 
+@description('Version of the deployed release (SERVICE_VERSION), reported as the OpenTelemetry service.version.')
+param serviceVersion string
+
 @description('Login server of the existing container registry (ACR_LOGIN_SERVER).')
 param registryServer string
 
@@ -79,6 +82,7 @@ module api 'modules/api.bicep' = {
     containerAppName: '${namePrefix}-api'
     environmentId: containerAppsEnvironment.outputs.environmentId
     imageName: imageName
+    serviceVersion: serviceVersion
     registryServer: registryServer
     registryUsername: registryUsername
     registryPassword: registryPassword

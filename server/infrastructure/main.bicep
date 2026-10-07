@@ -15,6 +15,9 @@ param locationAbbreviation string = 'neu'
 @minLength(1)
 param imageName string
 
+@description('Version of the deployed release (SERVICE_VERSION), reported as the OpenTelemetry service.version.')
+param serviceVersion string
+
 @description('Login server of the existing container registry (ACR_LOGIN_SERVER).')
 @minLength(1)
 param registryServer string
@@ -60,6 +63,7 @@ module resources 'resources.bicep' = {
   params: {
     location: location
     imageName: imageName
+    serviceVersion: serviceVersion
     registryServer: registryServer
     registryUsername: registryUsername
     registryPassword: registryPassword

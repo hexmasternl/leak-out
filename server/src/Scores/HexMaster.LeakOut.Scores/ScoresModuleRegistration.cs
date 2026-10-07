@@ -17,6 +17,7 @@ public static class ScoresModuleRegistration
     /// </summary>
     public static IServiceCollection AddScoresModule(this IServiceCollection services)
     {
+        services.AddLogging();
         services.AddMetrics();
         services.TryAddSingleton<IClock, SystemClock>();
         services.TryAddSingleton<ScoresMetrics>();

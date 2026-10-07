@@ -39,10 +39,10 @@
 
 ## 8. API authentication and endpoints
 
-- [ ] 8.1 Configure `AddAuthentication().AddJwtBearer()` (issuer, audience, lifetime with 1 minute skew, signing key), `AddAuthorization` with a fallback policy requiring an authenticated user, anonymous `/health`, `/alive` and `/openapi`, and a bearer security scheme in the OpenAPI document, and verify `/health` still returns 200 anonymously in Development
-- [ ] 8.2 Add `Endpoints/PlayerEndpoints.cs` with `MapPlayerEndpoints()` (group `/api/players`, `POST /sessions`, `AllowAnonymous`, 400 for a blank code, 401 for `GooglePlayGamesAuthenticationException`, 503 for `GooglePlayGamesUnavailableException`) and call it from `Program.cs`, and verify with endpoint tests
-- [ ] 8.3 Add the `ResolveUserIdAsync` helper (or endpoint filter) that reads `sub`, calls `IUserResolver` and returns 401 for an unknown player, and verify with a test endpoint in `HexMaster.LeakOut.Api.Tests`
-- [ ] 8.4 Create `HexMaster.LeakOut.Api.Tests` with `WebApplicationFactory<Program>` tests for no token, expired token, foreign-signed token and valid token on a protected endpoint, and verify they pass
+- [x] 8.1 Configure `AddAuthentication().AddJwtBearer()` (issuer, audience, lifetime with 1 minute skew, signing key), `AddAuthorization` with a fallback policy requiring an authenticated user, anonymous `/health`, `/alive` and `/openapi`, and a bearer security scheme in the OpenAPI document, and verify `/health` still returns 200 anonymously in Development
+- [x] 8.2 Add `Endpoints/PlayerEndpoints.cs` with `MapPlayerEndpoints()` (group `/api/players`, `POST /sessions`, `AllowAnonymous`, 400 for a blank code, 401 for `GooglePlayGamesAuthenticationException`, 503 for `GooglePlayGamesUnavailableException`) and call it from `Program.cs`, and verify with endpoint tests
+- [x] 8.3 Add the `ResolveUserIdAsync` helper (or endpoint filter) that reads `sub`, calls `IUserResolver` and returns 401 for an unknown player, and verify with a test endpoint in `HexMaster.LeakOut.Api.Tests`
+- [x] 8.4 Create `HexMaster.LeakOut.Api.Tests` with `WebApplicationFactory<Program>` tests for no token, expired token, foreign-signed token and valid token on a protected endpoint, and verify they pass
 - [ ] 8.5 Add a sign-in sample to `HexMaster.LeakOut.Api.http` and document the Google web client id/secret, the signing key and the game's `serverClientId` in `README.md` and `CLAUDE.md`, and verify the documented `dotnet user-secrets` commands work
 
 ## 9. Integration check

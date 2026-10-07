@@ -29,7 +29,7 @@
 - [x] 5.1 Add `src/HexMaster.LeakOut.Api/Endpoints/ScoreEndpoints.cs` with `MapScoreEndpoints()`: group `/api/scores`, `.RequireAuthorization()`, `POST /` named `SubmitScore` that validates, resolves the `sub` claim with `IUserResolver`, dispatches the command and returns `200` with `SubmitScoreResult`; call `AddScoresModule()`, `AddScoresPostgreSql()` and `MapScoreEndpoints()` from `Program.cs`
 - [x] 5.2 Add endpoint tests with `WebApplicationFactory<Program>` and mocked handler and resolver: 401 without a token, 401 for an unknown player, 400 for level 0 and for a negative score, 200 with the handler result
 - [x] 5.3 Add `scoresdb` to `AppHost.cs` (`postgres.AddDatabase("scoresdb")`, `.WithReference(scoresDb).WaitFor(scoresDb)` on the API) and verify `aspire run` shows the database and the API healthy
-- [ ] 5.4 Add a `POST /api/scores` sample to `HexMaster.LeakOut.Api.http` and verify it returns `200` with a token from the sign-in endpoint of #1
+- [x] 5.4 Add a `POST /api/scores` sample to `HexMaster.LeakOut.Api.http` and verify it returns `200` with a token from the sign-in endpoint of #1
 
 ## 6. Verification
 

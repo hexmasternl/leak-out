@@ -1,4 +1,5 @@
 using HexMaster.LeakOut.Api.Authentication;
+using HexMaster.LeakOut.Api.Endpoints;
 using HexMaster.LeakOut.Players;
 using HexMaster.LeakOut.Players.Data.PostgreSQL;
 using HexMaster.LeakOut.Players.Observability;
@@ -38,6 +39,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi().AllowAnonymous();
 }
+
+app.MapPlayerEndpoints();
 
 app.Run();
 

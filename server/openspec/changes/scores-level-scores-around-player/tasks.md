@@ -15,7 +15,7 @@
 
 ## 4. Query slice
 
-- [ ] 4.1 Add `GetLevelScoresAroundPlayerQuery(Guid UserId, int Level)` and `GetLevelScoresAroundPlayerQueryHandler` returning `LevelLeaderboardDto`, register the handler in `AddScoresModule()`; verify handler tests with Moq and Bogus cover: player in the middle (positions 123..132, only 128 marked as caller), player near the top, player near the bottom, level with fewer than 10 scores, caller without a score (empty list, no window read), missing display name (`Unknown player`), null query (`ArgumentNullException`)
+- [x] 4.1 Add `GetLevelScoresAroundPlayerQuery(Guid UserId, int Level)` and `GetLevelScoresAroundPlayerQueryHandler` returning `LevelLeaderboardDto`, register the handler in `AddScoresModule()`; verify handler tests with Moq and Bogus cover: player in the middle (positions 123..132, only 128 marked as caller), player near the top, player near the bottom, level with fewer than 10 scores, caller without a score (empty list, no window read), missing display name (`Unknown player`), null query (`ArgumentNullException`)
 
 ## 5. Endpoint
 

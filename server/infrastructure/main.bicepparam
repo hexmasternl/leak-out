@@ -5,7 +5,7 @@
 using 'main.bicep'
 
 param resourceGroupName = 'rg-leakout'
-param location = 'westeurope'
+param location = 'swedencentral'
 param namePrefix = 'leakout'
 param maxReplicas = 3
 

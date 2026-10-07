@@ -21,7 +21,7 @@ Every resource is named `<resource group name>-<kind>`, so with the default reso
 | Parameter | Secure | Value in `main.bicepparam` |
 | --- | --- | --- |
 | `resourceGroupName` | | `rg-leakout-prod-swe` |
-| `location` | | `swedencentral` |
+| `location` | | `northeurope` |
 | `maxReplicas` | | `3` |
 | `imageName` | | `API_IMAGE`: full image reference with tag, e.g. `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>` |
 | `registryServer` | | `ACR_LOGIN_SERVER` |
@@ -87,12 +87,12 @@ read -rsp "Google client secret: " GOOGLE_CLIENT_SECRET; echo; export GOOGLE_CLI
 read -rsp "Signing key (>= 32 chars): " GOOGLE_SIGNING_KEY; echo; export GOOGLE_SIGNING_KEY
 
 # Preview the changes
-az deployment sub what-if --location swedencentral \
+az deployment sub what-if --location northeurope \
   --template-file infrastructure/main.bicep \
   --parameters infrastructure/main.bicepparam
 
 # Deploy
-az deployment sub create --location swedencentral --name "leakout-$(date +%Y%m%d%H%M%S)" \
+az deployment sub create --location northeurope --name "leakout-$(date +%Y%m%d%H%M%S)" \
   --template-file infrastructure/main.bicep \
   --parameters infrastructure/main.bicepparam \
   --query properties.outputs

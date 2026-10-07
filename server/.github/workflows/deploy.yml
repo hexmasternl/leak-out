@@ -102,7 +102,7 @@ jobs:
     env:
       # Must match location in infrastructure/main.bicepparam: ARM rejects a deployment name
       # reused in another location.
-      DEPLOYMENT_LOCATION: swedencentral
+      DEPLOYMENT_LOCATION: northeurope
     steps:
       - uses: actions/checkout@v7
 

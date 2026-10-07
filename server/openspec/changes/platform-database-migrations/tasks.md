@@ -11,4 +11,4 @@
 
 ## 3. Integration check
 
-- [ ] 3.1 After the next deployment to Azure, verify the container app's new revision becomes healthy, its logs show the migrations being applied (or none pending), and `POST /api/players/sessions` with a valid server auth code returns a token instead of the `42P01` error.
+- [x] 3.1 After the next deployment to Azure, verify the container app's new revision becomes healthy, its logs show the migrations being applied (or none pending), and `POST /api/players/sessions` with a valid server auth code returns a token instead of the `42P01` error.

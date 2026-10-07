@@ -138,10 +138,9 @@ private fun LevelCompleteContent(
                 WinEyebrow(level)
                 Spacer(Modifier.height(4.dp))
                 WinHeadline(LeakOutTextStyles.DisplayLg)
-                if (showNewBest) {
-                    Spacer(Modifier.height(8.dp))
-                    NewBest(Modifier.tag(LevelCompleteTags.NEW_BEST))
-                }
+                Spacer(Modifier.height(8.dp))
+                // As in Regular: "New best!" takes the message's place, so the column does not grow.
+                if (showNewBest) NewBest(Modifier.tag(LevelCompleteTags.NEW_BEST)) else WinMessage()
                 Spacer(Modifier.height(8.dp))
                 WinStars(lit = frame.starsLit, scales = frame.starScales, modifier = Modifier.tag(LevelCompleteTags.STARS), size = 32.dp, tagStars = !measuring)
                 Spacer(Modifier.height(12.dp))

@@ -2,8 +2,8 @@
 
 ## 1. Prerequisites and project setup
 
-- [ ] 1.1 Confirm `players-google-play-auth` (#1) is implemented on `development` (Core CQRS interfaces and `IClock`, JWT authentication, `IUserResolver`, `postgres` resource in the AppHost) and verify `dotnet build src/leak-out-server.slnx` succeeds
-- [ ] 1.2 Make sure the four Scores projects are in `src/leak-out-server.slnx`, add the Core reference to `HexMaster.LeakOut.Scores`, the Abstractions reference where needed, and the Aspire Npgsql EF Core package to `HexMaster.LeakOut.Scores.Data.PostgreSQL`; verify the solution builds
+- [x] 1.1 Confirm `players-google-play-auth` (#1) is implemented on `development` (Core CQRS interfaces and `IClock`, JWT authentication, `IUserResolver`, `postgres` resource in the AppHost) and verify `dotnet build src/leak-out-server.slnx` succeeds
+- [x] 1.2 Make sure the four Scores projects are in `src/leak-out-server.slnx`, add the Core reference to `HexMaster.LeakOut.Scores`, the Abstractions reference where needed, and the Aspire Npgsql EF Core package to `HexMaster.LeakOut.Scores.Data.PostgreSQL`; verify the solution builds
 
 ## 2. Domain model
 

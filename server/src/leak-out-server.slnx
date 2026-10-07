@@ -14,6 +14,7 @@
     <Project Path="Scores/HexMaster.LeakOut.Scores.Tests/HexMaster.LeakOut.Scores.Tests.csproj" />
     <Project Path="Scores/HexMaster.LeakOut.Scores/HexMaster.LeakOut.Scores.csproj" />
   </Folder>
+  <Project Path="HexMaster.LeakOut.Api.Tests/HexMaster.LeakOut.Api.Tests.csproj" />
   <Project Path="HexMaster.LeakOut.Api/HexMaster.LeakOut.Api.csproj" />
   <Project Path="HexMaster.LeakOut.Aspire/HexMaster.LeakOut.Aspire.AppHost/HexMaster.LeakOut.Aspire.AppHost.csproj" Id="dc1e398a-5833-4756-b768-a2c8a0d39daf" />
   <Project Path="HexMaster.LeakOut.Aspire/HexMaster.LeakOut.Aspire.ServiceDefaults/HexMaster.LeakOut.Aspire.ServiceDefaults.csproj" />

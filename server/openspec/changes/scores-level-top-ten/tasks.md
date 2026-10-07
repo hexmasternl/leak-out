@@ -15,7 +15,7 @@
 
 ## 3. Endpoint
 
-- [ ] 3.1 Map `GET /api/levels/{level}/scores/top` in a new `src/HexMaster.LeakOut.Api/Endpoints/LevelScoreEndpoints.cs` (`MapLevelScoreEndpoints()`, group `/api/levels/{level}/scores`, called from `Program.cs`) with `.RequireAuthorization()`, validate `level >= 1` (400 validation problem), resolve the caller via `IUserResolver`, dispatch the query, and add `.WithName("GetLevelTopScores")` and `.Produces<LevelLeaderboardDto>()`; verify endpoint tests return 200 with entries, 400 for level 0 and 401 without a token
+- [x] 3.1 Map `GET /api/levels/{level}/scores/top` in a new `src/HexMaster.LeakOut.Api/Endpoints/LevelScoreEndpoints.cs` (`MapLevelScoreEndpoints()`, group `/api/levels/{level}/scores`, called from `Program.cs`) with `.RequireAuthorization()`, validate `level >= 1` (400 validation problem), resolve the caller via `IUserResolver`, dispatch the query, and add `.WithName("GetLevelTopScores")` and `.Produces<LevelLeaderboardDto>()`; verify endpoint tests return 200 with entries, 400 for level 0 and 401 without a token
 - [ ] 3.2 Add a sample request for the top 10 to `HexMaster.LeakOut.Api.http` and verify it returns 200 against the running API with a valid token
 
 ## 4. Integration check

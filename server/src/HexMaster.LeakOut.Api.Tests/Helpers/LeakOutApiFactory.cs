@@ -4,6 +4,7 @@ using HexMaster.LeakOut.Players.Abstractions.DataTransferObjects;
 using HexMaster.LeakOut.Players.Abstractions.Services;
 using HexMaster.LeakOut.Players.Features.SignInPlayer;
 using HexMaster.LeakOut.Scores.Abstractions.DataTransferObjects;
+using HexMaster.LeakOut.Scores.Features.GetLevelTopScores;
 using HexMaster.LeakOut.Scores.Features.SubmitScore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -19,7 +20,7 @@ using Moq;
 namespace HexMaster.LeakOut.Api.Tests.Helpers;
 
 /// <summary>
-/// Hosts the real API in Development with mocked command handlers and resolver, no database
+/// Hosts the real API in Development with mocked handlers and resolver, no database
 /// access, and one extra protected endpoint, <see cref="ProtectedPath"/>, that echoes the caller's
 /// internal player id.
 /// </summary>
@@ -31,6 +32,8 @@ public sealed class LeakOutApiFactory : WebApplicationFactory<Program>
     public Mock<ICommandHandler<SignInPlayerCommand, SessionDto>> SignInHandler { get; } = new();
 
     public Mock<ICommandHandler<SubmitScoreCommand, SubmitScoreResult>> SubmitScoreHandler { get; } = new();
+
+    public Mock<IQueryHandler<GetLevelTopScoresQuery, LevelLeaderboardDto>> GetLevelTopScoresHandler { get; } = new();
 
     public Mock<IUserResolver> UserResolver { get; } = new();
 
@@ -51,6 +54,8 @@ public sealed class LeakOutApiFactory : WebApplicationFactory<Program>
             services.AddSingleton(SignInHandler.Object);
             services.RemoveAll<ICommandHandler<SubmitScoreCommand, SubmitScoreResult>>();
             services.AddSingleton(SubmitScoreHandler.Object);
+            services.RemoveAll<IQueryHandler<GetLevelTopScoresQuery, LevelLeaderboardDto>>();
+            services.AddSingleton(GetLevelTopScoresHandler.Object);
             services.RemoveAll<IUserResolver>();
             services.AddSingleton(UserResolver.Object);
             services.AddSingleton<IStartupFilter, ProtectedTestEndpointStartupFilter>();

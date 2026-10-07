@@ -453,9 +453,9 @@ section.block > header p{color:var(--text-2)}
 .top10 .state .ico{width:40px; height:40px; color:var(--text-3)}
 .top10 .state .ico.err{color:var(--leak-500)}
 .top10 .state .btn{margin-top:4px}
-.ring{width:32px; height:32px; border-radius:50%; border:3px solid var(--line-subtle); border-top-color:var(--liquid-500); animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){ .ring{animation:none} }
+.t10-spinner{width:32px; height:32px; border-radius:50%; border:3px solid var(--line-subtle); border-top-color:var(--liquid-500); animation:t10spin 1s linear infinite}
+@keyframes t10spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){ .t10-spinner{animation:none} }
 @media (max-width:820px){ .t10grid{grid-template-columns:minmax(0,1fr)} }
 @media (max-width:640px){ .top10.compact .cols{grid-template-columns:minmax(0,1fr)} .top10.compact .cols .vline{display:none} }
 
@@ -967,7 +967,7 @@ td:first-child{color:var(--text-1)}
         <div style="display:grid; gap:16px; align-content:start">
           <div class="scrimbox opaque" style="min-height:0">
             <div class="floating top10"><div class="head"><div><div class="eyebrow">Level 7 · Loading</div><h2><svg><use href="#ic-trophy"/></svg>Top 10</h2></div><button class="iconbtn" aria-label="Close"><svg><use href="#ic-close"/></svg></button></div>
-              <div class="state"><div class="ring" role="progressbar" aria-label="Loading scores"></div><p>Loading scores…</p></div></div>
+              <div class="state"><div class="t10-spinner" role="progressbar" aria-label="Loading scores"></div><p>Loading scores…</p></div></div>
           </div>
           <div class="scrimbox opaque" style="min-height:0">
             <div class="floating top10"><div class="head"><div><div class="eyebrow">Level 7 · Empty</div><h2><svg><use href="#ic-trophy"/></svg>Top 10</h2></div><button class="iconbtn" aria-label="Close"><svg><use href="#ic-close"/></svg></button></div>

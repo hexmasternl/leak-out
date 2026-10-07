@@ -7,6 +7,11 @@
     <UserSecretsId>e419bfa5-547a-45d8-b3fd-c669af68899a</UserSecretsId>
   </PropertyGroup>
 
+  <!-- Container image for Azure Container Apps: dotnet publish -c Release /t:PublishContainer (no Dockerfile). -->
+  <PropertyGroup>
+    <ContainerRepository>hexmaster-leakout-api</ContainerRepository>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />

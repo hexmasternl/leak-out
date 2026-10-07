@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HexMaster.LeakOut.Scores\HexMaster.LeakOut.Scores.csproj" />
+    <ProjectReference Include="..\HexMaster.LeakOut.Scores.Data.PostgreSQL\HexMaster.LeakOut.Scores.Data.PostgreSQL.csproj" />
   </ItemGroup>
 
 </Project>

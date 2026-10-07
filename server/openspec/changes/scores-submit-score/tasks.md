@@ -8,14 +8,14 @@
 ## 2. Domain model
 
 - [x] 2.1 Add `DomainModels/LevelScore.cs` with `Create(userId, level, score, achievedAt)` (rejects level < 1 and score < 0 with `DomainException`) and `TryImprove(score, achievedAt)`; verify `LevelScoreTests` cover valid and invalid creation and higher, equal and lower scores
-- [ ] 2.2 Add `Factories/LevelScoreFaker.cs` (Bogus) to the test project and verify it is used by the domain and handler tests
+- [x] 2.2 Add `Factories/LevelScoreFaker.cs` (Bogus) to the test project and verify it is used by the domain and handler tests
 
 ## 3. SubmitScore feature slice
 
-- [ ] 3.1 Add `SubmitScoreRequest` and `SubmitScoreResult` sealed records in `HexMaster.LeakOut.Scores.Abstractions/DataTransferObjects` and verify the Abstractions project has no reference to the module or EF Core
-- [ ] 3.2 Add `ILevelScoreRepository` (`SubmitAsync` returning the stored best score and whether it changed) to the module project
-- [ ] 3.3 Add `Features/SubmitScore/SubmitScoreCommand.cs` and `SubmitScoreCommandHandler.cs`, using `IClock` for the moment; verify `SubmitScoreCommandHandlerTests` cover first, higher, equal and lower score, a null command, and the repository called `Times.Once`
-- [ ] 3.4 Add `ScoresModuleRegistration.AddScoresModule()` registering the handler and verify a test resolves `ICommandHandler<SubmitScoreCommand, SubmitScoreResult>` from a service collection
+- [x] 3.1 Add `SubmitScoreRequest` and `SubmitScoreResult` sealed records in `HexMaster.LeakOut.Scores.Abstractions/DataTransferObjects` and verify the Abstractions project has no reference to the module or EF Core
+- [x] 3.2 Add `ILevelScoreRepository` (`SubmitAsync` returning the stored best score and whether it changed) to the module project
+- [x] 3.3 Add `Features/SubmitScore/SubmitScoreCommand.cs` and `SubmitScoreCommandHandler.cs`, using `IClock` for the moment; verify `SubmitScoreCommandHandlerTests` cover first, higher, equal and lower score, a null command, and the repository called `Times.Once`
+- [x] 3.4 Add `ScoresModuleRegistration.AddScoresModule()` registering the handler and verify a test resolves `ICommandHandler<SubmitScoreCommand, SubmitScoreResult>` from a service collection
 
 ## 4. Persistence
 

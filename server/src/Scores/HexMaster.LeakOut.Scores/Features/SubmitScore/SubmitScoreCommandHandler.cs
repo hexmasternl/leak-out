@@ -1,0 +1,44 @@
+using System.Diagnostics;
+using HexMaster.LeakOut.Core;
+using HexMaster.LeakOut.Scores.Abstractions.DataTransferObjects;
+using HexMaster.LeakOut.Scores.Observability;
+
+namespace HexMaster.LeakOut.Scores.Features.SubmitScore;
+
+/// <summary>
+/// Keeps the submitted score when it is the player's first or a strictly higher score on the level,
+/// and returns the stored best score either way.
+/// </summary>
+public sealed class SubmitScoreCommandHandler(
+    ILevelScoreRepository repository,
+    IClock clock,
+    ScoresMetrics metrics) : ICommandHandler<SubmitScoreCommand, SubmitScoreResult>
+{
+    public async Task<SubmitScoreResult> Handle(SubmitScoreCommand command, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        using var activity = ScoresMetrics.ActivitySource.StartActivity(ScoresMetrics.SubmitScoreActivityName);
+        activity?.SetTag("player.id", command.UserId);
+        activity?.SetTag("score.level", command.Level);
+        activity?.SetTag("score.value", command.Score);
+        try
+        {
+            var submission = await repository.SubmitAsync(
+                command.UserId, command.Level, command.Score, clock.UtcNow, cancellationToken);
+
+            activity?.SetTag("score.new_best", submission.IsNewBest);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            metrics.ScoreSubmitted(submission.IsNewBest);
+
+            return new SubmitScoreResult(command.Level, submission.BestScore, submission.IsNewBest);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.AddException(ex);
+            metrics.ScoreSubmissionFailed();
+            throw;
+        }
+    }
+}

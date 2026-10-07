@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using HexMaster.LeakOut.Api.Tests.Helpers;
 using HexMaster.LeakOut.Scores.Abstractions.DataTransferObjects;
+using HexMaster.LeakOut.Scores.Features.GetLevelScoresAroundPlayer;
 using HexMaster.LeakOut.Scores.Features.GetLevelTopScores;
 using Moq;
 
@@ -17,6 +18,7 @@ public sealed class LevelScoreEndpointsTests : IClassFixture<LeakOutApiFactory>
     {
         _factory = factory;
         _factory.GetLevelTopScoresHandler.Reset();
+        _factory.GetLevelScoresAroundPlayerHandler.Reset();
         _factory.UserResolver.Reset();
         _factory.UserResolver
             .Setup(r => r.ResolveAsync(TestTokens.SubjectId, It.IsAny<CancellationToken>()))
@@ -87,6 +89,74 @@ public sealed class LevelScoreEndpointsTests : IClassFixture<LeakOutApiFactory>
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         _factory.GetLevelTopScoresHandler.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task GetLevelScoresAroundPlayer_Returns200WithLeaderboard()
+    {
+        var leaderboard = new LevelLeaderboardDto(3,
+        [
+            new LeaderboardEntryDto(127, "Bob", 530, IsCurrentPlayer: false),
+            new LeaderboardEntryDto(128, "Ann", 526, IsCurrentPlayer: true),
+            new LeaderboardEntryDto(129, "Cid", 510, IsCurrentPlayer: false),
+        ]);
+        _factory.GetLevelScoresAroundPlayerHandler
+            .Setup(h => h.Handle(new GetLevelScoresAroundPlayerQuery(_playerId, 3), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(leaderboard);
+
+        var response = await GetAsync("/api/levels/3/scores/around-me", TestTokens.Create());
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<LevelLeaderboardDto>(TestContext.Current.CancellationToken);
+        Assert.NotNull(body);
+        Assert.Equal(3, body.Level);
+        Assert.Equal(leaderboard.Entries, body.Entries);
+    }
+
+    [Fact]
+    public async Task GetLevelScoresAroundPlayer_PlayerWithoutScore_Returns200WithEmptyEntries()
+    {
+        _factory.GetLevelScoresAroundPlayerHandler
+            .Setup(h => h.Handle(new GetLevelScoresAroundPlayerQuery(_playerId, 7), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new LevelLeaderboardDto(7, []));
+
+        var response = await GetAsync("/api/levels/7/scores/around-me", TestTokens.Create());
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<LevelLeaderboardDto>(TestContext.Current.CancellationToken);
+        Assert.Equal(7, body!.Level);
+        Assert.Empty(body.Entries);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-2)]
+    public async Task GetLevelScoresAroundPlayer_LevelBelowOne_Returns400NamingTheLevel(int level)
+    {
+        var response = await GetAsync($"/api/levels/{level}/scores/around-me", TestTokens.Create());
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<HttpValidationProblem>(TestContext.Current.CancellationToken);
+        Assert.Equal(["level"], problem?.Errors.Keys);
+        _factory.GetLevelScoresAroundPlayerHandler.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task GetLevelScoresAroundPlayer_WithoutToken_Returns401WithoutCallingHandler()
+    {
+        var response = await GetAsync("/api/levels/3/scores/around-me", accessToken: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        _factory.GetLevelScoresAroundPlayerHandler.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task GetLevelScoresAroundPlayer_ForUnknownPlayer_Returns401WithoutCallingHandler()
+    {
+        var response = await GetAsync("/api/levels/3/scores/around-me", TestTokens.Create(subjectId: "g-unknown"));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        _factory.GetLevelScoresAroundPlayerHandler.VerifyNoOtherCalls();
     }
 
     private async Task<HttpResponseMessage> GetAsync(string path, string? accessToken)

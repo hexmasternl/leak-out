@@ -12,4 +12,8 @@
     <ProjectReference Include="..\..\HexMaster.LeakOut.Api\HexMaster.LeakOut.Api.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.1" />
+  </ItemGroup>
+
 </Project>

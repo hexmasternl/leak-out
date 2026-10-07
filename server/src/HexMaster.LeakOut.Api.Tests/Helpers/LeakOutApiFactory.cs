@@ -3,6 +3,8 @@ using HexMaster.LeakOut.Core;
 using HexMaster.LeakOut.Players.Abstractions.DataTransferObjects;
 using HexMaster.LeakOut.Players.Abstractions.Services;
 using HexMaster.LeakOut.Players.Features.SignInPlayer;
+using HexMaster.LeakOut.Scores.Abstractions.DataTransferObjects;
+using HexMaster.LeakOut.Scores.Features.SubmitScore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -17,7 +19,7 @@ using Moq;
 namespace HexMaster.LeakOut.Api.Tests.Helpers;
 
 /// <summary>
-/// Hosts the real API in Development with mocked Players handlers and resolver, no database
+/// Hosts the real API in Development with mocked command handlers and resolver, no database
 /// access, and one extra protected endpoint, <see cref="ProtectedPath"/>, that echoes the caller's
 /// internal player id.
 /// </summary>
@@ -28,12 +30,15 @@ public sealed class LeakOutApiFactory : WebApplicationFactory<Program>
 
     public Mock<ICommandHandler<SignInPlayerCommand, SessionDto>> SignInHandler { get; } = new();
 
+    public Mock<ICommandHandler<SubmitScoreCommand, SubmitScoreResult>> SubmitScoreHandler { get; } = new();
+
     public Mock<IUserResolver> UserResolver { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
         builder.UseSetting("ConnectionStrings:playersdb", "Host=localhost;Database=playersdb");
+        builder.UseSetting("ConnectionStrings:scoresdb", "Host=localhost;Database=scoresdb");
         builder.UseSetting("Aspire:Npgsql:EntityFrameworkCore:PostgreSQL:DisableHealthChecks", "true");
         builder.UseSetting("GooglePlayGames:ClientId", "web-client-id");
         builder.UseSetting("GooglePlayGames:ClientSecret", "web-client-secret");
@@ -44,6 +49,8 @@ public sealed class LeakOutApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<IHostedService>();
             services.RemoveAll<ICommandHandler<SignInPlayerCommand, SessionDto>>();
             services.AddSingleton(SignInHandler.Object);
+            services.RemoveAll<ICommandHandler<SubmitScoreCommand, SubmitScoreResult>>();
+            services.AddSingleton(SubmitScoreHandler.Object);
             services.RemoveAll<IUserResolver>();
             services.AddSingleton(UserResolver.Object);
             services.AddSingleton<IStartupFilter, ProtectedTestEndpointStartupFilter>();

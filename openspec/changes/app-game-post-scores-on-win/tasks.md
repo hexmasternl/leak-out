@@ -18,7 +18,7 @@
 
 ## 4. Pending score queue
 
-- [ ] 4.1 Add `PendingScoreQueue` and `DataStorePendingScoreQueue` (own Preferences DataStore file `score_queue`, key `level_<id>`): `offer` keeps the highest score per level atomically, `snapshot`, `pending` flow, and `remove(level, score)` that only removes when the stored value still equals `score`; verify instrumented tests (`androidTest` `DataStorePendingScoreQueueTest`; DataStore cannot replace its file on a Windows JVM host, so only reading the keys is a JVM test) for add, higher replaces, equal/lower ignored, several levels, conditional remove keeping a higher score queued meanwhile, and values surviving a new DataStore instance on the same file
+- [x] 4.1 Add `PendingScoreQueue` and `DataStorePendingScoreQueue` (own Preferences DataStore file `score_queue`, key `level_<id>`): `offer` keeps the highest score per level atomically, `snapshot`, `pending` flow, and `remove(level, score)` that only removes when the stored value still equals `score`; verify instrumented tests (`androidTest` `DataStorePendingScoreQueueTest`; DataStore cannot replace its file on a Windows JVM host, so only reading the keys is a JVM test) for add, higher replaces, equal/lower ignored, several levels, conditional remove keeping a higher score queued meanwhile, and values surviving a new DataStore instance on the same file
 - [x] 4.2 Add `NetworkMonitor` and its `ConnectivityManager.registerDefaultNetworkCallback` implementation emitting when a network with internet capability becomes available; verify a JVM test of the callback-to-flow adapter with a fake registrar (emit on available, unregister on cancel)
 
 ## 5. Score submitter
@@ -30,8 +30,8 @@
 ## 6. Queuing from the game and the status dot
 
 - [x] 6.1 Add the pure `ScorePostDot.frame(status, elapsedMs)` blink function (yellow blinking 400 ms while in progress; one green blink of 300 ms on / 300 ms off; three red blinks of 200 ms on / 200 ms off; `done` afterwards) using design-system colour tokens; verify JVM tests for each phase boundary and that terminal states finish with `done`
-- [ ] 6.2 Add the `ScorePostIndicator` composable: 10 dp dot at the top-start safe-drawing inset + 12 dp, wall-clock animation via `dotFrame`, no semantics and no pointer input, plays nothing for a status already terminal when first composed; verify a Compose instrumented test (`ScorePostIndicatorTest`) with a controlled clock: yellow while in progress, gone after a green blink, gone after three red blinks, and no semantics node
-- [ ] 6.3 Add `GameSession.submitScore` (once per attempt, keeps `scorePost`) and `scores: ScoreSubmissions? = null` to `GameScreen`; when `showWinDialog` becomes true, submit, and show `ScorePostIndicator` in a `cornerOverlay` slot of the dialog window, above its scrim; pass the container's submitter from `MainActivity` and `null` from `TestPlayScreen`; verify a Compose instrumented test (`GameScreenScorePostTest`) with a fake submitter: no submit before the dialog shows, one submit with the total once it shows, dot visible, buttons enabled while the send is still in progress, dot gone after Next Level, no submit when `scores` is null; plus JVM `GameSessionScorePostTest` for once per attempt, restart, and lost/running attempts
+- [x] 6.2 Add the `ScorePostIndicator` composable: 10 dp dot at the top-start safe-drawing inset + 12 dp, wall-clock animation via `dotFrame`, no semantics and no pointer input, plays nothing for a status already terminal when first composed; verify a Compose instrumented test (`ScorePostIndicatorTest`) with a controlled clock: yellow while in progress, gone after a green blink, gone after three red blinks, and no semantics node
+- [x] 6.3 Add `GameSession.submitScore` (once per attempt, keeps `scorePost`) and `scores: ScoreSubmissions? = null` to `GameScreen`; when `showWinDialog` becomes true, submit, and show `ScorePostIndicator` in a `cornerOverlay` slot of the dialog window, above its scrim; pass the container's submitter from `MainActivity` and `null` from `TestPlayScreen`; verify a Compose instrumented test (`GameScreenScorePostTest`) with a fake submitter: no submit before the dialog shows, one submit with the total once it shows, dot visible, buttons enabled while the send is still in progress, dot gone after Next Level, no submit when `scores` is null; plus JVM `GameSessionScorePostTest` for once per attempt, restart, and lost/running attempts
 - [ ] 6.4 Run only the affected instrumented tests (`ScorePostIndicatorTest`, `GameScreenScorePostTest`, existing level complete dialog tests) with `./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=...`, and verify they pass
 
 ## 7. Privacy line and documentation
@@ -42,4 +42,4 @@
 
 ## 8. Integration check
 
-- [ ] 8.1 Run `./gradlew :core:test :app:testDebugUnitTest` and `openspec validate app-game-post-scores-on-win --strict`; verify both pass
+- [x] 8.1 Run `./gradlew :core:test :app:testDebugUnitTest` and `openspec validate app-game-post-scores-on-win --strict`; verify both pass

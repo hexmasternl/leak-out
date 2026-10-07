@@ -128,4 +128,27 @@ class HttpScoreServerApiTest {
         answer("/api/scores", 200, "{}", delayMs = 2_000)
         assertFails<ScoreServerException.Unavailable> { HttpScoreServerApi(base, timeoutMs = 300).submitScore("tok", 4, 520) }
     }
+
+    @Test
+    fun `a server that is starting up is waited for beyond the connect timeout`() = runBlocking {
+        answer("/api/scores", 200, """{"level":4,"bestScore":520,"isNewBest":true}""", delayMs = 800)
+        HttpScoreServerApi(base, timeoutMs = 2_000, connectTimeoutMs = 200, readTimeoutMs = 1_500).submitScore("tok", 4, 520)
+        assertEquals("/api/scores", requests.single().first)
+    }
+
+    @Test
+    fun `a server that does not answer within the read timeout is unavailable`() = runBlocking {
+        answer("/api/scores", 200, "{}", delayMs = 1_500)
+        assertFails<ScoreServerException.Unavailable> {
+            HttpScoreServerApi(base, timeoutMs = 5_000, connectTimeoutMs = 200, readTimeoutMs = 400).submitScore("tok", 4, 520)
+        }
+    }
+
+    @Test
+    fun `the default timeouts wait out a cold start within the spec limit`() {
+        assertTrue(HttpScoreServerApi.CONNECT_TIMEOUT_MS <= 10_000)
+        assertTrue(HttpScoreServerApi.READ_TIMEOUT_MS >= 30_000)
+        assertTrue(HttpScoreServerApi.TIMEOUT_MS <= 35_000)
+        assertTrue(HttpScoreServerApi.READ_TIMEOUT_MS < HttpScoreServerApi.TIMEOUT_MS)
+    }
 }

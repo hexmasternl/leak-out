@@ -47,15 +47,26 @@ The pull request check SHALL compile the Bicep templates and fail when they do n
 - **THEN** the check fails
 
 ### Requirement: Merges to main are built, tested and published
-Every push to `main` SHALL build the solution, run all tests with the same coverage gate, and, only when that succeeds, publish the API container image tagged with the commit SHA to the existing container registry, authenticating with the `ACR_LOGIN_SERVER`, `ACR_LOGIN_USERNAME` and `ACR_LOGIN_PASSWORD` secrets.
+Every push to `main` SHALL build the solution, run all tests with the same coverage gate, and, only when that succeeds, publish the API container image as `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>` to the existing container registry, where `<version>` is the semantic version GitVersion calculates for the commit, authenticating with the `ACR_LOGIN_USERNAME` and `ACR_LOGIN_PASSWORD` secrets.
 
 #### Scenario: Successful publish
 - **WHEN** a merge to `main` builds and passes the tests and the coverage gate
-- **THEN** an image of the API tagged with the commit SHA is present in the existing registry
+- **THEN** `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api` is present in the registry with the commit's semantic version as tag
+
+#### Scenario: Every merge gets a new version
+- **WHEN** two successive merges to `main` are published
+- **THEN** the second image has a higher semantic version than the first, and no existing tag is overwritten
 
 #### Scenario: Tests fail on main
 - **WHEN** a test fails on a push to `main`
 - **THEN** no image is published and no deployment starts
+
+### Requirement: The API container runs without elevated permissions
+The API container image SHALL run as a non-root user and SHALL listen on an unprivileged port. The non-root user SHALL be declared in the API project's container configuration, and the publish job SHALL fail when the published image is configured to run as root.
+
+#### Scenario: Container user
+- **WHEN** the configuration of a published API image is inspected
+- **THEN** its user is `app`, not `root` or empty, and the API listens on port 8080
 
 ### Requirement: Merges to main are deployed to Azure at subscription scope
 After the image is published, the workflow SHALL run a subscription-scope deployment of the infrastructure templates that creates the resource group if needed and deploys the published image tag. Azure login SHALL use OpenID Connect with the `AZURE_PROD_CLIENT_ID`, `AZURE_PROD_TENANT_ID` and `AZURE_PROD_SUBSCRIPTION_ID` secrets, without a stored Azure client secret.

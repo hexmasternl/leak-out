@@ -30,12 +30,12 @@
 ## 6. Persistence
 
 - [x] 6.1 Add `PlayersDbContext`, `PlayerEntity` (table `players`, unique index on `subject_id`) and `PlayerRepository` to `HexMaster.LeakOut.Players.Data.PostgreSQL` using `Aspire.Npgsql.EntityFrameworkCore.PostgreSQL`, and verify repository tests (EF Core in-memory SQLite or Testcontainers) cover insert, lookup by subject id and update
-- [ ] 6.2 Add the initial EF Core migration and apply migrations at startup in Development, and verify `dotnet ef migrations list` shows it and the `players` table exists after `aspire run`
+- [x] 6.2 Add the initial EF Core migration and apply migrations at startup in Development, and verify `dotnet ef migrations list` shows it and the `players` table exists after `aspire run`
 
 ## 7. Aspire orchestration and configuration
 
-- [ ] 7.1 Add `AddPostgres("postgres").WithDataVolume()` and the `playersdb` database to `AppHost.cs`, referenced into the API with `.WithReference(...).WaitFor(...)`, and verify the Aspire dashboard shows PostgreSQL healthy and the API waiting for it
-- [ ] 7.2 Add Aspire parameters for `GooglePlayGames:ClientId`, `GooglePlayGames:ClientSecret` (secret) and `Authentication:SigningKey` (secret), passed to the API as environment variables, and verify the API fails fast with a clear options-validation error when one is missing
+- [x] 7.1 Add `AddPostgres("postgres").WithDataVolume()` and the `playersdb` database to `AppHost.cs`, referenced into the API with `.WithReference(...).WaitFor(...)`, and verify the Aspire dashboard shows PostgreSQL healthy and the API waiting for it
+- [x] 7.2 Add Aspire parameters for `GooglePlayGames:ClientId`, `GooglePlayGames:ClientSecret` (secret) and `Authentication:SigningKey` (secret), passed to the API as environment variables, and verify the API fails fast with a clear options-validation error when one is missing
 
 ## 8. API authentication and endpoints
 

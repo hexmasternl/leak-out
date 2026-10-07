@@ -24,6 +24,7 @@ Every resource is named `<resource group name>-<kind>`, so with the default reso
 | `location` | | `swedencentral` |
 | `maxReplicas` | | `3` |
 | `imageName` | | `API_IMAGE`: full image reference with tag, e.g. `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>` |
+| `serviceVersion` | | `SERVICE_VERSION`: version of the release, set by `deploy.yml` from the GitVersion `SemVer` (the image tag); reported as the OpenTelemetry `service.version` |
 | `registryServer` | | `ACR_LOGIN_SERVER` |
 | `registryUsername` | | `ACR_LOGIN_USERNAME` |
 | `registryPassword` | yes | `ACR_LOGIN_PASSWORD` |
@@ -45,6 +46,8 @@ The container app gets its configuration as container app secrets, exposed as en
 | `auth-signing-key` | `Authentication__SigningKey` |
 | `appinsights-connection` | `APPLICATIONINSIGHTS_CONNECTION_STRING` |
 | `registry-password` | (registry credentials) |
+
+Besides these, the container app sets plain environment variables: `ASPNETCORE_ENVIRONMENT=Production`, `OTEL_SERVICE_NAME=hexmaster-leakout-api` and `OTEL_RESOURCE_ATTRIBUTES=service.version=<serviceVersion>`. Application Insights shows the service name as the cloud role and the version as `application_Version`.
 
 ## One-time setup
 
@@ -78,6 +81,7 @@ From the repository root, logged in with `az login` to the target subscription. 
 az account set --subscription <subscription-id>
 
 export API_IMAGE="nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>"
+export SERVICE_VERSION="<version>"
 export ACR_LOGIN_SERVER="nvv54gsk4pteu.azurecr.io"
 export ACR_LOGIN_USERNAME="<registry-user>"
 read -rsp "Registry password: " ACR_LOGIN_PASSWORD; echo; export ACR_LOGIN_PASSWORD

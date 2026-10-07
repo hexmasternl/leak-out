@@ -4,6 +4,9 @@
 @description('Azure region of the resources.')
 param location string = resourceGroup().location
 
+@description('Azure region of the PostgreSQL server.')
+param postgresLocation string = location
+
 @description('Prefix of the resource names.')
 param namePrefix string = 'leakout'
 
@@ -56,7 +59,7 @@ module monitoring 'modules/monitoring.bicep' = {
 module postgres 'modules/postgres.bicep' = {
   name: 'postgres'
   params: {
-    location: location
+    location: postgresLocation
     serverName: '${namePrefix}-psql-${suffix}'
     administratorLogin: postgresAdministratorLogin
     administratorPassword: postgresAdminPassword

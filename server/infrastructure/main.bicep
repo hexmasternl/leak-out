@@ -8,6 +8,9 @@ param resourceGroupName string = 'rg-leakout'
 @description('Azure region of the resource group and its resources.')
 param location string
 
+@description('Azure region of the PostgreSQL server; differs from location when the subscription may not provision PostgreSQL there.')
+param postgresLocation string = location
+
 @description('Prefix of the resource names.')
 param namePrefix string = 'leakout'
 
@@ -55,6 +58,7 @@ module resources 'resources.bicep' = {
   scope: resourceGroup
   params: {
     location: location
+    postgresLocation: postgresLocation
     namePrefix: namePrefix
     imageName: imageName
     registryServer: registryServer

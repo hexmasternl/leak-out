@@ -22,6 +22,7 @@ Resource names are `<namePrefix>-<kind>-<uniqueString(resourceGroup().id)>`, so 
 | --- | --- | --- |
 | `resourceGroupName` | | `rg-leakout` |
 | `location` | | `westeurope` |
+| `postgresLocation` | | `northeurope`: the subscription may not provision PostgreSQL Flexible Server in `westeurope` (the server fails with `The value of the 'Version' should be in: []`) |
 | `namePrefix` | | `leakout` |
 | `maxReplicas` | | `3` |
 | `imageName` | | `API_IMAGE`: full image reference with tag, e.g. `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>` |

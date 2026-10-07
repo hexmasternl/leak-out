@@ -19,24 +19,24 @@ Tracking issue: [#110 Show the global top 10 of a level](https://github.com/hexm
 
 ## 3. Top 10 dialog
 
-- [ ] 3.1 Build `TopScoresDialog` per the approved design: backdrop, panel, title and level, scrolling list with highlighted own entry, the four other states, Close, Try again and sign-in, entry motion and reduced motion; Back and Close call `onClose`, a backdrop tap does nothing; expose test tags; verify the `@Preview`s from 1.5 now use the real dialog
-- [ ] 3.2 Add the screen-scoped state holder that loads on open and on Try again, starts the manual Play Games sign-in from the signed-out state and loads after a successful sign-in, and cancels on close; verify JVM unit tests with a fake loader
-- [ ] 3.3 Add strings (title, rank/name/score content description, "your score", empty, signed out, error, Try again, Close, Top 10); verify `./gradlew :app:assembleDebug` succeeds
+- [x] 3.1 Build `TopScoresDialog` per the approved design: backdrop, panel, title and level, scrolling list with highlighted own entry, the four other states, Close, Try again and sign-in, entry motion and reduced motion; Back and Close call `onClose`, a backdrop tap does nothing; expose test tags; verify the `@Preview`s from 1.5 now use the real dialog _(the previews are in `TopScoresDialog.kt`; 1.5 was skipped)_
+- [x] 3.2 Add the screen-scoped state holder that loads on open and on Try again, starts the manual Play Games sign-in from the signed-out state and loads after a successful sign-in, and cancels on close; verify JVM unit tests with a fake loader
+- [x] 3.3 Add strings (title, rank/name/score content description, "your score", empty, signed out, error, Try again, Close, Top 10); verify `./gradlew :app:assembleDebug` succeeds
 
 ## 4. Entry points
 
-- [ ] 4.1 Decide availability in `GameScreen` (library level and `ScoreServerConfig` enabled) and pass it to the three dialogs; verify a JVM unit test of the rule (library + configured, test play, blank URL)
-- [ ] 4.2 Add the Top 10 button to `PauseDialog`; opening keeps the game paused and closing returns to the pause dialog; verify an instrumented test that the game time does not advance while the top 10 is open and that Close shows the pause dialog again
-- [ ] 4.3 Add the Top 10 button to `LevelCompleteDialog` (enabled with the other buttons, both layouts) and `LevelLostDialog`; closing returns to the unchanged dialog; verify instrumented tests for opening and closing from both dialogs and that all buttons are fully visible in the Compact layout on 640 × 360 dp
-- [ ] 4.4 Hide the Top 10 button for designer test plays and unconfigured builds; verify instrumented tests that no Top 10 button exists in those cases
+- [x] 4.1 Decide availability in `GameScreen` (library level and `ScoreServerConfig` enabled) and pass it to the three dialogs; verify a JVM unit test of the rule (library + configured, test play, blank URL) _(`TopScoresAccess.forLibraryLevel`; the test play passes no access)_
+- [x] 4.2 Add the Top 10 button to `PauseDialog`; opening keeps the game paused and closing returns to the pause dialog; verify an instrumented test that the game time does not advance while the top 10 is open and that Close shows the pause dialog again _(written and compiled; not run on a device at the user's request, assumed to pass)_
+- [x] 4.3 Add the Top 10 button to `LevelCompleteDialog` (enabled with the other buttons, both layouts) and `LevelLostDialog`; closing returns to the unchanged dialog; verify instrumented tests for opening and closing from both dialogs and that all buttons are fully visible in the Compact layout on 640 × 360 dp _(written and compiled; not run on a device at the user's request, assumed to pass)_
+- [x] 4.4 Hide the Top 10 button for designer test plays and unconfigured builds; verify instrumented tests that no Top 10 button exists in those cases _(written and compiled; not run on a device at the user's request, assumed to pass)_
 
 ## 5. Dialog behaviour tests
 
-- [ ] 5.1 Instrumented tests of `TopScoresDialog` with a fake loader: 10 entries in order with the own entry highlighted, 3 entries, empty, signed out with sign-in, error then Try again, Back closes, backdrop tap does not; verify they pass
-- [ ] 5.2 Instrumented accessibility and fit tests: each row is one semantics node with rank, name and score, the own row says "your score", Close is at least 48 dp, and on 640 × 360 dp at 130 % font Close is displayed and the last entry can be scrolled to; verify they pass
+- [x] 5.1 Instrumented tests of `TopScoresDialog` with a fake loader: 10 entries in order with the own entry highlighted, 3 entries, empty, signed out with sign-in, error then Try again, Back closes, backdrop tap does not; verify they pass _(written and compiled; not run on a device at the user's request, assumed to pass)_
+- [x] 5.2 Instrumented accessibility and fit tests: each row is one semantics node with rank, name and score, the own row says "your score", Close is at least 48 dp, and on 640 × 360 dp at 130 % font Close is displayed and the last entry can be scrolled to; verify they pass _(written and compiled; not run on a device at the user's request, assumed to pass)_
 
 ## 6. Regression
 
-- [ ] 6.1 Run `./gradlew :core:test :app:testDebugUnitTest` and fix failures; verify both pass
-- [ ] 6.2 Run the affected instrumented tests on the emulator (the new top 10 tests, `PauseDialog` tests, `LevelCompleteTest`, `LevelCompleteNewBestTest`, `LevelLostTest`); verify they pass
-- [ ] 6.3 Open the top 10 from the pause, win and leak dialogs against the live score server on the emulator and post screenshots on issue #110; verify the comment links them
+- [x] 6.1 Run `./gradlew :core:test :app:testDebugUnitTest` and fix failures; verify both pass _(app 802 and core 1213 tests pass; lint 0 errors)_
+- [x] 6.2 Run the affected instrumented tests on the emulator (the new top 10 tests, `PauseDialog` tests, `LevelCompleteTest`, `LevelCompleteNewBestTest`, `LevelLostTest`); verify they pass _(skipped at the user's request: assumed to pass, compiled only)_
+- [x] 6.3 Open the top 10 from the pause, win and leak dialogs against the live score server on the emulator and post screenshots on issue #110; verify the comment links them _(skipped at the user's request: no emulator run, no screenshots posted)_

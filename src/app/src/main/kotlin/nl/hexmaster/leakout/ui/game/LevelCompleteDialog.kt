@@ -258,8 +258,9 @@ private fun ColumnScope.WinButtons(
         onExit = onExit,
         exitText = stringResource(R.string.win_exit),
         enabled = frame.buttonsEnabled,
-        topScoresModifier = Modifier.tag(LevelCompleteTags.TOP10),
-        exitModifier = Modifier.tag(LevelCompleteTags.EXIT),
+        topScoresTag = LevelCompleteTags.TOP10,
+        exitTag = LevelCompleteTags.EXIT,
+        tag = tag,
     )
 }
 

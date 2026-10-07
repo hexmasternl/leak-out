@@ -297,8 +297,9 @@ internal fun TopScoresAndExitRow(
     onExit: () -> Unit,
     exitText: String,
     enabled: Boolean,
-    topScoresModifier: Modifier,
-    exitModifier: Modifier,
+    topScoresTag: String,
+    exitTag: String,
+    tag: Modifier.(String) -> Modifier,
 ) {
     Row(Modifier.fillMaxWidth()) {
         if (onTopScores != null) {
@@ -308,7 +309,7 @@ internal fun TopScoresAndExitRow(
                 variant = FlowButtonVariant.Tertiary,
                 enabled = enabled,
                 horizontalPadding = ResultDialogMetrics.PairedButtonPadding,
-                modifier = topScoresModifier.weight(1f),
+                modifier = Modifier.weight(1f).tag(topScoresTag),
             )
         }
         FlowButton(
@@ -317,7 +318,7 @@ internal fun TopScoresAndExitRow(
             variant = FlowButtonVariant.Tertiary,
             enabled = enabled,
             horizontalPadding = if (onTopScores != null) ResultDialogMetrics.PairedButtonPadding else FlowButtonMetrics.HorizontalPadding,
-            modifier = exitModifier.weight(1f),
+            modifier = Modifier.weight(1f).tag(exitTag),
         )
     }
 }

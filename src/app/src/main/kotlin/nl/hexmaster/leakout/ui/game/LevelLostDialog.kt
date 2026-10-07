@@ -189,8 +189,9 @@ private fun ColumnScope.LostButtons(
         onExit = onExit,
         exitText = stringResource(R.string.lost_exit),
         enabled = true,
-        topScoresModifier = Modifier.tag(LevelLostTags.TOP10),
-        exitModifier = Modifier.tag(LevelLostTags.EXIT),
+        topScoresTag = LevelLostTags.TOP10,
+        exitTag = LevelLostTags.EXIT,
+        tag = tag,
     )
 }
 

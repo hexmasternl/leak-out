@@ -21,15 +21,15 @@ All Azure resources the server needs SHALL be defined in Bicep templates in the 
 - **WHEN** the templates are deployed again with the same parameters
 - **THEN** the deployment succeeds and no resources are added, removed or recreated
 
-### Requirement: The API image is published to the existing container registry
-The API SHALL be packaged as a container image and pushed to the existing container registry identified by `ACR_ENDPOINT`, authenticating with `ACR_USERNAME` and `ACR_PASSWORD`. The infrastructure SHALL NOT create a container registry.
+### Requirement: The API runs from the existing container registry
+The API SHALL be packageable as a container image without a Dockerfile, and the container app SHALL pull the image given as a deployment parameter from the existing container registry identified by `ACR_ENDPOINT`, authenticating with `ACR_USERNAME` and `ACR_PASSWORD`. The infrastructure SHALL NOT create a container registry.
 
-#### Scenario: Image is pushed on deployment
-- **WHEN** the deployment pipeline runs for a commit
-- **THEN** an image of the API tagged with that commit's SHA is present in the existing registry
+#### Scenario: Image can be built from the project
+- **WHEN** the API project is published as a container
+- **THEN** a runnable image of the API is produced that serves `/alive` on port 8080
 
 #### Scenario: Container app pulls from the registry
-- **WHEN** the container app is deployed with that image tag
+- **WHEN** the container app is deployed with an image tag present in the registry
 - **THEN** it pulls the image from the existing registry using the registry credentials and starts a revision
 
 ### Requirement: Telemetry goes to Application Insights and Log Analytics

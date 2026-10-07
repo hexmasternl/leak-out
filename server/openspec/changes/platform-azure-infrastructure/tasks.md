@@ -13,16 +13,14 @@
 - [ ] 2.4 Add `infrastructure/modules/api.bicep` (container app `hexmaster-leakout-api`: registry credentials, secrets, environment variables, external HTTPS ingress on 8080, 0..`maxReplicas` with the `http-concurrency` rule, `/alive` and `/health` probes); verify `az bicep build` succeeds
 - [ ] 2.5 Add `infrastructure/resources.bicep` (resource group scope) wiring the modules with `@secure()` parameters for every secret; verify `az bicep build` succeeds
 - [ ] 2.6 Add `infrastructure/main.bicep` (`targetScope = 'subscription'`) that creates the resource group `resourceGroupName` in `location` and deploys `resources.bicep` into it, plus `infrastructure/main.bicepparam`; verify `az bicep build` and `az deployment sub what-if` against a test subscription show the new resource group and only the expected resources in it
-- [ ] 2.7 Document the infrastructure, the required GitHub secrets and the one-time setup (OIDC federated credential with a subscription-level role, first migration) in `infrastructure/README.md` and verify the documented commands match the templates
+- [ ] 2.7 Document the infrastructure, the parameters, a manual `az deployment sub create` and the one-time setup (subscription-level role for the deploying identity, first migration) in `infrastructure/README.md`; verify the documented commands match the templates
 
-## 3. Pipeline
+## 3. Integration checks
 
-- [ ] 3.1 Add `.github/workflows/deploy.yml` (push to `main` and `workflow_dispatch`: build and push the image tagged with the commit SHA, then `az deployment sub create` with OIDC login); verify with `workflow_dispatch` that the image appears in the registry and the deployment succeeds
-- [ ] 3.2 Add a pull request check that runs `az bicep build infrastructure/main.bicep`; verify it fails on a deliberately broken template and passes on the real one
+The GitHub Actions workflows that publish and deploy are delivered by `platform-github-actions-workflows` (#8); these checks use a manual deployment.
 
-## 4. Integration checks
 
-- [ ] 4.1 Deploy at subscription scope with a resource group name that does not exist yet and verify the resource group is created, every resource from the spec exists inside it, `/health` returns 200 over HTTPS, and a request appears in Application Insights
-- [ ] 4.2 Redeploy with the same parameters and verify `what-if` reports no changes
-- [ ] 4.3 Leave the app idle and verify it scales to 0 replicas, then verify a request starts a replica and is answered
-- [ ] 4.4 Search the repository for the secret values used in the deployment and verify none are committed
+- [ ] 3.1 Deploy at subscription scope with a resource group name that does not exist yet and verify the resource group is created, every resource from the spec exists inside it, `/health` returns 200 over HTTPS, and a request appears in Application Insights
+- [ ] 3.2 Redeploy with the same parameters and verify `what-if` reports no changes
+- [ ] 3.3 Leave the app idle and verify it scales to 0 replicas, then verify a request starts a replica and is answered
+- [ ] 3.4 Search the repository for the secret values used in the deployment and verify none are committed

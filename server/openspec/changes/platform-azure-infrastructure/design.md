@@ -61,16 +61,12 @@ Consumption-only managed environment. Container app `hexmaster-leakout-api` (mat
 *Alternative considered*: a managed identity with `AcrPull` instead of registry username/password. Rejected because the issue specifies the existing registry's username and password, and the registry may live outside this subscription.
 
 ### D5. Container image without a Dockerfile
-`HexMaster.LeakOut.Api.csproj` gets `<ContainerRepository>hexmaster-leakout-api</ContainerRepository>` and uses the SDK's default chiseled ASP.NET base image. The pipeline runs `dotnet publish src/HexMaster.LeakOut.Api -c Release /t:PublishContainer -p:ContainerRegistry=$ACR_ENDPOINT -p:ContainerImageTags=<sha>` after `docker login`. The SDK's container support is the .NET default and avoids maintaining a Dockerfile.
+`HexMaster.LeakOut.Api.csproj` gets `<ContainerRepository>hexmaster-leakout-api</ContainerRepository>` and uses the SDK's default chiseled ASP.NET base image. Publishing runs `dotnet publish src/HexMaster.LeakOut.Api -c Release /t:PublishContainer -p:ContainerRegistry=<registry> -p:ContainerImageTags=<tag>`. The SDK's container support is the .NET default and avoids maintaining a Dockerfile.
 
-### D6. GitHub Actions workflow `.github/workflows/deploy.yml`
-Triggers: push to `main` and `workflow_dispatch`. Jobs:
-1. `build` - setup .NET from `global.json`, `docker login` with the registry secrets, publish the container tagged with `github.sha`.
-2. `deploy` (needs `build`, environment `production`) - `azure/login` with OpenID Connect (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`), then `az deployment sub create --location <location> --name leakout-<run id> -f infrastructure/main.bicep -p infrastructure/main.bicepparam` with the image and secrets passed as parameters. The federated identity needs `Contributor` on the subscription (or a custom role that can create resource groups and the resources in them), because it creates the resource group.
+### D6. Deployment entry point, pipeline in #8
+The templates are deployed with `az deployment sub create --location <location> --name leakout-<id> -f infrastructure/main.bicep -p infrastructure/main.bicepparam`, passing the image reference and the secure parameters. The deploying identity needs `Contributor` on the subscription (or a custom role that can create resource groups and the resources in them), because it creates the resource group. `infrastructure/README.md` documents a manual deployment with these commands.
 
-Repository secrets: `ACR_ENDPOINT`, `ACR_USERNAME`, `ACR_PASSWORD`, `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `POSTGRES_ADMIN_PASSWORD`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `AUTH_SIGNING_KEY`. A pull request workflow step runs `az bicep build` to catch template errors before merge.
-
-*Alternative considered*: a service principal secret for Azure login. OIDC federated credentials avoid a long-lived secret.
+The GitHub Actions workflows that build, test, publish the image and run this deployment, including the Bicep check on pull requests, are designed in `platform-github-actions-workflows` (#8).
 
 ## Risks / Trade-offs
 
@@ -87,7 +83,7 @@ Repository secrets: `ACR_ENDPOINT`, `ACR_USERNAME`, `ACR_PASSWORD`, `AZURE_CLIEN
 ## Migration Plan
 
 1. Maintainer creates the federated credential with a subscription-level role assignment and the GitHub secrets. The resource group is created by the deployment.
-2. Merge to `development`, then `main`; the workflow builds, pushes and deploys.
+2. Merge to `development`, then `main`; the workflow from #8 builds, pushes and deploys (or deploy manually as documented in `infrastructure/README.md`).
 3. Apply database migrations once (see Risks).
 4. Rollback: redeploy the previous image tag with `workflow_dispatch`, or delete the resource group to remove everything.
 

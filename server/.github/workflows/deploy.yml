@@ -158,9 +158,9 @@ jobs:
       - name: Deploy infrastructure and API
         id: deployment
         env:
-          API_IMAGE: ${{ needs.publish.outputs.image }}
+          API_IMAGE: ${{ steps.container.outputs.image }}
           SERVICE_VERSION: ${{ needs.publish.outputs.version }}
-          ACR_LOGIN_SERVER: ${{ needs.publish.outputs.registry }}
+          ACR_LOGIN_SERVER: ${{ steps.container.outputs.registry }}
           ACR_LOGIN_USERNAME: ${{ secrets.ACR_LOGIN_USERNAME }}
           ACR_LOGIN_PASSWORD: ${{ secrets.ACR_LOGIN_PASSWORD }}
           POSTGRES_ADMIN_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}

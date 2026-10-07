@@ -4,7 +4,7 @@
 // A missing environment variable fails the deployment before anything changes.
 using 'main.bicep'
 
-param resourceGroupName = 'rg-leakout-prod-swe'
+param resourceGroupName = 'rg-leakout-prod'
 param location = 'swedencentral'
 param locationAbbreviation = 'swc'
 param maxReplicas = 3

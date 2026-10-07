@@ -29,7 +29,7 @@ class ScoreSubmitterTest {
 
     private fun TestScope.submitter(
         queue: PendingScoreQueue = InMemoryPendingScoreQueue(),
-        config: ScoreServerConfig = ScoreServerConfig("https://api.leak-out.com", "web-client"),
+        config: ScoreServerConfig = ScoreServerConfig("https://rg-leakout-prod-neu-api.jollywater-e41c70f8.northeurope.azurecontainerapps.io", "web-client"),
     ) = ScoreSubmitter(config, api, queue, signIn, codeSource, network, backgroundScope, log = log)
 
     private fun TestScope.settle(): Unit = testScheduler.runCurrent()

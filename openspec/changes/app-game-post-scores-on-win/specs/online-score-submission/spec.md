@@ -37,11 +37,11 @@ The system SHALL NOT queue scores and SHALL NOT contact the score server when th
 - **THEN** the queue is not sent and keeps its scores
 
 ### Requirement: Score server configuration
-The build SHALL carry a score server address and a server client id. By default the address SHALL be `https://api.leak-out.com` and the client id `201820010117-uteqrtu77v48c9ovd8d9k9qan0sktcj4.apps.googleusercontent.com`; a build MAY override either. When the address is blank or not `https://`, or the client id is blank, the system SHALL NOT queue or post scores and SHALL NOT show the status dot.
+The build SHALL carry a score server address and a server client id. By default the address SHALL be `https://rg-leakout-prod-neu-api.jollywater-e41c70f8.northeurope.azurecontainerapps.io` and the client id `201820010117-uteqrtu77v48c9ovd8d9k9qan0sktcj4.apps.googleusercontent.com`; a build MAY override either. When the address is blank or not `https://`, or the client id is blank, the system SHALL NOT queue or post scores and SHALL NOT show the status dot.
 
 #### Scenario: Default configuration
 - **WHEN** the app is built without overriding the score server settings
-- **THEN** scores are sent to `https://api.leak-out.com` and the server auth code is requested for client id `201820010117-uteqrtu77v48c9ovd8d9k9qan0sktcj4.apps.googleusercontent.com`
+- **THEN** scores are sent to `https://rg-leakout-prod-neu-api.jollywater-e41c70f8.northeurope.azurecontainerapps.io` and the server auth code is requested for client id `201820010117-uteqrtu77v48c9ovd8d9k9qan0sktcj4.apps.googleusercontent.com`
 
 #### Scenario: Score server turned off
 - **WHEN** the build overrides the score server address with a blank value, the player is signed in to Play Games and wins a level

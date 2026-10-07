@@ -2,7 +2,7 @@
 
 ## 1. Build configuration and permissions
 
-- [x] 1.1 In `app/build.gradle.kts`, add `buildConfigField`s `SCORE_SERVER_URL` and `SCORE_SERVER_CLIENT_ID`, read from the Gradle properties `leakout.scoreServerUrl` / `leakout.scoreServerClientId`, then the env vars `LEAKOUT_SCORE_SERVER_URL` / `LEAKOUT_SCORE_SERVER_CLIENT_ID`, then the defaults `https://api.leak-out.com` and `201820010117-uteqrtu77v48c9ovd8d9k9qan0sktcj4.apps.googleusercontent.com` (comment that the URL is a placeholder); verify `./gradlew :app:assembleDebug` succeeds and the generated `BuildConfig` holds the defaults, and that `-Pleakout.scoreServerUrl=` yields a blank URL
+- [x] 1.1 In `app/build.gradle.kts`, add `buildConfigField`s `SCORE_SERVER_URL` and `SCORE_SERVER_CLIENT_ID`, read from the Gradle properties `leakout.scoreServerUrl` / `leakout.scoreServerClientId`, then the env vars `LEAKOUT_SCORE_SERVER_URL` / `LEAKOUT_SCORE_SERVER_CLIENT_ID`, then the defaults `https://rg-leakout-prod-neu-api.jollywater-e41c70f8.northeurope.azurecontainerapps.io` and `201820010117-uteqrtu77v48c9ovd8d9k9qan0sktcj4.apps.googleusercontent.com`; verify `./gradlew :app:assembleDebug` succeeds and the generated `BuildConfig` holds the defaults, and that `-Pleakout.scoreServerUrl=` yields a blank URL
 - [x] 1.2 Add `android.permission.INTERNET` and `android.permission.ACCESS_NETWORK_STATE` to `AndroidManifest.xml` with comments; verify the merged manifest of `:app:processDebugMainManifest` contains both
 - [x] 1.3 Add `ScoreServerConfig(baseUrl, webClientId)` in `app/.../scores/online` with `enabled` true only when both are non-blank and the URL starts with `https://`, plus a factory from `BuildConfig`; verify with a JVM unit test covering blank URL, blank client id, `http://` URL and the default pair
 
@@ -37,7 +37,7 @@
 ## 7. Privacy line and documentation
 
 - [ ] 7.1 Update `settings_about_privacy` in every `res/values*/strings.xml` to say that, only when signed in to Google Play Games, achievements are shared with Google Play and scores of won levels are sent to the Leak Out score server; verify the settings screen About test asserts the new text and passes
-- [x] 7.2 Document score posting in `docs/deployment.md`: the two settings with their defaults and override properties/env vars, that the URL is a placeholder, that the client id must equal the server's `GooglePlayGames:ClientId`, the https requirement, the offline queue, and the Data safety form changes; verify the doc's commands and links resolve
+- [x] 7.2 Document score posting in `docs/deployment.md`: the two settings with their defaults and override properties/env vars, that the client id must equal the server's `GooglePlayGames:ClientId`, the https requirement, the offline queue, and the Data safety form changes; verify the doc's commands and links resolve
 - [x] 7.3 Note score posting and the offline queue in `docs/project-plan.md` (level complete flow) and remove the "no network" note from `docs/missing-features.md`; verify by reading the updated sections
 
 ## 8. Integration check

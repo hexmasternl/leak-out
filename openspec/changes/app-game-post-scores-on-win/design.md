@@ -51,14 +51,14 @@ Alternatives: Retrofit/Ktor/OkHttp were rejected: two JSON POSTs do not justify 
 - The blink sequences are a pure function `ScorePostDot.frame(status, elapsedMs) -> DotFrame(color, alpha, done)`, JVM-testable without Compose. The endless yellow blink waits on `withInfiniteAnimationFrameMillis`, so it does not keep Compose (and its tests) busy.
 
 ### 4. Build configuration
-`app/build.gradle.kts` adds `buildConfigField("String", "SCORE_SERVER_URL", ...)` and `SCORE_SERVER_CLIENT_ID`, read from the Gradle properties `leakout.scoreServerUrl` / `leakout.scoreServerClientId`, then the environment variables `LEAKOUT_SCORE_SERVER_URL` / `LEAKOUT_SCORE_SERVER_CLIENT_ID`, then the defaults `https://api.leak-out.com` and `201820010117-uteqrtu77v48c9ovd8d9k9qan0sktcj4.apps.googleusercontent.com`. Both values are public (a URL and an OAuth client id are not secrets), so the defaults live in the build file and CI needs nothing until the URL changes. The URL default is a placeholder: changing it later is a one-line edit or a CI variable. A URL that is not `https://` counts as not configured, so cleartext traffic stays off.
+`app/build.gradle.kts` adds `buildConfigField("String", "SCORE_SERVER_URL", ...)` and `SCORE_SERVER_CLIENT_ID`, read from the Gradle properties `leakout.scoreServerUrl` / `leakout.scoreServerClientId`, then the environment variables `LEAKOUT_SCORE_SERVER_URL` / `LEAKOUT_SCORE_SERVER_CLIENT_ID`, then the defaults `https://rg-leakout-prod-neu-api.jollywater-e41c70f8.northeurope.azurecontainerapps.io` and `201820010117-uteqrtu77v48c9ovd8d9k9qan0sktcj4.apps.googleusercontent.com`. Both values are public (a URL and an OAuth client id are not secrets), so the defaults live in the build file and CI needs nothing until the URL changes. The URL default is the live Container App's own host; moving to a custom domain later is a one-line edit or a CI variable. A URL that is not `https://` counts as not configured, so cleartext traffic stays off.
 
 ### 5. Permissions and privacy
 Add `INTERNET` and `ACCESS_NETWORK_STATE` (normal permissions, no prompt). Update `settings_about_privacy`, and note the Data safety form changes in `docs/deployment.md`.
 
 ## Risks / Trade-offs
 
-- [The placeholder `https://api.leak-out.com` does not answer] → every send fails, scores pile up in the queue (at most one per level, so bounded by the level count) and the dot blinks red. They are sent once the real URL ships in an update. Mitigation: tracked as an open question; replace before or right after release.
+- [The server moves away from the Container App host `https://rg-leakout-prod-neu-api.jollywater-e41c70f8.northeurope.azurecontainerapps.io` (custom domain, new region)] → old builds' sends fail, their scores pile up in the queue (at most one per level, so bounded by the level count) and the dot blinks red; they are sent once the player updates. Mitigation: keep the old host answering (or redirecting) for a while after a move.
 - [The web client id differs from the server's `GooglePlayGames:ClientId`] → every sign-in fails, scores stay queued. Mitigation: documented in `docs/deployment.md`; failures logged through `PlayGamesLog`.
 - [A different Play Games account signs in on the device] → its flush sends scores queued under the previous account. Accepted: rare on a phone, and the server only keeps bests.
 - [Scores can be forged by a modified client] → accepted for now; the server keeps only bests per player and needs a Play Games identity.
@@ -68,10 +68,7 @@ Add `INTERNET` and `ACCESS_NETWORK_STATE` (normal permissions, no prompt). Updat
 
 ## Migration Plan
 
-1. Ship with the defaults: score posting is on, sends to the placeholder URL fail and the scores stay queued.
-2. When the real endpoint is known, change the default (or set `LEAKOUT_SCORE_SERVER_URL` in CI), update the Play Console Data safety form, and release; queued scores are sent on the first flush.
+1. Update the Play Console Data safety form, then ship with the defaults: score posting is on and goes to the live host.
+2. When the server gets another address, change the default (or set `LEAKOUT_SCORE_SERVER_URL` in CI) and release; scores still queued are sent on the first flush.
 3. Rollback: set the URL to blank and release; the app stops queuing and sending, and an existing queue is kept untouched.
 
-## Open Questions
-
-- The real production base URL of the score server (replaces the `https://api.leak-out.com` placeholder) — a configuration value only.

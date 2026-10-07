@@ -10,7 +10,7 @@ class ScoreServerConfigTest {
 
     @Test
     fun `the default pair is enabled`() {
-        assertTrue(ScoreServerConfig("https://api.leak-out.com", clientId).enabled)
+        assertTrue(ScoreServerConfig("https://rg-leakout-prod-neu-api.jollywater-e41c70f8.northeurope.azurecontainerapps.io", clientId).enabled)
     }
 
     @Test
@@ -22,13 +22,13 @@ class ScoreServerConfigTest {
 
     @Test
     fun `a blank client id turns posting off`() {
-        assertFalse(ScoreServerConfig("https://api.leak-out.com", "").enabled)
-        assertFalse(ScoreServerConfig("https://api.leak-out.com", "  ").enabled)
+        assertFalse(ScoreServerConfig("https://rg-leakout-prod-neu-api.jollywater-e41c70f8.northeurope.azurecontainerapps.io", "").enabled)
+        assertFalse(ScoreServerConfig("https://rg-leakout-prod-neu-api.jollywater-e41c70f8.northeurope.azurecontainerapps.io", "  ").enabled)
     }
 
     @Test
     fun `cleartext http is not accepted`() {
-        assertFalse(ScoreServerConfig("http://api.leak-out.com", clientId).enabled)
+        assertFalse(ScoreServerConfig("http://rg-leakout-prod-neu-api.jollywater-e41c70f8.northeurope.azurecontainerapps.io", clientId).enabled)
     }
 
     @Test

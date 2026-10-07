@@ -28,11 +28,11 @@ fun requiredSigningEnv(name: String): String =
 
 // The Leak Out score server (openspec/specs/online-score-submission). Both values are public, so the
 // defaults live here; -Pleakout.scoreServerUrl / LEAKOUT_SCORE_SERVER_URL (and the client id pair)
-// override them, and a blank value turns score posting off. The URL is a placeholder until the
-// real endpoint is known.
+// override them, and a blank value turns score posting off. The URL is the live Container App's own
+// host; change it here when the server gets a custom domain.
 fun scoreServerSetting(property: String, env: String, default: String): String =
     (providers.gradleProperty(property).orNull ?: providers.environmentVariable(env).orNull ?: default).trim()
-val scoreServerUrl = scoreServerSetting("leakout.scoreServerUrl", "LEAKOUT_SCORE_SERVER_URL", "https://api.leak-out.com")
+val scoreServerUrl = scoreServerSetting("leakout.scoreServerUrl", "LEAKOUT_SCORE_SERVER_URL", "https://rg-leakout-prod-neu-api.jollywater-e41c70f8.northeurope.azurecontainerapps.io")
 val scoreServerClientId = scoreServerSetting(
     "leakout.scoreServerClientId",
     "LEAKOUT_SCORE_SERVER_CLIENT_ID",

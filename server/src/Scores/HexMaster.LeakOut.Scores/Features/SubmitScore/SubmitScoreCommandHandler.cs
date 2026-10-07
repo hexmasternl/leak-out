@@ -18,6 +18,7 @@ public sealed class SubmitScoreCommandHandler(
     {
         ArgumentNullException.ThrowIfNull(command);
 
+        var started = Stopwatch.GetTimestamp();
         using var activity = ScoresMetrics.ActivitySource.StartActivity(ScoresMetrics.SubmitScoreActivityName);
         activity?.SetTag("player.id", command.UserId);
         activity?.SetTag("score.level", command.Level);
@@ -29,7 +30,7 @@ public sealed class SubmitScoreCommandHandler(
 
             activity?.SetTag("score.new_best", submission.IsNewBest);
             activity?.SetStatus(ActivityStatusCode.Ok);
-            metrics.ScoreSubmitted(submission.IsNewBest);
+            metrics.ScoreSubmitted(submission.IsNewBest, Stopwatch.GetElapsedTime(started));
 
             return new SubmitScoreResult(command.Level, submission.BestScore, submission.IsNewBest);
         }
@@ -37,7 +38,7 @@ public sealed class SubmitScoreCommandHandler(
         {
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             activity?.AddException(ex);
-            metrics.ScoreSubmissionFailed();
+            metrics.ScoreSubmissionFailed(Stopwatch.GetElapsedTime(started));
             throw;
         }
     }

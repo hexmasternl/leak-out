@@ -83,11 +83,11 @@ There is no Azure client secret: the login is OIDC, so the app registration behi
 Every workflow sets top-level `permissions: contents: read`; only the deploy job adds `id-token: write`. Actions are pinned to major versions from GitHub and Azure (`actions/*`, `azure/login`, `docker/login-action`).
 
 ### D7. Semantic versioning with GitVersion
-`GitVersion.yml` at the repository root sets `workflow: TrunkBased/preview1` (mainline versioning). The publish job runs `gittools/actions/gitversion/setup` (GitVersion `6.3.x`) and `gittools/actions/gitversion/execute` after a checkout with `fetch-depth: 0`. On `main` every first-parent commit (every merge from `development`) increments the patch version, so each deployment gets a unique release version such as `0.0.4` without creating Git tags. Commit messages with `+semver: minor` or `+semver: major` bump the minor or major version; a Git tag `vX.Y.Z` on `main` resets the base. `SemVer` is the image tag and the assembly `Version`; `InformationalVersion` (version plus commit SHA) is stamped into the assembly, and the SDK adds the commit as the `org.opencontainers.image.revision` label, so the image stays traceable to its commit.
+`GitVersion.yml` at the repository root sets `workflow: TrunkBased/preview1` (mainline versioning). The publish job runs `gittools/actions/gitversion/setup` (GitVersion `6.3.x`) and `gittools/actions/gitversion/execute` after a checkout with `fetch-depth: 0`. On `main` every first-parent commit (every merge from `development`) increments the patch version, so each deployment gets a unique release version such as `0.0.4` without creating Git tags. Commit messages with `+semver: minor` or `+semver: major` bump the minor or major version; a Git tag `vX.Y.Z` on `main` resets the base. `SemVer` is the image tag, the assembly `Version` and (through the SDK) the image's `org.opencontainers.image.version` label; `InformationalVersion` (version plus branch and commit SHA) is stamped into the assembly, so a running image stays traceable to its commit.
 
 *Alternative considered*: `GitFlow/v1`. Rejected: without tags on `main` it yields pre-release versions like `0.0.1-10`, and it needs a tag after every release to move on.
 
-*Alternative considered*: tagging the image with the commit SHA. Replaced by the semantic version on request; the SHA remains in the image label and the informational version.
+*Alternative considered*: tagging the image with the commit SHA. Replaced by the semantic version on request; the SHA remains in the informational version.
 
 ## Risks / Trade-offs
 

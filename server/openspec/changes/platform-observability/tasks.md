@@ -24,7 +24,7 @@
 
 ## 5. Infrastructure and deployment
 
-- [ ] 5.1 Add `param serviceVersion string` to `infrastructure/modules/api.bicep` and set `OTEL_RESOURCE_ATTRIBUTES` = `service.version=${serviceVersion}`. Pass it through `resources.bicep` and `main.bicep`, and read it in `main.bicepparam` with `readEnvironmentVariable('SERVICE_VERSION')`. Verify `az bicep build --file infrastructure/main.bicep` and `az bicep build-params --file infrastructure/main.bicepparam` (with `SERVICE_VERSION` set) succeed.
+- [x] 5.1 Add `param serviceVersion string` to `infrastructure/modules/api.bicep` and set `OTEL_RESOURCE_ATTRIBUTES` = `service.version=${serviceVersion}`. Pass it through `resources.bicep` and `main.bicep`, and read it in `main.bicepparam` with `readEnvironmentVariable('SERVICE_VERSION')`. Verify `az bicep build --file infrastructure/main.bicep` and `az bicep build-params --file infrastructure/main.bicepparam` (with `SERVICE_VERSION` set) succeed.
 - [ ] 5.2 Set `SERVICE_VERSION: ${{ needs.publish.outputs.version }}` in the deploy step of `.github/workflows/deploy.yml`. Document the parameter and the env var in `infrastructure/README.md`. Verify the workflow YAML parses and every parameter in `main.bicepparam` has a matching env var in the deploy step.
 
 ## 6. Documentation

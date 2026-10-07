@@ -10,6 +10,7 @@ param locationAbbreviation = 'swc'
 param maxReplicas = 3
 
 param imageName = readEnvironmentVariable('API_IMAGE')
+param serviceVersion = readEnvironmentVariable('SERVICE_VERSION')
 param registryServer = readEnvironmentVariable('ACR_LOGIN_SERVER')
 param registryUsername = readEnvironmentVariable('ACR_LOGIN_USERNAME')
 param registryPassword = readEnvironmentVariable('ACR_LOGIN_PASSWORD')

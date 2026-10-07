@@ -17,10 +17,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.StateFlow
 import nl.hexmaster.leakout.R
 import nl.hexmaster.leakout.core.achievements.Achievement
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.score.FinalScore
+import nl.hexmaster.leakout.scores.online.ScorePostStatus
 import nl.hexmaster.leakout.ui.components.FlowButton
 import nl.hexmaster.leakout.ui.components.FlowButtonSize
 import nl.hexmaster.leakout.ui.components.FlowButtonVariant
@@ -56,7 +58,8 @@ private typealias Tagger = Modifier.(String) -> Modifier
  * tally and works as Exit after it. When the win beat the stored highscore ([newBest]), "New best!"
  * takes the place of the message once the tally is done. The achievements the win [unlocked] pop in
  * under the score row once the tally is done; the buttons never wait for them. The dialog uses the
- * Regular layout when it fits the window height and the Compact one otherwise.
+ * Regular layout when it fits the window height and the Compact one otherwise. While the score is
+ * sent to the score server ([scorePost]), the status dot shows in the top-left corner.
  */
 @Composable
 fun LevelCompleteDialog(
@@ -69,6 +72,7 @@ fun LevelCompleteDialog(
     onExit: () -> Unit,
     newBest: Boolean = false,
     unlocked: List<Achievement> = emptyList(),
+    scorePost: StateFlow<ScorePostStatus>? = null,
 ) {
     val paneName = stringResource(R.string.win_pane_title)
     ResultDialogWindow(
@@ -79,6 +83,7 @@ fun LevelCompleteDialog(
         measureRegular = { LevelCompleteMeasured(level, score, frame, newBest, unlocked) },
         // The tracker can answer after the dialog opened; the row's height then counts too.
         measureKey = unlocked.isNotEmpty(),
+        cornerOverlay = { scorePost?.let { ScorePostIndicator(it) } },
     ) { layout ->
         LevelCompleteContent(layout, level, score, frame, hasNextLevel, onNextLevel, onRestart, onExit, newBest, unlocked)
     }

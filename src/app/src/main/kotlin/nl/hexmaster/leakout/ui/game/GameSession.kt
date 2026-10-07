@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlin.random.Random
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import nl.hexmaster.leakout.achievements.AchievementTracker
 import nl.hexmaster.leakout.achievements.toRecordOutcome
@@ -23,6 +24,8 @@ import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.history.RecordResult
+import nl.hexmaster.leakout.scores.online.ScorePostStatus
+import nl.hexmaster.leakout.scores.online.ScoreSubmissions
 import nl.hexmaster.leakout.settings.TipId
 
 /**
@@ -247,6 +250,23 @@ class GameSession(level: Level, private val engine: GameEngine = GameEngine()) {
         if (won.outcome !is Outcome.Won || recorded?.first == won.attempt) return
         val result = withContext(NonCancellable) { history.recordCompletion(won.level.id, score.total, won.finalStars) }
         recorded = won.attempt to result
+    }
+
+    /** The attempt whose win was handed to the score server, and how its sending goes (null: nothing is sent). */
+    private var postedScore: Pair<Int, StateFlow<ScorePostStatus>?>? by mutableStateOf(null)
+
+    /** How the sending of this attempt's score goes; null when it is not sent, and on any other attempt. */
+    val scorePost: StateFlow<ScorePostStatus>? get() = postedScore?.takeIf { it.first == state.attempt }?.second
+
+    /**
+     * Hands this attempt's final total to [scores] if it was won, once per attempt however often it
+     * is called (coming back from the background shows the dialog again). A restart is a new attempt.
+     */
+    fun submitScore(scores: ScoreSubmissions) {
+        val won = state
+        val score = won.finalScore ?: return
+        if (won.outcome !is Outcome.Won || postedScore?.first == won.attempt) return
+        postedScore = won.attempt to scores.submitWin(won.level.id, score.total)
     }
 
     /** The state at the moment the last attempt was first won or lost; null while none has ended. */

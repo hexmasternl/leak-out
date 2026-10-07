@@ -229,6 +229,7 @@ class MainActivity : ComponentActivity() {
                                 soundEffects = soundEffectsViewModel.soundEffects,
                                 haptics = hapticsViewModel.haptics,
                                 tips = settings,
+                                scores = appContainer.scores,
                             )
                         }
                         is Screen.TestPlay -> TestPlayScreen(

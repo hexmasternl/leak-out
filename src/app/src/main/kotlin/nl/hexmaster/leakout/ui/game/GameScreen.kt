@@ -66,6 +66,7 @@ import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.history.RecordResult
+import nl.hexmaster.leakout.scores.online.ScoreSubmissions
 import nl.hexmaster.leakout.settings.SettingsRepository
 import nl.hexmaster.leakout.settings.TipId
 import nl.hexmaster.leakout.ui.components.KeepScreenOn
@@ -95,7 +96,9 @@ import nl.hexmaster.leakout.ui.theme.LeakOutColors
  * command to the engine. [session] owns the running level; tests pass their own to drive it.
  * Placements, points popups and the two dialogs play their sound through [soundEffects]; without it
  * the game is silent. A replacement, the gap warning and a lost attempt vibrate through [haptics]
- * (spec `game-haptics`); without it nothing vibrates.
+ * (spec `game-haptics`); without it nothing vibrates. Once the level complete dialog shows, the won
+ * score goes to [scores] (spec `online-score-submission`) and the dialog shows how sending it goes;
+ * without it nothing is sent (test play).
  */
 @Composable
 fun GameScreen(
@@ -109,6 +112,7 @@ fun GameScreen(
     tips: SettingsRepository? = null,
     achievements: AchievementTracker? = null,
     haptics: Haptics? = null,
+    scores: ScoreSubmissions? = null,
 ) {
     // The display stays on for the whole game screen, its dialogs included.
     KeepScreenOn()
@@ -149,6 +153,10 @@ fun GameScreen(
     LaunchedEffect(session, history, achievements, attempt, ended) {
         if (won && history != null) session.recordWin(history)
         if (ended && achievements != null) session.recordAchievements(achievements)
+    }
+    // While the level complete dialog is shown, not before; the session sends each attempt once.
+    LaunchedEffect(session, scores, attempt, showWinDialog) {
+        if (showWinDialog && scores != null) session.submitScore(scores)
     }
     // A replacement takes no input: a drag a second finger still holds goes back to its slot.
     LaunchedEffect(session, isStopped, replacing) {
@@ -299,6 +307,7 @@ fun GameScreen(
                 onExit = onExit,
                 newBest = session.select { recordResult is RecordResult.NewHighscore },
                 unlocked = session.select { unlockedThisAttempt },
+                scorePost = session.select { scorePost },
             )
         }
     }

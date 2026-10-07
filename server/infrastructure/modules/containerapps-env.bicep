@@ -13,7 +13,7 @@ param workspaceCustomerId string
 @secure()
 param workspaceSharedKey string
 
-resource environment 'Microsoft.App/managedEnvironments@2025-01-01' = {
+resource environment 'Microsoft.App/managedEnvironments@2026-07-01' = {
   name: environmentName
   location: location
   properties: {
@@ -24,8 +24,6 @@ resource environment 'Microsoft.App/managedEnvironments@2025-01-01' = {
         sharedKey: workspaceSharedKey
       }
     }
-    // No workload profiles: a Consumption-only environment, billed per use.
-    zoneRedundant: false
   }
 }
 

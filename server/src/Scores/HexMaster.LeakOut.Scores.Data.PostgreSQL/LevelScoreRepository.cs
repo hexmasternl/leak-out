@@ -43,11 +43,12 @@ public sealed class LevelScoreRepository(ScoresDbContext dbContext) : ILevelScor
     }
 
     /// <remarks>
-    /// Served by the <c>(level, score desc, achieved_at)</c> index. For the top N, numbering the
-    /// rows in memory equals <c>ROW_NUMBER() OVER (ORDER BY score DESC, achieved_at, user_id)</c>.
+    /// Served by the <c>(level, score desc, achieved_at)</c> index. Numbering the rows in memory from
+    /// <paramref name="offset"/> equals <c>ROW_NUMBER() OVER (ORDER BY score DESC, achieved_at, user_id)</c>.
     /// </remarks>
-    public async Task<IReadOnlyList<RankedLevelScore>> GetTopAsync(int level, int count, CancellationToken ct)
+    public async Task<IReadOnlyList<RankedLevelScore>> GetRankedAsync(int level, int offset, int count, CancellationToken ct)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(offset);
         ArgumentOutOfRangeException.ThrowIfNegative(count);
 
         var rows = await dbContext.LevelScores
@@ -56,10 +57,42 @@ public sealed class LevelScoreRepository(ScoresDbContext dbContext) : ILevelScor
             .OrderByDescending(s => s.Score)
             .ThenBy(s => s.AchievedAt)
             .ThenBy(s => s.UserId)
+            .Skip(offset)
             .Take(count)
             .Select(s => new { s.UserId, s.Score })
             .ToListAsync(ct);
 
-        return rows.Select((row, index) => new RankedLevelScore(index + 1, row.UserId, row.Score)).ToList();
+        return rows.Select((row, index) => new RankedLevelScore(offset + index + 1, row.UserId, row.Score)).ToList();
     }
+
+    public async Task<BestLevelScore?> GetBestAsync(Guid userId, int level, CancellationToken ct) =>
+        await dbContext.LevelScores
+            .AsNoTracking()
+            .Where(s => s.UserId == userId && s.Level == level)
+            .Select(s => new BestLevelScore(s.Score, s.AchievedAt))
+            .SingleOrDefaultAsync(ct);
+
+    /// <remarks>
+    /// Raw SQL because LINQ has no <c>&lt;</c> on <see cref="Guid"/>; PostgreSQL compares uuids the same
+    /// way the <c>ORDER BY user_id</c> of <see cref="GetRankedAsync"/> does.
+    /// </remarks>
+    public async Task<int> CountRankedAboveAsync(
+        int level, int score, DateTimeOffset achievedAt, Guid userId, CancellationToken ct)
+    {
+        var achievedAtUtc = achievedAt.ToUniversalTime();
+
+        return await dbContext.Database
+            .SqlQuery<int>($"""
+                SELECT count(*)::int AS "Value"
+                  FROM level_scores
+                 WHERE level = {level}
+                   AND (score > {score}
+                        OR (score = {score} AND achieved_at < {achievedAtUtc})
+                        OR (score = {score} AND achieved_at = {achievedAtUtc} AND user_id < {userId}))
+                """)
+            .SingleAsync(ct);
+    }
+
+    public Task<int> CountAsync(int level, CancellationToken ct) =>
+        dbContext.LevelScores.CountAsync(s => s.Level == level, ct);
 }

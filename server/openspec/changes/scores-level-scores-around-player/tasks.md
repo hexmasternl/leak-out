@@ -10,8 +10,8 @@
 
 ## 3. Repository reads
 
-- [ ] 3.1 Add `CountRankedAboveAsync`, `CountAsync` and an offset-aware `GetRankedAsync` to `ILevelScoreRepository` (reuse or extend what #2 and #3 added); verify the Scores project builds
-- [ ] 3.2 Implement them in `HexMaster.LeakOut.Scores.Data.PostgreSQL` ordered by `score desc, achieved_at asc, user_id asc`, without a migration; verify with a repository test (EF Core against PostgreSQL or the test setup #2 introduced) that ties on score and `achieved_at` produce the expected order and count
+- [x] 3.1 Add `CountRankedAboveAsync`, `CountAsync` and an offset-aware `GetRankedAsync` to `ILevelScoreRepository` (reuse or extend what #2 and #3 added); verify the Scores project builds
+- [x] 3.2 Implement them in `HexMaster.LeakOut.Scores.Data.PostgreSQL` ordered by `score desc, achieved_at asc, user_id asc`, without a migration; verify with a repository test (EF Core against PostgreSQL or the test setup #2 introduced) that ties on score and `achieved_at` produce the expected order and count
 
 ## 4. Query slice
 

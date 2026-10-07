@@ -20,7 +20,7 @@
 ## 5. Endpoint
 
 - [x] 5.1 Map `GET /api/levels/{level}/scores/around-me` in the leaderboard endpoint file with `.WithName("GetLevelScoresAroundPlayer")`, `.Produces<LevelLeaderboardDto>()` and `.ProducesValidationProblem()`, validating `level >= 1` and resolving `sub` with `IUserResolver` before dispatching; verify endpoint tests with `WebApplicationFactory` and a mocked handler return 200 with entries, 400 for level 0, and 401 without a token
-- [ ] 5.2 Add a sample request to `src/HexMaster.LeakOut.Api/HexMaster.LeakOut.Api.http`; verify it runs against the local API with a valid session token
+- [x] 5.2 Add a sample request to `src/HexMaster.LeakOut.Api/HexMaster.LeakOut.Api.http`; verify it runs against the local API with a valid session token
 
 ## 6. Integration check
 

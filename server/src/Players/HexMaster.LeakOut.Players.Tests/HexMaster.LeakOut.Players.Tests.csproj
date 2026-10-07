@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="Bogus" Version="35.6.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.12" />
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.12.0" />
     <PackageReference Include="Moq" Version="4.21.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0">
@@ -23,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HexMaster.LeakOut.Players\HexMaster.LeakOut.Players.csproj" />
+    <ProjectReference Include="..\HexMaster.LeakOut.Players.Data.PostgreSQL\HexMaster.LeakOut.Players.Data.PostgreSQL.csproj" />
   </ItemGroup>
 
 </Project>

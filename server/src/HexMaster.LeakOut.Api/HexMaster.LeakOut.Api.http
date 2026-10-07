@@ -1,6 +1,39 @@
 @HexMaster.LeakOut.Api_HostAddress = http://localhost:5090
 
-GET {{HexMaster.LeakOut.Api_HostAddress}}/weatherforecast/
+### Sign in with a Google Play Games server auth code.
+# Get a fresh code from the game (GamesSignInClient.requestServerSideAccess); codes are single-use.
+# @name signIn
+POST {{HexMaster.LeakOut.Api_HostAddress}}/api/players/sessions
+Content-Type: application/json
+Accept: application/json
+
+{
+  "serverAuthCode": "4/0A...replace-with-a-fresh-server-auth-code"
+}
+
+### Protected endpoints take the returned access token as a bearer token, for example:
+# Authorization: Bearer {{signIn.response.body.$.accessToken}}
+
+### Submit the signed-in player's score on a level. Only a higher score replaces the stored best.
+POST {{HexMaster.LeakOut.Api_HostAddress}}/api/scores
+Authorization: Bearer {{signIn.response.body.$.accessToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "level": 4,
+  "score": 520
+}
+
+### Get the top 10 scores of a level, highest first; the signed-in player's entry has isCurrentPlayer = true.
+GET {{HexMaster.LeakOut.Api_HostAddress}}/api/levels/4/scores/top
+Authorization: Bearer {{signIn.response.body.$.accessToken}}
+Accept: application/json
+
+### Get up to 10 scores of a level around the signed-in player: 5 above, the player and 4 below.
+# The list is empty when the player has no score on the level yet.
+GET {{HexMaster.LeakOut.Api_HostAddress}}/api/levels/4/scores/around-me
+Authorization: Bearer {{signIn.response.body.$.accessToken}}
 Accept: application/json
 
 ###

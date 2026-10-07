@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Code coverage settings for the 80% gate (see .claude/skills/git-workflow/SKILL.md).
+  Only tool-generated code is excluded: classes and members marked [GeneratedCode] by source
+  generators, such as the ASP.NET Core OpenAPI XML comment support emitted for AddOpenApi() and
+  LoggerMessage methods. Hand-written production code is never excluded.
+-->
+<Configuration>
+  <CodeCoverage>
+    <Attributes>
+      <Exclude>
+        <Attribute>^System\.CodeDom\.Compiler\.GeneratedCodeAttribute$</Attribute>
+      </Exclude>
+    </Attributes>
+  </CodeCoverage>
+</Configuration>

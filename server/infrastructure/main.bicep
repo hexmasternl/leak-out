@@ -9,7 +9,7 @@ param resourceGroupName string = 'rg-leakout-prod'
 param location string
 
 @description('Abbreviation of the Azure region, used for naming resources.')
-param locationAbbreviation string = 'swc'
+param locationAbbreviation string = 'neu'
 
 @description('Full image reference of the API including the tag.')
 param imageName string

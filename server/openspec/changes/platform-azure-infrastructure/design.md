@@ -9,14 +9,14 @@ Changes #1 (`players-google-play-auth`) and #2 (`scores-submit-score`) define th
 ## Goals / Non-Goals
 
 **Goals:**
-- One `az deployment group create` provisions everything except the container registry and the resource group.
+- One subscription-scope `az deployment sub create` creates the resource group and provisions everything in it, except the container registry.
 - Lowest reasonable monthly cost for a low-traffic hobby game server.
 - Telemetry in Application Insights without changing any handler code.
 
 **Non-Goals:**
 - Running EF Core migrations against the Azure databases (separate follow-up; see Risks).
 - Custom domain, certificates, VNet integration, private endpoints, Key Vault, multiple environments (staging/production).
-- Creating the resource group, the container registry or the Azure service principal.
+- Creating the container registry or the Azure service principal.
 - Generating the infrastructure from the Aspire AppHost.
 
 ## Decisions
@@ -24,15 +24,18 @@ Changes #1 (`players-google-play-auth`) and #2 (`scores-submit-score`) define th
 ### D1. Hand-written Bicep under `infrastructure/`
 ```
 infrastructure/
-  main.bicep                 # resourceGroup scope, wires the modules
+  main.bicep                 # targetScope = 'subscription': creates the resource group, deploys resources.bicep into it
   main.bicepparam            # non-secret defaults; secrets come from the pipeline
+  resources.bicep            # resourceGroup scope, wires the modules
   modules/
     monitoring.bicep         # Log Analytics + Application Insights
     postgres.bicep           # Flexible Server, databases, firewall rule
     containerapps-env.bicep  # managed environment
     api.bicep                # container app
 ```
-Parameters: `location` (default `resourceGroup().location`), `namePrefix` (default `leakout`), `imageName` (full image reference including tag), `registryServer`, `registryUsername`, secure `registryPassword`, secure `postgresAdminPassword`, secure `googleClientId`, `googleClientSecret`, `authSigningKey`, `maxReplicas` (default `3`). Resource names are `${namePrefix}-<kind>-${uniqueString(resourceGroup().id)}` so they are stable across redeploys and unique where Azure requires it.
+`main.bicep` declares `targetScope = 'subscription'`, creates `Microsoft.Resources/resourceGroups` named `resourceGroupName` in `location`, and deploys `resources.bicep` as a module with `scope: resourceGroup`. Splitting into a subscription-scope entry point and a resource-group-scope module is required because Bicep resources other than the resource group itself cannot be declared directly at subscription scope.
+
+Parameters: `resourceGroupName` (default `rg-leakout`), `location` (required; default `westeurope` in `main.bicepparam`, because a subscription deployment has no resource group location to inherit), `namePrefix` (default `leakout`), `imageName` (full image reference including tag), `registryServer`, `registryUsername`, secure `registryPassword`, secure `postgresAdminPassword`, secure `googleClientId`, `googleClientSecret`, `authSigningKey`, `maxReplicas` (default `3`). Resource names are `${namePrefix}-<kind>-${uniqueString(resourceGroup().id)}` so they are stable across redeploys and unique where Azure requires it.
 
 *Alternative considered*: Aspire's own Azure publishing (`aspire publish`/`azd`), which generates Bicep from the AppHost. Rejected for now: the issue asks for Bicep that is owned in the repository, the existing registry with username/password does not fit the azd default of a managed registry, and generated templates are harder to review and tune for cost. ADR 0003 still holds: Aspire remains the local orchestrator and the hosted configuration uses the same resource names and connection string keys, so no deviation ADR is needed for local orchestration.
 
@@ -63,9 +66,9 @@ Consumption-only managed environment. Container app `hexmaster-leakout-api` (mat
 ### D6. GitHub Actions workflow `.github/workflows/deploy.yml`
 Triggers: push to `main` and `workflow_dispatch`. Jobs:
 1. `build` - setup .NET from `global.json`, `docker login` with the registry secrets, publish the container tagged with `github.sha`.
-2. `deploy` (needs `build`, environment `production`) - `azure/login` with OpenID Connect (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`), then `az deployment group create -g $AZURE_RESOURCE_GROUP -f infrastructure/main.bicep -p infrastructure/main.bicepparam` with the image and secrets passed as parameters.
+2. `deploy` (needs `build`, environment `production`) - `azure/login` with OpenID Connect (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`), then `az deployment sub create --location <location> --name leakout-<run id> -f infrastructure/main.bicep -p infrastructure/main.bicepparam` with the image and secrets passed as parameters. The federated identity needs `Contributor` on the subscription (or a custom role that can create resource groups and the resources in them), because it creates the resource group.
 
-Repository secrets: `ACR_ENDPOINT`, `ACR_USERNAME`, `ACR_PASSWORD`, `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `POSTGRES_ADMIN_PASSWORD`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `AUTH_SIGNING_KEY`. A pull request workflow step runs `az bicep build` to catch template errors before merge.
+Repository secrets: `ACR_ENDPOINT`, `ACR_USERNAME`, `ACR_PASSWORD`, `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `POSTGRES_ADMIN_PASSWORD`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `AUTH_SIGNING_KEY`. A pull request workflow step runs `az bicep build` to catch template errors before merge.
 
 *Alternative considered*: a service principal secret for Azure login. OIDC federated credentials avoid a long-lived secret.
 
@@ -78,13 +81,16 @@ Repository secrets: `ACR_ENDPOINT`, `ACR_USERNAME`, `ACR_PASSWORD`, `AZURE_CLIEN
 - [Secrets visible in deployment history] → Secure parameters (`@secure()`) are not logged by ARM; secrets are passed from GitHub secrets only.
 - [This change can be implemented before #1 and #2] → Templates and env vars can exist before the code consumes them; the app simply ignores unused configuration.
 
+- [The pipeline identity has subscription-wide rights] → Scope the role assignment to the smallest that works (a custom role limited to resource groups, PostgreSQL, Container Apps and monitoring), and restrict the federated credential to the `main` branch and the `production` environment.
+- [Subscription deployments are named per location] → Use a deployment name per run and always deploy to the same `location`; ARM rejects reusing a subscription deployment name in a different location.
+
 ## Migration Plan
 
-1. Maintainer creates the resource group, the federated credential and the GitHub secrets.
+1. Maintainer creates the federated credential with a subscription-level role assignment and the GitHub secrets. The resource group is created by the deployment.
 2. Merge to `development`, then `main`; the workflow builds, pushes and deploys.
 3. Apply database migrations once (see Risks).
 4. Rollback: redeploy the previous image tag with `workflow_dispatch`, or delete the resource group to remove everything.
 
 ## Open Questions
 
-- Azure region: defaults to the resource group's location; the maintainer picks it when creating the group.
+- Azure region and resource group name: defaults are `westeurope` and `rg-leakout` in `main.bicepparam`; the maintainer can change them before the first deployment.

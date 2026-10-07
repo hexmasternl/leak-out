@@ -7,11 +7,15 @@ Describes how the Leak Out score server is provisioned and run in Azure: reprodu
 ## ADDED Requirements
 
 ### Requirement: Infrastructure is defined as code
-All Azure resources the server needs SHALL be defined in Bicep templates in the repository and deployable into one resource group with a single deployment. Deploying the same templates and parameters again SHALL not change or duplicate resources.
+All Azure resources the server needs SHALL be defined in Bicep templates in the repository and deployed with a single subscription-scope deployment. That deployment SHALL create the resource group and place every resource inside it. Deploying the same templates and parameters again SHALL not change or duplicate resources.
 
-#### Scenario: Deploy into an empty resource group
-- **WHEN** the templates are deployed into an empty resource group with valid parameters
-- **THEN** the Log Analytics workspace, Application Insights, PostgreSQL server with both databases, Container Apps environment and container app exist and the deployment succeeds
+#### Scenario: Deploy into a subscription without the resource group
+- **WHEN** the templates are deployed at subscription scope with valid parameters and the named resource group does not exist
+- **THEN** the resource group is created, and the Log Analytics workspace, Application Insights, PostgreSQL server with both databases, Container Apps environment and container app exist inside it
+
+#### Scenario: Resource group already exists
+- **WHEN** the templates are deployed at subscription scope and the named resource group already exists
+- **THEN** the deployment succeeds and the resources are created or updated inside that resource group
 
 #### Scenario: Redeploy without changes
 - **WHEN** the templates are deployed again with the same parameters

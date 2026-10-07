@@ -2,6 +2,9 @@ package nl.hexmaster.leakout.achievements.playgames
 
 import android.app.Activity
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import nl.hexmaster.leakout.achievements.AchievementRepository
 
 /**
@@ -14,6 +17,7 @@ import nl.hexmaster.leakout.achievements.AchievementRepository
  *
  * @param initializeSdk starts the Play Games SDK (`PlayGamesSdk.initialize`); only called when configured.
  * @param syncFor the Play Games sync for an activity.
+ * @param serverAuthCodesFor the server auth codes for an activity, used to sign in to the score server.
  */
 class PlayGamesServices(
     appId: String?,
@@ -22,6 +26,7 @@ class PlayGamesServices(
     private val initializeSdk: () -> Unit,
     gatewayFor: (Activity) -> SignInGateway = ::GmsSignInGateway,
     private val syncFor: (Activity) -> AchievementSync = PlayGamesAchievementSync::of,
+    private val serverAuthCodesFor: (Activity) -> ServerAuthCodeSource = ::GmsServerAuthCodeSource,
     log: PlayGamesLog = PlayGamesLog.Android,
 ) {
     val configured: Boolean = isConfigured(appId)
@@ -29,6 +34,11 @@ class PlayGamesServices(
     val auth = PlayGamesAuth(configured, scope, gatewayFor, log)
 
     val syncer = AchievementSyncer(achievements, auth.state, scope, log)
+
+    private val boundServerAuthCodes = MutableStateFlow<ServerAuthCodeSource?>(null)
+
+    /** The server auth codes of the attached activity; null while none is attached or without a configuration. */
+    val serverAuthCodes: StateFlow<ServerAuthCodeSource?> = boundServerAuthCodes.asStateFlow()
 
     private var attached: Pair<Activity, AchievementSync>? = null
 
@@ -38,12 +48,13 @@ class PlayGamesServices(
         syncer.start()
     }
 
-    /** When [activity] is created: binds its sync and runs the silent sign-in check. Nothing without a configuration. */
+    /** When [activity] is created: binds its sync and server auth codes and runs the silent sign-in check. Nothing without a configuration. */
     fun attach(activity: Activity) {
         if (!configured) return
         val sync = syncFor(activity)
         attached = activity to sync
         syncer.bind(sync)
+        boundServerAuthCodes.value = serverAuthCodesFor(activity)
         auth.checkSilently(activity)
     }
 
@@ -53,6 +64,7 @@ class PlayGamesServices(
         if (owner !== activity) return
         attached = null
         syncer.unbind(sync)
+        boundServerAuthCodes.value = null
     }
 
     companion object {

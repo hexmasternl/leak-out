@@ -11,11 +11,14 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -75,6 +78,9 @@ object ResultDialogMetrics {
     val ButtonsColumnWidth: Dp = 200.dp
     val ColumnGap: Dp = 24.dp
     val ButtonSpacing: Dp = FloatingPanelMetrics.ButtonSpacing
+
+    /** Distance of the corner overlay (the score status dot) from the window's safe edges. */
+    val CornerOverlayInset: Dp = 12.dp
 }
 
 /**
@@ -83,6 +89,7 @@ object ResultDialogMetrics {
  * chosen by [ResultDialogFrame]. [content] draws the panel's content for the chosen layout;
  * [measureRegular] draws the Regular content with its final values, for measuring only; it is
  * measured again when [measureKey] changes (content that arrives later, such as the achievement row).
+ * [cornerOverlay] is drawn in the window's top-left corner, above the scrim and outside the panel.
  */
 @Composable
 internal fun ResultDialogWindow(
@@ -93,6 +100,7 @@ internal fun ResultDialogWindow(
     measureRegular: @Composable () -> Unit,
     measureKey: Any? = null,
     reducedMotion: Boolean = rememberReducedMotion(),
+    cornerOverlay: @Composable () -> Unit = {},
     content: @Composable (ResultDialogLayout) -> Unit,
 ) {
     Dialog(
@@ -135,6 +143,12 @@ internal fun ResultDialogWindow(
                     Box(Modifier.testTag("${layoutTagPrefix}_layout_${layout.name.lowercase()}")) { content(layout) }
                 }
             }
+            Box(
+                Modifier
+                    .align(Alignment.TopStart)
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
+                    .padding(ResultDialogMetrics.CornerOverlayInset),
+            ) { cornerOverlay() }
         }
     }
 }

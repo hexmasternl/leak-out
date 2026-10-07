@@ -10,6 +10,12 @@ import nl.hexmaster.leakout.achievements.playgames.PlayGamesServices
 import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.history.data.LeakOutDatabase
 import nl.hexmaster.leakout.history.data.RoomLevelHistoryRepository
+import nl.hexmaster.leakout.scores.online.CallbackNetworkMonitor
+import nl.hexmaster.leakout.scores.online.DataStorePendingScoreQueue
+import nl.hexmaster.leakout.scores.online.HttpScoreServerApi
+import nl.hexmaster.leakout.scores.online.ScoreServerConfig
+import nl.hexmaster.leakout.scores.online.ScoreSubmitter
+import nl.hexmaster.leakout.scores.online.scoreQueueDataStore
 
 /**
  * The app's long-lived objects, made once per process by [LeakOutApplication] and handed to the
@@ -35,6 +41,20 @@ class AppContainer(context: Context, val scope: CoroutineScope, playGamesAppId: 
     /** Play Games sign-in ([PlayGamesServices.auth]) and the sync of [achievements] to it. */
     val playGames: PlayGamesServices by lazy {
         PlayGamesServices(playGamesAppId, achievements, scope, initializeSdk = { PlayGamesSdk.initialize(appContext) })
+    }
+
+    /** Sends the scores of won levels to the score server, through a queue kept on the device. */
+    val scores: ScoreSubmitter by lazy {
+        val config = ScoreServerConfig.fromBuildConfig()
+        ScoreSubmitter(
+            config = config,
+            api = HttpScoreServerApi(config.baseUrl),
+            queue = DataStorePendingScoreQueue(appContext.scoreQueueDataStore),
+            signIn = playGames.auth.state,
+            serverAuthCodes = playGames.serverAuthCodes,
+            network = CallbackNetworkMonitor.android(appContext),
+            scope = scope,
+        )
     }
 }
 

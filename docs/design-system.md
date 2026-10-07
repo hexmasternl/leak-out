@@ -389,7 +389,7 @@ Heights at 100 % font (a text box is its size × line height; a button is face +
 |--------|----------|--------|
 | Regular win | 48 padding + 17 eyebrow + 8 + 42 headline + 8 + 24 message + 16 + 40 stars + 16 + 53 score row (17 caption + 4 + 32 value) + 24 + 60 + 12 + 60 + 12 + 48 buttons | ≈ 488 dp |
 | Regular leak | 48 + 17 + 8 + 72 splash + 12 + 42 + 8 + 24 + 16 + 53 + 24 + 60 + 12 + 48 | ≈ 444 dp |
-| Compact win, information | 48 + 17 + 4 + 31 headline + 8 + 22 "New best!" + 8 + 32 stars + 12 + 53 | ≈ 235 dp |
+| Compact win, information | 48 + 17 + 4 + 31 headline + 8 + 22 "New best!" (or the 20 dp message in its place) + 8 + 32 stars + 12 + 53 | ≈ 235 dp |
 | Compact leak, information | 48 + 17 + 4 + 48 splash beside the headline + 8 + 20 message + 12 + 53 | ≈ 210 dp |
 | Compact win, buttons | 48 + 52 + 12 + 52 + 12 + 48 | ≈ 224 dp |
 | Compact leak, buttons | 48 + 52 + 12 + 48 | ≈ 160 dp |

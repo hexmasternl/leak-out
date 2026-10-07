@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -25,7 +26,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso
@@ -112,6 +112,22 @@ class SettingsScreenTest {
 
     private fun musicSlider() = compose.onNodeWithContentDescription("Music volume")
 
+    /**
+     * Drags the slider's thumb to 0, as a player does. Inside the scrolling settings columns the
+     * slider only follows a drag that starts on its thumb, so a swipe from the track's end is ignored.
+     */
+    private fun SemanticsNodeInteraction.dragToStart() {
+        // On a short screen the slider can sit partly below its column's visible part.
+        performScrollTo()
+        val current = fetchSemanticsNode().config[SemanticsProperties.ProgressBarRangeInfo].current
+        performTouchInput {
+            down(Offset(width * current, centerY))
+            repeat(DRAG_STEPS) { moveBy(Offset(-width * current / DRAG_STEPS, 0f)) }
+            moveTo(Offset(0f, centerY))
+            up()
+        }
+    }
+
     @Test
     fun panelsAndTitlesAreShown() {
         showScreen()
@@ -155,7 +171,7 @@ class SettingsScreenTest {
     @Test
     fun soundEffectsSliderStoresOnReleaseAndPreviews() {
         showScreen()
-        soundSlider().performTouchInput { swipeLeft() }
+        soundSlider().dragToStart()
         compose.waitForIdle()
         soundSlider().assertSliderValue(0f)
         compose.runOnIdle {
@@ -168,7 +184,7 @@ class SettingsScreenTest {
     @Test
     fun noPreviewWhileSoundEffectsAreOff() {
         showScreen(Settings(soundEnabled = false))
-        soundSlider().performTouchInput { swipeLeft() }
+        soundSlider().dragToStart()
         compose.runOnIdle {
             assertEquals(0f, stored().soundVolume)
             assertEquals(emptyList<Float>(), previews)
@@ -198,7 +214,7 @@ class SettingsScreenTest {
     @Test
     fun musicSliderFollowsTheDragLiveAndStoresOnRelease() {
         showScreen()
-        musicSlider().performTouchInput { swipeLeft() }
+        musicSlider().dragToStart()
         compose.waitForIdle()
         musicSlider().assertSliderValue(0f)
         compose.runOnIdle {
@@ -240,7 +256,7 @@ class SettingsScreenTest {
         compose.onNodeWithTag(SettingsTags.MUSIC_CREDITS).assertDoesNotExist()
         compose.onNodeWithTag(musicCreditTag(0)).assertDoesNotExist()
         compose.onNodeWithTag(SettingsTags.ABOUT_VERSION).performScrollTo().assertIsDisplayed().assertTextEquals("Version 0.1.0 (1)")
-        compose.onNodeWithText("No account needed. If you sign in to Google Play Games, your achievements are shared with Google Play.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("No account needed. If you sign in to Google Play Games, your achievements are shared with Google Play and the scores of the levels you win are sent to the Leak Out score server.").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -361,7 +377,7 @@ class SettingsScreenTest {
         compose.onNodeWithTag(SettingsTags.ABOUT_VERSION).performScrollTo().assertIsDisplayed().assertTextEquals("Version 0.1.0 (1)")
         compose.onNodeWithText("Leak Out").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Made by HexMaster").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("No account needed. If you sign in to Google Play Games, your achievements are shared with Google Play.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("No account needed. If you sign in to Google Play Games, your achievements are shared with Google Play and the scores of the levels you win are sent to the Leak Out score server.").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -397,6 +413,9 @@ class SettingsScreenTest {
         compose.onNodeWithTag(SettingsTags.RESET_DIALOG).assertIsDisplayed()
     }
 }
+
+/** Moves in small steps, so the drag is seen as one, like a finger. */
+private const val DRAG_STEPS = 20
 
 private suspend fun InMemoryLevelHistoryRepository.observeAllNow(): List<LevelHistory> =
     observeAll().first()

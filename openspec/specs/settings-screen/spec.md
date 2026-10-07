@@ -78,7 +78,7 @@ The Audio panel SHALL show a "Sound effects" switch with a volume slider and a "
 - **THEN** no "Coming soon" text is visible on the Sound effects row or the Music row
 
 ### Requirement: Vibration switch
-The Feel panel SHALL show a "Vibration" switch that reflects and changes the stored vibration setting. The switch only stores the preference; this change makes nothing vibrate.
+The Feel panel SHALL show a "Vibration" switch that reflects and changes the stored vibration setting. The stored setting turns the game's haptic feedback on and off, as described in `game-haptics`.
 
 #### Scenario: Switch reflects the stored value
 - **WHEN** vibration is stored as on

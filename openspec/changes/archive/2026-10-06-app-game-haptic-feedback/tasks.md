@@ -20,6 +20,6 @@
 
 ## 4. Integration
 
-- [ ] 4.1 Play a level on a real device with vibration on and check by feel: a soft buzz on a replacement, a short buzz with each "WARNING", a one-second buzz on the leak, nothing with the Vibration switch off; tune the amplitudes in `HapticEffect` if needed and note the result here
-  - Not done yet: needs a real device (the emulator has no vibrator). The amplitudes are still the first guesses (60, 140, 255).
+- [x] 4.1 Play a level on a real device with vibration on and check by feel: a soft buzz on a replacement, a short buzz with each "WARNING", a one-second buzz on the leak, nothing with the Vibration switch off; tune the amplitudes in `HapticEffect` if needed and note the result here
+  - Confirmed by the user on a real device on 2026-10-06 (#85); the amplitudes stay at 60, 140 and 255.
 - [x] 4.2 Run `./gradlew :core:test :app:testDebugUnitTest` and verify everything passes

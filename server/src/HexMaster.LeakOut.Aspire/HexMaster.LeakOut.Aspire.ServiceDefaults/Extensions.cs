@@ -1,4 +1,5 @@
 using Azure.Monitor.OpenTelemetry.AspNetCore;
+using HexMaster.LeakOut.Aspire.ServiceDefaults;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ServiceDiscovery;
 using OpenTelemetry;
+using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -63,16 +65,24 @@ public static class Extensions
             .WithTracing(tracing =>
             {
                 tracing.AddSource(builder.Environment.ApplicationName)
-                    .AddAspNetCoreInstrumentation(tracing =>
-                        // Exclude health check requests from tracing
-                        tracing.Filter = context =>
-                            !context.Request.Path.StartsWithSegments(HealthEndpointPath)
-                            && !context.Request.Path.StartsWithSegments(AlivenessEndpointPath)
-                    )
+                    .AddAspNetCoreInstrumentation()
                     // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
                     //.AddGrpcClientInstrumentation()
-                    .AddHttpClientInstrumentation();
+                    .AddHttpClientInstrumentation()
+                    // Children of the filtered probe requests (the health checks' database calls) are dropped too.
+                    .AddProcessor(new DropChildrenOfUnrecordedSpansProcessor());
             });
+
+        // Configured as options rather than in the AddAspNetCoreInstrumentation callback, so they also
+        // apply to the ASP.NET Core instrumentation that UseAzureMonitor() registers.
+        builder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(options =>
+        {
+            // Probes would clutter traces and eat the Application Insights ingestion cap.
+            options.Filter = context =>
+                !context.Request.Path.StartsWithSegments(HealthEndpointPath)
+                && !context.Request.Path.StartsWithSegments(AlivenessEndpointPath);
+            options.RecordException = true;
+        });
 
         builder.AddOpenTelemetryExporters();
 

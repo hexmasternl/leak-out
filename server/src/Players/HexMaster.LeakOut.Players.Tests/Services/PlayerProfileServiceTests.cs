@@ -1,11 +1,16 @@
+using System.Diagnostics;
+using HexMaster.LeakOut.Players.Observability;
 using HexMaster.LeakOut.Players.Services;
+using HexMaster.LeakOut.Players.Tests.Helpers;
 using Moq;
 
 namespace HexMaster.LeakOut.Players.Tests.Services;
 
-public sealed class PlayerProfileServiceTests
+[Collection(TelemetryCollection.Name)]
+public sealed class PlayerProfileServiceTests : IDisposable
 {
     private readonly Mock<IPlayerRepository> _repository = new();
+    private readonly TelemetryCollector _telemetry = new();
 
     [Fact]
     public async Task GetDisplayNamesAsync_KnownPlayers_ReturnsTheirNames()
@@ -20,6 +25,13 @@ public sealed class PlayerProfileServiceTests
 
         Assert.Equal("Ann", names[ann]);
         Assert.Equal("Bob", names[bob]);
+
+        var activity = Assert.Single(_telemetry.Activities);
+        Assert.Equal(PlayersMetrics.GetDisplayNamesActivityName, activity.OperationName);
+        Assert.Equal(ActivityStatusCode.Ok, activity.Status);
+        Assert.Equal(2, activity.GetTagItem("players.requested"));
+        Assert.Equal(2, activity.GetTagItem("players.found"));
+        Assert.DoesNotContain(activity.TagObjects, t => t.Value is "Ann" or "Bob");
     }
 
     [Fact]
@@ -35,6 +47,10 @@ public sealed class PlayerProfileServiceTests
 
         Assert.Equal("Ann", Assert.Single(names).Value);
         Assert.False(names.ContainsKey(unknown));
+
+        var activity = Assert.Single(_telemetry.Activities);
+        Assert.Equal(2, activity.GetTagItem("players.requested"));
+        Assert.Equal(1, activity.GetTagItem("players.found"));
     }
 
     [Fact]
@@ -50,6 +66,7 @@ public sealed class PlayerProfileServiceTests
         _repository.Verify(
             r => r.GetDisplayNamesAsync(It.Is<IReadOnlyCollection<Guid>>(ids => ids.SequenceEqual(new[] { ann })), It.IsAny<CancellationToken>()),
             Times.Once);
+        Assert.Equal(1, Assert.Single(_telemetry.Activities).GetTagItem("players.requested"));
     }
 
     [Fact]
@@ -59,6 +76,35 @@ public sealed class PlayerProfileServiceTests
 
         Assert.Empty(names);
         _repository.VerifyNoOtherCalls();
+        Assert.Empty(_telemetry.Activities);
+    }
+
+    [Fact]
+    public async Task GetDisplayNamesAsync_RepositoryFails_MarksSpanAsErrorAndRethrows()
+    {
+        _repository
+            .Setup(r => r.GetDisplayNamesAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("database down"));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => CreateService().GetDisplayNamesAsync([Guid.CreateVersion7()], TestContext.Current.CancellationToken));
+
+        var activity = Assert.Single(_telemetry.Activities);
+        Assert.Equal(ActivityStatusCode.Error, activity.Status);
+        Assert.Contains(activity.Events, e => e.Name == "exception");
+    }
+
+    [Fact]
+    public async Task GetDisplayNamesAsync_Cancelled_DoesNotMarkSpanAsError()
+    {
+        _repository
+            .Setup(r => r.GetDisplayNamesAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new OperationCanceledException());
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => CreateService().GetDisplayNamesAsync([Guid.CreateVersion7()], TestContext.Current.CancellationToken));
+
+        Assert.NotEqual(ActivityStatusCode.Error, Assert.Single(_telemetry.Activities).Status);
     }
 
     [Fact]
@@ -67,6 +113,8 @@ public sealed class PlayerProfileServiceTests
         await Assert.ThrowsAsync<ArgumentNullException>(
             () => CreateService().GetDisplayNamesAsync(null!, TestContext.Current.CancellationToken));
     }
+
+    public void Dispose() => _telemetry.Dispose();
 
     private PlayerProfileService CreateService() => new(_repository.Object);
 }

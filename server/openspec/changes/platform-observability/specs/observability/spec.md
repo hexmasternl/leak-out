@@ -83,11 +83,19 @@ The incoming HTTP request span SHALL record an exception event when the request 
 - **THEN** the request span contains an exception event with the exception type
 
 ### Requirement: Health probes are not traced
-Requests to `/alive` and `/health` SHALL NOT produce request spans, so platform probes neither clutter traces nor consume telemetry ingestion.
+Requests to `/alive` and `/health` SHALL NOT produce request spans, and the database calls of the health checks SHALL NOT produce spans either, so platform probes neither clutter traces nor consume telemetry ingestion. The endpoints SHALL keep answering in every environment.
 
 #### Scenario: Liveness probe
 - **WHEN** the platform calls `/alive`
 - **THEN** no request span is recorded for it, locally or in Application Insights
+
+#### Scenario: Readiness probe checks the databases
+- **WHEN** the platform calls `/health` and the health checks query both databases
+- **THEN** the endpoint answers with the health status, and neither a request span nor a database span is recorded for it
+
+#### Scenario: Database calls of a request are kept
+- **WHEN** a leaderboard request queries the database
+- **THEN** its database spans are recorded under the request's trace
 
 ### Requirement: Telemetry identifies the service and its version
 All telemetry SHALL carry the service name `hexmaster-leakout-api` and, when deployed, the service version of the deployed release.

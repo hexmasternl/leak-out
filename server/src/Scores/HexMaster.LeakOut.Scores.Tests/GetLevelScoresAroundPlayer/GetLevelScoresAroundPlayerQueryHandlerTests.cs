@@ -1,12 +1,18 @@
+using System.Diagnostics;
 using Bogus;
 using HexMaster.LeakOut.Players.Abstractions.Services;
 using HexMaster.LeakOut.Scores.Abstractions.DataTransferObjects;
 using HexMaster.LeakOut.Scores.Features.GetLevelScoresAroundPlayer;
+using HexMaster.LeakOut.Scores.Observability;
+using HexMaster.LeakOut.Scores.Tests.Helpers;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 using Moq;
 
 namespace HexMaster.LeakOut.Scores.Tests.GetLevelScoresAroundPlayer;
 
-public sealed class GetLevelScoresAroundPlayerQueryHandlerTests
+[Collection(TelemetryCollection.Name)]
+public sealed class GetLevelScoresAroundPlayerQueryHandlerTests : IDisposable
 {
     private const int Level = 3;
 
@@ -16,6 +22,8 @@ public sealed class GetLevelScoresAroundPlayerQueryHandlerTests
     private readonly Mock<ILevelScoreRepository> _repository = new();
     private readonly Mock<IPlayerProfileService> _playerProfiles = new();
     private readonly Guid _requestingPlayer = Guid.CreateVersion7();
+    private readonly TelemetryCollector _telemetry = new();
+    private readonly FakeLogger<GetLevelScoresAroundPlayerQueryHandler> _logger = new();
 
     [Fact]
     public async Task Handle_PlayerInTheMiddle_ReturnsFiveAboveAndFourBelow()
@@ -105,6 +113,67 @@ public sealed class GetLevelScoresAroundPlayerQueryHandlerTests
         _repository.Verify(r => r.GetBestAsync(_requestingPlayer, 7, It.IsAny<CancellationToken>()), Times.Once);
         _repository.VerifyNoOtherCalls();
         _playerProfiles.VerifyNoOtherCalls();
+
+        var activity = Assert.Single(_telemetry.Activities);
+        Assert.Equal(ActivityStatusCode.Ok, activity.Status);
+        Assert.Equal(false, activity.GetTagItem("player.has_score"));
+        Assert.Equal(0, activity.GetTagItem("leaderboard.entries"));
+        AssertLeaderboardRecorded(ScoresMetrics.OutcomeSuccess);
+    }
+
+    [Fact]
+    public async Task Handle_PlayerWithScore_RecordsSpanAndMetrics()
+    {
+        RankingWithPlayerAt(128, total: 200);
+
+        await HandleAsync();
+
+        var activity = Assert.Single(_telemetry.Activities);
+        Assert.Equal(ScoresMetrics.GetLevelScoresAroundPlayerActivityName, activity.OperationName);
+        Assert.Equal(ActivityStatusCode.Ok, activity.Status);
+        Assert.Equal(_requestingPlayer, activity.GetTagItem("player.id"));
+        Assert.Equal(Level, activity.GetTagItem("score.level"));
+        Assert.Equal(ScoresMetrics.LeaderboardKindAroundPlayer, activity.GetTagItem("leaderboard.kind"));
+        Assert.Equal(true, activity.GetTagItem("player.has_score"));
+        Assert.Equal(10, activity.GetTagItem("leaderboard.entries"));
+        AssertLeaderboardRecorded(ScoresMetrics.OutcomeSuccess);
+        Assert.Empty(_logger.Collector.GetSnapshot());
+    }
+
+    [Fact]
+    public async Task Handle_RepositoryFails_RecordsErrorLogsAndRethrows()
+    {
+        var failure = new InvalidOperationException("database down");
+        _repository
+            .Setup(r => r.GetBestAsync(_requestingPlayer, Level, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(failure);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(HandleAsync);
+
+        var activity = Assert.Single(_telemetry.Activities);
+        Assert.Equal(ActivityStatusCode.Error, activity.Status);
+        Assert.Contains(activity.Events, e => e.Name == "exception");
+        AssertLeaderboardRecorded(ScoresMetrics.OutcomeError);
+
+        var log = Assert.Single(_logger.Collector.GetSnapshot());
+        Assert.Equal(LogLevel.Error, log.Level);
+        Assert.Same(failure, log.Exception);
+        Assert.Equal("around_player leaderboard request failed unexpectedly", log.Message);
+    }
+
+    [Fact]
+    public async Task Handle_Cancelled_RecordsNoFailure()
+    {
+        _repository
+            .Setup(r => r.GetBestAsync(_requestingPlayer, Level, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new OperationCanceledException());
+
+        await Assert.ThrowsAsync<OperationCanceledException>(HandleAsync);
+
+        Assert.NotEqual(ActivityStatusCode.Error, Assert.Single(_telemetry.Activities).Status);
+        Assert.Empty(_telemetry.Measurements);
+        Assert.Empty(_telemetry.DoubleMeasurements);
+        Assert.Empty(_logger.Collector.GetSnapshot());
     }
 
     [Fact]
@@ -186,8 +255,25 @@ public sealed class GetLevelScoresAroundPlayerQueryHandlerTests
         return ranking;
     }
 
+    private void AssertLeaderboardRecorded(string outcome)
+    {
+        // Only the kind and the outcome: no player id, level or score.
+        var expectedTags = new Dictionary<string, object?> { ["leaderboard.kind"] = ScoresMetrics.LeaderboardKindAroundPlayer, ["outcome"] = outcome };
+
+        var count = Assert.Single(_telemetry.Measurements);
+        Assert.Equal(ScoresMetrics.LeaderboardRequestsInstrumentName, count.Instrument);
+        Assert.Equal(expectedTags, count.Tags);
+
+        var duration = Assert.Single(_telemetry.DoubleMeasurements);
+        Assert.Equal(ScoresMetrics.LeaderboardDurationInstrumentName, duration.Instrument);
+        Assert.True(duration.Value >= 0);
+        Assert.Equal(expectedTags, duration.Tags);
+    }
+
     private Task<LevelLeaderboardDto> HandleAsync() =>
         CreateHandler().Handle(new GetLevelScoresAroundPlayerQuery(_requestingPlayer, Level), TestContext.Current.CancellationToken);
 
-    private GetLevelScoresAroundPlayerQueryHandler CreateHandler() => new(_repository.Object, _playerProfiles.Object);
+    private GetLevelScoresAroundPlayerQueryHandler CreateHandler() => new(_repository.Object, _playerProfiles.Object, _telemetry.Metrics, _logger);
+
+    public void Dispose() => _telemetry.Dispose();
 }

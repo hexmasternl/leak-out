@@ -49,4 +49,20 @@ public sealed class PlayerRepository(PlayersDbContext dbContext) : IPlayerReposi
             throw new InvalidOperationException($"Player {player.Id} does not exist.");
         }
     }
+
+    public async Task<IReadOnlyDictionary<Guid, string>> GetDisplayNamesAsync(
+        IReadOnlyCollection<Guid> playerIds, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(playerIds);
+        if (playerIds.Count == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+
+        // Translates to WHERE id = ANY(@ids) on PostgreSQL.
+        return await dbContext.Players
+            .AsNoTracking()
+            .Where(p => playerIds.Contains(p.Id))
+            .ToDictionaryAsync(p => p.Id, p => p.DisplayName, cancellationToken);
+    }
 }

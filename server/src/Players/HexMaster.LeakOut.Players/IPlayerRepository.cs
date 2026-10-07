@@ -13,4 +13,8 @@ public interface IPlayerRepository
     Task AddAsync(string subjectId, Player player, CancellationToken cancellationToken);
 
     Task UpdateAsync(Player player, CancellationToken cancellationToken);
+
+    /// <summary>Reads the display names of the given players in one query.</summary>
+    /// <returns>The display name per player id; ids of unknown players are absent.</returns>
+    Task<IReadOnlyDictionary<Guid, string>> GetDisplayNamesAsync(IReadOnlyCollection<Guid> playerIds, CancellationToken cancellationToken);
 }

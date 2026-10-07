@@ -3,7 +3,7 @@
 ## 1. Display names contract (Players module)
 
 - [x] 1.1 Add `IPlayerProfileService` with `GetDisplayNamesAsync(IReadOnlyCollection<Guid> userIds, CancellationToken ct)` to `HexMaster.LeakOut.Players.Abstractions/Services` and verify the Abstractions project builds without referencing the Players core project
-- [ ] 1.2 Add a batched display-name read to `IPlayerRepository` and its PostgreSQL implementation in `HexMaster.LeakOut.Players.Data.PostgreSQL`; verify with a repository test that unknown ids are absent from the result
+- [x] 1.2 Add a batched display-name read to `IPlayerRepository` and its PostgreSQL implementation in `HexMaster.LeakOut.Players.Data.PostgreSQL`; verify with a repository test that unknown ids are absent from the result
 - [ ] 1.3 Implement `PlayerProfileService` in `HexMaster.LeakOut.Players/Services`, register it in `AddPlayersModule`, and verify `PlayerProfileServiceTests` cover found names, unknown ids and an empty id list
 
 ## 2. Ranking and top 10 query (Scores module)

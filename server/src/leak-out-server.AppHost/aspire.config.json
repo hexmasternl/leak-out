@@ -1,0 +1,5 @@
+{
+  "appHost": {
+    "path": "leak_out_server.AppHost.csproj"
+  }
+}

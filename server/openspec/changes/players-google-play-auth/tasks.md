@@ -20,7 +20,7 @@
 
 - [x] 4.1 Add `CreateSessionRequest` and `SessionDto` sealed records to `HexMaster.LeakOut.Players.Abstractions/DataTransferObjects` and verify the Abstractions project has no reference to the module or EF
 - [x] 4.2 Add `Features/SignInPlayer/SignInPlayerCommand.cs` and `SignInPlayerCommandHandler.cs` with `SignInPlayerCommandHandlerTests` (new player, returning player with a renamed display name, rejected code, Google unavailable, null command), and verify the tests pass
-- [ ] 4.3 Add `Observability/PlayersMetrics.cs` and the `players.sign_in` activity with outcome and new-player tags, without subject ids or tokens, and verify a handler test asserts the counter is recorded
+- [x] 4.3 Add `Observability/PlayersMetrics.cs` and the `players.sign_in` activity with outcome and new-player tags, without subject ids or tokens, and verify a handler test asserts the counter is recorded
 
 ## 5. User resolver
 

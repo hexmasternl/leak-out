@@ -12,6 +12,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -56,6 +57,7 @@ object PauseTags {
     const val RESTART = "pause_restart"
     const val DIVIDER = "pause_divider"
     const val EXIT = "pause_exit"
+    const val TOP10 = "pause_top10"
 }
 
 /**
@@ -94,12 +96,13 @@ val PauseBackdropBrush: Brush = Brush.linearGradient(
 )
 
 /**
- * Modal pause menu: Resume, Restart, a separator and Exit, on an opaque backdrop that hides the
- * frozen game entirely, so a pause cannot be used to study the board. Back works as Resume; a tap on
- * the backdrop does nothing so the player cannot close it by accident. Closing is immediate.
+ * Modal pause menu: Resume, Restart (with Top 10 beside it when [onTopScores] is given), a separator
+ * and Exit, on an opaque backdrop that hides the frozen game entirely, so a pause cannot be used to
+ * study the board. Back works as Resume; a tap on the backdrop does nothing so the player cannot
+ * close it by accident. Closing is immediate.
  */
 @Composable
-fun PauseDialog(onResume: () -> Unit, onRestart: () -> Unit, onExit: () -> Unit) {
+fun PauseDialog(onResume: () -> Unit, onRestart: () -> Unit, onExit: () -> Unit, onTopScores: (() -> Unit)? = null) {
     val reducedMotion = rememberReducedMotion()
     Dialog(
         onDismissRequest = onResume,
@@ -110,21 +113,31 @@ fun PauseDialog(onResume: () -> Unit, onRestart: () -> Unit, onExit: () -> Unit)
             decorFitsSystemWindows = false,
         ),
     ) {
-        val window = (LocalView.current.parent as? DialogWindowProvider)?.window
-        SideEffect {
-            window?.apply {
-                // The backdrop is opaque by itself; the platform dim would darken it off its tokens.
-                setDimAmount(0f)
-                setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-                // The explicit gate keeps lint aware that the cutout attribute is only set on API 28+.
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    fullScreenDialogCutoutMode(Build.VERSION.SDK_INT)?.let { mode ->
-                        attributes = attributes.apply { layoutInDisplayCutoutMode = mode }
-                    }
+        FullScreenDialogWindow()
+        PauseDialogContent(onResume, onRestart, onExit, entry = remember(reducedMotion) { PauseDialogEntry.select(reducedMotion) }, onTopScores = onTopScores)
+    }
+}
+
+/**
+ * Makes the current dialog window cover the whole screen, system bars and cutout included, with no
+ * platform dim: for dialogs that draw their own opaque backdrop (pause, top 10). Call it inside the
+ * `Dialog` content.
+ */
+@Composable
+internal fun FullScreenDialogWindow() {
+    val window = (LocalView.current.parent as? DialogWindowProvider)?.window
+    SideEffect {
+        window?.apply {
+            // The backdrop is opaque by itself; the platform dim would darken it off its tokens.
+            setDimAmount(0f)
+            setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            // The explicit gate keeps lint aware that the cutout attribute is only set on API 28+.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                fullScreenDialogCutoutMode(Build.VERSION.SDK_INT)?.let { mode ->
+                    attributes = attributes.apply { layoutInDisplayCutoutMode = mode }
                 }
             }
         }
-        PauseDialogContent(onResume, onRestart, onExit, entry = remember(reducedMotion) { PauseDialogEntry.select(reducedMotion) })
     }
 }
 
@@ -149,6 +162,7 @@ internal fun PauseDialogContent(
     onExit: () -> Unit,
     entry: PauseDialogEntry,
     modifier: Modifier = Modifier,
+    onTopScores: (() -> Unit)? = null,
 ) {
     val backdropAlpha = remember { Animatable(if (entry.backdropFadeMs == 0) 1f else 0f) }
     val panelAlpha = remember { Animatable(if (entry.panelFadeMs == 0) 1f else 0f) }
@@ -176,6 +190,7 @@ internal fun PauseDialogContent(
             onResume = onResume,
             onRestart = onRestart,
             onExit = onExit,
+            onTopScores = onTopScores,
             modifier = Modifier
                 .padding(ResultDialogMetrics.Gutter)
                 .semantics { panelScale = scale.value }
@@ -189,11 +204,18 @@ internal fun PauseDialogContent(
 }
 
 /**
- * The level 3 panel of design-system.md 5.6: title "Paused", brass Resume, glass Restart, a
- * `line.subtle` separator and destructive Exit, Medium buttons so it fits a 360 dp high screen.
+ * The level 3 panel of design-system.md 5.6: title "Paused", brass Resume, glass Restart and Top 10
+ * sharing one row (Restart alone without [onTopScores]), a `line.subtle` separator and destructive
+ * Exit, Medium buttons so it fits a 360 dp high screen.
  */
 @Composable
-private fun PausePanel(onResume: () -> Unit, onRestart: () -> Unit, onExit: () -> Unit, modifier: Modifier = Modifier) {
+private fun PausePanel(
+    onResume: () -> Unit,
+    onRestart: () -> Unit,
+    onExit: () -> Unit,
+    onTopScores: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
     val paneName = stringResource(R.string.hud_pause_menu)
     ResultDialogPanel(
         layout = ResultDialogLayout.Regular,
@@ -219,13 +241,27 @@ private fun PausePanel(onResume: () -> Unit, onRestart: () -> Unit, onExit: () -
                 size = FlowButtonSize.Medium,
                 modifier = Modifier.fillMaxWidth().testTag(PauseTags.RESUME),
             )
-            FlowButton(
-                text = stringResource(R.string.pause_restart),
-                onClick = onRestart,
-                variant = FlowButtonVariant.Secondary,
-                size = FlowButtonSize.Medium,
-                modifier = Modifier.fillMaxWidth().testTag(PauseTags.RESTART),
-            )
+            // Top 10 shares Restart's row, so the panel keeps the height that fits a 360 dp screen.
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ResultDialogMetrics.ButtonSpacing)) {
+                FlowButton(
+                    text = stringResource(R.string.pause_restart),
+                    onClick = onRestart,
+                    variant = FlowButtonVariant.Secondary,
+                    size = FlowButtonSize.Medium,
+                    horizontalPadding = ResultDialogMetrics.PairedButtonPadding,
+                    modifier = Modifier.weight(1f).testTag(PauseTags.RESTART),
+                )
+                if (onTopScores != null) {
+                    FlowButton(
+                        text = stringResource(R.string.top10_open),
+                        onClick = onTopScores,
+                        variant = FlowButtonVariant.Secondary,
+                        size = FlowButtonSize.Medium,
+                        horizontalPadding = ResultDialogMetrics.PairedButtonPadding,
+                        modifier = Modifier.weight(1f).testTag(PauseTags.TOP10),
+                    )
+                }
+            }
             Box(
                 Modifier
                     .testTag(PauseTags.DIVIDER)
@@ -249,6 +285,6 @@ private fun PausePanel(onResume: () -> Unit, onRestart: () -> Unit, onExit: () -
 private fun PauseDialogPreview() {
     LeakOutTheme {
         // At rest: no fade or scale, so the static preview shows the final look.
-        PauseDialogContent(onResume = {}, onRestart = {}, onExit = {}, entry = PauseDialogEntry(0, 0, 1f, null))
+        PauseDialogContent(onResume = {}, onRestart = {}, onExit = {}, entry = PauseDialogEntry(0, 0, 1f, null), onTopScores = {})
     }
 }

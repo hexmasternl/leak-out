@@ -10,7 +10,9 @@ metadata:
 
 Triage GitHub issues: turn each one into a good, complete story, label it, give it a type, and link the OpenSpec change that covers it.
 
-**Input**: one or more issue numbers or URLs. If none are given, triage the open issues that have no issue type or none of the labels below (`gh issue list --state open --json number,title,labels,issueType`), and tell the user which ones you picked. If that list is long (more than ~10), ask which ones to do first.
+**Only untriaged issues are triaged.** An issue is **untriaged** when it has no labels at all, or no issue type. An issue with both at least one label and an issue type is triaged and is left alone.
+
+**Input**: one or more issue numbers or URLs. If none are given, triage the open untriaged issues (`gh issue list --state open --json number,title,labels,issueType`, then keep those with an empty `labels` list or no `issueType`), and tell the user which ones you picked. If that list is long (more than ~10), ask which ones to do first. If the user names an issue that is already triaged, skip it and say so in your report; re-triage it only when the user explicitly asks for that issue to be triaged again.
 
 ## What a triaged issue looks like
 
@@ -155,7 +157,7 @@ As a <player | maintainer | ...>, I want <capability>, so that <benefit>.
 
 Acceptance criteria are the heart of the story: each one is something a tester can check, written so it can become a unit or instrumented test. For bugs, include "a test reproduces the problem and passes after the fix".
 
-If the issue was already triaged (it follows this format), update it in place instead of nesting a second "Original report".
+If the issue already follows this format (an explicit re-triage, or an issue that lost its labels or type), update it in place instead of nesting a second "Original report".
 
 ### 6. Show, then apply
 
@@ -192,4 +194,4 @@ Re-read each issue (`gh issue view <n> --json title,labels,issueType`) to confir
 #88 Upgrade androidx.fragment — Task · enhancement · linked app-play-console-policy-fixes (by topic)
 ```
 
-Follow with anything that needs the user: open questions, suggested closes, possible duplicates, labels removed.
+Follow with anything that needs the user: issues skipped because they were already triaged, open questions, suggested closes, possible duplicates, labels removed.

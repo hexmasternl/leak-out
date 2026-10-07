@@ -78,6 +78,40 @@ class HttpScoreServerApiTest {
     }
 
     @Test
+    fun `the top scores are fetched with the bearer token`() = runBlocking {
+        var method = ""
+        server.createContext("/api/levels/7/scores/top") { exchange ->
+            method = exchange.requestMethod
+            requests += Triple(exchange.requestURI.path, exchange.requestHeaders.getFirst("Authorization"), exchange.requestBody.readBytes().decodeToString())
+            val bytes = """{"level":7,"entries":[{"position":1,"displayName":"Ada","score":2140,"isCurrentPlayer":true}]}""".toByteArray()
+            exchange.sendResponseHeaders(200, bytes.size.toLong())
+            exchange.responseBody.use { it.write(bytes) }
+        }
+        val board = HttpScoreServerApi(base).topScores("tok", 7)
+        assertEquals(LevelLeaderboard(7, listOf(LeaderboardEntry(1, "Ada", 2140, isCurrentPlayer = true))), board)
+        assertEquals("GET", method)
+        assertEquals(Triple("/api/levels/7/scores/top", "Bearer tok", ""), requests.single())
+    }
+
+    @Test
+    fun `top scores 401 is unauthorized`() = runBlocking {
+        answer("/api/levels/7/scores/top", 401)
+        assertFails<ScoreServerException.Unauthorized> { HttpScoreServerApi(base).topScores("old", 7) }
+    }
+
+    @Test
+    fun `top scores 404 is a rejection`() = runBlocking {
+        answer("/api/levels/7/scores/top", 404)
+        assertFails<ScoreServerException.Rejected> { HttpScoreServerApi(base).topScores("tok", 7) }
+    }
+
+    @Test
+    fun `top scores 500 is unavailable`() = runBlocking {
+        answer("/api/levels/7/scores/top", 500)
+        assertFails<ScoreServerException.Unavailable> { HttpScoreServerApi(base).topScores("tok", 7) }
+    }
+
+    @Test
     fun `an unreadable session is unavailable`() = runBlocking {
         answer("/api/players/sessions", 200, "<html>")
         assertFails<ScoreServerException.Unavailable> { HttpScoreServerApi(base).createSession("code") }
@@ -93,5 +127,28 @@ class HttpScoreServerApiTest {
     fun `a slow server times out as unavailable`() = runBlocking {
         answer("/api/scores", 200, "{}", delayMs = 2_000)
         assertFails<ScoreServerException.Unavailable> { HttpScoreServerApi(base, timeoutMs = 300).submitScore("tok", 4, 520) }
+    }
+
+    @Test
+    fun `a server that is starting up is waited for beyond the connect timeout`() = runBlocking {
+        answer("/api/scores", 200, """{"level":4,"bestScore":520,"isNewBest":true}""", delayMs = 800)
+        HttpScoreServerApi(base, timeoutMs = 2_000, connectTimeoutMs = 200, readTimeoutMs = 1_500).submitScore("tok", 4, 520)
+        assertEquals("/api/scores", requests.single().first)
+    }
+
+    @Test
+    fun `a server that does not answer within the read timeout is unavailable`() = runBlocking {
+        answer("/api/scores", 200, "{}", delayMs = 1_500)
+        assertFails<ScoreServerException.Unavailable> {
+            HttpScoreServerApi(base, timeoutMs = 5_000, connectTimeoutMs = 200, readTimeoutMs = 400).submitScore("tok", 4, 520)
+        }
+    }
+
+    @Test
+    fun `the default timeouts wait out a cold start within the spec limit`() {
+        assertTrue(HttpScoreServerApi.CONNECT_TIMEOUT_MS <= 10_000)
+        assertTrue(HttpScoreServerApi.READ_TIMEOUT_MS >= 30_000)
+        assertTrue(HttpScoreServerApi.TIMEOUT_MS <= 35_000)
+        assertTrue(HttpScoreServerApi.READ_TIMEOUT_MS < HttpScoreServerApi.TIMEOUT_MS)
     }
 }

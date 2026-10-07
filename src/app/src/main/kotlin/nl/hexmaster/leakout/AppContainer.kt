@@ -14,7 +14,9 @@ import nl.hexmaster.leakout.scores.online.CallbackNetworkMonitor
 import nl.hexmaster.leakout.scores.online.DataStorePendingScoreQueue
 import nl.hexmaster.leakout.scores.online.HttpScoreServerApi
 import nl.hexmaster.leakout.scores.online.ScoreServerConfig
+import nl.hexmaster.leakout.scores.online.ScoreServerSession
 import nl.hexmaster.leakout.scores.online.ScoreSubmitter
+import nl.hexmaster.leakout.scores.online.TopScoresLoader
 import nl.hexmaster.leakout.scores.online.scoreQueueDataStore
 
 /**
@@ -43,18 +45,31 @@ class AppContainer(context: Context, val scope: CoroutineScope, playGamesAppId: 
         PlayGamesServices(playGamesAppId, achievements, scope, initializeSdk = { PlayGamesSdk.initialize(appContext) })
     }
 
+    /** The score server this build talks to; [ScoreServerConfig.enabled] is false when it has none. */
+    val scoreServerConfig: ScoreServerConfig by lazy { ScoreServerConfig.fromBuildConfig() }
+
+    private val scoreServerApi: HttpScoreServerApi by lazy { HttpScoreServerApi(scoreServerConfig.baseUrl) }
+
+    // One sign-in to the score server for posting scores and loading the top 10.
+    private val scoreServerSession: ScoreServerSession by lazy { ScoreServerSession(scoreServerApi, scoreServerConfig.webClientId) }
+
     /** Sends the scores of won levels to the score server, through a queue kept on the device. */
     val scores: ScoreSubmitter by lazy {
-        val config = ScoreServerConfig.fromBuildConfig()
         ScoreSubmitter(
-            config = config,
-            api = HttpScoreServerApi(config.baseUrl),
+            config = scoreServerConfig,
+            api = scoreServerApi,
             queue = DataStorePendingScoreQueue(appContext.scoreQueueDataStore),
             signIn = playGames.auth.state,
             serverAuthCodes = playGames.serverAuthCodes,
             network = CallbackNetworkMonitor.android(appContext),
             scope = scope,
+            session = scoreServerSession,
         )
+    }
+
+    /** Loads the global top 10 of a level from the score server. */
+    val topScores: TopScoresLoader by lazy {
+        TopScoresLoader(scoreServerApi, scoreServerSession, playGames.auth.state, playGames.serverAuthCodes)
     }
 }
 

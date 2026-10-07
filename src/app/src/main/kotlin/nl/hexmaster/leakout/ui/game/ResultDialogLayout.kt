@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -35,6 +36,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -44,9 +46,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import nl.hexmaster.leakout.R
 import nl.hexmaster.leakout.ui.components.DialogEntry
 import nl.hexmaster.leakout.ui.components.FloatingPanel
 import nl.hexmaster.leakout.ui.components.FloatingPanelMetrics
+import nl.hexmaster.leakout.ui.components.FlowButton
+import nl.hexmaster.leakout.ui.components.FlowButtonMetrics
+import nl.hexmaster.leakout.ui.components.FlowButtonVariant
 import nl.hexmaster.leakout.ui.components.displayUppercase
 import nl.hexmaster.leakout.ui.components.panelScale
 import nl.hexmaster.leakout.ui.splash.rememberReducedMotion
@@ -78,6 +84,9 @@ object ResultDialogMetrics {
     val ButtonsColumnWidth: Dp = 200.dp
     val ColumnGap: Dp = 24.dp
     val ButtonSpacing: Dp = FloatingPanelMetrics.ButtonSpacing
+
+    /** The horizontal padding of two buttons sharing one row (Restart + Top 10, Top 10 + Exit), so their labels fit. */
+    val PairedButtonPadding: Dp = 8.dp
 
     /** Distance of the corner overlay (the score status dot) from the window's safe edges. */
     val CornerOverlayInset: Dp = 12.dp
@@ -274,5 +283,42 @@ internal fun ResultScoreColumn(
             else -> LeakOutTextStyles.NumericLg
         }
         Text(value, style = style, color = valueColor, maxLines = 1)
+    }
+}
+
+/**
+ * The last button row of a result dialog: tertiary Top 10 and Exit side by side, equally wide, or
+ * Exit alone when [onTopScores] is null (design-system.md 5.6). Sharing the row keeps the dialog's
+ * height as it was without Top 10.
+ */
+@Composable
+internal fun TopScoresAndExitRow(
+    onTopScores: (() -> Unit)?,
+    onExit: () -> Unit,
+    exitText: String,
+    enabled: Boolean,
+    topScoresTag: String,
+    exitTag: String,
+    tag: Modifier.(String) -> Modifier,
+) {
+    Row(Modifier.fillMaxWidth()) {
+        if (onTopScores != null) {
+            FlowButton(
+                text = stringResource(R.string.top10_open),
+                onClick = onTopScores,
+                variant = FlowButtonVariant.Tertiary,
+                enabled = enabled,
+                horizontalPadding = ResultDialogMetrics.PairedButtonPadding,
+                modifier = Modifier.weight(1f).tag(topScoresTag),
+            )
+        }
+        FlowButton(
+            text = exitText,
+            onClick = onExit,
+            variant = FlowButtonVariant.Tertiary,
+            enabled = enabled,
+            horizontalPadding = if (onTopScores != null) ResultDialogMetrics.PairedButtonPadding else FlowButtonMetrics.HorizontalPadding,
+            modifier = Modifier.weight(1f).tag(exitTag),
+        )
     }
 }

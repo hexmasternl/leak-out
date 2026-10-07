@@ -109,7 +109,8 @@ object FlowButtonMetrics {
  * Deep Flow button (design-system.md 5.1, 4.4). The footprint never changes when pressed: the face
  * moves down 2 dp into the lip, which shrinks from 4 dp to 2 dp over 90 ms. Disabled: the glass
  * fill, a muted label, no lip, no glow, 60 % opacity, and taps are ignored. A [trailing] text, such
- * as a count, puts the label at the start and the trailing text at the end.
+ * as a count, puts the label at the start and the trailing text at the end. Two buttons sharing a
+ * row can narrow the [horizontalPadding] so their labels fit.
  */
 @Composable
 fun FlowButton(
@@ -121,6 +122,7 @@ fun FlowButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
     trailing: String? = null,
+    horizontalPadding: Dp = FlowButtonMetrics.HorizontalPadding,
 ) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val pressed = source.collectIsPressedAsState().value && enabled
@@ -199,7 +201,7 @@ fun FlowButton(
                 .fillMaxWidth()
                 .height(faceHeight)
                 .offset { IntOffset(0, faceOffset.roundToPx()) }
-                .padding(horizontal = FlowButtonMetrics.HorizontalPadding),
+                .padding(horizontal = horizontalPadding),
             contentAlignment = Alignment.Center,
         ) {
             if (trailing == null) {

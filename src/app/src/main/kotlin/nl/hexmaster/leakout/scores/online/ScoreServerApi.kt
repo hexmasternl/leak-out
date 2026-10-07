@@ -3,13 +3,22 @@ package nl.hexmaster.leakout.scores.online
 import java.time.Instant
 import java.time.OffsetDateTime
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
 /** A score server sign-in: the bearer token and when it stops being accepted. */
 data class Session(val accessToken: String, val expiresAt: Instant)
+
+/** One ranked best score of a level: its 1-based [position], the player's name and whether it is the asking player's own. */
+data class LeaderboardEntry(val position: Int, val displayName: String, val score: Int, val isCurrentPlayer: Boolean)
+
+/** The best scores of [level], highest first. */
+data class LevelLeaderboard(val level: Int, val entries: List<LeaderboardEntry>)
 
 /** Why a score server call failed; decides whether a queued score is kept or dropped. */
 sealed class ScoreServerException(message: String, cause: Throwable? = null) : Exception(message, cause) {
@@ -23,13 +32,16 @@ sealed class ScoreServerException(message: String, cause: Throwable? = null) : E
     class Unavailable(message: String, cause: Throwable? = null) : ScoreServerException(message, cause)
 }
 
-/** The two score server endpoints the game uses (see the `leak-out-server` README). */
+/** The score server endpoints the game uses (see the `leak-out-server` README). */
 interface ScoreServerApi {
     /** `POST /api/players/sessions` with a one-time Play Games server auth code. */
     suspend fun createSession(serverAuthCode: String): Session
 
     /** `POST /api/scores` for the signed-in player; the server keeps only the best per level. */
     suspend fun submitScore(accessToken: String, level: Int, score: Int)
+
+    /** `GET /api/levels/{level}/scores/top`: the 10 best scores of [level], with the signed-in player's own marked. */
+    suspend fun topScores(accessToken: String, level: Int): LevelLeaderboard
 }
 
 /** The JSON bodies of [ScoreServerApi], kept apart from the HTTP code so they can be tested alone. */
@@ -52,5 +64,24 @@ internal object ScoreServerJson {
         )
     } catch (error: Exception) {
         throw ScoreServerException.Unavailable("unreadable session response", error)
+    }
+
+    /** Reads `{ level, entries: [{ position, displayName, score, isCurrentPlayer }] }`, sorted by position. */
+    fun leaderboard(body: String): LevelLeaderboard = try {
+        val fields = json.parseToJsonElement(body).jsonObject
+        LevelLeaderboard(
+            level = fields.getValue("level").jsonPrimitive.int,
+            entries = fields.getValue("entries").jsonArray.map { element ->
+                val entry = element.jsonObject
+                LeaderboardEntry(
+                    position = entry.getValue("position").jsonPrimitive.int,
+                    displayName = entry.getValue("displayName").jsonPrimitive.content,
+                    score = entry.getValue("score").jsonPrimitive.int,
+                    isCurrentPlayer = entry["isCurrentPlayer"]?.jsonPrimitive?.boolean ?: false,
+                )
+            }.sortedBy { it.position },
+        )
+    } catch (error: Exception) {
+        throw ScoreServerException.Unavailable("unreadable leaderboard response", error)
     }
 }

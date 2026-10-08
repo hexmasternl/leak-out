@@ -12,22 +12,30 @@ enum class EndpointKind { START, FINISH }
  * [LevelValidator]: a draft may be invalid, for example with a start that opens onto the edge, and
  * [status] reports that instead of preventing it.
  *
- * Mandatory sections are only placed with [toggleMandatory]: the Start, Finish and Block tools leave
- * their cells alone, and a resize drops those outside the grid.
+ * Mandatory sections are only placed with [toggleMandatory] and portals only with [tapPortal]: the
+ * Start, Finish and Block tools leave their cells alone, and a resize drops those outside the grid.
+ *
+ * Portal pairs are placed one portal at a time. [unpaired] is the first portal of a pair whose
+ * second portal is not placed yet: it is pair `level.portals.size + 1`, and the draft is invalid
+ * until it gets a partner. [level] only holds complete pairs. [selectedPortal] is the cell of the
+ * portal the Portal tool has selected, if any.
  *
  * The star thresholds are not edited: every draft calculates them from the free cells with
  * [StarBenchmarks.forFreeCells], so [level] has them whatever level the draft was built from.
  */
-class LevelDraft(source: Level) {
-    val level: Level = source.copy(stars = StarBenchmarks.forFreeCells(source.freeCells))
+class LevelDraft(source: Level, val unpaired: Endpoint? = null, selectedPortal: Position? = null) {
+    val level: Level = source.copy(stars = StarBenchmarks.forFreeCells(source.freeCells - unpairedCells(source, unpaired)))
+
+    /** The selected portal's cell; `null` when nothing is selected or no portal lies there. */
+    val selectedPortal: Position? = selectedPortal?.takeIf { portalAt(it) != null }
 
     /** Validation first, then solvability: what the designer shows, and whether it may be played. */
-    val status: DesignStatus by lazy { DesignStatus.of(level) }
+    val status: DesignStatus by lazy { DesignStatus.of(level, unpaired) }
 
     /**
-     * Sets the grid size, clamped to [MIN_GRID_SIZE]..[MAX_GRID_SIZE]. Blocked cells and mandatory
-     * sections outside the new grid are dropped; an endpoint outside it moves to the nearest cell
-     * inside, keeping its open side.
+     * Sets the grid size, clamped to [MIN_GRID_SIZE]..[MAX_GRID_SIZE]. Blocked cells, mandatory
+     * sections and portal pairs with a portal outside the new grid are dropped; an endpoint outside
+     * it moves to the nearest cell inside, keeping its open side, and drops what lies there.
      */
     fun resize(columns: Int, rows: Int): LevelDraft {
         val grid = GridSize(columns.coerceIn(MIN_GRID_SIZE, MAX_GRID_SIZE), rows.coerceIn(MIN_GRID_SIZE, MAX_GRID_SIZE))
@@ -35,6 +43,7 @@ class LevelDraft(source: Level) {
         var finish = level.finish.copy(position = clampInto(level.finish.position, grid))
         if (finish.position == start.position) finish = finish.copy(position = nearestFree(finish.position, grid, start.position))
         val endpoints = setOf(start.position, finish.position)
+        fun keeps(portal: Endpoint) = portal.position in grid && portal.position !in endpoints
         return LevelDraft(
             level.copy(
                 grid = grid,
@@ -42,7 +51,10 @@ class LevelDraft(source: Level) {
                 finish = finish,
                 blocked = level.blocked.filter { it in grid && it !in endpoints },
                 mandatory = level.mandatory.filter { it.position in grid && it.position !in endpoints },
+                portals = level.portals.filter { keeps(it.a) && keeps(it.b) },
             ),
+            unpaired?.takeIf(::keeps),
+            selectedPortal,
         )
     }
 
@@ -54,14 +66,14 @@ class LevelDraft(source: Level) {
 
     /**
      * Moves an endpoint to [cell] and unblocks that cell. Does nothing for a cell outside the grid,
-     * the other endpoint's cell or a mandatory section's cell.
+     * the other endpoint's cell, a mandatory section's cell or a portal.
      */
     fun placeEndpoint(kind: EndpointKind, cell: Position): LevelDraft {
         val other = endpoint(kind.other()).position
-        if (cell !in level.grid || cell == other || level.mandatoryAt(cell) != null) return this
+        if (cell !in level.grid || cell == other || level.mandatoryAt(cell) != null || portalAt(cell) != null) return this
         val moved = endpoint(kind).copy(position = cell)
         val unblocked = level.blocked.filter { it != cell }
-        return LevelDraft(
+        return edited(
             when (kind) {
                 EndpointKind.START -> level.copy(start = moved, blocked = unblocked)
                 EndpointKind.FINISH -> level.copy(finish = moved, blocked = unblocked)
@@ -69,7 +81,7 @@ class LevelDraft(source: Level) {
         )
     }
 
-    fun setOpenSide(kind: EndpointKind, side: Side): LevelDraft = LevelDraft(
+    fun setOpenSide(kind: EndpointKind, side: Side): LevelDraft = edited(
         when (kind) {
             EndpointKind.START -> level.copy(start = level.start.copy(openSide = side))
             EndpointKind.FINISH -> level.copy(finish = level.finish.copy(openSide = side))
@@ -96,10 +108,10 @@ class LevelDraft(source: Level) {
         } else {
             level.blocked.filter { it !in targets }
         }
-        return if (result == level.blocked) this else LevelDraft(level.copy(blocked = result))
+        return if (result == level.blocked) this else edited(level.copy(blocked = result))
     }
 
-    fun clearBlocked(): LevelDraft = LevelDraft(level.copy(blocked = emptyList()))
+    fun clearBlocked(): LevelDraft = edited(level.copy(blocked = emptyList()))
 
     /**
      * What a tap with a mandatory section tool does on [cell]: removes a mandatory [section] there,
@@ -117,36 +129,119 @@ class LevelDraft(source: Level) {
             !canPlaceMandatory(cell) -> return this
             else -> level.mandatory + MandatorySection(cell, section)
         }
-        return LevelDraft(level.copy(mandatory = mandatory))
+        return edited(level.copy(mandatory = mandatory))
     }
 
     /** Whether a new mandatory section may go on [cell]. */
     private fun canPlaceMandatory(cell: Position): Boolean =
         cell in level.grid && !level.isBlocked(cell) && cell != level.start.position && cell != level.finish.position &&
-            level.mandatory.size < LevelValidator.MAX_MANDATORY_SECTIONS
+            portalAt(cell) == null && level.mandatory.size < LevelValidator.MAX_MANDATORY_SECTIONS
 
     /** Whether the Block tool may change [cell]. */
     fun canBlock(cell: Position): Boolean =
-        cell in level.grid && cell != level.start.position && cell != level.finish.position && level.mandatoryAt(cell) == null
+        cell in level.grid && cell != level.start.position && cell != level.finish.position && level.mandatoryAt(cell) == null &&
+            portalAt(cell) == null
 
-    fun withId(id: Int): LevelDraft = LevelDraft(level.copy(id = id))
+    // Portals
 
-    fun withName(name: String): LevelDraft = LevelDraft(level.copy(name = name))
+    /** The portal on [cell], of a complete pair or the [unpaired] one, or `null` when there is none. */
+    fun portalAt(cell: Position): Endpoint? = level.portalAt(cell) ?: unpaired?.takeIf { it.position == cell }
 
-    fun withFlow(flow: FlowSettings): LevelDraft = LevelDraft(level.copy(flow = flow))
+    /** The number of the pair the portal on [cell] belongs to, starting at 1, or `null` when there is no portal there. */
+    fun pairNumberAt(cell: Position): Int? {
+        val index = level.portals.indexOfFirst { it.portalAt(cell) != null }
+        return when {
+            index >= 0 -> index + 1
+            unpaired?.position == cell -> level.portals.size + 1
+            else -> null
+        }
+    }
 
-    fun withVisibleStackSize(size: Int): LevelDraft = LevelDraft(level.copy(stack = level.stack.copy(visibleSize = size)))
+    /** The selected portal, or `null` when none is selected. */
+    val selectedPortalEndpoint: Endpoint? get() = selectedPortal?.let(::portalAt)
+
+    /** Whether the Portal tool may put a portal on [cell]: a free cell without a mandatory section or a portal. */
+    fun canPlacePortal(cell: Position): Boolean =
+        cell in level.grid && !level.isBlocked(cell) && cell != level.start.position && cell != level.finish.position &&
+            level.mandatoryAt(cell) == null && portalAt(cell) == null
+
+    /**
+     * What a tap with the Portal tool does on [cell]. On a portal it selects that portal, or
+     * deselects it when it already is selected. On a free cell it moves the selected portal there,
+     * keeping its open side; with no portal selected it places a portal there: the partner of
+     * [unpaired] when there is one, otherwise the first portal of a new pair, but not beyond
+     * [LevelValidator.MAX_PORTAL_PAIRS] pairs. A new portal opens to the first of right, left,
+     * bottom and top that faces a cell inside the grid. Any other cell is left alone.
+     */
+    fun tapPortal(cell: Position): LevelDraft {
+        if (portalAt(cell) != null) return LevelDraft(level, unpaired, if (selectedPortal == cell) null else cell)
+        if (!canPlacePortal(cell)) return this
+        val selected = selectedPortal
+        if (selected != null) return movePortal(selected, cell)
+        val portal = Endpoint(cell, defaultOpenSide(cell))
+        val first = unpaired
+        return when {
+            first != null -> LevelDraft(level.copy(portals = level.portals + PortalPair(first, portal)))
+            level.portals.size >= LevelValidator.MAX_PORTAL_PAIRS -> this
+            else -> LevelDraft(level, portal)
+        }
+    }
+
+    private fun movePortal(from: Position, to: Position): LevelDraft {
+        fun moved(portal: Endpoint) = if (portal.position == from) portal.copy(position = to) else portal
+        return LevelDraft(
+            level.copy(portals = level.portals.map { PortalPair(moved(it.a), moved(it.b)) }),
+            unpaired?.let(::moved),
+            to,
+        )
+    }
+
+    /** Sets the selected portal's open side. Does nothing when no portal is selected. */
+    fun setPortalOpenSide(side: Side): LevelDraft {
+        val selected = selectedPortal ?: return this
+        fun turned(portal: Endpoint) = if (portal.position == selected) portal.copy(openSide = side) else portal
+        return LevelDraft(
+            level.copy(portals = level.portals.map { PortalPair(turned(it.a), turned(it.b)) }),
+            unpaired?.let(::turned),
+            selected,
+        )
+    }
+
+    /**
+     * Removes both portals of the selected portal's pair, or the [unpaired] portal when that is the
+     * one selected. The pairs after it move up one place. Does nothing when no portal is selected.
+     */
+    fun removeSelectedPair(): LevelDraft {
+        val selected = selectedPortal ?: return this
+        if (unpaired?.position == selected) return LevelDraft(level)
+        return LevelDraft(level.copy(portals = level.portals.filter { it.portalAt(selected) == null }), unpaired)
+    }
+
+    private fun defaultOpenSide(cell: Position): Side =
+        listOf(Side.RIGHT, Side.LEFT, Side.BOTTOM, Side.TOP).first { cell.neighbour(it) in level.grid }
+
+    fun withId(id: Int): LevelDraft = edited(level.copy(id = id))
+
+    fun withName(name: String): LevelDraft = edited(level.copy(name = name))
+
+    fun withFlow(flow: FlowSettings): LevelDraft = edited(level.copy(flow = flow))
+
+    fun withVisibleStackSize(size: Int): LevelDraft = edited(level.copy(stack = level.stack.copy(visibleSize = size)))
 
     fun withWeight(section: PipeSection, weight: Int): LevelDraft =
-        LevelDraft(level.copy(stack = level.stack.copy(weights = level.stack.weights + (section to weight))))
+        edited(level.copy(stack = level.stack.copy(weights = level.stack.weights + (section to weight))))
 
-    fun withRules(rules: PlacementRules): LevelDraft = LevelDraft(level.copy(rules = rules))
+    fun withRules(rules: PlacementRules): LevelDraft = edited(level.copy(rules = rules))
 
-    override fun equals(other: Any?): Boolean = other is LevelDraft && other.level == level
+    /** The same draft with [changed] as its level, keeping the unpaired and the selected portal. */
+    private fun edited(changed: Level): LevelDraft = LevelDraft(changed, unpaired, selectedPortal)
 
-    override fun hashCode(): Int = level.hashCode()
+    override fun equals(other: Any?): Boolean =
+        other is LevelDraft && other.level == level && other.unpaired == unpaired && other.selectedPortal == selectedPortal
 
-    override fun toString(): String = "LevelDraft(level=$level)"
+    override fun hashCode(): Int = (level.hashCode() * 31 + unpaired.hashCode()) * 31 + selectedPortal.hashCode()
+
+    override fun toString(): String = "LevelDraft(level=$level, unpaired=$unpaired, selectedPortal=$selectedPortal)"
 
     private fun EndpointKind.other(): EndpointKind = if (this == EndpointKind.START) EndpointKind.FINISH else EndpointKind.START
 
@@ -171,6 +266,10 @@ class LevelDraft(source: Level) {
                 stars = StarBenchmarks(one = 0, two = 0, three = 0),
             ),
         )
+
+        /** 1 when [unpaired] takes a cell of [level]'s grid, so that it is not a free cell either. */
+        private fun unpairedCells(level: Level, unpaired: Endpoint?): Int =
+            if (unpaired != null && unpaired.position in level.grid) 1 else 0
 
         private fun clampInto(position: Position, grid: GridSize): Position =
             Position(position.x.coerceIn(0, grid.columns - 1), position.y.coerceIn(0, grid.rows - 1))
@@ -198,21 +297,39 @@ sealed interface DesignStatus {
 
     companion object {
         private val indexed = Regex("""^(blocked|mandatory)\[(\d+)]""")
+        private val portal = Regex("""^portals\[(\d+)]\.([ab])""")
 
-        fun of(level: Level): DesignStatus {
-            val errors = LevelValidator.validate(level).errors
-            if (errors.isNotEmpty()) return Invalid(errors, errors.mapNotNull { cellOf(it.field, level) }.toSet())
+        /**
+         * The status of [level], with [unpaired] the first portal of a pair that still needs its
+         * second portal: that makes the design invalid, with an error for the missing portal.
+         */
+        fun of(level: Level, unpaired: Endpoint? = null): DesignStatus {
+            val errors = LevelValidator.validate(level).errors.toMutableList()
+            val cells = errors.mapNotNull { cellOf(it.field, level) }.toMutableSet()
+            if (unpaired != null) {
+                val number = level.portals.size + 1
+                errors += ValidationError("portals[${number - 1}].b", "Portal pair $number needs a second portal")
+                cells += unpaired.position
+            }
+            if (errors.isNotEmpty()) return Invalid(errors, cells)
             return when (val result = LevelSolver.solve(level)) {
                 is SolverResult.Solvable -> Solvable(result.path)
                 is SolverResult.Unsolvable -> Unsolvable(result.reason)
             }
         }
 
-        /** The cell an error [field] is about: `start.*`, `finish.*`, `blocked[i]` or `mandatory[i]`; otherwise `null`. */
+        /**
+         * The cell an error [field] is about: `start.*`, `finish.*`, `blocked[i]`, `mandatory[i]` or
+         * `portals[i].a` / `.b`; otherwise `null`.
+         */
         fun cellOf(field: String, level: Level): Position? {
             val root = field.substringBefore('.')
             if (root == "start") return level.start.position
             if (root == "finish") return level.finish.position
+            portal.find(field)?.let { match ->
+                val pair = level.portals.getOrNull(match.groupValues[1].toInt()) ?: return null
+                return if (match.groupValues[2] == "a") pair.a.position else pair.b.position
+            }
             val match = indexed.find(field) ?: return null
             val index = match.groupValues[2].toInt()
             return when (match.groupValues[1]) {

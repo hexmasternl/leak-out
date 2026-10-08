@@ -1,9 +1,13 @@
 package nl.hexmaster.leakout.core.flow
 
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import nl.hexmaster.leakout.core.board.Board
 import nl.hexmaster.leakout.core.board.Cell
+import nl.hexmaster.leakout.core.engine.GameCommand
+import nl.hexmaster.leakout.core.engine.GameEngine
+import nl.hexmaster.leakout.core.engine.Outcome
 import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.GridSize
 import nl.hexmaster.leakout.core.level.Level
@@ -17,6 +21,7 @@ import nl.hexmaster.leakout.core.level.PipeSection.RES
 import nl.hexmaster.leakout.core.level.PipeSection.RT
 import nl.hexmaster.leakout.core.level.PipeSection.V
 import nl.hexmaster.leakout.core.level.PipeSection.X
+import nl.hexmaster.leakout.core.level.PortalPair
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.level.TestLevels
@@ -37,9 +42,36 @@ class FlowStepRouteAgreementTest {
         finish: Endpoint = Endpoint(p(2, 3), Side.TOP),
         blocked: List<Position> = emptyList(),
         mandatory: List<MandatorySection> = emptyList(),
-    ): Level = TestLevels.valid(grid = GridSize(5, 5), start = start, finish = finish, blocked = blocked, mandatory = mandatory)
+        portals: List<PortalPair> = emptyList(),
+    ): Level = TestLevels.valid(
+        grid = GridSize(5, 5), start = start, finish = finish, blocked = blocked, mandatory = mandatory, portals = portals,
+    )
+
+    /** Portal a at (2, 1) open to the left, next to the start's first tile; portal b at (3, 2) open to the left. */
+    private val pair = TestLevels.pair(2, 1, Side.LEFT, 3, 2, Side.LEFT)
 
     private val cases = listOf(
+        Case("through a portal pair", level(portals = listOf(pair)), listOf(p(1, 1) to H, p(2, 2) to RB)),
+        Case("through a portal pair from b to a", level(portals = listOf(PortalPair(pair.b, pair.a))), listOf(p(1, 1) to H, p(2, 2) to RB)),
+        Case(
+            "closed side of a portal",
+            level(portals = listOf(PortalPair(Endpoint(p(2, 1), Side.TOP), pair.b))),
+            listOf(p(1, 1) to H, p(2, 2) to RB),
+        ),
+        Case("nothing in front of the exit portal", level(portals = listOf(pair)), listOf(p(1, 1) to H)),
+        Case(
+            "through a portal pair to a mandatory reservoir",
+            level(
+                portals = listOf(TestLevels.pair(2, 1, Side.LEFT, 4, 0, Side.BOTTOM)),
+                mandatory = listOf(MandatorySection(p(3, 2), RES)),
+            ),
+            listOf(p(1, 1) to H, p(4, 1) to V, p(4, 2) to LT, p(2, 2) to RB),
+        ),
+        Case(
+            "portal pair skipping a mandatory reservoir",
+            level(portals = listOf(pair), mandatory = listOf(MandatorySection(p(0, 4), RES))),
+            listOf(p(1, 1) to H, p(2, 2) to RB),
+        ),
         Case("straight and corner", level(), listOf(p(1, 1) to H, p(2, 1) to LB, p(2, 2) to V)),
         Case("empty tile", level(), listOf(p(1, 1) to H)),
         Case("nothing placed", level(), emptyList()),
@@ -95,11 +127,18 @@ class FlowStepRouteAgreementTest {
             when (val result = FlowStep.after(board, from, exit, used)) {
                 FlowStep.Result.Finish -> return MandatoryProgress.unused(level.mandatory, used).isEmpty()
                 is FlowStep.Result.Leak -> return false
-                is FlowStep.Result.Enter -> {
-                    val section = (board[result.next] as Cell.Pipe).section
-                    used += ChannelUse(result.next, section.channelFor(result.entry))
-                    exit = section.exitFor(result.entry)!!
-                    from = result.next
+                is FlowStep.Result.Enter -> when (val cell = board[result.next]) {
+                    is Cell.Portal -> {
+                        used += portalPairUses(result.next, cell.partner)
+                        exit = (board[cell.partner] as Cell.Portal).openSide
+                        from = cell.partner
+                    }
+                    else -> {
+                        val section = (cell as Cell.Pipe).section
+                        used += ChannelUse(result.next, section.channelFor(result.entry))
+                        exit = section.exitFor(result.entry)!!
+                        from = result.next
+                    }
                 }
             }
         }
@@ -111,6 +150,23 @@ class FlowStepRouteAgreementTest {
             val complete = RouteTracer.trace(case.board, case.level) is Route.Complete
             assertEquals(complete, flowReachesFinish(case.board, case.level), case.name)
         }
+    }
+
+    @Test
+    fun `the flow simulation wins on every board the route check calls complete`() {
+        val engine = GameEngine(Random(1))
+        for (case in cases) {
+            val complete = RouteTracer.trace(case.board, case.level) is Route.Complete
+            var state = engine.start(case.level).copy(board = case.board)
+            repeat(100_000) { if (state.outcome is Outcome.Playing) state = engine.handle(state, GameCommand.Tick(50)) }
+            assertEquals(complete, state.outcome is Outcome.Won, "${case.name}: ${state.outcome}")
+        }
+    }
+
+    @Test
+    fun `the scripted boards include portal pairs`() {
+        val withPortals = cases.filter { it.level.portals.isNotEmpty() }
+        assertEquals(setOf(true, false), withPortals.map { RouteTracer.trace(it.board, it.level) is Route.Complete }.toSet())
     }
 
     @Test

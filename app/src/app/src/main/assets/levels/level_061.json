@@ -69,5 +69,8 @@
   "mandatory": [
     { "x": 5, "y": 2, "section": "RES" }
   ],
-  "stars": { "one": 1700, "two": 2540, "three": 3390 }
+  "portals": [
+    { "a": { "x": 7, "y": 4, "openSide": "TOP" }, "b": { "x": 8, "y": 14, "openSide": "RIGHT" } }
+  ],
+  "stars": { "one": 1700, "two": 2540, "three": 3370 }
 }

@@ -351,6 +351,144 @@ class LevelValidatorTest {
         assertEquals(listOf("mandatory[0]", "mandatory[1]", "mandatory[1].section", "mandatory[3]"), fields.sorted())
     }
 
+    // Portals (valid(): 7 by 9 grid, start at 0,1 RIGHT, finish at 6,7 LEFT, blocked 3,4)
+
+    private fun pair(ax: Int, ay: Int, aSide: Side, bx: Int, by: Int, bSide: Side) =
+        TestLevels.pair(ax, ay, aSide, bx, by, bSide)
+
+    private val pairOne = pair(2, 1, Side.LEFT, 6, 5, Side.LEFT)
+
+    @Test
+    fun `level without portals is accepted`() = assertValid(valid(portals = emptyList()))
+
+    @Test
+    fun `valid portal pair is accepted`() = assertValid(valid(portals = listOf(pairOne)))
+
+    @Test
+    fun `three portal pairs are accepted`() = assertValid(
+        valid(portals = listOf(pairOne, pair(1, 3, Side.BOTTOM, 5, 3, Side.TOP), pair(2, 8, Side.TOP, 4, 8, Side.TOP))),
+    )
+
+    @Test
+    fun `four portal pairs are rejected`() {
+        val level = valid(
+            portals = listOf(
+                pairOne,
+                pair(1, 3, Side.BOTTOM, 5, 3, Side.TOP),
+                pair(2, 8, Side.TOP, 4, 8, Side.TOP),
+                pair(0, 5, Side.RIGHT, 6, 2, Side.LEFT),
+            ),
+        )
+        val error = assertOnlyError("portals", level)
+        assertTrue("at most 3" in error.message)
+    }
+
+    @Test
+    fun `portal outside the grid is rejected`() {
+        val error = assertOnlyError("portals[0].a", valid(portals = listOf(pair(7, 2, Side.LEFT, 6, 5, Side.LEFT))))
+        assertTrue("(7, 2)" in error.message)
+    }
+
+    @Test
+    fun `portal on a blocked cell is rejected`() {
+        val error = assertOnlyError("portals[0].b", valid(portals = listOf(pair(2, 1, Side.LEFT, 3, 4, Side.RIGHT))))
+        assertTrue("blocked" in error.message)
+    }
+
+    @Test
+    fun `portal on the start or finish is rejected`() {
+        for (cell in listOf(Position(0, 1), Position(6, 7))) {
+            val error = assertOnlyError(
+                "portals[0].b",
+                valid(portals = listOf(pair(2, 1, Side.LEFT, cell.x, cell.y, Side.TOP))),
+            )
+            assertTrue("start and finish cannot hold a portal" in error.message)
+        }
+    }
+
+    @Test
+    fun `portal on a mandatory section is rejected`() {
+        val level = valid(mandatory = listOf(mandatory(5, 5, PipeSection.RES)), portals = listOf(pair(2, 1, Side.LEFT, 5, 5, Side.LEFT)))
+        val error = assertOnlyError("portals[0].b", level)
+        assertTrue("mandatory section" in error.message)
+    }
+
+    @Test
+    fun `two portals of a pair on one cell are rejected`() {
+        val error = assertOnlyError("portals[0].b", valid(portals = listOf(pair(2, 1, Side.LEFT, 2, 1, Side.LEFT))))
+        assertTrue("(2, 1)" in error.message)
+        assertTrue("portals[0].a" in error.message)
+    }
+
+    @Test
+    fun `portals of two pairs on one cell are rejected`() {
+        val level = valid(portals = listOf(pairOne, pair(1, 3, Side.BOTTOM, 6, 5, Side.LEFT)))
+        val error = assertOnlyError("portals[1].b", level)
+        assertTrue("(6, 5)" in error.message)
+        assertTrue("portals[0].b" in error.message)
+    }
+
+    @Test
+    fun `portal opening onto the grid edge is rejected`() {
+        val error = assertOnlyError("portals[0].a.openSide", valid(portals = listOf(pair(0, 4, Side.LEFT, 6, 5, Side.LEFT))))
+        assertTrue("edge of the grid" in error.message)
+    }
+
+    @Test
+    fun `walled-off portal is rejected`() {
+        val error = assertOnlyError("portals[0].a.openSide", valid(portals = listOf(pair(2, 4, Side.RIGHT, 6, 5, Side.LEFT))))
+        assertTrue("walled off" in error.message)
+    }
+
+    @Test
+    fun `portal facing the start, the finish or another portal is rejected`() {
+        val facingStart = pair(0, 2, Side.TOP, 6, 5, Side.LEFT)
+        val facingFinish = pair(2, 1, Side.LEFT, 6, 6, Side.BOTTOM)
+        val facingPortal = pair(2, 1, Side.RIGHT, 3, 1, Side.BOTTOM)
+        assertTrue("must not face the start" in assertOnlyError("portals[0].a.openSide", valid(portals = listOf(facingStart))).message)
+        assertOnlyError("portals[0].b.openSide", valid(portals = listOf(facingFinish)))
+        assertOnlyError("portals[0].a.openSide", valid(portals = listOf(facingPortal)))
+    }
+
+    @Test
+    fun `portal facing a mandatory reservoir is accepted`() =
+        assertValid(valid(mandatory = listOf(mandatory(4, 5, PipeSection.RES)), portals = listOf(pair(2, 1, Side.LEFT, 5, 5, Side.LEFT))))
+
+    @Test
+    fun `portals may share a facing cell with each other and with the start`() =
+        assertValid(valid(portals = listOf(pair(1, 0, Side.BOTTOM, 2, 1, Side.LEFT))))
+
+    @Test
+    fun `start or finish facing a portal is rejected`() {
+        val error = assertOnlyError("start.openSide", valid(portals = listOf(pair(1, 1, Side.BOTTOM, 6, 5, Side.LEFT))))
+        assertTrue("must not be a portal" in error.message)
+        assertOnlyError("finish.openSide", valid(portals = listOf(pair(2, 1, Side.LEFT, 5, 7, Side.TOP))))
+    }
+
+    @Test
+    fun `blocked cell on a portal is reported for the portal`() {
+        val level = valid(blocked = listOf(Position(3, 4), Position(6, 5)), portals = listOf(pairOne))
+        val error = assertOnlyError("portals[0].b", level)
+        assertTrue("blocked" in error.message)
+    }
+
+    @Test
+    fun `every portal problem is reported together`() {
+        val level = valid(
+            portals = listOf(
+                pair(9, 9, Side.LEFT, 3, 4, Side.LEFT),
+                pair(0, 4, Side.LEFT, 2, 4, Side.RIGHT),
+                pair(1, 3, Side.BOTTOM, 1, 3, Side.TOP),
+                pair(2, 8, Side.TOP, 4, 8, Side.TOP),
+            ),
+        )
+        val fields = errors(level).map { it.field }
+        assertEquals(
+            listOf("portals", "portals[0].a", "portals[0].b", "portals[1].a.openSide", "portals[1].b.openSide", "portals[2].b"),
+            fields.sorted(),
+        )
+    }
+
     // Reporting
 
     @Test

@@ -204,6 +204,49 @@ class LevelParserTest {
             listOf(MandatorySection(Position(3, 2), PipeSection.X), MandatorySection(Position(5, 5), PipeSection.RES)),
             level.mandatory,
         )
+        assertEquals(listOf(TestLevels.pair(1, 6, Side.TOP, 5, 1, Side.BOTTOM)), level.portals)
+    }
+
+    @Test
+    fun `level without a portals field has no portal pairs`() {
+        assertEquals(emptyList(), parsed(TestLevels.minimalJson()).portals)
+    }
+
+    @Test
+    fun `portal pairs are parsed in authored order`() {
+        val level = parsed(
+            TestLevels.minimalJson(
+                extra = """, "portals": [
+                    { "a": { "x": 2, "y": 1, "openSide": "LEFT" }, "b": { "x": 6, "y": 5, "openSide": "RIGHT" } },
+                    { "a": { "x": 1, "y": 3, "openSide": "TOP" }, "b": { "x": 4, "y": 0, "openSide": "BOTTOM" } }
+                ]""",
+            ),
+        )
+        assertEquals(
+            listOf(
+                TestLevels.pair(2, 1, Side.LEFT, 6, 5, Side.RIGHT),
+                TestLevels.pair(1, 3, Side.TOP, 4, 0, Side.BOTTOM),
+            ),
+            level.portals,
+        )
+    }
+
+    @Test
+    fun `missing portal in a pair is named with its index`() {
+        val error = failed(TestLevels.minimalJson(extra = """, "portals": [ { "a": { "x": 2, "y": 1, "openSide": "LEFT" } } ]"""))
+        assertEquals("portals[0].b", error.field)
+    }
+
+    @Test
+    fun `unknown open side of a portal is named`() {
+        val error = failed(
+            TestLevels.minimalJson(
+                extra = """, "portals": [ { "a": { "x": 2, "y": 1, "openSide": "UP" }, "b": { "x": 4, "y": 2, "openSide": "LEFT" } } ]""",
+            ),
+        )
+        assertEquals("portals[0].a.openSide", error.field)
+        assertTrue("'UP'" in error.message)
+        assertTrue("BOTTOM" in error.message)
     }
 
     @Test

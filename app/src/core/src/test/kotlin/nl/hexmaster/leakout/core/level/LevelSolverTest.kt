@@ -213,6 +213,79 @@ class LevelSolverTest {
         assertEquals(1 + 4 + 6, solvable(level).path.size)
     }
 
+    // Portal pairs: a 7 by 4 grid split by a wall in column 3, start on the left at (0, 1), finish
+    // on the right at (6, 3) open at the top, so the finish's facing cell is (6, 2).
+
+    private val splitGrid = GridSize(7, 4)
+    private val splitStart = at(0, 1, Side.RIGHT)
+    private val splitFinish = at(6, 3, Side.TOP)
+    private val splitWall = (0 until 4).map { Position(3, it) }
+
+    private fun split(portals: List<PortalPair>, mandatory: List<MandatorySection> = emptyList()) = valid(
+        grid = splitGrid, start = splitStart, finish = splitFinish, blocked = splitWall, mandatory = mandatory, portals = portals,
+    )
+
+    /** Asserts that consecutive cells of [path] are neighbours, except a portal followed by its partner. */
+    private fun assertWalkable(level: Level, path: List<Position>) {
+        path.zipWithNext().forEach { (from, to) ->
+            val jump = level.partnerOf(from)?.position == to
+            assertTrue(jump || Side.entries.any { from.neighbour(it) == to }, "$from and $to are not adjacent")
+        }
+        assertEquals(path.size, path.distinct().size, "path $path uses a cell twice")
+    }
+
+    @Test
+    fun `a level that is only solvable through a portal pair runs into one portal and out of the other`() {
+        val level = split(listOf(TestLevels.pair(2, 3, Side.TOP, 4, 0, Side.BOTTOM)))
+        val path = solvable(level).path
+        assertEquals(Position(1, 1), path.first())
+        assertEquals(Position(6, 2), path.last())
+        val into = path.indexOf(Position(2, 3))
+        assertEquals(listOf(Position(2, 2), Position(2, 3), Position(4, 0), Position(4, 1)), path.subList(into - 1, into + 3))
+        assertWalkable(level, path)
+        assertTrue(LevelSolver.solve(split(emptyList())) is SolverResult.Unsolvable)
+    }
+
+    @Test
+    fun `a portal pair that does not cross the wall leaves the level unsolvable`() {
+        val reason = unsolvable(split(listOf(TestLevels.pair(2, 3, Side.TOP, 0, 3, Side.TOP)))).reason
+        assertTrue("(6, 2)" in reason, reason)
+    }
+
+    @Test
+    fun `a mandatory reservoir that can only be reached through a pair is passed after the pair`() {
+        val level = split(listOf(TestLevels.pair(2, 3, Side.TOP, 4, 0, Side.BOTTOM)), listOf(mandatory(5, 1, PipeSection.RES)))
+        val path = solvable(level).path
+        assertTrue(path.indexOf(Position(4, 0)) < path.indexOf(Position(5, 1)), "path $path")
+        assertWalkable(level, path)
+    }
+
+    @Test
+    fun `a portal facing a mandatory reservoir feeds it`() {
+        val level = split(listOf(TestLevels.pair(2, 3, Side.TOP, 4, 1, Side.RIGHT)), listOf(mandatory(5, 1, PipeSection.RES)))
+        val path = solvable(level).path
+        val into = path.indexOf(Position(2, 3))
+        assertEquals(listOf(Position(2, 3), Position(4, 1), Position(5, 1), Position(6, 1)), path.subList(into, into + 4))
+        assertWalkable(level, path)
+    }
+
+    @Test
+    fun `a mandatory reservoir may be left through a portal that faces it`() {
+        val level = split(listOf(TestLevels.pair(2, 1, Side.LEFT, 4, 0, Side.BOTTOM)), listOf(mandatory(1, 1, PipeSection.RES)))
+        val path = solvable(level).path
+        assertEquals(listOf(Position(1, 1), Position(2, 1), Position(4, 0), Position(4, 1)), path.take(4))
+        assertWalkable(level, path)
+    }
+
+    @Test
+    fun `a portal pair that is no shortcut leaves the shortest route as it was`() {
+        val level = valid(blocked = emptyList())
+        val withPair = level.copy(portals = listOf(TestLevels.pair(0, 8, Side.TOP, 6, 0, Side.BOTTOM)))
+        val path = solvable(withPair).path
+        assertEquals(solvable(level).path.size, path.size)
+        assertTrue(path.none { withPair.portalAt(it) != null }, "path $path")
+    }
+
     @Test
     fun `every route the solver returns is self-avoiding and passes each mandatory channel`() {
         val random = kotlin.random.Random(42)

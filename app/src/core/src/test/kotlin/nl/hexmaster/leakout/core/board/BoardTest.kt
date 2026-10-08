@@ -1,9 +1,12 @@
 package nl.hexmaster.leakout.core.board
 
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import nl.hexmaster.leakout.core.engine.GameCommand
+import nl.hexmaster.leakout.core.engine.GameEngine
 import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
@@ -83,5 +86,33 @@ class BoardTest {
         for (position in listOf(Position(0, 1), Position(6, 7), Position(3, 4), Position(2, 2))) {
             assertSame(board, board.markLiquidEntered(position), "cell $position")
         }
+    }
+
+    private val withPortals = TestLevels.valid(
+        portals = listOf(
+            TestLevels.pair(2, 1, Side.LEFT, 6, 5, Side.LEFT),
+            TestLevels.pair(1, 3, Side.BOTTOM, 5, 3, Side.TOP),
+        ),
+    )
+
+    @Test
+    fun `from level puts both portals of every pair in place`() {
+        val board = Board.from(withPortals)
+        assertEquals(Cell.Portal(1, Side.LEFT, Position(6, 5)), board[Position(2, 1)])
+        assertEquals(Cell.Portal(1, Side.LEFT, Position(2, 1)), board[Position(6, 5)])
+        assertEquals(Cell.Portal(2, Side.BOTTOM, Position(5, 3)), board[Position(1, 3)])
+        assertEquals(Cell.Portal(2, Side.TOP, Position(1, 3)), board[Position(5, 3)])
+        assertTrue(board.pipes.isEmpty())
+        assertSame(board[Position(2, 1)], board.markLiquidEntered(Position(2, 1))[Position(2, 1)])
+    }
+
+    @Test
+    fun `a restarted attempt has the portals again`() {
+        val engine = GameEngine(Random(1))
+        val first = engine.start(withPortals)
+        val played = first.copy(board = first.board.with(Position(2, 2), Cell.Pipe(PipeSection.H)))
+        val restarted = engine.handle(played, GameCommand.Restart)
+        assertEquals(Board.from(withPortals), restarted.board)
+        assertEquals(Cell.Portal(2, Side.TOP, Position(1, 3)), restarted.board[Position(5, 3)])
     }
 }

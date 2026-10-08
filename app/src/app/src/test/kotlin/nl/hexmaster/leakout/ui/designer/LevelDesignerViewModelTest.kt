@@ -2,6 +2,7 @@ package nl.hexmaster.leakout.ui.designer
 
 import androidx.lifecycle.SavedStateHandle
 import nl.hexmaster.leakout.core.level.DesignStatus
+import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.EndpointKind
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.LevelDraft
@@ -10,6 +11,7 @@ import nl.hexmaster.leakout.core.level.LevelWriter
 import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.ParseResult
 import nl.hexmaster.leakout.core.level.PipeSection
+import nl.hexmaster.leakout.core.level.PortalPair
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.level.StarBenchmarks
@@ -343,5 +345,100 @@ class LevelDesignerViewModelTest {
     fun `file name is padded to three digits`() {
         assertEquals("level_005.json", LevelDesignerViewModel.fileName(5))
         assertEquals("level_123.json", LevelDesignerViewModel.fileName(123))
+    }
+
+    // Portals (the blank design: 7 by 5, start at 0,2 open right, finish at 6,2 open left)
+
+    private fun LevelDesignerViewModel.placePair() {
+        selectTool(DesignerTool.PORTAL)
+        onCellTap(Position(1, 1))
+        onCellTap(Position(6, 3))
+    }
+
+    @Test
+    fun `the portal tool places a pair with two taps`() {
+        val vm = viewModel()
+        vm.placePair()
+        assertEquals(
+            listOf(PortalPair(Endpoint(Position(1, 1), Side.RIGHT), Endpoint(Position(6, 3), Side.LEFT))),
+            vm.state.level.portals,
+        )
+        assertTrue(vm.state.dirty)
+        assertTrue(vm.state.canPlay)
+    }
+
+    @Test
+    fun `an unfinished pair disables export and test play`() {
+        val vm = viewModel()
+        vm.selectTool(DesignerTool.PORTAL)
+        vm.onCellTap(Position(1, 1))
+        val status = vm.state.status as DesignStatus.Invalid
+        assertEquals(listOf("portals[0].b"), status.errors.map { it.field })
+        assertTrue(Position(1, 1) in status.highlightedCells)
+        assertFalse(vm.state.canPlay)
+        assertFalse(vm.export())
+        assertNull(vm.testPlayLevel())
+    }
+
+    @Test
+    fun `selecting a portal does not mark the design dirty, moving it does`() {
+        val vm = viewModel()
+        vm.placePair()
+        vm.export()
+        vm.onCellTap(Position(6, 3))
+        assertEquals(Position(6, 3), vm.state.draft.selectedPortal)
+        assertFalse(vm.state.dirty)
+        vm.onCellTap(Position(5, 4))
+        assertEquals(Position(5, 4), vm.state.level.portals.single().b.position)
+        assertTrue(vm.state.dirty)
+    }
+
+    @Test
+    fun `the open side of the selected portal is set and its pair removed`() {
+        val vm = viewModel()
+        vm.placePair()
+        vm.onCellTap(Position(1, 1))
+        vm.setPortalOpenSide(Side.TOP)
+        assertEquals(Side.TOP, vm.state.level.portals.single().a.openSide)
+        vm.removeSelectedPair()
+        assertEquals(emptyList<PortalPair>(), vm.state.level.portals)
+    }
+
+    @Test
+    fun `a portal tool drag only acts on the cell it starts on`() {
+        val vm = viewModel()
+        vm.selectTool(DesignerTool.PORTAL)
+        vm.onDragStart(Position(1, 1))
+        vm.onDrag(Position(2, 1))
+        vm.onDrag(Position(3, 1))
+        vm.onDragEnd()
+        assertEquals(Endpoint(Position(1, 1), Side.RIGHT), vm.state.draft.unpaired)
+        assertEquals(emptyList<PortalPair>(), vm.state.level.portals)
+    }
+
+    @Test
+    fun `portals are exported and test played`() {
+        val vm = viewModel()
+        vm.placePair()
+        assertTrue(vm.export())
+        val json = exporter.exports.single().second
+        val parsed = (LevelParser.parse(json) as ParseResult.Success).level
+        assertEquals(vm.state.level, parsed)
+        assertEquals(vm.state.level.portals, vm.testPlayLevel()?.portals)
+    }
+
+    @Test
+    fun `portals, the unpaired and the selected portal are restored`() {
+        val saved = SavedStateHandle()
+        val first = viewModel(saved)
+        first.placePair()
+        first.onCellTap(Position(2, 4))
+        first.onCellTap(Position(6, 3))
+        val restored = viewModel(saved).state
+        assertEquals(first.state.level.portals, restored.level.portals)
+        assertEquals(Endpoint(Position(2, 4), Side.RIGHT), restored.draft.unpaired)
+        assertEquals(Position(6, 3), restored.draft.selectedPortal)
+        assertEquals(DesignerTool.PORTAL, restored.tool)
+        assertEquals(first.state.draft, restored.draft)
     }
 }

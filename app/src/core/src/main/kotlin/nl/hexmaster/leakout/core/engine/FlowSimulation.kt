@@ -6,7 +6,9 @@ import nl.hexmaster.leakout.core.flow.ChannelUse
 import nl.hexmaster.leakout.core.flow.FlowStep
 import nl.hexmaster.leakout.core.flow.MandatoryProgress
 import nl.hexmaster.leakout.core.flow.channelFor
+import nl.hexmaster.leakout.core.flow.portalPairUses
 import nl.hexmaster.leakout.core.level.PipeSection
+import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.level.exitFor
 import nl.hexmaster.leakout.core.score.FinalScore
@@ -60,8 +62,17 @@ object FlowSimulation {
      * gives none), then [FlowStep] decides between the next tile, the finish and a leak. The finish
      * only wins when every mandatory section is used; otherwise it refuses the liquid and the
      * attempt is lost at the finish's open side.
+     *
+     * A head in a portal pair leaves it from the other portal of the pair, through that portal's
+     * open side, so the next tile and a leak are both at the exit portal. A pair gives no points
+     * and adds no [PathStep], so it does not count for the speed ramp either.
      */
     private fun leaveTile(state: GameState, flow: FlowState.Flowing): GameState {
+        if (flow.channel == Channel.PORTAL) {
+            val exitPortal = (state.board[flow.position] as Cell.Portal).partner
+            val exit = (state.board[exitPortal] as Cell.Portal).openSide
+            return moveOn(state, exitPortal, exit, flow.used + portalPairUses(flow.position, exitPortal))
+        }
         val used = flow.used + ChannelUse(flow.position, flow.channel)
         val pipe = state.board[flow.position] as? Cell.Pipe
         val exit: Side = pipe?.section?.exitFor(flow.entry) ?: state.level.start.openSide
@@ -74,29 +85,37 @@ object FlowSimulation {
                 flowPath = next.flowPath + PathStep(flow.position, pipe.section),
             )
         }
-        return when (val result = FlowStep.after(next.board, flow.position, exit, used)) {
+        return moveOn(next, flow.position, exit, used)
+    }
+
+    /** The liquid leaves the tile [from] through [exit], with the channels in [used] run through. */
+    private fun moveOn(state: GameState, from: Position, exit: Side, used: Set<ChannelUse>): GameState {
+        return when (val result = FlowStep.after(state.board, from, exit, used)) {
             is FlowStep.Result.Enter -> {
-                val section = (next.board[result.next] as Cell.Pipe).section
-                next.copy(
-                    board = next.board.markLiquidEntered(result.next),
-                    flow = FlowState.Flowing(result.next, result.entry, section.channelFor(result.entry), 0.0, used),
+                val channel = when (val cell = state.board[result.next]) {
+                    is Cell.Portal -> Channel.PORTAL
+                    else -> (cell as Cell.Pipe).section.channelFor(result.entry)
+                }
+                state.copy(
+                    board = state.board.markLiquidEntered(result.next),
+                    flow = FlowState.Flowing(result.next, result.entry, channel, 0.0, used),
                 )
             }
             FlowStep.Result.Finish -> if (MandatoryProgress.unused(state.level.mandatory, used).isEmpty()) {
-                next.copy(
+                state.copy(
                     flow = FlowState.Ended(used),
                     outcome = Outcome.Won(state.clockMs),
-                    finalScore = FinalScore.of(next.sheet.total, next.board),
+                    finalScore = FinalScore.of(state.sheet.total, state.board),
                 )
             } else {
                 val finish = state.level.finish
-                next.copy(
+                state.copy(
                     flow = FlowState.Ended(used),
                     outcome = Outcome.Lost(finish.position, finish.openSide, state.clockMs, LossReason.MANDATORY_MISSED),
                 )
             }
             is FlowStep.Result.Leak ->
-                next.copy(flow = FlowState.Ended(used), outcome = Outcome.Lost(result.at, result.side, state.clockMs))
+                state.copy(flow = FlowState.Ended(used), outcome = Outcome.Lost(result.at, result.side, state.clockMs))
         }
     }
 }

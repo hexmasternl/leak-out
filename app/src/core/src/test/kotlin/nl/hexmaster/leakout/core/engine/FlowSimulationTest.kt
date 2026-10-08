@@ -23,6 +23,7 @@ import nl.hexmaster.leakout.core.level.PipeSection.RES
 import nl.hexmaster.leakout.core.level.PipeSection.RT
 import nl.hexmaster.leakout.core.level.PipeSection.V
 import nl.hexmaster.leakout.core.level.PipeSection.X
+import nl.hexmaster.leakout.core.level.PortalPair
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.score.ScoreSheet
@@ -268,6 +269,113 @@ class FlowSimulationTest {
         val outcome = assertIs<Outcome.Lost>(lost.outcome)
         assertEquals(p(1, 1) to Side.RIGHT, outcome.at to outcome.side)
         assertEquals(LossReason.LEAK, outcome.reason)
+    }
+
+    // --- Portal pairs ---
+
+    private fun portalLevel(ramp: Double = 0.0, pair: PortalPair = PORTAL_PAIR) =
+        engineLevel(flow = FlowSettings(10_000, 1.0, speedRampPerCell = ramp), portals = listOf(pair))
+
+    @Test
+    fun `leaving a straight into a portal enters the pair after scoring the straight`() {
+        val state = engine.start(portalLevel()).withPipes(PORTAL_ROUTE).headAt(p(1, 1), Side.LEFT, 0.5)
+        val after = engine.handle(state, Tick(600))
+        val head = flowing(after)
+        assertEquals(p(2, 1), head.position)
+        assertEquals(Side.LEFT, head.entry)
+        assertEquals(Channel.PORTAL, head.channel)
+        assertEquals(0.1, head.progress, tolerance)
+        assertEquals(10, after.score)
+    }
+
+    @Test
+    fun `passing a pair at 1 cell per second takes one second`() {
+        val inPair = engine.start(portalLevel()).withPipes(PORTAL_ROUTE).inPortalPair(0.0)
+        val at400 = flowing(engine.handle(inPair, Tick(400)))
+        assertEquals(p(2, 1), at400.position)
+        assertEquals(0.4, at400.progress, tolerance)
+        val at600 = flowing(engine.handle(inPair, Tick(600)))
+        assertEquals(Channel.PORTAL, at600.channel)
+        assertTrue(at600.progress > 0.5, "past halfway the liquid is in the exit portal")
+        val at1000 = flowing(engine.handle(inPair, Tick(1_000)))
+        assertEquals(p(2, 2), at1000.position)
+        assertEquals(Side.RIGHT, at1000.entry)
+        assertEquals(0.0, at1000.progress, tolerance)
+    }
+
+    @Test
+    fun `leaving a pair marks both portals as passed and scores nothing`() {
+        val inPair = engine.start(portalLevel()).withPipes(PORTAL_ROUTE).inPortalPair(0.5)
+        val after = engine.handle(inPair, Tick(500))
+        assertTrue(ChannelUse(p(2, 1), Channel.PORTAL) in after.flow.used)
+        assertTrue(ChannelUse(p(3, 2), Channel.PORTAL) in after.flow.used)
+        assertEquals(0, after.score)
+        assertEquals(emptyList(), after.flowPath)
+        assertEquals(emptyList(), after.awards)
+    }
+
+    @Test
+    fun `the pair works the other way round`() {
+        val reversed = PortalPair(PORTAL_PAIR.b, PORTAL_PAIR.a)
+        val state = engine.start(portalLevel(pair = reversed)).withPipes(PORTAL_ROUTE)
+        assertIs<Outcome.Won>(engine.runToEnd(atStart(state)).outcome)
+        // Into portal b and out of portal a, in front of which nothing is placed.
+        val fromB = engine.start(portalLevel()).withPipes(p(2, 2) to RB).inPortalPair(0.0, at = p(3, 2), entry = Side.LEFT)
+        val outcome = assertIs<Outcome.Lost>(engine.handle(fromB, Tick(1_000)).outcome)
+        assertEquals(p(2, 1), outcome.at)
+        assertEquals(Side.LEFT, outcome.side)
+    }
+
+    @Test
+    fun `a portal reached through a closed side leaks at the tile left`() {
+        val closed = PortalPair(Endpoint(p(2, 1), Side.TOP), PORTAL_PAIR.b)
+        val state = engine.start(portalLevel(pair = closed)).withPipes(PORTAL_ROUTE).headAt(p(1, 1), Side.LEFT, 0.0)
+        val outcome = assertIs<Outcome.Lost>(engine.handle(state, Tick(1_000)).outcome)
+        assertEquals(p(1, 1), outcome.at)
+        assertEquals(Side.RIGHT, outcome.side)
+    }
+
+    @Test
+    fun `nothing in front of the exit portal leaks at the exit portal`() {
+        val inPair = engine.start(portalLevel()).withPipes(p(1, 1) to H).inPortalPair(0.0)
+        val after = engine.handle(inPair, Tick(1_000))
+        val outcome = assertIs<Outcome.Lost>(after.outcome)
+        assertEquals(p(3, 2), outcome.at)
+        assertEquals(Side.LEFT, outcome.side)
+        assertEquals(0, after.score)
+    }
+
+    @Test
+    fun `a route through a pair is won and the pair adds no points`() {
+        val won = engine.runToEnd(atStart(engine.start(portalLevel()).withPipes(PORTAL_ROUTE)))
+        assertIs<Outcome.Won>(won.outcome)
+        assertEquals(10 + 15, won.score)
+        assertEquals(listOf(PathStep(p(1, 1), H), PathStep(p(2, 2), RB)), won.flowPath)
+    }
+
+    @Test
+    fun `one long tick passes a pair`() {
+        val state = engine.start(portalLevel()).withPipes(PORTAL_ROUTE).headAt(p(1, 1), Side.LEFT, 0.0)
+        val head = flowing(engine.handle(state, Tick(2_500)))
+        assertEquals(p(2, 2), head.position)
+        assertEquals(0.5, head.progress, tolerance)
+    }
+
+    @Test
+    fun `a pair does not count for the speed ramp`() {
+        val state = engine.start(portalLevel(ramp = 0.05)).withPipes(PORTAL_ROUTE).headAt(p(1, 1), Side.LEFT, 0.0)
+        val after = engine.handle(state, Tick(1_000 + 960)) // the H at 1.0, the pair at 1.05 cells per second (952 ms)
+        assertEquals(p(2, 2), flowing(after).position)
+        assertEquals(1, after.sectionsLeft)
+        assertEquals(1.05, after.flowSpeed, tolerance)
+    }
+
+    @Test
+    fun `a pair already passed leaks at the tile left`() {
+        val used = setOf(ChannelUse(p(2, 1), Channel.PORTAL), ChannelUse(p(3, 2), Channel.PORTAL))
+        val state = engine.start(portalLevel()).withPipes(PORTAL_ROUTE).headAt(p(1, 1), Side.LEFT, 0.0)
+        val outcome = assertIs<Outcome.Lost>(engine.handle(state.copy(flow = flowing(state).copy(used = used)), Tick(1_000)).outcome)
+        assertEquals(p(1, 1), outcome.at)
     }
 
     // --- Large ticks ---

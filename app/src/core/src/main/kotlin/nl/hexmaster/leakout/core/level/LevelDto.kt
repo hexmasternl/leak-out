@@ -19,6 +19,7 @@ internal data class LevelDto(
     val rules: RulesDto = RulesDto(),
     val stars: StarsDto,
     val mandatory: List<MandatoryDto> = emptyList(),
+    val portals: List<PortalPairDto> = emptyList(),
 ) {
     fun toLevel(): Level = Level(
         id = id,
@@ -32,6 +33,7 @@ internal data class LevelDto(
         rules = PlacementRules(rules.allowReplace, rules.replacePenaltyMs),
         stars = StarBenchmarks(stars.one, stars.two, stars.three),
         mandatory = mandatory.map { MandatorySection(Position(it.x, it.y), it.section) },
+        portals = portals.map { PortalPair(it.a.toEndpoint(), it.b.toEndpoint()) },
     )
 }
 
@@ -48,6 +50,9 @@ internal data class CellDto(val x: Int, val y: Int)
 
 @Serializable
 internal data class MandatoryDto(val x: Int, val y: Int, val section: PipeSection)
+
+@Serializable
+internal data class PortalPairDto(val a: EndpointDto, val b: EndpointDto)
 
 @Serializable
 internal data class FlowDto(

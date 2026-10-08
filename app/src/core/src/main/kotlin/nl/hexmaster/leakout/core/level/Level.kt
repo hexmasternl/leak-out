@@ -58,9 +58,30 @@ data class StarBenchmarks(val one: Int, val two: Int, val three: Int) {
 data class MandatorySection(val position: Position, val section: PipeSection)
 
 /**
+ * Two portals that link two cells of the board: liquid that enters one portal through its open
+ * side comes out of the other through that portal's open side. A pair works both ways and is
+ * placed by the level, never drawn from the stack. Each portal has the shape of an [Endpoint].
+ */
+data class PortalPair(val a: Endpoint, val b: Endpoint) {
+    /** The portal of this pair on [position], or `null` when neither is there. */
+    fun portalAt(position: Position): Endpoint? = when (position) {
+        a.position -> a
+        b.position -> b
+        else -> null
+    }
+
+    /** The other portal of this pair than the one on [position], or `null` when neither is there. */
+    fun partnerOf(position: Position): Endpoint? = when (position) {
+        a.position -> b
+        b.position -> a
+        else -> null
+    }
+}
+
+/**
  * One playable level. Instances hold concrete values only: defaults are resolved while parsing.
- * [blocked] and [mandatory] keep their entries in authored order so that validation can report
- * duplicates.
+ * [blocked], [mandatory] and [portals] keep their entries in authored order so that validation can
+ * report duplicates; the first portal pair is pair 1.
  */
 data class Level(
     val id: Int,
@@ -74,19 +95,29 @@ data class Level(
     val rules: PlacementRules,
     val stars: StarBenchmarks,
     val mandatory: List<MandatorySection> = emptyList(),
+    val portals: List<PortalPair> = emptyList(),
 ) {
     fun isBlocked(position: Position): Boolean = position in blocked
 
     /** The mandatory section on [position], or `null` when there is none. */
     fun mandatoryAt(position: Position): MandatorySection? = mandatory.firstOrNull { it.position == position }
 
+    /** The portal on [position], or `null` when there is none. */
+    fun portalAt(position: Position): Endpoint? = portals.firstNotNullOfOrNull { it.portalAt(position) }
+
+    /** The other portal of the pair whose portal is on [position], or `null` when there is no portal there. */
+    fun partnerOf(position: Position): Endpoint? = portals.firstNotNullOfOrNull { it.partnerOf(position) }
+
+    /** The cells of every portal, pair by pair. */
+    val portalCells: List<Position> get() = portals.flatMap { listOf(it.a.position, it.b.position) }
+
     /**
-     * The cells a pipe can go on: every cell of the grid except blocked cells, the start and the
-     * finish. Cells holding a mandatory section count as free.
+     * The cells a pipe can go on: every cell of the grid except blocked cells, the start, the
+     * finish and portals. Cells holding a mandatory section count as free.
      */
     val freeCells: Int
         get() {
-            val taken = (blocked + start.position + finish.position).filter { it in grid }.toSet()
+            val taken = (blocked + start.position + finish.position + portalCells).filter { it in grid }.toSet()
             return grid.columns * grid.rows - taken.size
         }
 

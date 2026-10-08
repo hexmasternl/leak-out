@@ -19,11 +19,12 @@ import kotlin.math.abs
  */
 object TipScheduler {
     /**
-     * The tips due now, in the order they are shown: intro, mandatory, cross, reservoir. Nothing is
-     * due once the attempt has ended. The intro tour and the mandatory tip only come [atLevelStart];
-     * the cross and reservoir tips come whenever an `X` / `RES` sits in a stack slot whose index is in
-     * [fullyVisibleSlots], so a section on a cut-off top of the stack waits until it moves into view.
-     * [mandatory] are the level's mandatory section cells; none until levels can have them.
+     * The tips due now, in the order they are shown: intro, mandatory, portal, cross, reservoir.
+     * Nothing is due once the attempt has ended. The intro tour, the mandatory tip and the portal tip
+     * only come [atLevelStart]; the cross and reservoir tips come whenever an `X` / `RES` sits in a
+     * stack slot whose index is in [fullyVisibleSlots], so a section on a cut-off top of the stack
+     * waits until it moves into view. [mandatory] are the level's mandatory section cells, and
+     * [portalPairs] the number of portal pairs the level has.
      */
     fun dueTips(
         stack: PipeStack,
@@ -32,15 +33,24 @@ object TipScheduler {
         atLevelStart: Boolean,
         fullyVisibleSlots: Set<Int>,
         mandatory: Collection<Position> = emptyList(),
+        portalPairs: Int = 0,
     ): List<TipId> {
         if (outcome != Outcome.Playing) return emptyList()
         return buildList {
             if (atLevelStart && TipId.Intro !in seen) add(TipId.Intro)
             if (atLevelStart && mandatory.isNotEmpty() && TipId.Mandatory !in seen) add(TipId.Mandatory)
+            if (atLevelStart && portalPairs > 0 && TipId.Portal !in seen) add(TipId.Portal)
             if (TipId.Cross !in seen && tipSlot(stack, PipeSection.X, fullyVisibleSlots) != null) add(TipId.Cross)
             if (TipId.Reservoir !in seen && tipSlot(stack, PipeSection.RES, fullyVisibleSlots) != null) add(TipId.Reservoir)
         }
     }
+
+    /**
+     * The cells the portal tip highlights and links: both portals of pair 1, in the level's order.
+     * The other pairs are not highlighted, so the player sees which two cells belong together.
+     */
+    fun portalTipCells(level: Level): List<Position> =
+        level.portals.firstOrNull()?.let { listOf(it.a.position, it.b.position) }.orEmpty()
 
     /**
      * The stack slot to highlight for a [section] tip: the lowest fully visible slot holding it

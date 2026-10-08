@@ -15,7 +15,7 @@
 ## 3. Behaviour script
 
 - [ ] 3.1 Write `assets/js/tester-invite.js`: open the dialog from the menu item and button (preventing navigation), auto-open after 15 seconds unless dismissed or already open, record a dismissal in `localStorage` on any close, with all storage access in `try/catch`; load it from `baseof.html` and verify the dialog opens from both triggers in `hugo server`
-- [ ] 3.2 Add `website/tests/tester-invite.test.js` covering auto-open when not dismissed, no auto-open after dismissal, no second open when already open, dismissal recorded on close, and behaviour when storage throws; verify `cd website && npm test` passes
+- [x] 3.2 Add `website/tests/tester-invite.test.js` covering auto-open when not dismissed, no auto-open after dismissal, no second open when already open, dismissal recorded on close, and behaviour when storage throws; verify `cd website && npm test` passes
 - [ ] 3.3 Check in `hugo server` with JavaScript disabled that the menu item leads to the home page section and no dialog opens, and with JavaScript enabled that Escape closes the dialog and focus returns to the menu item
 
 ## 4. Documentation

@@ -7,6 +7,6 @@ param location = 'westeurope'
 param locationAbbreviation = 'weu'
 param sku = 'Free'
 
-// Set to the custom domain (for example 'leakout.hexmaster.nl') once its CNAME record points at
-// the Static Web App's default host name.
-param customDomain = ''
+// The site's custom domain. Its CNAME record must point at the Static Web App's default host
+// name (red-sea-080a37703.6.azurestaticapps.net) before a deployment; empty for none.
+param customDomain = 'leakout.hexmaster.nl'

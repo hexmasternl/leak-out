@@ -3,8 +3,10 @@ using HexMaster.LeakOut.Players.Abstractions.Services;
 using HexMaster.LeakOut.Scores.Abstractions.DataTransferObjects;
 using HexMaster.LeakOut.Scores.Features.GetLevelScoresAroundPlayer;
 using HexMaster.LeakOut.Scores.Features.GetLevelTopScores;
+using HexMaster.LeakOut.Scores.Features.GetPublicLevelTopScores;
 using HexMaster.LeakOut.Scores.Features.SubmitScore;
 using HexMaster.LeakOut.Scores.Observability;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 
@@ -28,6 +30,9 @@ public sealed class ScoresModuleRegistrationTests
             scope.ServiceProvider.GetRequiredService<IQueryHandler<GetLevelTopScoresQuery, LevelLeaderboardDto>>());
         Assert.IsType<GetLevelScoresAroundPlayerQueryHandler>(
             scope.ServiceProvider.GetRequiredService<IQueryHandler<GetLevelScoresAroundPlayerQuery, LevelLeaderboardDto>>());
+        Assert.IsType<GetPublicLevelTopScoresQueryHandler>(
+            scope.ServiceProvider.GetRequiredService<IQueryHandler<GetPublicLevelTopScoresQuery, PublicLevelLeaderboardDto>>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<IMemoryCache>());
         Assert.IsType<SystemClock>(scope.ServiceProvider.GetRequiredService<IClock>());
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<ScoresMetrics>());
     }

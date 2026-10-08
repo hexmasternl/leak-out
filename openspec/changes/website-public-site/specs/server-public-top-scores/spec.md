@@ -22,19 +22,31 @@ The score server SHALL serve the public top scores of a level without authentica
 - **THEN** the response is 400 Bad Request with a validation error for the level
 
 ### Requirement: Website origin allowed
-The public top scores endpoint SHALL allow cross-origin requests from the website's configured origins and SHALL NOT allow them from other origins.
+The public top scores endpoint SHALL allow cross-origin GET requests from the website's configured origins, which by default is `https://leakout.hexmaster.nl`, and SHALL NOT allow them from other origins.
 
 #### Scenario: Request from the website
-- **WHEN** a browser sends a request from the website's origin
+- **WHEN** a browser sends a request from `https://leakout.hexmaster.nl`
 - **THEN** the response carries a CORS header that allows that origin
+
+#### Scenario: Preflight from the website
+- **WHEN** a browser sends a CORS preflight request from `https://leakout.hexmaster.nl` without an access token
+- **THEN** the response allows that origin and the GET method
 
 #### Scenario: Request from another site
 - **WHEN** a browser sends a request from an origin that is not configured
 - **THEN** the response carries no CORS header that allows that origin
 
-### Requirement: Public endpoint protection
-The public top scores endpoint SHALL be rate limited per client and its responses SHALL be cacheable for a short time.
+### Requirement: Server-side cache of the public top scores
+The score server SHALL keep the public top scores of each level in memory for 30 minutes after reading them, and SHALL answer requests for that level from memory during that time. A failed read SHALL NOT be kept. Responses SHALL be cacheable by browsers for a short time.
 
-#### Scenario: Too many requests
-- **WHEN** one client exceeds the rate limit
-- **THEN** further requests get 429 Too Many Requests until the limit window passes
+#### Scenario: Repeated requests
+- **WHEN** the public top scores of level 3 are requested twice within 30 minutes
+- **THEN** the scores are read from the database only once and both responses are the same
+
+#### Scenario: Cache expired
+- **WHEN** the public top scores of level 3 are requested more than 30 minutes after they were read
+- **THEN** the scores are read from the database again
+
+#### Scenario: Read failed
+- **WHEN** reading the public top scores of level 3 fails and they are requested again
+- **THEN** the scores are read from the database again

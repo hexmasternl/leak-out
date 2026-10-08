@@ -16,7 +16,7 @@ faq:
   - question: "¿Cómo consigo más estrellas?"
     answer: "Haz que el líquido pase por más secciones, usa codos y cruces (una segunda pasada por un cruce vale 50 puntos) y no dejes secciones a las que nunca llega el líquido: cada una resta 3 puntos. Todos los puntos están en las [reglas](/es/rules/)."
   - question: "¿Cómo aparezco en la clasificación?"
-    answer: "Inicia sesión en Google Play Juegos desde los ajustes del juego y gana un nivel. Tu mejor puntuación en cada nivel se envía a la clasificación, que muestra el top 25 de cada nivel."
+    answer: "Inicia sesión en Google Play Juegos desde los ajustes del juego y gana un nivel. Tu mejor puntuación en cada nivel se envía a la clasificación, que muestra el top 25 de cada nivel. Se actualiza cada 30 minutos, así que una nueva puntuación puede tardar hasta media hora en aparecer."
   - question: "¿Qué nombre aparece en la clasificación?"
     answer: "Tu nombre visible de Google Play Juegos. Puedes cambiarlo en la aplicación Google Play Juegos."
   - question: "He encontrado un error o tengo una idea. ¿Dónde lo cuento?"

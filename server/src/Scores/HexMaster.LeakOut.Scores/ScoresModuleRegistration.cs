@@ -2,6 +2,7 @@ using HexMaster.LeakOut.Core;
 using HexMaster.LeakOut.Scores.Abstractions.DataTransferObjects;
 using HexMaster.LeakOut.Scores.Features.GetLevelScoresAroundPlayer;
 using HexMaster.LeakOut.Scores.Features.GetLevelTopScores;
+using HexMaster.LeakOut.Scores.Features.GetPublicLevelTopScores;
 using HexMaster.LeakOut.Scores.Features.SubmitScore;
 using HexMaster.LeakOut.Scores.Observability;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,10 +22,12 @@ public static class ScoresModuleRegistration
         services.AddMetrics();
         services.TryAddSingleton<IClock, SystemClock>();
         services.TryAddSingleton<ScoresMetrics>();
+        services.AddMemoryCache();
 
         services.AddScoped<ICommandHandler<SubmitScoreCommand, SubmitScoreResult>, SubmitScoreCommandHandler>();
         services.AddScoped<IQueryHandler<GetLevelTopScoresQuery, LevelLeaderboardDto>, GetLevelTopScoresQueryHandler>();
         services.AddScoped<IQueryHandler<GetLevelScoresAroundPlayerQuery, LevelLeaderboardDto>, GetLevelScoresAroundPlayerQueryHandler>();
+        services.AddScoped<IQueryHandler<GetPublicLevelTopScoresQuery, PublicLevelLeaderboardDto>, GetPublicLevelTopScoresQueryHandler>();
 
         return services;
     }

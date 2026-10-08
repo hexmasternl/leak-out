@@ -36,4 +36,9 @@ GET {{HexMaster.LeakOut.Api_HostAddress}}/api/levels/4/scores/around-me
 Authorization: Bearer {{signIn.response.body.$.accessToken}}
 Accept: application/json
 
+### Get the public top 25 of a level, as the website does: no token needed. Cached on the server for 30 minutes.
+GET {{HexMaster.LeakOut.Api_HostAddress}}/api/public/levels/4/scores/top
+Origin: https://leakout.hexmaster.nl
+Accept: application/json
+
 ###

@@ -16,7 +16,7 @@ faq:
   - question: "Wie bekomme ich mehr Sterne?"
     answer: "Lass die Flüssigkeit durch mehr Teile fließen, nutze Kurven und Kreuze (ein zweiter Durchfluss durch ein Kreuz bringt 50 Punkte) und lass keine Teile liegen, die die Flüssigkeit nie erreicht: Jedes kostet 3 Punkte. Alle Punkte findest du in den [Spielregeln](/de/rules/)."
   - question: "Wie komme ich in die Bestenliste?"
-    answer: "Melde dich in den Einstellungen des Spiels bei Google Play Games an und gewinne ein Level. Deine beste Punktzahl in jedem Level geht an die Bestenliste, die die Top 25 jedes Levels zeigt."
+    answer: "Melde dich in den Einstellungen des Spiels bei Google Play Games an und gewinne ein Level. Deine beste Punktzahl in jedem Level geht an die Bestenliste, die die Top 25 jedes Levels zeigt. Sie wird alle 30 Minuten aktualisiert, daher kann es bis zu einer halben Stunde dauern, bis eine neue Punktzahl erscheint."
   - question: "Welcher Name steht in der Bestenliste?"
     answer: "Dein Anzeigename bei Google Play Games. Du kannst ihn in der Google Play Spiele-App ändern."
   - question: "Ich habe einen Fehler gefunden oder eine Idee. Wo kann ich das melden?"

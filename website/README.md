@@ -32,7 +32,7 @@ Two workflows handle the website, separately from the app and the server:
 | `.github/workflows/website-pull-request.yml` | every pull request into `development` | Reports the check **website / build**: builds the site with `--panicOnWarning`, runs `npm test` and builds the Bicep. Skipped (counts as passed) when the pull request does not change `website/` or a `website-*` workflow. |
 | `.github/workflows/website-deploy.yml` | a push to `main` that changes `website/` or the workflow, or by hand (`workflow_dispatch`) | Tests the leaderboard script, deploys `infrastructure/main.bicep` at subscription scope, builds the site for its public address, reads the Static Web App's deployment token, uploads the built site and smoke-tests the pages, sitemap, `robots.txt` and the security headers. |
 
-The infrastructure is the resource group `rg-leakout-web-prod-weu` with the Static Web App `stapp-leakout-prod-weu` (Free tier, West Europe). It is separate from the score server's resource group, so either can be changed or removed on its own.
+The infrastructure is the resource group `rg-leakout-web-prod-weu` with the Static Web App `stapp-leakout-prod-weu` (Free tier, West Europe) and its custom domain **`leakout.hexmaster.nl`**. It is separate from the score server's resource group, so either can be changed or removed on its own. The site is built for `https://leakout.hexmaster.nl/`; the Static Web App's own address, `https://red-sea-080a37703.6.azurestaticapps.net`, keeps working.
 
 ### Secrets and variables
 
@@ -43,7 +43,7 @@ The deploy job signs in to Azure with OpenID Connect, using **the same app regis
 | `AZURE_PROD_CLIENT_ID` | secret | yes | Client id of the app registration with the federated credential (shared with the server) |
 | `AZURE_PROD_TENANT_ID` | secret | yes | Its tenant id (shared with the server) |
 | `AZURE_PROD_SUBSCRIPTION_ID` | secret | yes | The subscription to deploy into (shared with the server) |
-| `WEBSITE_BASE_URL` | variable | no | The site's public address with a trailing slash, for example `https://leakout.hexmaster.nl/`. Canonical, `hreflang`, Open Graph and sitemap URLs use it. Without it the site is built for the Static Web App's own address. |
+| `WEBSITE_BASE_URL` | variable | no | Overrides the address the site is built for, with a trailing slash. Without it the site is built for the custom domain in `infrastructure/main.bicepparam` (`https://leakout.hexmaster.nl/`), or for the Static Web App's own address when no custom domain is set. Canonical, `hreflang`, Open Graph and sitemap URLs use it. |
 | `LEAKOUT_SCORE_SERVER_URL` | variable | no | The score server the leaderboard reads; defaults to `scoreServerUrl` in `src/hugo.toml`. The Content Security Policy follows it. |
 
 **No deployment token is stored anywhere.** The workflow reads it with `az staticwebapp secrets list` during each run and masks it in the log. The app registration needs permission to create resource groups and deploy at subscription scope, which it already has for the server (Contributor on the subscription).
@@ -53,14 +53,18 @@ If the website should ever use a different app registration: create one, give it
 ### First deployment
 
 1. Merge the website into `main` (through `development`), or run **website-deploy** by hand from the Actions tab (`workflow_dispatch`). The first run creates the resource group and the Static Web App.
-2. The run's summary shows the default address, `https://<name>.azurestaticapps.net`. Add that origin (and the custom domain, once set) to the score server's allowed CORS origins so the leaderboard can load scores.
+2. The run's summary shows the default address, `https://<name>.azurestaticapps.net`.
 3. Make **website / build** a required status check for `development` in the branch protection rules.
 
-### Custom domain (optional)
+### Custom domain
 
-1. Create a CNAME record from the domain (for example `leakout.hexmaster.nl`) to the Static Web App's default host name.
-2. Set `customDomain` in `infrastructure/main.bicepparam` and push to `main`; Azure validates the CNAME and issues the certificate.
-3. Set the `WEBSITE_BASE_URL` variable to the new address and add the origin to the score server's CORS settings.
+The site's domain is `leakout.hexmaster.nl`, set as `customDomain` in `infrastructure/main.bicepparam`. Its DNS has a CNAME record `leakout.hexmaster.nl → red-sea-080a37703.6.azurestaticapps.net`; Azure validates that record (`cname-delegation`) and issues and renews the certificate itself. The record must stay in place: a deployment fails when the domain no longer points at the Static Web App.
+
+To move to another domain: create its CNAME to the Static Web App's default host name first, then change `customDomain`, push to `main`, and add the new origin to the score server's `Website:AllowedOrigins` (see below).
+
+### Leaderboard and the score server
+
+The leaderboard page reads `GET /api/public/levels/{level}/scores/top` on the score server in the visitor's browser ([server/README.md](../server/README.md#public-endpoints)). The server only allows that cross-origin request from `https://leakout.hexmaster.nl`, so the leaderboard shows its error state on any other address, including the `azurestaticapps.net` one and local previews. To test locally against the real server, add the local origin to `Website:AllowedOrigins` of a locally running server. The server keeps each level's top 25 for 30 minutes, which the leaderboard page and the FAQ tell visitors.
 
 ### Rolling back
 
@@ -70,7 +74,7 @@ The website is independent of the app and the server: disable `website-deploy.ym
 
 - **Search engines.** Every page has its own title and description, a canonical link, `hreflang` links to its translations plus `x-default` (English), and `robots` metadata. Hugo writes a sitemap index with one sitemap per language, and `robots.txt` points to it. The home page carries `VideoGame` and `WebSite` structured data and the FAQ page `FAQPage` data, all generated in `layouts/_partials/seo.html`. Missing pages answer 404 with a `noindex` page that links to every language.
 - **Sharing.** Every page has Open Graph and Twitter card metadata. The share image is a JPEG copy of the feature graphic (Hugo makes it at build time), because some crawlers do not read WebP. Its alternative text is translated.
-- **Absolute URLs.** Canonical, `hreflang`, Open Graph and sitemap URLs must be absolute, so the deploy workflow builds the site only after the infrastructure step, when the address is known (see `WEBSITE_BASE_URL`). A local build without `--baseURL` produces root-relative URLs, which is fine for previews.
+- **Absolute URLs.** Canonical, `hreflang`, Open Graph and sitemap URLs must be absolute, so the deploy workflow builds the site only after the infrastructure step, for the custom domain it reports (or `WEBSITE_BASE_URL`). A local build without `--baseURL` produces root-relative URLs, which is fine for previews.
 - **Performance.** Images are responsive WebP (`srcset` of 480, 800 and full width), the hero image loads with high priority and the rest lazily, both fonts are preloaded, CSS and JavaScript are minified and fingerprinted.
 - **Headers.** `assets/site/staticwebapp.config.json` is a template rendered into the site root: it caches fingerprinted CSS and JavaScript for a year and images and fonts for longer periods, rewrites 404s to `/404.html`, and sends a Content Security Policy that allows connections only to the site and the score server, plus HSTS, `nosniff`, `X-Frame-Options`, a referrer policy and a permissions policy. The web app manifest (`assets/site/site.webmanifest`) is rendered the same way.
 

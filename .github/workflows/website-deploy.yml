@@ -23,44 +23,19 @@ env:
   HUGO_VERSION: 0.165.0
 
 jobs:
-  build:
-    name: website / build
+  test:
+    name: website / test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-
-      - name: Install Hugo extended ${{ env.HUGO_VERSION }}
-        run: |
-          curl --fail --silent --show-error --location --output "$RUNNER_TEMP/hugo.deb" \
-            "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.deb"
-          sudo dpkg -i "$RUNNER_TEMP/hugo.deb"
-          hugo version
 
       - name: Test the leaderboard script
         working-directory: website
         run: npm test
 
-      # Optional repository variables override hugo.toml: WEBSITE_BASE_URL (the site's public address,
-      # for absolute hreflang links) and LEAKOUT_SCORE_SERVER_URL (the score server the leaderboard reads).
-      - name: Build the site
-        env:
-          WEBSITE_BASE_URL: ${{ vars.WEBSITE_BASE_URL }}
-          HUGO_PARAMS_SCORESERVERURL: ${{ vars.LEAKOUT_SCORE_SERVER_URL }}
-        run: |
-          [[ -z "$HUGO_PARAMS_SCORESERVERURL" ]] && unset HUGO_PARAMS_SCORESERVERURL
-          hugo --source website/src --panicOnWarning --minify --destination "$GITHUB_WORKSPACE/public" \
-            ${WEBSITE_BASE_URL:+--baseURL "$WEBSITE_BASE_URL"}
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: website
-          path: public
-          if-no-files-found: error
-          retention-days: 7
-
   deploy:
     name: website / deploy
-    needs: build
+    needs: test
     runs-on: ubuntu-latest
     environment: production
     permissions:
@@ -73,10 +48,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v8
-        with:
-          name: website
-          path: public
+      - name: Install Hugo extended ${{ env.HUGO_VERSION }}
+        run: |
+          curl --fail --silent --show-error --location --output "$RUNNER_TEMP/hugo.deb" \
+            "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.deb"
+          sudo dpkg -i "$RUNNER_TEMP/hugo.deb"
+          hugo version
 
       # The same federated credential as the server deployment (environment "production").
       - uses: azure/login@v3
@@ -98,6 +75,21 @@ jobs:
           echo "resource-group=$(jq -r '.resourceGroupName.value' <<< "$outputs")" >> "$GITHUB_OUTPUT"
           echo "name=$(jq -r '.staticWebAppName.value' <<< "$outputs")" >> "$GITHUB_OUTPUT"
           echo "hostname=$(jq -r '.defaultHostname.value' <<< "$outputs")" >> "$GITHUB_OUTPUT"
+
+      # Built after the infrastructure so canonical, hreflang, Open Graph and sitemap URLs are absolute:
+      # WEBSITE_BASE_URL (the custom domain) when set, otherwise the Static Web App's own address.
+      # LEAKOUT_SCORE_SERVER_URL optionally overrides the score server in hugo.toml (also in the CSP).
+      - name: Build the site
+        env:
+          WEBSITE_BASE_URL: ${{ vars.WEBSITE_BASE_URL }}
+          DEFAULT_HOSTNAME: ${{ steps.infrastructure.outputs.hostname }}
+          HUGO_PARAMS_SCORESERVERURL: ${{ vars.LEAKOUT_SCORE_SERVER_URL }}
+        run: |
+          [[ -z "$HUGO_PARAMS_SCORESERVERURL" ]] && unset HUGO_PARAMS_SCORESERVERURL
+          base_url="${WEBSITE_BASE_URL:-https://$DEFAULT_HOSTNAME/}"
+          echo "Building for $base_url"
+          hugo --source website/src --panicOnWarning --minify --baseURL "$base_url" \
+            --destination "$GITHUB_WORKSPACE/public"
 
       # The deployment token is read at run time and masked; it is never stored as a secret.
       - name: Read the deployment token
@@ -128,9 +120,11 @@ jobs:
         env:
           HOSTNAME: ${{ steps.infrastructure.outputs.hostname }}
         run: |
-          for path in / /nl/ /fr/ /de/ /es/ /rules/ /faq/ /leaderboard/; do
+          for path in / /nl/ /fr/ /de/ /es/ /rules/ /faq/ /leaderboard/ /sitemap.xml /robots.txt; do
             curl --fail --silent --show-error --max-time 20 --output /dev/null "https://$HOSTNAME$path"
             echo "https://$HOSTNAME$path is up"
           done
+          curl --silent --show-error --head "https://$HOSTNAME/" | grep -i '^content-security-policy:' \
+            || { echo "::error::The Content-Security-Policy header is missing"; exit 1; }
           echo "### Deployed" >> "$GITHUB_STEP_SUMMARY"
           echo "https://$HOSTNAME" >> "$GITHUB_STEP_SUMMARY"

@@ -1,4 +1,14 @@
-{{- /* A raster image from assets/images, resized to WebP. Params: src, alt, width, class, eager. */ -}}
+{{- /* A raster image from assets/images as responsive WebP. Params: src, alt, width (largest), sizes, class, eager.
+       An eager image is the page's largest above-the-fold image, so it also gets fetchpriority=high. */ -}}
 {{- $image := resources.Get (printf "images/%s" .src) }}
-{{- $webp := $image.Resize (printf "%dx webp q82" (.width | default 1200)) }}
-<img{{ with .class }} class="{{ . }}"{{ end }} src="{{ $webp.RelPermalink }}" alt="{{ .alt }}" width="{{ $webp.Width }}" height="{{ $webp.Height }}"{{ if not .eager }} loading="lazy"{{ end }} decoding="async">
+{{- $max := .width | default 1200 }}
+{{- $widths := slice }}
+{{- range slice 480 800 $max }}{{ if and (le . $max) (le . $image.Width) }}{{ $widths = $widths | append . }}{{ end }}{{ end }}
+{{- $widths = $widths | uniq }}
+{{- $srcset := slice }}
+{{- $largest := "" }}
+{{- range $widths }}
+  {{- $largest = $image.Resize (printf "%dx webp q82" .) }}
+  {{- $srcset = $srcset | append (printf "%s %dw" $largest.RelPermalink .) }}
+{{- end }}
+<img{{ with .class }} class="{{ . }}"{{ end }} src="{{ $largest.RelPermalink }}" srcset="{{ delimit $srcset ", " }}" sizes="{{ .sizes | default "100vw" }}" alt="{{ .alt }}" width="{{ $largest.Width }}" height="{{ $largest.Height }}"{{ if .eager }} fetchpriority="high"{{ else }} loading="lazy"{{ end }} decoding="async">

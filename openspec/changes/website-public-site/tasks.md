@@ -33,5 +33,5 @@
 
 ## 6. Integration
 
-- [ ] 6.1 Run an automated accessibility check (for example `pa11y-ci` or axe) over the built site and fix what it reports; verify it reports no missing alternatives, titles, language attributes or contrast failures
+- [x] 6.1 Run an automated accessibility check (for example `pa11y-ci` or axe) over the built site and fix what it reports; verify it reports no missing alternatives, titles, language attributes or contrast failures
 - [ ] 6.2 After merging to `main`, run `website-deploy.yml`, then verify the live site in all five languages, the feedback links, and the leaderboard against the deployed server endpoint

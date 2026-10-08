@@ -5,15 +5,15 @@ description: "The rules of Leak Out: connect the start pipe to the finish pipe w
 
 **Connect the start pipe to the finish pipe with sections from your stack, before the liquid leaks out.** That is the whole goal. Here is how it works.
 
-### The playing field
+## The playing field
 
 Every level is a grid of cells, the playing field. Somewhere on it sit two fixed pipes: the **start pipe**, with the brass valve, where the liquid comes from, and the **finish pipe**, with the green ring, where it has to go. Each has one open end. Some levels have walls: blocked cells you have to build around. Large levels can be panned with one finger and zoomed with two.
 
-### The stack
+## The stack
 
 On the left you see your **stack** of pipe sections. You can't choose your next piece: only the highlighted section at the bottom can be placed, and the ones above it show what's coming next. Drag that section onto an empty cell to place it. There is no way to throw a section away, so plan ahead and find a spot for awkward pieces.
 
-### Pipe sections
+## Pipe sections
 
 - **Straights** run left to right or top to bottom.
 - **Corners** turn the flow a quarter turn.
@@ -22,13 +22,13 @@ On the left you see your **stack** of pipe sections. You can't choose your next 
 
 Changed your mind? Drop a new section on a pipe the liquid hasn't reached yet to replace it. Replacing takes a moment, and the liquid won't wait for you.
 
-### The flowing liquid
+## The flowing liquid
 
 When a level starts, a countdown runs. When it reaches zero, liquid starts flowing out of the start pipe and follows your pipes wherever they lead. **Reach the finish and you win.** If the liquid finds an open end, runs into a wall, enters a section from a side without an opening or reaches the finish from the wrong side, it **leaks out** and the level is lost. You can then try again.
 
 Finished your route early? A fast forward button appears: tap it to make the liquid race to the finish.
 
-### Points
+## Points
 
 Every section the liquid flows through earns points:
 
@@ -39,6 +39,6 @@ Every section the liquid flows through earns points:
 
 Sections you placed but the liquid never reached cost 3 points each at the end, so a tidy pipeline scores better than a sprawling one.
 
-### Stars
+## Stars
 
 Your final score earns up to **three stars**. Each level sets its own thresholds. Winning a level unlocks the next one, and you can always come back to perfect your route and collect the stars you missed.

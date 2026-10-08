@@ -19,6 +19,7 @@ public sealed class ScoresMetrics
     public const string SubmitScoreActivityName = "scores.submit_score";
     public const string GetLevelTopScoresActivityName = "scores.get_level_top_scores";
     public const string GetLevelScoresAroundPlayerActivityName = "scores.get_level_scores_around_player";
+    public const string GetPublicLevelTopScoresActivityName = "scores.get_public_level_top_scores";
 
     public const string OutcomeSuccess = "success";
     public const string OutcomeNewBest = "new_best";
@@ -27,6 +28,7 @@ public sealed class ScoresMetrics
 
     public const string LeaderboardKindTop = "top";
     public const string LeaderboardKindAroundPlayer = "around_player";
+    public const string LeaderboardKindPublicTop = "public_top";
 
     public static readonly ActivitySource ActivitySource = new(Name);
 
@@ -69,7 +71,7 @@ public sealed class ScoresMetrics
     public void ScoreSubmissionFailed(TimeSpan elapsed) =>
         RecordSubmission(OutcomeError, elapsed);
 
-    /// <summary>Records a served leaderboard of kind <see cref="LeaderboardKindTop"/> or <see cref="LeaderboardKindAroundPlayer"/>.</summary>
+    /// <summary>Records a served leaderboard of kind <see cref="LeaderboardKindTop"/>, <see cref="LeaderboardKindAroundPlayer"/> or <see cref="LeaderboardKindPublicTop"/>.</summary>
     public void LeaderboardServed(string kind, TimeSpan elapsed) =>
         RecordLeaderboard(kind, OutcomeSuccess, elapsed);
 

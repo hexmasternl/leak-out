@@ -1,6 +1,6 @@
 {{ define "main" }}
 <article class="section">
-  <div class="container prose faq">
+  <div class="container"><div class="prose faq">
     <h1>{{ .Title }}</h1>
     {{ .Content }}
     {{- range .Params.faq }}
@@ -9,6 +9,6 @@
       <div>{{ .answer | markdownify }}</div>
     </details>
     {{- end }}
-  </div>
+  </div></div>
 </article>
 {{ end }}

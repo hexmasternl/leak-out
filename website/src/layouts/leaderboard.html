@@ -17,11 +17,11 @@
          data-locale="{{ site.Language.Locale }}"
          data-strings="{{ $strings | jsonify }}">
       <form class="level-chooser" id="level-chooser">
-        <button type="button" class="button button-secondary" id="level-previous" aria-label="{{ T "previousLevel" }}">‹</button>
         <label for="level-input">{{ T "level" }}</label>
+        <button type="button" class="button button-secondary" id="level-previous" aria-label="{{ T "previousLevel" }}">‹</button>
         <input id="level-input" name="level" type="number" inputmode="numeric" min="1" max="{{ site.Params.levelCount }}" value="1" required>
-        <button type="submit" class="button button-secondary">{{ T "showLevel" }}</button>
         <button type="button" class="button button-secondary" id="level-next" aria-label="{{ T "nextLevel" }}">›</button>
+        <button type="submit" class="button button-secondary">{{ T "showLevel" }}</button>
       </form>
       <h2 class="leaderboard-caption" id="leaderboard-caption">{{ T "topScoresOf" }} 1</h2>
       <div id="leaderboard-status" class="leaderboard-status" role="status" aria-live="polite"></div>

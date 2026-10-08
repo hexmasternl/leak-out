@@ -1,4 +1,4 @@
-# database-migrations Specification
+# server-database-migrations Specification
 
 ## Purpose
 

@@ -1,4 +1,4 @@
-# level-leaderboard Specification
+# server-level-leaderboard Specification
 
 ## Purpose
 

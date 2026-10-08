@@ -1,4 +1,4 @@
-# azure-hosting Specification
+# server-azure-hosting Specification
 
 ## Purpose
 

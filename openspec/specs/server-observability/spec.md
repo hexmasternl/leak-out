@@ -1,4 +1,4 @@
-# observability Specification
+# server-observability Specification
 
 ## Purpose
 

@@ -1,4 +1,4 @@
-# player-authentication Specification
+# server-player-authentication Specification
 
 ## Purpose
 

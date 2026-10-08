@@ -1,4 +1,4 @@
-# score-submission Specification
+# server-score-submission Specification
 
 ## Purpose
 

@@ -465,22 +465,21 @@ private fun <T> GameSession.select(read: GameSession.() -> T): T {
 }
 
 /**
- * Sends a tick to the engine every frame while the game is not [paused]. The loop ends on pause and
- * starts again on resume with a first delta of 0, so no time from the pause leaks in. It is an
- * infinite animation, so Compose tests only run it when they drive the clock themselves
- * (`autoAdvance = false`).
+ * Sends ticks to the engine while the game is not [paused] and the session [GameSession.needsClock]
+ * (spec `game-play-frame-budget`): paced by a [TickPacer], so at most about 60 a second. The loop
+ * ends on pause, and once an ended attempt is still, and starts again on resume or restart with a
+ * first delta of 0, so no time from the pause leaks in. It is an infinite animation, so Compose
+ * tests only run it when they drive the clock themselves (`autoAdvance = false`).
  */
 @Composable
 private fun GameClock(session: GameSession, paused: Boolean) {
-    LaunchedEffect(session, paused) {
-        if (paused) return@LaunchedEffect
-        var last = -1L
+    val needsClock = session.select { needsClock }
+    LaunchedEffect(session, paused, needsClock) {
+        if (paused || !needsClock) return@LaunchedEffect
+        val pacer = TickPacer()
         while (true) {
             withInfiniteAnimationFrameNanos { now ->
-                if (last < 0) last = now
-                val dtMs = (now - last) / 1_000_000
-                last += dtMs * 1_000_000
-                session.send(GameCommand.Tick(dtMs))
+                pacer.onFrame(now)?.let { dtMs -> session.send(GameCommand.Tick(dtMs)) }
             }
         }
     }

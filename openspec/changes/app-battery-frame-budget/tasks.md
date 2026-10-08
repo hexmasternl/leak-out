@@ -6,7 +6,7 @@ Tracks [#91](https://github.com/hexmasternl/leak-out/issues/91).
 
 - [x] 1.1 Add `GameSession.needsClock` (design decision 1) with JVM tests in `GameSessionTest`/`GameSessionWinTest`: true while playing; after a loss true until `LeakTiming.EFFECT_MS` and while awards are visible, false after; after a win true until the end of the tally and while awards are visible, false after; true again after a restart. Verify with `./gradlew :app:testDebugUnitTest --tests '*GameSession*'`
 - [x] 1.2 Make `EndpointGlow.finish` steady at 60 % after a loss (decision 2) and pass the lost state from `PlayingField`. Extend `EndpointsTest` (lost → `STEADY` at any `nowMs`; won → 0; playing → pulse). Verify with `./gradlew :app:testDebugUnitTest --tests '*Endpoints*'`
-- [ ] 1.3 Key `GameClock` on `needsClock` so it returns without looping when it is false. Add an instrumented test (in `GameEngineScreenTest` or a new `GameClockIdleTest`) with `autoAdvance = false`: lose a level, advance past the leak effect, check that `session.state.clockMs` no longer changes over further frames and that the lost dialog is shown. Do the same for a win after the tally. Restart and check that the clock runs again. Verify by running only that test class on the emulator
+- [x] 1.3 Key `GameClock` on `needsClock` so it returns without looping when it is false. Add an instrumented test (in `GameEngineScreenTest` or a new `GameClockIdleTest`) with `autoAdvance = false`: lose a level, advance past the leak effect, check that `session.state.clockMs` no longer changes over further frames and that the lost dialog is shown. Do the same for a win after the tally. Restart and check that the clock runs again. Verify by running only that test class on the emulator
 
 ## 2. Tick cap
 

@@ -48,5 +48,23 @@ expect_fail "no arguments" "Pass --labels or --manual"
 expect_fail "unknown argument" "Unknown argument" --priority 5
 expect_fail "labels without a value" "--labels needs a value" --labels
 
+# Reads the output back the way the step "Resolve in-app update priority" in
+# .github/workflows/deploy-play-internal.yml does; keep the two loops the same.
+read_env() { # <args...>
+  (
+    while IFS='=' read -r key value; do export "$key=$value"; done < <(bash "$script" "$@")
+    printf '%s|%s|%s' "$UPDATE_PRIORITY" "$UPDATE_KIND" "$UPDATE_SOURCE"
+  )
+}
+expect_read() { # <name> <expected priority|kind|source> <args...>
+  local name="$1" expected="$2" out
+  shift 2
+  if out=$(read_env "$@" 2>&1) && [ "$out" = "$expected" ]; then echo "ok   $name"
+  else echo "FAIL $name: expected '$expected', got '$out'"; failures=$((failures + 1)); fi
+}
+
+expect_read "label read back as the workflow does" "5|required|pull request label" --labels "update-required"
+expect_read "manual input read back as the workflow does" "0|optional|manual input" --manual false
+
 if (( failures > 0 )); then echo "$failures test(s) failed"; exit 1; fi
 echo "all tests passed"

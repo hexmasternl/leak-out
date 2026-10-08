@@ -1,5 +1,6 @@
 // The API container app: pulls the API image from the existing registry, receives its
-// configuration as secrets and scales on HTTP traffic from 0 replicas.
+// configuration as secrets and scales on HTTP traffic between minReplicas (default 1, so a
+// warm replica avoids cold starts) and maxReplicas.
 
 @description('Azure region of the container app.')
 param location string
@@ -53,6 +54,10 @@ param authSigningKey string
 @description('Connection string of the Application Insights component.')
 @secure()
 param applicationInsightsConnectionString string
+
+@description('Minimum number of replicas; 1 keeps a warm replica, 0 lets the app scale to zero.')
+@minValue(0)
+param minReplicas int = 1
 
 @description('Maximum number of replicas.')
 @minValue(1)
@@ -165,7 +170,7 @@ resource containerApp 'Microsoft.App/containerApps@2026-07-01' = {
                 path: '/alive'
                 port: targetPort
               }
-              // Up to 50 seconds for a cold start after scaling from zero.
+              // Up to 50 seconds for the cold start of a new replica.
               initialDelaySeconds: 1
               periodSeconds: 5
               failureThreshold: 10
@@ -192,7 +197,7 @@ resource containerApp 'Microsoft.App/containerApps@2026-07-01' = {
         }
       ]
       scale: {
-        minReplicas: 0
+        minReplicas: minReplicas <= maxReplicas ? minReplicas : fail('minReplicas (${minReplicas}) must not be greater than maxReplicas (${maxReplicas}).')
         maxReplicas: maxReplicas
         rules: [
           {

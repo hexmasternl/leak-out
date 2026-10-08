@@ -268,8 +268,8 @@ fun rememberPlayingFieldState(grid: GridSize, start: Position): PlayingFieldStat
  * The start is drawn as the start valve and the finish as the checkered finish (design system
  * 6.4): a stub of the straight's pipe art under the brass wheel, or under the success ring filled
  * with a checker. The liquid comes out of the valve into its stub. The valve glow pulses until the
- * liquid flows and the finish glow until the win, timed by [nowMs]; with [reducedMotion] both are
- * steady.
+ * liquid flows and the finish glow until the win or loss, timed by [nowMs]; after a loss the finish
+ * glow is steady, and with [reducedMotion] both are.
  */
 @Composable
 fun PlayingField(
@@ -303,12 +303,14 @@ fun PlayingField(
     val currentNowMs by rememberUpdatedState(nowMs)
     val currentFlow by rememberUpdatedState(flow)
     val currentWon by rememberUpdatedState(won)
+    val lost = leakAt != null
+    val currentLost by rememberUpdatedState(lost)
     val currentReducedMotion by rememberUpdatedState(reducedMotion)
     // Rounded, so the cell semantics only recompose when the value they report changes.
     val valveGlow = remember {
         derivedStateOf { EndpointGlow.valve(currentNowMs(), currentFlow().isFlowing(), currentReducedMotion).rounded() }
     }
-    val finishGlow = remember { derivedStateOf { EndpointGlow.finish(currentNowMs(), currentWon, currentReducedMotion).rounded() } }
+    val finishGlow = remember { derivedStateOf { EndpointGlow.finish(currentNowMs(), currentWon, currentLost, currentReducedMotion).rounded() } }
     Box(
         modifier = modifier
             .testTag(GameScreenTags.FIELD)
@@ -329,7 +331,7 @@ fun PlayingField(
             val pop = landing?.let { landingPopScale(now - it.atMs) }
             val glows = EndpointGlows(
                 valve = EndpointGlow.valve(now, liquid.isFlowing(), reducedMotion),
-                finish = EndpointGlow.finish(now, won, reducedMotion),
+                finish = EndpointGlow.finish(now, won, lost, reducedMotion),
                 reachPx = EndpointGeometry.GLOW_REACH_DP.dp.toPx(),
             )
             for (position in cells) {

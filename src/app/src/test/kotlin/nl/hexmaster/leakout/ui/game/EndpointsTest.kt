@@ -84,23 +84,31 @@ class EndpointsTest {
 
     @Test
     fun `the finish pulses on 2 s until won`() {
-        val at0 = EndpointGlow.finish(0, won = false, reducedMotion = false)
-        assertEquals(at0, EndpointGlow.finish(2_000, won = false, reducedMotion = false), 1e-6f)
-        assertEquals(0.9f, EndpointGlow.finish(1_000, won = false, reducedMotion = false), 1e-6f)
-        assertNotEquals(at0, EndpointGlow.finish(800, won = false, reducedMotion = false), 1e-3f)
+        val at0 = EndpointGlow.finish(0, won = false, lost = false, reducedMotion = false)
+        assertEquals(at0, EndpointGlow.finish(2_000, won = false, lost = false, reducedMotion = false), 1e-6f)
+        assertEquals(0.9f, EndpointGlow.finish(1_000, won = false, lost = false, reducedMotion = false), 1e-6f)
+        assertNotEquals(at0, EndpointGlow.finish(800, won = false, lost = false, reducedMotion = false), 1e-3f)
     }
 
     @Test
     fun `the finish is steady under reduced motion and off once won`() {
-        assertEquals(0.6f, EndpointGlow.finish(1_000, won = false, reducedMotion = true))
-        assertEquals(0f, EndpointGlow.finish(1_000, won = true, reducedMotion = false))
+        assertEquals(0.6f, EndpointGlow.finish(1_000, won = false, lost = false, reducedMotion = true))
+        assertEquals(0f, EndpointGlow.finish(1_000, won = true, lost = false, reducedMotion = false))
+    }
+
+    @Test
+    fun `the finish is steady at any time once lost`() {
+        for (t in 0L..4_000L step 37) {
+            assertEquals(EndpointGlow.STEADY, EndpointGlow.finish(t, won = false, lost = true, reducedMotion = false))
+            assertEquals(EndpointGlow.STEADY, EndpointGlow.finish(t, won = false, lost = true, reducedMotion = true))
+        }
     }
 
     @Test
     fun `glows stay within their range`() {
         for (t in 0L..4_000L step 37) {
             assertTrue(EndpointGlow.valve(t, false, false) in 0.45f..0.9f)
-            assertTrue(EndpointGlow.finish(t, false, false) in 0.45f..0.9f)
+            assertTrue(EndpointGlow.finish(t, false, false, false) in 0.45f..0.9f)
         }
     }
 }

@@ -88,10 +88,13 @@ object EndpointGlow {
     fun valve(nowMs: Long, flowing: Boolean, reducedMotion: Boolean): Float =
         if (flowing || reducedMotion) STEADY else pulse(nowMs, VALVE_PERIOD_MS)
 
-    /** Pulses on [FINISH_PERIOD_MS] until [won]; steady with [reducedMotion]; none once won, when the finish flash takes over. */
-    fun finish(nowMs: Long, won: Boolean, reducedMotion: Boolean): Float = when {
+    /**
+     * Pulses on [FINISH_PERIOD_MS] while playing; steady once [lost] (so the idle clock never freezes
+     * it mid-pulse) and with [reducedMotion]; none once [won], when the finish flash takes over.
+     */
+    fun finish(nowMs: Long, won: Boolean, lost: Boolean, reducedMotion: Boolean): Float = when {
         won -> 0f
-        reducedMotion -> STEADY
+        lost || reducedMotion -> STEADY
         else -> pulse(nowMs, FINISH_PERIOD_MS)
     }
 

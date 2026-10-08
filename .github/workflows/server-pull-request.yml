@@ -1,0 +1,64 @@
+# Required checks for pull requests into development: "server / build-test" and "server / bicep".
+# They report on every pull request; when it does not change the server they are skipped, which
+# counts as passed, so app-only pull requests are never blocked. Keep the job names stable:
+# branch protection refers to them (docs/repository-layout.md).
+name: server-pull-request
+
+on:
+  pull_request:
+    branches: [development]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: server-pull-request-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # Not a paths filter: a filtered-out workflow never reports, and a required check would stay pending.
+  changes:
+    name: server / changes
+    runs-on: ubuntu-latest
+    outputs:
+      server: ${{ steps.diff.outputs.server }}
+    steps:
+      # The pull request's merge commit; its first parent is the tip of the base branch.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Does the pull request change the server?
+        id: diff
+        run: |
+          changed=$(git diff --name-only HEAD^1 HEAD)
+          echo "$changed"
+          if grep -qE '^(server/|\.github/workflows/server-|\.github/scripts/server-)' <<< "$changed"; then
+            echo "server=true" >> "$GITHUB_OUTPUT"
+            echo "The server changed: building and testing it."
+          else
+            echo "server=false" >> "$GITHUB_OUTPUT"
+            echo "The server did not change: skipping its checks."
+          fi
+
+  build-test:
+    name: server
+    needs: changes
+    uses: ./.github/workflows/server-build-test.yml
+    with:
+      enabled: ${{ needs.changes.outputs.server == 'true' }}
+
+  bicep:
+    name: server / bicep
+    needs: changes
+    if: ${{ needs.changes.outputs.server == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Compiles main.bicep and every module it references. main.bicepparam is not built here:
+      # it reads the deployment secrets from environment variables that only the deploy job has.
+      - name: Build Bicep templates
+        run: |
+          az bicep install
+          az bicep build --file server/infrastructure/main.bicep --stdout > /dev/null

@@ -6,32 +6,39 @@ A 2D pipe-building puzzle game for Android, written in Kotlin with Jetpack Compo
 
 ## Repository layout
 
-**All application source code lives in `src/`**, which is the Gradle root (settings, wrapper, `gradle/libs.versions.toml`). Nothing outside `src/` is part of the app build.
+The repository holds two products, each in its own folder with its own build and release: the Android app in `app/` and its online game server in `server/`. Full description, including which workflow releases what: [docs/repository-layout.md](docs/repository-layout.md).
+
+**All app source code lives in `app/src/`**, which is the Gradle root (settings, wrapper, `gradle/libs.versions.toml`). Nothing outside `app/src/` is part of the app build.
 
 ```
 leak-out/
-├── src/
-│   ├── core/     pure Kotlin: game rules, level model, parsing, validation (no Android dependencies)
-│   └── app/      Android app: Compose UI, rendering, screens
-├── docs/         project plan, design system, level format
-├── openspec/     specs (openspec/specs) and change proposals (openspec/changes)
-└── scripts/      repository tooling
+├── app/
+│   ├── src/
+│   │   ├── core/     pure Kotlin: game rules, level model, parsing, validation (no Android dependencies)
+│   │   └── app/      Android app: Compose UI, rendering, screens
+│   └── GitVersion.yml
+├── server/           online game server (.NET, Azure); has its own CLAUDE.md / AGENTS.md
+│   ├── src/          .NET solution and projects
+│   └── infrastructure/  Bicep templates
+├── docs/             project plan, design system, level format, repository layout
+├── openspec/         specs (openspec/specs) and change proposals (openspec/changes); server specs are prefixed server-
+└── scripts/          repository tooling
 ```
 
-Paths such as `core/...` or `app/...` in specs and tasks are relative to `src/`.
+Paths such as `core/...` or `app/...` in app specs and tasks are relative to `app/src/`.
 
 ## Build and test
 
-Run Gradle from `src/` (on Windows use `.\gradlew.bat`):
+Run Gradle from `app/src/` (on Windows use `.\gradlew.bat`):
 
 ```sh
-cd src
+cd app/src
 ./gradlew :core:test                        # JVM unit tests for the game logic
 ./gradlew :app:testDebugUnitTest            # app JVM unit tests
 ./gradlew :app:connectedDebugAndroidTest    # instrumented tests (needs a running emulator/device)
 ```
 
-Versions are pinned exactly in `src/gradle/libs.versions.toml`. Change them there, never inline in a build file.
+Versions are pinned exactly in `app/src/gradle/libs.versions.toml`. Change them there, never inline in a build file.
 
 ## Conventions
 
@@ -49,7 +56,7 @@ Work is specified and tracked with [OpenSpec](https://github.com/Fission-AI/Open
 
 ## Releases
 
-Every push to `main` runs `.github/workflows/deploy-play-internal.yml`: it runs the unit tests, builds a signed release bundle and uploads it to the Play Console's internal testing track. Signing material and Play credentials live only in GitHub secrets: never commit a keystore or key, and none is needed locally (without the `LEAKOUT_UPLOAD_*` variables the release build is simply unsigned). The version code comes from `-PversionCode` in CI; bump `versionName` by hand. Setup of every secret, key and variable: [docs/deployment.md](docs/deployment.md).
+Every push to `main` that changes `app/` runs `.github/workflows/deploy-play-internal.yml`: it runs the unit tests, builds a signed release bundle and uploads it to the Play Console's internal testing track. Signing material and Play credentials live only in GitHub secrets: never commit a keystore or key, and none is needed locally (without the `LEAKOUT_UPLOAD_*` variables the release build is simply unsigned). The version code comes from `-PversionCode` in CI; bump `versionName` by hand. Setup of every secret, key and variable: [docs/deployment.md](docs/deployment.md).
 
 ## Keeping Claude Code and Copilot in sync
 

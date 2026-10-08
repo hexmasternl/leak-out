@@ -213,7 +213,7 @@ AchievementRules.evaluate(
 
 ## Local store
 
-The achievements live in the existing Room database `LeakOutDatabase` (`app/history/data/`), in version 3. `MIGRATION_1_2` only creates the three new tables, so existing history is untouched; `MIGRATION_2_3` adds `player_stats.tips_resets` (`NOT NULL DEFAULT 0`) and keeps every row. Every schema version is exported to `src/app/schemas/` and committed. There is no destructive fallback.
+The achievements live in the existing Room database `LeakOutDatabase` (`app/history/data/`), in version 3. `MIGRATION_1_2` only creates the three new tables, so existing history is untouched; `MIGRATION_2_3` adds `player_stats.tips_resets` (`NOT NULL DEFAULT 0`) and keeps every row. Every schema version is exported to `app/src/app/schemas/` and committed. There is no destructive fallback.
 
 | Table | Columns |
 |---|---|
@@ -269,7 +269,7 @@ There is no DI framework. `LeakOutApplication` builds an `AppContainer(context, 
 
 ## Play Games
 
-Dependency: `com.google.android.gms:play-services-games-v2`, pinned in `src/gradle/libs.versions.toml`.
+Dependency: `com.google.android.gms:play-services-games-v2`, pinned in `app/src/gradle/libs.versions.toml`.
 
 ### Configuration
 

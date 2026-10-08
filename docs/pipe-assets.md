@@ -70,7 +70,7 @@ Paint: `#RRGGBB`, `#RGB`, `none` or `url(#gradient-id)`.
 
 Anything else, such as `text`, `style="…"` or `transform="…"`, makes loading fail with an error that names it. Elements and attributes in other namespaces (what Inkscape and other editors add) are ignored, so saving from an editor is fine as long as it writes plain attributes. If an editor writes `style="…"`, switch it to presentation attributes (in Inkscape: *Preferences → Input/Output → SVG output → Style properties → Presentation attributes*).
 
-After editing an asset, run `./gradlew :app:testDebugUnitTest` from `src/`; `PipeAssetsTest` checks the format, the channels, the flanges and the colours of the section assets and the glass overlays.
+After editing an asset, run `./gradlew :app:testDebugUnitTest` from `app/src/`; `PipeAssetsTest` checks the format, the channels, the flanges and the colours of the section assets and the glass overlays.
 
 ## Previewing
 

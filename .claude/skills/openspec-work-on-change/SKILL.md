@@ -123,7 +123,7 @@ branch="feature/$change"
    ```
    If it prints `main` or `development`, stop. Something is wrong and the user must decide.
 
-   Note for this repository: the Gradle root is `src/` inside the worktree, so Gradle commands run from `<worktree-path>/src`.
+   Note for this repository: the app's Gradle root is `app/src/` inside the worktree, so Gradle commands run from `<worktree-path>/app/src`; the server's .NET solution is in `<worktree-path>/server/src`.
 
 6. **Implement the change**
 

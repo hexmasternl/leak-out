@@ -165,13 +165,14 @@ No third-party game engine (libGDX, Unity, Godot) is used. The rule set is small
 
 ### 2.2 Module layout
 
-**The app is written in the `src/` directory of the repository.** `src/` is the Gradle root: the settings file, the Gradle wrapper, the version catalog and both modules live there. Run all Gradle commands from `src/`. Paths such as `core/…` or `app/…` elsewhere in the docs and specs are relative to `src/`.
+**The app is written in the `app/src/` directory of the repository.** `app/src/` is the Gradle root: the settings file, the Gradle wrapper, the version catalog and both modules live there. Run all Gradle commands from `app/src/`. Paths such as `core/…` or `app/…` elsewhere in the docs and specs are relative to `app/src/`. The online game server lives next to it in `server/` ([repository-layout.md](repository-layout.md)).
 
 ```
 leak-out/
 ├── docs/                           this plan, design notes, level design sheets
 ├── openspec/                       specs and change proposals
-└── src/                            the app – Gradle root
+├── server/                         the online game server (.NET, Azure)
+└── app/src/                        the app – Gradle root
     ├── settings.gradle.kts, build.gradle.kts, gradlew, gradlew.bat
     ├── gradle/libs.versions.toml
     ├── core/                       pure Kotlin (JVM) module – no Android dependencies

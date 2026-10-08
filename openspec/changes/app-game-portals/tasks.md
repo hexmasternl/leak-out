@@ -49,11 +49,11 @@ Paths are relative to `app/src/`; run Gradle from `app/src/` (`.\gradlew.bat` on
 
 ## 7. Portals in levels 49 to 96
 
-- [ ] 7.1 Add a `BundledLevelsTest` check: levels 1 to 48 have no portals, level 49 has exactly one pair that the solver's shortest route passes, fewer than half of levels 50 to 96 have portals, and no level has more than three pairs.
-- [ ] 7.2 Update level 49 with the level designer: one portal pair that the shortest route must use, on an otherwise gentle board. Export it over `assets/levels/level_049.json`, keeping its id and name.
-- [ ] 7.3 Pick about eleven more levels spread over 50 to 96, with plain levels between them, and add portal pairs with the designer: one pair up to level 72, up to two pairs from level 73, up to three pairs only in the last few levels. Make at least one of them solvable only through a pair. List the chosen levels in the PR description.
-- [ ] 7.4 Retune the star thresholds of an updated level only where three stars would otherwise become unreachable.
-- [ ] 7.5 Run `./gradlew :core:test` and confirm `LevelSolvabilityTest`, `HeadlessPlayTest`, `BundledLevelsTest`, `AchievementReachabilityTest` and `ThreeStarReachabilityTest` pass, and that `git diff --stat app/src/app/src/main/assets/levels` only lists the updated levels (levels 1 to 48 and every level without portals byte-identical).
+- [x] 7.1 Add a `BundledLevelsTest` check: levels 1 to 48 have no portals, level 49 has exactly one pair that the solver's shortest route passes, fewer than half of levels 50 to 96 have portals, and no level has more than three pairs.
+- [x] 7.2 Update level 49 with the level designer: one portal pair that the shortest route must use, on an otherwise gentle board. Export it over `assets/levels/level_049.json`, keeping its id and name.
+- [x] 7.3 Pick about eleven more levels spread over 50 to 96, with plain levels between them, and add portal pairs with the designer: one pair up to level 72, up to two pairs from level 73, up to three pairs only in the last few levels. Make at least one of them solvable only through a pair. List the chosen levels in the PR description.
+- [x] 7.4 Retune the star thresholds of an updated level only where three stars would otherwise become unreachable.
+- [x] 7.5 Run `./gradlew :core:test` and confirm `LevelSolvabilityTest`, `HeadlessPlayTest`, `BundledLevelsTest`, `AchievementReachabilityTest` and `ThreeStarReachabilityTest` pass, and that `git diff --stat app/src/app/src/main/assets/levels` only lists the updated levels (levels 1 to 48 and every level without portals byte-identical).
 
 ## 8. Instrumented tests and integration
 

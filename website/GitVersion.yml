@@ -1,0 +1,7 @@
+# Semantic versioning of the public website, read by the release job of .github/workflows/website-deploy.yml.
+# Every deployment from main is tagged website-v<major>.<minor>.<patch>; the next commit on main bumps the patch.
+# Bump minor or major with "+semver: minor" / "+semver: major" in a commit message (or PR title).
+workflow: GitHubFlow/v1
+# Only website-v<x.y.z> tags count: the app's v<x.y.z> and the server's server-v<x.y.z> tags never move
+# the website's version (docs/repository-layout.md#versions-and-tags).
+tag-prefix: 'website-v'

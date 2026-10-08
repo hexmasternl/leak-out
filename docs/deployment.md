@@ -35,7 +35,7 @@ On each run it:
 6. decodes the upload keystore and builds `app-release.aab` signed with the **upload key**;
 7. checks that the bundle really is signed;
 8. keeps the bundle as a workflow artifact for 14 days;
-9. uploads it with the release notes and the in-app update priority to the Play Console track in `PLAY_TRACK` (default: internal testing), then tags the commit `v<x.y.z>`;
+9. uploads it with the release notes and the in-app update priority to the Play Console track in `PLAY_TRACK` (default: internal testing), then tags the commit `v<x.y.z>` and creates its GitHub release, marked *latest*, with the same release notes ([`scripts/publish-release.sh`](../scripts/publish-release.sh); see [repository-layout.md](repository-layout.md#versions-and-tags));
 10. deletes the decoded keystore, whether the run succeeded or not.
 
 Three keys and accounts are involved. It helps to keep them apart:

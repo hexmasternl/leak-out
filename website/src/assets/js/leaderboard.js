@@ -21,25 +21,72 @@ export function topScoresUrl(server, level) {
 }
 
 /**
- * The entries of a top scores response, best first and at most 25, each as { position, displayName, score }.
- * Throws when the response does not have the expected shape.
+ * The entries of a top scores response, best first and at most 25, each as
+ * { position, displayName, score, achievedAt }. `achievedAt` is the Date the server received the score, or
+ * null when the response has no valid moment. Throws when the response does not have the expected shape.
  */
 export function parseTopScores(body) {
   if (!body || !Array.isArray(body.entries)) throw new Error("Unexpected top scores response");
   return body.entries
     .filter((e) => e && Number.isFinite(e.position) && Number.isFinite(e.score))
-    .map((e) => ({ position: e.position, displayName: String(e.displayName ?? ""), score: e.score }))
+    .map((e) => ({
+      position: e.position,
+      displayName: String(e.displayName ?? ""),
+      score: e.score,
+      achievedAt: parseMoment(e.achievedAt),
+    }))
     .sort((a, b) => a.position - b.position)
     .slice(0, MAX_ENTRIES);
 }
 
-/** The table rows of the entries, with the score formatted for the page's locale. */
-export function toRows(entries, locale) {
+function parseMoment(value) {
+  if (typeof value !== "string") return null;
+  const moment = new Date(value);
+  return Number.isNaN(moment.getTime()) ? null : moment;
+}
+
+const MINUTE = 60 * 1000;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
+/**
+ * How long ago `achievedAt` was at `now`, in the page's language and the largest whole unit that fits:
+ * "5 minutes ago", "2 days ago", "1 year ago". Under a minute, and for a moment in the future (clocks
+ * differ), it is "now". Months count as 30 days and years as 365.
+ */
+export function relativeTime(achievedAt, now, locale) {
+  const age = now.getTime() - achievedAt.getTime();
+  if (age < MINUTE) return new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(0, "second");
+  // "always" gives "1 year ago" rather than "last year", so every entry reads as an amount of time.
+  const format = new Intl.RelativeTimeFormat(locale, { numeric: "always" });
+  const days = Math.floor(age / DAY);
+  if (days >= 365) return format.format(-Math.floor(days / 365), "year");
+  if (days >= 30) return format.format(-Math.floor(days / 30), "month");
+  if (days >= 7) return format.format(-Math.floor(days / 7), "week");
+  if (days >= 1) return format.format(-days, "day");
+  if (age >= HOUR) return format.format(-Math.floor(age / HOUR), "hour");
+  return format.format(-Math.floor(age / MINUTE), "minute");
+}
+
+/** The full date and time of `achievedAt` in the page's language, in the visitor's time zone unless `timeZone` is given. */
+export function fullDate(achievedAt, locale, timeZone) {
+  return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone }).format(achievedAt);
+}
+
+/**
+ * The table rows of the entries, with the score formatted for the page's locale and when it was set: as
+ * relative time at `now` (`when`), as full date (`whenFull`) and as ISO moment (`whenIso`). All three are
+ * empty for an entry without a moment.
+ */
+export function toRows(entries, locale, now = new Date()) {
   const format = new Intl.NumberFormat(locale);
   return entries.map((e) => ({
     position: String(e.position),
     displayName: e.displayName,
     score: format.format(e.score),
+    when: e.achievedAt ? relativeTime(e.achievedAt, now, locale) : "",
+    whenFull: e.achievedAt ? fullDate(e.achievedAt, locale) : "",
+    whenIso: e.achievedAt ? e.achievedAt.toISOString() : "",
   }));
 }
 
@@ -147,6 +194,16 @@ export function createDomView(doc, strings) {
             td.textContent = text;
             tr.append(td);
           }
+          const when = doc.createElement("td");
+          when.className = "when";
+          if (row.whenIso) {
+            const time = doc.createElement("time");
+            time.setAttribute("datetime", row.whenIso);
+            time.setAttribute("title", row.whenFull);
+            time.textContent = row.when;
+            when.append(time);
+          }
+          tr.append(when);
           return tr;
         }),
       );

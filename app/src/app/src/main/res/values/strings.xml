@@ -252,6 +252,7 @@
     <string name="designer_tool_block" translatable="false">Block</string>
     <string name="designer_tool_mandatory_cross" translatable="false">Mandatory cross</string>
     <string name="designer_tool_mandatory_reservoir" translatable="false">Mandatory reservoir</string>
+    <string name="designer_tool_portal" translatable="false">Portal</string>
     <string name="designer_clear_blocked" translatable="false">Clear blocked</string>
     <string name="designer_section_grid" translatable="false">Grid</string>
     <string name="designer_columns" translatable="false">Columns</string>
@@ -259,6 +260,9 @@
     <string name="designer_decrease" translatable="false">Fewer %1$s</string>
     <string name="designer_increase" translatable="false">More %1$s</string>
     <string name="designer_section_endpoints" translatable="false">Open sides</string>
+    <string name="designer_section_portal" translatable="false">Portal pair %1$d</string>
+    <string name="designer_portal_side" translatable="false">Opens</string>
+    <string name="designer_remove_pair" translatable="false">Remove pair</string>
     <string name="designer_start_side" translatable="false">Start</string>
     <string name="designer_finish_side" translatable="false">Finish</string>
     <string name="designer_section_level" translatable="false">Level</string>

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import nl.hexmaster.leakout.BundledLevels
 import nl.hexmaster.leakout.core.level.DesignStatus
+import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.EndpointKind
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.LevelDraft
@@ -20,7 +21,7 @@ import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.ui.levels.LevelCatalog
 
 /** What a tap or drag on the designer grid does. */
-enum class DesignerTool { START, FINISH, BLOCK, MANDATORY_CROSS, MANDATORY_RESERVOIR }
+enum class DesignerTool { START, FINISH, BLOCK, MANDATORY_CROSS, MANDATORY_RESERVOIR, PORTAL }
 
 /** The bundled levels as the designer uses them: how many there are, and a copy of one to start from. */
 interface DesignerLevels : LevelCatalog {
@@ -114,6 +115,12 @@ class LevelDesignerViewModel(
 
     fun clearBlocked() = edit { it.clearBlocked() }
 
+    /** Sets the open side of the portal the Portal tool has selected. */
+    fun setPortalOpenSide(side: Side) = edit { it.setPortalOpenSide(side) }
+
+    /** Removes the pair of the portal the Portal tool has selected. */
+    fun removeSelectedPair() = edit { it.removeSelectedPair() }
+
     /** A tap on [cell] with the selected tool. */
     fun onCellTap(cell: Position) {
         when (_uiState.value.tool) {
@@ -122,6 +129,7 @@ class LevelDesignerViewModel(
             DesignerTool.BLOCK -> edit { it.toggleBlocked(cell) }
             DesignerTool.MANDATORY_CROSS -> edit { it.toggleMandatory(cell, PipeSection.X) }
             DesignerTool.MANDATORY_RESERVOIR -> edit { it.toggleMandatory(cell, PipeSection.RES) }
+            DesignerTool.PORTAL -> edit { it.tapPortal(cell) }
         }
     }
 
@@ -137,13 +145,13 @@ class LevelDesignerViewModel(
     }
 
     /**
-     * The drag has moved onto [cell]. The mandatory tools ignore it: they only act on the cell the
-     * drag started on, so a drag does not toggle a trail of sections on and off.
+     * The drag has moved onto [cell]. The mandatory and portal tools ignore it: they only act on the
+     * cell the drag started on, so a drag does not toggle a trail of sections or portals.
      */
     fun onDrag(cell: Position) {
         when (_uiState.value.tool) {
             DesignerTool.BLOCK -> paintTarget?.let { target -> edit { it.paintBlocked(listOf(cell), target) } }
-            DesignerTool.MANDATORY_CROSS, DesignerTool.MANDATORY_RESERVOIR -> Unit
+            DesignerTool.MANDATORY_CROSS, DesignerTool.MANDATORY_RESERVOIR, DesignerTool.PORTAL -> Unit
             else -> onCellTap(cell)
         }
     }
@@ -191,10 +199,14 @@ class LevelDesignerViewModel(
     private fun replace(draft: LevelDraft) =
         commit(LevelDesignerUiState(draft, _uiState.value.tool, dirty = false))
 
-    /** Applies a draft edit; the design only becomes dirty when the edit changed something. */
+    /**
+     * Applies a draft edit; the design only becomes dirty when the edit changed the design itself.
+     * Selecting a portal changes the draft but not the design.
+     */
     private fun edit(change: (LevelDraft) -> LevelDraft) = updateState { state ->
         val draft = change(state.draft)
-        if (draft == state.draft) state else state.copy(draft = draft, dirty = true)
+        val changed = draft.level != state.draft.level || draft.unpaired != state.draft.unpaired
+        if (draft == state.draft) state else state.copy(draft = draft, dirty = state.dirty || changed)
     }
 
     private fun updateState(change: (LevelDesignerUiState) -> LevelDesignerUiState) {
@@ -212,19 +224,39 @@ class LevelDesignerViewModel(
         savedState[KEY_DRAFT] = LevelWriter.write(state.level)
         savedState[KEY_TOOL] = state.tool.name
         savedState[KEY_DIRTY] = state.dirty
+        // The level holds complete portal pairs only; the unpaired and the selected portal go alongside.
+        savedState[KEY_UNPAIRED] = state.draft.unpaired?.let { "${it.position.x},${it.position.y},${it.openSide.name}" }
+        savedState[KEY_SELECTED_PORTAL] = state.draft.selectedPortal?.let { "${it.x},${it.y}" }
     }
 
     private fun restore(): LevelDesignerUiState? {
         val json = savedState.get<String>(KEY_DRAFT) ?: return null
         val level = (LevelParser.parse(json) as? ParseResult.Success)?.level ?: return null
         val tool = savedState.get<String>(KEY_TOOL)?.let { name -> DesignerTool.entries.firstOrNull { it.name == name } }
-        return LevelDesignerUiState(LevelDraft(level), tool ?: DesignerTool.START, savedState.get<Boolean>(KEY_DIRTY) ?: false)
+        val unpaired = savedState.get<String>(KEY_UNPAIRED)?.split(',')?.let { parts ->
+            val side = Side.entries.firstOrNull { it.name == parts.getOrNull(2) }
+            val x = parts.getOrNull(0)?.toIntOrNull()
+            val y = parts.getOrNull(1)?.toIntOrNull()
+            if (side != null && x != null && y != null) Endpoint(Position(x, y), side) else null
+        }
+        val selected = savedState.get<String>(KEY_SELECTED_PORTAL)?.split(',')?.let { parts ->
+            val x = parts.getOrNull(0)?.toIntOrNull()
+            val y = parts.getOrNull(1)?.toIntOrNull()
+            if (x != null && y != null) Position(x, y) else null
+        }
+        return LevelDesignerUiState(
+            LevelDraft(level, unpaired, selected),
+            tool ?: DesignerTool.START,
+            savedState.get<Boolean>(KEY_DIRTY) ?: false,
+        )
     }
 
     companion object {
         internal const val KEY_DRAFT = "designer.draft"
         internal const val KEY_TOOL = "designer.tool"
         internal const val KEY_DIRTY = "designer.dirty"
+        internal const val KEY_UNPAIRED = "designer.unpairedPortal"
+        internal const val KEY_SELECTED_PORTAL = "designer.selectedPortal"
 
         /** The suggested file name for a level with [id]: `level_005.json`. */
         fun fileName(id: Int): String = BundledLevels.path(id).substringAfterLast('/')

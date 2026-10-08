@@ -2,9 +2,10 @@
 # (see server/README.md, "Deployment", and docs/repository-layout.md).
 # The image name comes from the API project (ContainerRegistry, ContainerRepository); the tag is
 # <semver>-<short commit sha>: the semantic version GitVersion calculates from server-v<x.y.z> tags
-# (server/GitVersion.yml) plus the commit. GitVersion can give two merges the same version; the
-# commit keeps every tag unique, so a deployment always changes the container app's image and rolls
-# out a new revision instead of leaving the old image running under a reused tag.
+# (server/GitVersion.yml) plus the commit. The commit keeps every tag unique, so a deployment always
+# changes the container app's image and rolls out a new revision instead of leaving the old image
+# running under a reused tag. After a healthy deployment the release job tags the commit
+# server-v<semver> and creates its GitHub release, so the next merge gets the next version.
 name: server-deploy
 
 on:
@@ -222,3 +223,26 @@ jobs:
           done
           echo "::error::https://$FQDN/alive did not become healthy on version $expected"
           exit 1
+
+  # Only after a healthy deployment: the server-v<x.y.z> tag is what moves the next merge to the next
+  # version. Its own tag prefix keeps it apart from app and website releases running at the same time.
+  release:
+    needs: [publish, deploy]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # The release notes and the previous server-v tag need the full history and every tag.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Tag and release
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.publish.outputs.version }}
+          TAG: ${{ needs.publish.outputs.tag }}
+        run: |
+          bash scripts/publish-release.sh --prefix server-v --version "$VERSION" --commit "$GITHUB_SHA" \
+            --title "Game server $VERSION (image $TAG)" --path server

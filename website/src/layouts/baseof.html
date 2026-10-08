@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="{{ site.Language.Locale }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ if eq .Kind "404" }}{{ T "notFoundTitle" }} – {{ site.Title }}{{ else if .IsHome }}{{ site.Title }} – {{ T "tagline" }}{{ else }}{{ .Title }} – {{ site.Title }}{{ end }}</title>
+  {{ partial "seo.html" . }}
+  <meta name="theme-color" content="#0C1A2A">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" type="image/svg+xml" href="{{ "images/app-icon.svg" | relURL }}">
+  {{- $icons := partial "icons.html" . }}
+  <link rel="icon" type="image/png" sizes="192x192" href="{{ $icons.icon192.RelPermalink }}">
+  <link rel="apple-touch-icon" href="{{ $icons.apple.RelPermalink }}">
+  <link rel="manifest" href="{{ "site.webmanifest" | relURL }}">
+  {{- /* Both fonts are used above the fold; preloading them avoids a late swap. */}}
+  <link rel="preload" href="{{ "fonts/wendy_one_regular.ttf" | relURL }}" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="{{ "fonts/fredoka.ttf" | relURL }}" as="font" type="font/ttf" crossorigin>
+  {{- with resources.Get "css/main.css" | minify | fingerprint }}
+  <link rel="stylesheet" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}">
+  {{- end }}
+</head>
+<body>
+  <a class="skip-link" href="#main">{{ T "skipToContent" }}</a>
+  {{ partial "header.html" . }}
+  <main id="main">
+    {{ block "main" . }}{{ end }}
+  </main>
+  {{ partial "footer.html" . }}
+</body>
+</html>

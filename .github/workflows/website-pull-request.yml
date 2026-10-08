@@ -1,0 +1,76 @@
+# Required check for pull requests into development: "website / build". It reports on every pull
+# request; when the pull request does not change the website it is skipped, which counts as passed,
+# so other pull requests are never blocked. Keep the job name stable: branch protection refers to it
+# (website/README.md).
+name: website-pull-request
+
+on:
+  pull_request:
+    branches: [development]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: website-pull-request-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  # Keep in step with website-deploy.yml and website/README.md.
+  HUGO_VERSION: 0.165.0
+
+jobs:
+  # Not a paths filter: a filtered-out workflow never reports, and a required check would stay pending.
+  changes:
+    name: website / changes
+    runs-on: ubuntu-latest
+    outputs:
+      website: ${{ steps.diff.outputs.website }}
+    steps:
+      # The pull request's merge commit; its first parent is the tip of the base branch.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Does the pull request change the website?
+        id: diff
+        run: |
+          changed=$(git diff --name-only HEAD^1 HEAD)
+          echo "$changed"
+          if grep -qE '^(website/|\.github/workflows/website-)' <<< "$changed"; then
+            echo "website=true" >> "$GITHUB_OUTPUT"
+            echo "The website changed: building it."
+          else
+            echo "website=false" >> "$GITHUB_OUTPUT"
+            echo "The website did not change: skipping its checks."
+          fi
+
+  build:
+    name: website / build
+    needs: changes
+    if: ${{ needs.changes.outputs.website == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Hugo extended ${{ env.HUGO_VERSION }}
+        run: |
+          curl --fail --silent --show-error --location --output "$RUNNER_TEMP/hugo.deb" \
+            "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.deb"
+          sudo dpkg -i "$RUNNER_TEMP/hugo.deb"
+          hugo version
+
+      # --panicOnWarning turns deprecations and missing templates or translations into failures.
+      - name: Build the site
+        run: hugo --source website/src --panicOnWarning --minify --destination "$RUNNER_TEMP/public"
+
+      - name: Test the leaderboard script
+        working-directory: website
+        run: npm test
+
+      # main.bicepparam has no secrets, so it is built too.
+      - name: Build Bicep templates
+        run: |
+          az bicep install
+          az bicep build --file website/infrastructure/main.bicep --stdout > /dev/null
+          az bicep build-params --file website/infrastructure/main.bicepparam --stdout > /dev/null

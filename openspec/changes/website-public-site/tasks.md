@@ -2,21 +2,21 @@
 
 ## 1. Hugo site skeleton
 
-- [ ] 1.1 Create `website/src/` with `hugo.toml` (five languages, English default at `/`, site params for the Play Store URL, the leak-out-game issue URLs, the score server base URL and `levelCount`), pin the Hugo extended version in `website/README.md`; verify `hugo --source website/src --panicOnWarning` builds an empty site
-- [ ] 1.2 Write the base layout, header navigation, language switcher (using `.Translations`), footer with "Report a problem" / "Request a feature" links, and `i18n/{en,nl,fr,de,es}.yaml` UI strings; verify the build and that every generated page has `<html lang>` matching its language and the feedback links point to `hexmasternl/leak-out-game`
-- [ ] 1.3 Add the design system colour and type tokens as CSS custom properties and responsive styles; verify in a browser at 360, 768 and 1280 px wide that no page scrolls horizontally
+- [x] 1.1 Create `website/src/` with `hugo.toml` (five languages, English default at `/`, site params for the Play Store URL, the leak-out-game issue URLs, the score server base URL and `levelCount`), pin the Hugo extended version in `website/README.md`; verify `hugo --source website/src --panicOnWarning` builds an empty site
+- [x] 1.2 Write the base layout, header navigation, language switcher (using `.Translations`), footer with "Report a problem" / "Request a feature" links, and `i18n/{en,nl,fr,de,es}.yaml` UI strings; verify the build and that every generated page has `<html lang>` matching its language and the feedback links point to `hexmasternl/leak-out-game`
+- [x] 1.3 Add the design system colour and type tokens as CSS custom properties and responsive styles; verify in a browser at 360, 768 and 1280 px wide that no page scrolls horizontally
 
 ## 2. Assets and content
 
-- [ ] 2.1 Copy the icon, feature graphic, store screenshots and pipe artwork into `website/src/` and list their origin in `website/README.md`; verify `grep -rn "\.\./" website/src --include=*.html --include=*.toml --include=*.md` finds no references outside `website/`, and a build from a copy of only `website/` succeeds
-- [ ] 2.2 Write the home page in all five languages (hero, tagline, screenshots, selling points, Get it on Google Play link); verify each language's home page renders and the Play Store link is correct
-- [ ] 2.3 Write the rules page in all five languages using the game's terms (playing field, stack, sections, start and finish pipes, liquid, points, stars); verify each language has the page and the switcher moves between them
-- [ ] 2.4 Write the FAQ page in all five languages; verify each language has the page with questions and answers
+- [x] 2.1 Copy the icon, feature graphic, store screenshots and pipe artwork into `website/src/` and list their origin in `website/README.md`; verify `grep -rn "\.\./" website/src --include=*.html --include=*.toml --include=*.md` finds no references outside `website/`, and a build from a copy of only `website/` succeeds
+- [x] 2.2 Write the home page in all five languages (hero, tagline, screenshots, selling points, Get it on Google Play link); verify each language's home page renders and the Play Store link is correct
+- [x] 2.3 Write the rules page in all five languages using the game's terms (playing field, stack, sections, start and finish pipes, liquid, points, stars); verify each language has the page and the switcher moves between them
+- [x] 2.4 Write the FAQ page in all five languages; verify each language has the page with questions and answers
 
 ## 3. Leaderboard page
 
-- [ ] 3.1 Add the leaderboard page in all five languages with the level chooser (number input, previous/next, bounded by `levelCount`) and an empty table, plus `assets/js/leaderboard.js` that fetches `/api/public/levels/{level}/scores/top` and renders the entries and the loading, empty and error (Try again) states with translated strings; verify with unit tests for the rendering and state logic (for example with Node's built-in test runner) that pass
-- [ ] 3.2 Verify the page in a browser against a stubbed endpoint (a local JSON file or mock server): level 1 loads on open, choosing another level reloads, 25 entries max, empty and error states and Try again work
+- [x] 3.1 Add the leaderboard page in all five languages with the level chooser (number input, previous/next, bounded by `levelCount`) and an empty table, plus `assets/js/leaderboard.js` that fetches `/api/public/levels/{level}/scores/top` and renders the entries and the loading, empty and error (Try again) states with translated strings; verify with unit tests for the rendering and state logic (for example with Node's built-in test runner) that pass
+- [x] 3.2 Verify the page in a browser against a stubbed endpoint (a local JSON file or mock server): level 1 loads on open, choosing another level reloads, 25 entries max, empty and error states and Try again work
 
 ## 4. Server public top scores (after `repo-merge-server`)
 
@@ -26,12 +26,17 @@
 
 ## 5. Infrastructure and deployment
 
-- [ ] 5.1 Write `website/infrastructure/main.bicep` and `main.bicepparam` for the Static Web App (Free tier, optional custom domain parameter); verify `az bicep build --file website/infrastructure/main.bicep` reports no errors
-- [ ] 5.2 Add `.github/workflows/website-pull-request.yml` (changes job, Hugo build with pinned version and `--panicOnWarning`, Bicep build, always reports a result); verify with `actionlint` if available and with a pull request that changes `website/`
-- [ ] 5.3 Add `.github/workflows/website-deploy.yml` (push to `main` on `website/**` and the workflow, `workflow_dispatch`; OIDC Azure login, Bicep deployment, deployment token fetched at run time, `Azure/static-web-apps-deploy` with `skip_app_build`); verify with `actionlint` if available and that no token appears in the repository
-- [ ] 5.4 Document the Azure federated credential, the GitHub variables and secrets, and the first manual run in `website/README.md`; add `website/` to `docs/repository-layout.md` and `README.md`; verify every secret and variable used by the workflows is documented
+- [x] 5.1 Write `website/infrastructure/main.bicep` and `main.bicepparam` for the Static Web App (Free tier, optional custom domain parameter); verify `az bicep build --file website/infrastructure/main.bicep` reports no errors
+- [x] 5.2 Add `.github/workflows/website-pull-request.yml` (changes job, Hugo build with pinned version and `--panicOnWarning`, Bicep build, always reports a result); verify with `actionlint` if available and with a pull request that changes `website/`
+- [x] 5.3 Add `.github/workflows/website-deploy.yml` (push to `main` on `website/**` and the workflow, `workflow_dispatch`; OIDC Azure login, Bicep deployment, deployment token fetched at run time, `Azure/static-web-apps-deploy` with `skip_app_build`); verify with `actionlint` if available and that no token appears in the repository
+- [x] 5.4 Document the Azure federated credential, the GitHub variables and secrets, and the first manual run in `website/README.md`; add `website/` to `docs/repository-layout.md` and `README.md`; verify every secret and variable used by the workflows is documented
 
 ## 6. Integration
 
-- [ ] 6.1 Run an automated accessibility check (for example `pa11y-ci` or axe) over the built site and fix what it reports; verify it reports no missing alternatives, titles, language attributes or contrast failures
+- [x] 6.1 Run an automated accessibility check (for example `pa11y-ci` or axe) over the built site and fix what it reports; verify it reports no missing alternatives, titles, language attributes or contrast failures
 - [ ] 6.2 After merging to `main`, run `website-deploy.yml`, then verify the live site in all five languages, the feedback links, and the leaderboard against the deployed server endpoint
+
+## 7. SEO, Open Graph and best practices
+
+- [x] 7.1 Add per-page canonical, `hreflang` (plus `x-default`), robots, Open Graph and Twitter card metadata, JSON-LD (`VideoGame` and `WebSite` on home, `FAQPage` on the FAQ), a `robots.txt` with the sitemap, localized 404 text and a web manifest; build in the deploy workflow after the infrastructure so every URL is absolute; verify the generated head of a translated page and that a missing page answers 404 with `noindex`
+- [x] 7.2 Add responsive WebP `srcset`s, a high-priority hero image, font preloads and a generated `staticwebapp.config.json` (long caching for fingerprinted files, CSP limited to the site and the score server, HSTS, nosniff, frame and referrer policies); verify with Lighthouse (mobile) on pages in all five languages: performance ≥ 90, accessibility, best practices and SEO 100, and the browser and accessibility checks still pass with the headers applied

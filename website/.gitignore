@@ -1,0 +1,4 @@
+src/public/
+src/resources/_gen/
+src/.hugo_build.lock
+node_modules/

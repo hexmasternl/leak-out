@@ -5,7 +5,7 @@
 #
 # Prints the notes on stdout, one "• " line per note and at most 500 characters, or exits non-zero
 # with a GitHub Actions ::error:: line. Run it inside the repository: the release covers the commits
-# since the previous v<x.y.z> tag. Rules: docs/deployment.md#release-notes
+# since the previous v<x.y.z> tag, and only the commits that change the app. Rules: docs/deployment.md#release-notes
 set -euo pipefail
 # Play counts characters, not bytes, and "•" and "…" are multi-byte.
 export LC_ALL=C.UTF-8
@@ -29,6 +29,19 @@ if previous=$(git describe --tags --abbrev=0 --match 'v[0-9]*' "$head^" 2> /dev/
 else
   range=("$head")
 fi
+
+# The app's folders: app/, and src/ where it lived before the server joined the repository, so the first
+# release after that move still gets notes for the work merged before it. Changes to server/ give no notes.
+app_paths=(app/ src/)
+
+# Whether a commit changes the app compared with its first parent (a merge: everything it brings in).
+changes_app() { # <commit>
+  if git rev-parse -q --verify "$1^1" > /dev/null; then
+    ! git diff --quiet "$1^1" "$1" -- "${app_paths[@]}"
+  else
+    [ -n "$(git diff-tree --root -r --no-commit-id --name-only "$1" -- "${app_paths[@]}")" ]
+  fi
+}
 
 feature_merge='^Merge pull request #[0-9]+ from [^/]+/feature/(.+)$'
 
@@ -66,6 +79,7 @@ add_notes() { # <commit>... : their trailers as notes, or return 1 if there are 
 }
 
 for c in "${commits[@]}"; do
+  changes_app "$c" || continue
   subject=$(git log -1 --format=%s "$c")
   if [[ "$subject" =~ $feature_merge ]]; then
     change="${BASH_REMATCH[1]}"

@@ -46,13 +46,13 @@ The app and the server do not share code. Each side's own sources sit in `<side>
 
 | Workflow | Side | Runs on | Does |
 | --- | --- | --- | --- |
-| [`deploy-play-internal.yml`](../.github/workflows/deploy-play-internal.yml) | app | push to `main` that changes `app/`, the workflow or its release scripts; by hand | unit tests, signed bundle, upload to Play internal testing, tag `v<x.y.z>` |
+| [`deploy-play-internal.yml`](../.github/workflows/deploy-play-internal.yml) | app | push to `main` that changes `app/`, the workflow or its release scripts; by hand | unit tests, signed bundle, upload to Play internal testing, tag `v<x.y.z>` and GitHub release |
 | [`server-pull-request.yml`](../.github/workflows/server-pull-request.yml) | server | every pull request into `development` | checks `server / build-test` and `server / bicep`; skipped (= passed) when the pull request does not change the server |
 | [`server-build-test.yml`](../.github/workflows/server-build-test.yml) | server | called by the two other server workflows | build, tests, 80% coverage gate |
-| [`server-deploy.yml`](../.github/workflows/server-deploy.yml) | server | push to `main` that changes `server/` or a server workflow; by hand | build and test, publish the API image, deploy `server/infrastructure` to Azure, smoke test |
+| [`server-deploy.yml`](../.github/workflows/server-deploy.yml) | server | push to `main` that changes `server/` or a server workflow; by hand | build and test, publish the API image, deploy `server/infrastructure` to Azure, smoke test, tag `server-v<x.y.z>` and GitHub release |
 
 | [`website-pull-request.yml`](../.github/workflows/website-pull-request.yml) | website | every pull request into `development` | check `website / build` (Hugo build, leaderboard tests, Bicep); skipped (= passed) when the pull request does not change the website |
-| [`website-deploy.yml`](../.github/workflows/website-deploy.yml) | website | push to `main` that changes `website/` or the workflow; by hand | leaderboard tests, deploy `website/infrastructure` to Azure, build the site for its public address, upload it to the Static Web App, smoke test |
+| [`website-deploy.yml`](../.github/workflows/website-deploy.yml) | website | push to `main` that changes `website/` or the workflow; by hand | leaderboard tests, deploy `website/infrastructure` to Azure, build the site for its public address, upload it to the Static Web App, smoke test, tag `website-v<x.y.z>` and GitHub release |
 
 What counts as "changes the server": a file under `server/`, a `.github/workflows/server-*.yml` workflow or `.github/scripts/server-coverage-gate.sh`. What counts as "changes the website": a file under `website/` or a `.github/workflows/website-*.yml` workflow.
 
@@ -62,13 +62,23 @@ A pull request into `development` that changes both sides gets both treatments; 
 
 ## Versions and tags
 
-| | App | Server |
-| --- | --- | --- |
-| Config | [`app/GitVersion.yml`](../app/GitVersion.yml), GitHub Flow | [`server/GitVersion.yml`](../server/GitVersion.yml), mainline (TrunkBased) |
-| Tags | `v<x.y.z>`, pushed by every app release | `server-v<x.y.z>`, set by hand to set a new base |
-| `tag-prefix` | `'[vV]?'` | `'server-v'` |
+| | App | Server | Website |
+| --- | --- | --- | --- |
+| Config | [`app/GitVersion.yml`](../app/GitVersion.yml), GitHub Flow | [`server/GitVersion.yml`](../server/GitVersion.yml), mainline (TrunkBased) | [`website/GitVersion.yml`](../website/GitVersion.yml), GitHub Flow |
+| Tags | `v<x.y.z>`, pushed by every app release | `server-v<x.y.z>`, pushed by every server deployment | `website-v<x.y.z>`, pushed by every website deployment |
+| `tag-prefix` | `'[vV]?'` | `'server-v'` | `'website-v'` |
+| GitHub release | yes, marked *latest* | yes | yes |
 
-A GitVersion tag prefix must match at the start of a tag, so `server-v1.0.0` is never an app version and `v0.9.0` never a server version. The app's prefix keeps the `v` optional because GitVersion also parses `next-version` with it. The app's release notes and version code only look at `v*` tags too (`scripts/generate-release-notes.sh`, `scripts/compute-release-version.sh`), and the notes only take commits that change `app/`.
+Every deploy workflow ends with [`scripts/publish-release.sh`](../scripts/publish-release.sh), only after its deployment succeeded: it pushes the product's tag on the deployed commit and creates the GitHub release for it. The next merge to `main` then gets the next version, which for the server also means a new image version. The release notes are the app's Play release notes, or for the server and website the commits since that product's previous tag that change `server/` or `website/`. Tests: `bash scripts/publish-release.test.sh`.
+
+The three deploy workflows can run at the same time, which is safe because:
+
+- **Versions live only in tags.** No workflow commits a version file, so none of them races another to push to `main`.
+- **Each product has its own tag prefix**, and GitVersion only counts its own, so runs of different products never compute or push the same tag.
+- **Runs of one product never overlap**: each deploy workflow has its own concurrency group, and a newer run waits.
+- **The script is idempotent.** A tag already on the same commit (a re-run, or another run that got there first) and an existing release are left alone, and the run succeeds. A tag on *another* commit fails the run without changing anything. Pushing a new tag can only create it, never move it.
+
+A GitVersion tag prefix must match at the start of a tag, so `server-v1.0.0` and `website-v1.0.0` are never app versions and `v0.9.0` never a server or website version. The app's prefix keeps the `v` optional because GitVersion also parses `next-version` with it. The app's release notes and version code only look at `v*` tags too (`scripts/generate-release-notes.sh`, `scripts/compute-release-version.sh`), and the notes only take commits that change `app/`.
 
 The commit that merged the server's history into this repository has no merge base with the app's history. Mainline versioning cannot walk past it, so it carries the tag `server-v0.3.2` (the last version deployed from the old repository); without a `server-v*` tag on or after it the server's GitVersion fails.
 

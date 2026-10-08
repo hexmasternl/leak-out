@@ -42,7 +42,8 @@ jobs:
     environment: play-store
     timeout-minutes: 45
     permissions:
-      # Pushes the v<x.y.z> tag of each release, which the next run's GitVersion builds on.
+      # Pushes the v<x.y.z> tag of each release, which the next run's GitVersion builds on, and
+      # creates its GitHub release.
       contents: write
       # Reads the update label of the pull request merged as the pushed commit.
       pull-requests: read
@@ -247,23 +248,15 @@ jobs:
           inAppUpdatePriority: ${{ env.UPDATE_PRIORITY }}
 
       # Only after a successful upload: the tag is what makes the next commit on main the next patch.
-      - name: Tag the release
+      # The app's release is the repository's latest; server and website releases never are.
+      - name: Tag and release
         working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          tag="v$VERSION_NAME"
-          if git rev-parse -q --verify "refs/tags/$tag" > /dev/null; then
-            echo "$tag already exists on this commit."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          {
-            echo "Leak Out $VERSION_NAME (version code $VERSION_CODE)"
-            echo ""
-            cat "$RUNNER_TEMP/whatsnew/whatsnew-en-US"
-          } > "$RUNNER_TEMP/tag-message.txt"
-          git tag -a "$tag" --cleanup=whitespace -F "$RUNNER_TEMP/tag-message.txt" "$GITHUB_SHA"
-          git push origin "refs/tags/$tag"
+          bash scripts/publish-release.sh --prefix v --version "$VERSION_NAME" --commit "$GITHUB_SHA" \
+            --title "Leak Out $VERSION_NAME (version code $VERSION_CODE)" \
+            --notes-file "$RUNNER_TEMP/whatsnew/whatsnew-en-US" --latest
 
       - name: Remove upload keystore
         if: always()

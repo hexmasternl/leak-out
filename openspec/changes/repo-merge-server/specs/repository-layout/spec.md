@@ -5,14 +5,14 @@ Defines how the repository holds both the Android app and the online game server
 ## ADDED Requirements
 
 ### Requirement: App and server live in their own folders
-The repository SHALL hold the Android app's Gradle root (settings, wrapper, `gradle/libs.versions.toml`, and the `core` and `app` modules) in `app/`, and the game server (the .NET solution, its infrastructure templates and its build settings) in `server/`. No app or server source SHALL live in `src/` at the repository root.
+The repository SHALL hold the Android app's Gradle root (settings, wrapper, `gradle/libs.versions.toml`, and the `core` and `app` modules) in `app/src/`, the game server's sources (the .NET solution and its projects) in `server/src/`, and the server's Bicep templates in `server/infrastructure/`. No source SHALL live in `src/` at the repository root.
 
-#### Scenario: App builds from app/
-- **WHEN** a contributor runs `./gradlew :core:test :app:testDebugUnitTest` from `app/`
+#### Scenario: App builds from app/src/
+- **WHEN** a contributor runs `./gradlew :core:test :app:testDebugUnitTest` from `app/src/`
 - **THEN** the build finds every module and the tests run
 
-#### Scenario: Server builds from server/
-- **WHEN** a contributor runs `dotnet build` on the server solution in `server/`
+#### Scenario: Server builds from server/src/
+- **WHEN** a contributor runs `dotnet build` on the server solution in `server/src/`
 - **THEN** the solution builds with the SDK pinned by `server/global.json`
 
 ### Requirement: History is kept across the move
@@ -27,7 +27,7 @@ The app's files SHALL keep their history when moved to `app/`, and the server's 
 - **THEN** commits made in the `leak-out-server` repository are listed
 
 ### Requirement: Server workflows only run for server changes
-The server's build, pull request and deploy workflows SHALL live in `.github/workflows/` with a `server-` prefix and SHALL build, test and deploy only from `server/`. The server deployment SHALL run for pushes to `main` that change `server/` or a server workflow, and by hand; it SHALL NOT run for pushes that only change the app.
+The server's build, pull request and deploy workflows SHALL live in `.github/workflows/` with a `server-` prefix and SHALL build and test from `server/src/` and deploy the infrastructure from `server/infrastructure/`. The server deployment SHALL run for pushes to `main` that change `server/` or a server workflow, and by hand; it SHALL NOT run for pushes that only change the app.
 
 #### Scenario: App-only changes do not deploy the server
 - **WHEN** a commit that only changes files under `app/` is pushed to `main`
@@ -71,7 +71,7 @@ The repository SHALL have a `production` environment holding every secret the se
 - **THEN** the deployment fails before anything changes in Azure, naming the missing secret
 
 ### Requirement: Repository layout is documented
-The repository SHALL contain `docs/repository-layout.md`, describing the `app/` and `server/` folders, which workflow builds and releases each, how their versions and tags differ, and where each side's secrets are documented. `CLAUDE.md` SHALL describe the same layout and link to it, and no instruction, doc, skill or agent SHALL refer to `src/` as the app's location.
+The repository SHALL contain `docs/repository-layout.md`, describing the `app/` folder (sources in `app/src/`) and the `server/` folder (sources in `server/src/`, Bicep in `server/infrastructure/`), which workflow builds and releases each, how their versions and tags differ, and where each side's secrets are documented. `CLAUDE.md` SHALL describe the same layout and link to it, and no instruction, doc, skill or agent SHALL refer to `src/` as the app's location.
 
 #### Scenario: No stale src/ references
 - **WHEN** the repository's instructions, docs, skills, agents and scripts are searched for `src/` as the app's Gradle root

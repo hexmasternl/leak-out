@@ -21,8 +21,8 @@ See proposal.md for the motivation. Today:
 
 ## Decisions
 
-### 1. `src/` becomes `app/` as a whole
-`git mv src app` keeps the Gradle root intact, so modules become `app/core` and `app/app` and Gradle project paths (`:core`, `:app`) do not change. *Alternative:* flatten so `app/` is the Android module and `core/` sits next to it at the root — rejected: it spreads the Gradle root over the repository root and mixes it with `server/`.
+### 1. `src/` becomes `app/src/` as a whole
+`git mv src app/src` keeps the Gradle root intact, so modules become `app/src/core` and `app/src/app` and Gradle project paths (`:core`, `:app`) do not change. Both sides then share one shape: `<side>/src/` holds the sources, and `<side>/` holds what belongs to that side but is not source (versioning, docs, and for the server its infrastructure). *Alternative:* `src/` becomes `app/` directly — rejected by the maintainer in favour of the symmetric `<side>/src/` layout. *Alternative:* flatten so `app/` is the Android module — rejected: it spreads the Gradle root over several folders.
 `GitVersion.yml` moves to `app/GitVersion.yml` and the deploy workflow passes it with the GitVersion action's `configFilePath`, so each side owns its versioning file.
 
 ### 2. Import the server with `git filter-repo --to-subdirectory-filter server`, then merge
@@ -30,13 +30,13 @@ In a fresh clone of `leak-out-server`, rewrite history so every path is under `s
 
 ### 3. What goes where after the import
 After the merge everything sits under `server/`. Then:
-- **Stays in `server/`:** `src/`, `infrastructure/`, `global.json`, `Directory.Build.props`, `CodeCoverage.settings.xml`, `GitVersion.yml`, `README.md`, `docs/`, `LICENSE` (dropped if identical to the root one), `.gitignore` (kept; Git applies nested ignore files).
+- **Stays in `server/`:** `src/` (the solution `leak-out-server.slnx` and every project, so `server/src/`), `infrastructure/` (the Bicep templates, so `server/infrastructure/`), `global.json`, `Directory.Build.props`, `CodeCoverage.settings.xml`, `GitVersion.yml`, `README.md`, `docs/`, `LICENSE` (dropped if identical to the root one), `.gitignore` (kept; Git applies nested ignore files).
 - **Moves to the root `.github/`:** the three workflows (renamed `server-build-test.yml`, `server-pull-request.yml`, `server-deploy.yml`) and `.github/scripts/coverage-gate.sh` → `.github/scripts/server-coverage-gate.sh`.
 - **OpenSpec:** there is one OpenSpec root per repository (the CLI reads `openspec/` at the root). The server's specs move to `openspec/specs/server-<name>/` (for example `server-score-submission`), its archived changes to `openspec/changes/archive/` (their dates make the names unique; clashes get a `server-` prefix), and active changes, if any, to `openspec/changes/server-<name>/`. References between server specs are updated to the new names, and `server-ci-cd` is rewritten for the new workflow names and paths as part of this change (it does not exist here yet, so it cannot be a delta).
 - **Agent configuration:** `server/CLAUDE.md` stays as a nested instructions file (Claude Code loads it when working under `server/`); the server's useful content for Copilot goes into `server/AGENTS.md`. Server skills move to `.claude/skills/` unless a skill with the same name already exists here (`openspec-*`, `triage-github-issues`): those keep this repository's version. `.agents/skills` duplicates are dropped. The sync script then mirrors them to `.github/skills/`. `.mcp.json` entries are merged into the root one, if present.
 
 ### 4. Path filters on deploys, change detection on pull requests
-Deploy workflows use `on.push.paths` (`app/**` plus the app workflow; `server/**` plus the `server-*` workflows and the coverage gate script). This is safe because deploys are not required checks.
+Deploy workflows use `on.push.paths` (`app/**`, which covers `app/src/`, plus the app workflow; `server/**` plus the `server-*` workflows and the coverage gate script). This is safe because deploys are not required checks.
 For the required pull request check, a `paths` filter would leave the check *pending* forever on app-only pull requests. Instead `server-pull-request.yml` always runs; a first `changes` job (using `git diff --name-only` against the base, no third-party action) outputs whether `server/` or a server workflow changed, and `build-test` and `bicep` run with `if: needs.changes.outputs.server == 'true'`. A skipped job counts as passing for branch protection. The required check names become `server / build-test` and `server / bicep` (job names stay stable from then on).
 
 ### 5. Separate tags and versions

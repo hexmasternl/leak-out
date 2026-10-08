@@ -24,7 +24,7 @@ The repository SHALL have a GitHub Actions workflow, `.github/workflows/deploy-p
 - **THEN** the second deployment waits until the first has finished, and neither is cancelled
 
 ### Requirement: Tests pass before anything is uploaded
-The workflow SHALL run `:core:test` and `:app:testDebugUnitTest` from `app/` with JDK 21 before building the release bundle. If any test fails, the workflow SHALL fail and SHALL NOT upload anything.
+The workflow SHALL run `:core:test` and `:app:testDebugUnitTest` from `app/src/` with JDK 21 before building the release bundle. If any test fails, the workflow SHALL fail and SHALL NOT upload anything.
 
 #### Scenario: Failing unit test stops the deployment
 - **WHEN** a unit test fails in the workflow

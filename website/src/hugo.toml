@@ -12,7 +12,7 @@ disableKinds = ["taxonomy", "term", "RSS"]
   # The score server the leaderboard reads from. Override per environment with
   # HUGO_PARAMS_SCORESERVERURL.
   scoreServerUrl = "https://rg-leakout-prod-neu-api.jollywater-e41c70f8.northeurope.azurecontainerapps.io"
-  # The number of library levels in the game (src/app/src/main/assets/levels). Update when levels are added.
+  # The number of library levels in the game (app/src/app/src/main/assets/levels). Update when levels are added.
   levelCount = 96
 
 [languages]

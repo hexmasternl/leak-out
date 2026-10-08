@@ -104,7 +104,7 @@ Every asset is a **copy**, so the site never depends on files outside `website/`
 | `assets/images/feature-graphic-1024x500.png` | `assets/store/feature-graphic-1024x500.png` |
 | `assets/images/screenshot-1.png` | `assets/store/Screenshot_20261001_144054.png` (title screen) |
 | `assets/images/screenshot-2.png` | `assets/store/Screenshot_20261001_144106.png` (level 8) |
-| `static/images/pipes/{h,lt,x,res}.svg` | `src/app/src/main/assets/pipes/` |
-| `static/fonts/wendy_one_regular.ttf`, `static/fonts/fredoka.ttf` | `src/app/src/main/res/font/` (both SIL Open Font License) |
+| `static/images/pipes/{h,lt,x,res}.svg` | `app/src/app/src/main/assets/pipes/` |
+| `static/fonts/wendy_one_regular.ttf`, `static/fonts/fredoka.ttf` | `app/src/app/src/main/res/font/` (both SIL Open Font License) |
 
 Colours, type and spacing follow [docs/design-system.md](../docs/design-system.md). The body font is Fredoka, the font the app uses.

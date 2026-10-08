@@ -1,6 +1,6 @@
 # Repository layout
 
-This repository holds two products: the **Leak Out Android app** and its **online game server**. They live in their own folders, have their own build tool, their own workflows, their own versions and their own secrets, so a change to one never builds, versions or releases the other. One OpenSpec change can still cover both sides, in one pull request.
+This repository holds two products: the **Leak Out Android app** and its **online game server**. They live in their own folders, have their own build tool, their own workflows, their own versions and their own secrets, so a change to one never builds, versions or releases the other. One OpenSpec change can still cover both sides, in one pull request. Next to them sits the public **website**, which follows the same rules: its own folder, workflows and deployment.
 
 ```
 leak-out/
@@ -17,12 +17,17 @@ leak-out/
 │   ├── GitVersion.yml        the server's versioning (server-v<x.y.z> tags)
 │   ├── README.md             running, CI, deployment, secrets of the server
 │   └── CLAUDE.md, AGENTS.md  agent instructions for work under server/
+├── website/                  the public website (Hugo, Azure Static Web App)
+│   ├── src/                  Hugo site: hugo.toml, content per language, layouts, assets, static
+│   ├── infrastructure/       Bicep templates (main.bicep, main.bicepparam, modules/)
+│   ├── tests/                unit tests for the leaderboard script (npm test)
+│   └── README.md             building, deployment, secrets, SEO of the website
 ├── assets/                   design sources of the app's artwork and audio
 ├── docs/                     project plan, design system, level format, app deployment, this file
 ├── openspec/                 one OpenSpec root for both: server specs are named server-<name>
 ├── scripts/                  repository tooling (release version and notes, agent config sync)
 └── .github/
-    ├── workflows/            deploy-play-internal.yml (app); server-*.yml (server)
+    ├── workflows/            deploy-play-internal.yml (app); server-*.yml (server); website-*.yml (website)
     └── scripts/              server-coverage-gate.sh
 ```
 
@@ -46,7 +51,10 @@ The app and the server do not share code. Each side's own sources sit in `<side>
 | [`server-build-test.yml`](../.github/workflows/server-build-test.yml) | server | called by the two other server workflows | build, tests, 80% coverage gate |
 | [`server-deploy.yml`](../.github/workflows/server-deploy.yml) | server | push to `main` that changes `server/` or a server workflow; by hand | build and test, publish the API image, deploy `server/infrastructure` to Azure, smoke test |
 
-What counts as "changes the server": a file under `server/`, a `.github/workflows/server-*.yml` workflow or `.github/scripts/server-coverage-gate.sh`.
+| [`website-pull-request.yml`](../.github/workflows/website-pull-request.yml) | website | every pull request into `development` | check `website / build` (Hugo build, leaderboard tests, Bicep); skipped (= passed) when the pull request does not change the website |
+| [`website-deploy.yml`](../.github/workflows/website-deploy.yml) | website | push to `main` that changes `website/` or the workflow; by hand | leaderboard tests, deploy `website/infrastructure` to Azure, build the site for its public address, upload it to the Static Web App, smoke test |
+
+What counts as "changes the server": a file under `server/`, a `.github/workflows/server-*.yml` workflow or `.github/scripts/server-coverage-gate.sh`. What counts as "changes the website": a file under `website/` or a `.github/workflows/website-*.yml` workflow.
 
 Deploys use `on.push.paths` filters, which is safe because they are not required checks. The pull request check cannot: a filtered-out workflow never reports, and a required check would stay pending forever on app-only pull requests. So `server-pull-request.yml` always runs, and its `server / changes` job decides whether the other two jobs do any work.
 
@@ -70,6 +78,7 @@ The commit that merged the server's history into this repository has no merge ba
 | --- | --- | --- |
 | App | environment `play-store` (limited to `main`) | [docs/deployment.md](deployment.md) |
 | Server | repository secrets; the deploy job runs in environment `production` (limited to `main`), which Azure's federated credential trusts | [server/README.md](../server/README.md#secrets-and-settings) |
+| Website | the server's `AZURE_PROD_*` secrets and federated credential (its deploy job also runs in `production`); no deployment token is stored | [website/README.md](../website/README.md#secrets-and-variables) |
 
 ## History
 

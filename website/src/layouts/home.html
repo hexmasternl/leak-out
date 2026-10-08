@@ -7,7 +7,7 @@
       <p class="lead">{{ .Params.intro }}</p>
       <a class="button button-primary" href="{{ site.Params.playStoreUrl }}" rel="noopener">{{ T "getItOnGooglePlay" }}</a>
     </div>
-    <img class="hero-art" src="{{ "images/feature-graphic-1024x500.png" | relURL }}" alt="{{ T "featureGraphicAlt" }}" width="1024" height="500">
+    {{ partial "image.html" (dict "src" "feature-graphic-1024x500.png" "alt" (T "featureGraphicAlt") "width" 1024 "class" "hero-art" "eager" true) }}
   </div>
 </section>
 
@@ -30,8 +30,8 @@
   <div class="container">
     <h2>{{ T "screenshotsHeading" }}</h2>
     <div class="screenshots">
-      <img src="{{ "images/screenshot-1.png" | relURL }}" alt="{{ T "screenshotAlt1" }}" loading="lazy">
-      <img src="{{ "images/screenshot-2.png" | relURL }}" alt="{{ T "screenshotAlt2" }}" loading="lazy">
+      {{ partial "image.html" (dict "src" "screenshot-2.png" "alt" (T "screenshotAlt1") "width" 1200) }}
+      {{ partial "image.html" (dict "src" "screenshot-1.png" "alt" (T "screenshotAlt2") "width" 1200) }}
     </div>
   </div>
 </section>

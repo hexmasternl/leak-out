@@ -1,0 +1,4 @@
+{{- /* A raster image from assets/images, resized to WebP. Params: src, alt, width, class, eager. */ -}}
+{{- $image := resources.Get (printf "images/%s" .src) }}
+{{- $webp := $image.Resize (printf "%dx webp q82" (.width | default 1200)) }}
+<img{{ with .class }} class="{{ . }}"{{ end }} src="{{ $webp.RelPermalink }}" alt="{{ .alt }}" width="{{ $webp.Width }}" height="{{ $webp.Height }}"{{ if not .eager }} loading="lazy"{{ end }} decoding="async">

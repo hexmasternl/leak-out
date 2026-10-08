@@ -2,16 +2,16 @@
 
 ## 1. Hugo site skeleton
 
-- [ ] 1.1 Create `website/src/` with `hugo.toml` (five languages, English default at `/`, site params for the Play Store URL, the leak-out-game issue URLs, the score server base URL and `levelCount`), pin the Hugo extended version in `website/README.md`; verify `hugo --source website/src --panicOnWarning` builds an empty site
-- [ ] 1.2 Write the base layout, header navigation, language switcher (using `.Translations`), footer with "Report a problem" / "Request a feature" links, and `i18n/{en,nl,fr,de,es}.yaml` UI strings; verify the build and that every generated page has `<html lang>` matching its language and the feedback links point to `hexmasternl/leak-out-game`
+- [x] 1.1 Create `website/src/` with `hugo.toml` (five languages, English default at `/`, site params for the Play Store URL, the leak-out-game issue URLs, the score server base URL and `levelCount`), pin the Hugo extended version in `website/README.md`; verify `hugo --source website/src --panicOnWarning` builds an empty site
+- [x] 1.2 Write the base layout, header navigation, language switcher (using `.Translations`), footer with "Report a problem" / "Request a feature" links, and `i18n/{en,nl,fr,de,es}.yaml` UI strings; verify the build and that every generated page has `<html lang>` matching its language and the feedback links point to `hexmasternl/leak-out-game`
 - [ ] 1.3 Add the design system colour and type tokens as CSS custom properties and responsive styles; verify in a browser at 360, 768 and 1280 px wide that no page scrolls horizontally
 
 ## 2. Assets and content
 
-- [ ] 2.1 Copy the icon, feature graphic, store screenshots and pipe artwork into `website/src/` and list their origin in `website/README.md`; verify `grep -rn "\.\./" website/src --include=*.html --include=*.toml --include=*.md` finds no references outside `website/`, and a build from a copy of only `website/` succeeds
-- [ ] 2.2 Write the home page in all five languages (hero, tagline, screenshots, selling points, Get it on Google Play link); verify each language's home page renders and the Play Store link is correct
-- [ ] 2.3 Write the rules page in all five languages using the game's terms (playing field, stack, sections, start and finish pipes, liquid, points, stars); verify each language has the page and the switcher moves between them
-- [ ] 2.4 Write the FAQ page in all five languages; verify each language has the page with questions and answers
+- [x] 2.1 Copy the icon, feature graphic, store screenshots and pipe artwork into `website/src/` and list their origin in `website/README.md`; verify `grep -rn "\.\./" website/src --include=*.html --include=*.toml --include=*.md` finds no references outside `website/`, and a build from a copy of only `website/` succeeds
+- [x] 2.2 Write the home page in all five languages (hero, tagline, screenshots, selling points, Get it on Google Play link); verify each language's home page renders and the Play Store link is correct
+- [x] 2.3 Write the rules page in all five languages using the game's terms (playing field, stack, sections, start and finish pipes, liquid, points, stars); verify each language has the page and the switcher moves between them
+- [x] 2.4 Write the FAQ page in all five languages; verify each language has the page with questions and answers
 
 ## 3. Leaderboard page
 

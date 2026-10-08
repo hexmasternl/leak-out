@@ -1,3 +1,26 @@
 ---
-title: FAQ
+title: Questions fréquentes
+description: "Réponses aux questions fréquentes sur Leak Out."
+layout: faq
+faq:
+  - question: "Sur quels appareils peut-on jouer à Leak Out ?"
+    answer: "Leak Out est conçu pour les téléphones et tablettes Android sous Android 8.0 ou plus récent. Téléchargez-le sur [Google Play](https://play.google.com/store/apps/details?id=nl.hexmaster.leakout)."
+  - question: "Ai-je besoin d'une connexion Internet ?"
+    answer: "Non. Leak Out fonctionne entièrement hors ligne. Une connexion n'est nécessaire que pour se connecter à Google Play Games et envoyer vos scores au classement ; les scores gagnés hors ligne sont envoyés plus tard."
+  - question: "Leak Out contient-il de la publicité ?"
+    answer: "Non. Leak Out ne contient ni publicité, ni pistage, ni statistiques."
+  - question: "Ai-je besoin d'un compte ?"
+    answer: "Non. Vous ne créez pas de compte chez nous. La connexion à Google Play Games est facultative : elle ajoute les succès et place vos meilleurs scores dans le classement."
+  - question: "Pourquoi ne puis-je pas choisir la section suivante ?"
+    answer: "C'est tout le défi. Seule la section en bas de la pile peut être posée. Regardez ce qui arrive et gardez de la place pour les pièces encombrantes. Une section mal placée peut être remplacée tant que le liquide ne l'a pas atteinte."
+  - question: "Comment gagner plus d'étoiles ?"
+    answer: "Faites passer le liquide par plus de sections, utilisez coudes et croix (un second passage dans une croix rapporte 50 points) et ne laissez pas de sections que le liquide n'atteint jamais : chacune coûte 3 points. Tous les points sont dans les [règles](/fr/rules/)."
+  - question: "Comment apparaître dans le classement ?"
+    answer: "Connectez-vous à Google Play Games dans les paramètres du jeu, puis gagnez un niveau. Votre meilleur score sur chaque niveau est envoyé au classement, qui montre le top 25 de chaque niveau."
+  - question: "Quel nom apparaît dans le classement ?"
+    answer: "Votre nom d'affichage Google Play Games. Vous pouvez le modifier dans l'application Google Play Jeux."
+  - question: "J'ai trouvé un bug ou j'ai une idée. Où le signaler ?"
+    answer: "Utilisez le lien Signaler un problème ou Proposer une fonctionnalité en bas de chaque page. Les deux ouvrent un formulaire sur GitHub."
+  - question: "Ma progression est-elle sauvegardée ?"
+    answer: "Oui, sur votre appareil. Les niveaux terminés, meilleurs scores et étoiles sont conservés jusqu'à ce que vous réinitialisiez votre progression dans les paramètres ou désinstalliez le jeu."
 ---

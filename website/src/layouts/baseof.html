@@ -6,7 +6,8 @@
   <title>{{ if .IsHome }}{{ site.Title }} – {{ T "tagline" }}{{ else }}{{ .Title }} – {{ site.Title }}{{ end }}</title>
   <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ T "siteDescription" }}{{ end }}">
   <meta name="theme-color" content="#0C1A2A">
-  <link rel="icon" type="image/png" href="{{ "images/app-icon-192.png" | absURL }}">
+  <link rel="icon" type="image/svg+xml" href="{{ "images/app-icon.svg" | relURL }}">
+  <link rel="apple-touch-icon" href="{{ "images/app-icon-512.png" | relURL }}">
   {{- range .Translations }}
   <link rel="alternate" hreflang="{{ .Language.Locale }}" href="{{ .Permalink }}">
   {{- end }}

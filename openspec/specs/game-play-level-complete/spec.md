@@ -4,7 +4,6 @@
 TBD - created by syncing change app-game-play-level-complete. Update Purpose after archive.
 
 ## Requirements
-
 ### Requirement: Reaching the finish wins the level
 When the liquid leaves a section and enters the finish tile through the finish's open side, and every mandatory section of the level is used, the system SHALL mark the current attempt as **won**. A level SHALL be won at most once per attempt, and a won attempt SHALL NOT become lost. The points for the section the liquid just left SHALL be awarded before the level is won.
 
@@ -51,11 +50,19 @@ When the level is won, the playing field SHALL show the finish tile flashing in 
 - **THEN** the finish tile flashes in the success colour for 1 second
 
 ### Requirement: Level complete dialog appears after the finish flash
-One second after the level is won, the system SHALL show the level complete dialog: a modal dialog above the dimmed game screen. The dialog SHALL show the level number, a title that celebrates the win ("Level Complete!") with a short cheerful line, three stars, the score rows **Points** (the points earned during play), **Penalty** (the unused-section penalty) and **Score** (the total), and three buttons: **Next Level**, **Restart** and **Exit**. When the win unlocked achievements, the dialog SHALL also show an "Achievement unlocked" row below the score rows with the names of the unlocked achievements: at most two names, followed by "+N more" when there are more. The row SHALL appear once the score tally is done and SHALL NOT delay enabling the buttons.
+One second after the level is won, the system SHALL show the level complete dialog: a modal dialog above the dimmed game screen. The dialog SHALL show the level number, a title that celebrates the win ("Level Complete!") with a short cheerful line, three stars, the score rows **Points** (the points earned during play), **Penalty** (the unused-section penalty) and **Score** (the total), and three buttons: **Next Level**, **Restart** and **Exit**. When the top 10 is available for the level (see `level-top-scores`), the dialog SHALL also show a **Top 10** button, which is enabled together with the other buttons. When the win unlocked achievements, the dialog SHALL also show an "Achievement unlocked" row below the score rows with the names of the unlocked achievements: at most two names, followed by "+N more" when there are more. The row SHALL appear once the score tally is done and SHALL NOT delay enabling the buttons.
 
 #### Scenario: Dialog content
 - **WHEN** level 7 is won and 1 second has passed
 - **THEN** the level complete dialog shows "Level 7", "Level Complete!", three stars, the rows Points, Penalty and Score, and the buttons Next Level, Restart and Exit
+
+#### Scenario: Top 10 button
+- **WHEN** a level from the level library is won, the score server is configured and the dialog's buttons are enabled
+- **THEN** the level complete dialog also shows an enabled Top 10 button
+
+#### Scenario: No Top 10 button for a test play
+- **WHEN** a test play from the level designer is won
+- **THEN** the level complete dialog shows no Top 10 button
 
 #### Scenario: Row values after the tally
 - **WHEN** the level complete dialog has finished its tally with 120 earned points and 4 unused sections

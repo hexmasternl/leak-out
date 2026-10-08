@@ -1,0 +1,35 @@
+# Required check for pull requests into main: "Release update label". Every release pull request
+# carries exactly one of the labels update-optional or update-required, which decides whether the
+# release is an optional or a required update for players (openspec/specs/app-deployment). The deploy
+# reads the same label. Keep the job name stable: the required status check on main refers to it
+# (docs/deployment.md#required-updates).
+name: Release update label
+
+on:
+  pull_request:
+    branches: [main]
+    # labeled and unlabeled run the check again as soon as the maintainer fixes the labels.
+    types: [opened, reopened, synchronize, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-update-label-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  label:
+    name: Release update label
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check the update label
+        env:
+          LABELS_JSON: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          labels=$(jq -r '.[]' <<< "$LABELS_JSON")
+          bash scripts/resolve-update-priority.sh --check --labels "$labels"

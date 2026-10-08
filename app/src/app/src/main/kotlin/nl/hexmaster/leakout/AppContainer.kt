@@ -3,10 +3,12 @@ package nl.hexmaster.leakout
 import android.content.Context
 import com.google.android.gms.games.PlayGamesSdk
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import nl.hexmaster.leakout.achievements.AchievementRepository
 import nl.hexmaster.leakout.achievements.AchievementTracker
 import nl.hexmaster.leakout.achievements.data.RoomAchievementRepository
 import nl.hexmaster.leakout.achievements.playgames.PlayGamesServices
+import nl.hexmaster.leakout.core.update.UpdateGate
 import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.history.data.LeakOutDatabase
 import nl.hexmaster.leakout.history.data.RoomLevelHistoryRepository
@@ -18,6 +20,8 @@ import nl.hexmaster.leakout.scores.online.ScoreServerSession
 import nl.hexmaster.leakout.scores.online.ScoreSubmitter
 import nl.hexmaster.leakout.scores.online.TopScoresLoader
 import nl.hexmaster.leakout.scores.online.scoreQueueDataStore
+import nl.hexmaster.leakout.update.AppUpdates
+import nl.hexmaster.leakout.update.PlayAppUpdates
 
 /**
  * The app's long-lived objects, made once per process by [LeakOutApplication] and handed to the
@@ -71,6 +75,12 @@ class AppContainer(context: Context, val scope: CoroutineScope, playGamesAppId: 
     val topScores: TopScoresLoader by lazy {
         TopScoresLoader(scoreServerApi, scoreServerSession, playGames.auth.state, playGames.serverAuthCodes)
     }
+
+    /** Google Play In-App Updates: whether a newer version is available and how urgent it is. */
+    val appUpdates: AppUpdates by lazy { PlayAppUpdates.create(appContext) }
+
+    /** What the update screens show, kept per process so the optional prompt is offered only once. */
+    val updateGate = MutableStateFlow(UpdateGate())
 }
 
 /** The process's [AppContainer]. */

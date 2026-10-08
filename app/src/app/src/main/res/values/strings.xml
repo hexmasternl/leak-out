@@ -404,4 +404,19 @@
     <string name="achievements_state_locked">locked</string>
     <string name="achievements_hidden_name">Hidden achievement</string>
     <string name="achievements_hidden_description">Keep playing to find out.</string>
+    <!-- App updates (openspec/specs/app-updates): the blocking screen for a required update. -->
+    <string name="update_required_title">Update needed</string>
+    <string name="update_required_body">A new version of Leak Out fixes an important problem. Update to keep playing.</string>
+    <string name="update_required_update">Update</string>
+    <string name="update_required_close">Close game</string>
+    <!-- App updates: the prompt for an optional update, shown once at start. -->
+    <string name="update_optional_title">Update available</string>
+    <string name="update_optional_body">A new version of Leak Out is ready. It downloads in the background while you play.</string>
+    <string name="update_optional_update">Update</string>
+    <string name="update_optional_later">Not now</string>
+    <!-- App updates: the prompt once an optional update has downloaded. -->
+    <string name="update_install_title">Update ready</string>
+    <string name="update_install_body">The new version has downloaded. Restart Leak Out to install it.</string>
+    <string name="update_install_restart">Restart</string>
+    <string name="update_install_later">Later</string>
 </resources>

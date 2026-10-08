@@ -61,7 +61,7 @@ The app SHALL keep versioning from `v<major>.<minor>.<patch>` tags. The server S
 - **THEN** the app's next version name is calculated without that tag
 
 ### Requirement: Server secrets and environment live in this repository
-The repository SHALL have a `production` environment holding every secret the server workflows read (`ACR_LOGIN_PASSWORD`, `ACR_LOGIN_SERVER`, `ACR_LOGIN_USERNAME`, `AZURE_PROD_CLIENT_ID`, `AZURE_PROD_SUBSCRIPTION_ID`, `AZURE_PROD_TENANT_ID`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_SIGNING_KEY`, `POSTGRES_ADMIN_PASSWORD`), and Azure SHALL trust this repository's `production` environment for the server's sign-in. No secret value SHALL be committed.
+The repository SHALL hold, as repository secrets, every secret the server workflows read (`ACR_LOGIN_PASSWORD`, `ACR_LOGIN_SERVER`, `ACR_LOGIN_USERNAME`, `AZURE_PROD_CLIENT_ID`, `AZURE_PROD_SUBSCRIPTION_ID`, `AZURE_PROD_TENANT_ID`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_SIGNING_KEY`, `POSTGRES_ADMIN_PASSWORD`); the server's deploy job SHALL run in a `production` environment, and Azure SHALL trust this repository's `production` environment for the server's sign-in. No secret value SHALL be committed.
 
 #### Scenario: Deployment signs in to Azure
 - **WHEN** the server deployment runs from this repository

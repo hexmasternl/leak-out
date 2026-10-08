@@ -4,19 +4,23 @@ A 2D pipe-building puzzle game for Android.
 
 ## Repository layout
 
-**All application source code lives in the `src/` directory.** The Gradle build (settings, wrapper, version catalog) and every module (`core`, `app`) sit under `src/`. Nothing else in the repository is part of the app build.
+The repository holds the Android app and its online game server, each in its own folder with its own build and release. **The app's source code lives in `app/src/`**: the Gradle build (settings, wrapper, version catalog) and every module (`core`, `app`) sit there. The server's .NET solution lives in `server/src/` and its Azure templates in `server/infrastructure/`. Details: [docs/repository-layout.md](docs/repository-layout.md).
 
 ```
 leak-out/
-├── src/          the app: Gradle root, core (pure Kotlin) and app (Android) modules
-├── docs/         project plan and design system
+├── app/
+│   └── src/      the app: Gradle root, core (pure Kotlin) and app (Android) modules
+├── server/
+│   ├── src/      the game server: .NET solution and projects
+│   └── infrastructure/  Bicep templates for Azure
+├── docs/         project plan, design system, repository layout
 └── openspec/     specs and change proposals
 ```
 
-Run Gradle commands from `src/`:
+Run Gradle commands from `app/src/`:
 
 ```sh
-cd src
+cd app/src
 ./gradlew :core:test          # Windows: .\gradlew.bat :core:test
 ```
 

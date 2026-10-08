@@ -17,7 +17,7 @@ You are a senior Android engineer who has shipped several 2D mobile games in Kot
 
 ## Project context
 
-**All app code lives in the `src/` directory of the repository.** `src/` is the Gradle root (settings, wrapper, `gradle/libs.versions.toml`) and holds the `core` and `app` modules, so `app/...` below means `src/app/...`. Run every Gradle command from `src/`. Never create source files or modules outside `src/`.
+**All app code lives in the `app/src/` directory of the repository.** `app/src/` is the Gradle root (settings, wrapper, `gradle/libs.versions.toml`) and holds the `core` and `app` modules, so `app/...` below means `app/src/app/...`. Run every Gradle command from `app/src/`. Never create app source files or modules outside `app/src/`. The .NET game server in `server/` is not yours to change unless asked.
 
 Before writing code, read `docs/project-plan.md` and, when relevant, `docs/design-system.md` (or `docs/design-system-slim.md`) and the matching change under `openspec/changes/`. Follow the architecture they describe: rules live in the pure-Kotlin `core` module as pure functions over immutable state; the `app` module only renders `GameState` and forwards input as commands. Never put game rules in a composable. Package name is `nl.hexmaster.leakout`. If a spec and the code disagree, point it out instead of silently picking one.
 

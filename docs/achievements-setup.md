@@ -209,7 +209,7 @@ Testers of the app's testing tracks are **not** automatically PGS testers. Add t
    Check the other 20 as well: each one must read `achievement_<key>` with a key from the catalogue. Keep the ids (the `CgkI…` values) exactly as exported.
 
 4. Replace `src/app/src/main/res/values/games-ids.xml` with the result.
-5. Run the resource check and the unit tests from `src/`:
+5. Run the resource check and the unit tests from `app/src/`:
 
    ```sh
    ./gradlew :app:testDebugUnitTest

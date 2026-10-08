@@ -34,9 +34,20 @@ See [docs/auth-setup.md](docs/auth-setup.md) for the full Google Cloud / Play Co
 
 1. The game signs in to Play Games Services and requests a one-time server auth code.
 2. It posts the code to `POST /api/players/sessions`. The server exchanges it with Google, registers the player on their first sign-in (or refreshes their display name), and returns an access token valid for one hour, its expiry time, the internal player id and the display name.
-3. Every other endpoint requires that token as `Authorization: Bearer <token>`. When it expires, the game requests a new server auth code and signs in again.
+3. Every other endpoint, except the public ones below, requires that token as `Authorization: Bearer <token>`. When it expires, the game requests a new server auth code and signs in again.
 
 `src/HexMaster.LeakOut.Api/HexMaster.LeakOut.Api.http` has a sign-in sample.
+
+## Public endpoints
+
+A few read-only endpoints need no token, for the public website ([website/README.md](../website/README.md)). They opt out of the fallback policy with `AllowAnonymous()` and live in `src/HexMaster.LeakOut.Api/Endpoints/PublicLevelScoreEndpoints.cs`.
+
+| Endpoint | Returns |
+| --- | --- |
+| `GET /api/public/levels/{level}/scores/top` | The 25 best scores of a level in ranking order: `{ "level": 3, "entries": [{ "position": 1, "displayName": "Ann", "score": 600 }] }`. No player ids. 400 with a validation error when `level` is below 1. |
+
+- **Caching.** Each level's result is kept in the API's memory cache for **30 minutes** (`GetPublicLevelTopScoresQueryHandler.CacheDuration`), so a new score can take up to 30 minutes to appear, and each replica reads the database at most once per level in that time. A failed read is not cached. Responses also carry `Cache-Control: public, max-age=60`.
+- **CORS.** Only the origins in `Website:AllowedOrigins` may call them from a browser, with GET and no credentials. `appsettings.json` allows `https://leakout.hexmaster.nl`; another origin, for example the Static Web App's own `*.azurestaticapps.net` address, can be added there or as the app setting `Website__AllowedOrigins__1`. The authenticated endpoints send no CORS headers.
 
 ## Observability
 
@@ -51,7 +62,7 @@ The API emits OpenTelemetry traces, metrics and logs (`HexMaster.LeakOut.Aspire.
 **In Azure**, everything goes to the Application Insights component `<resource group>-appi`, under cloud role `hexmaster-leakout-api`. The deployed version (`service.version`, the image tag) appears as `application_Version`. Requests and dependencies show in **Transaction search** and **Application map**. Custom spans are in the `dependencies` table, custom metrics in `customMetrics` and logs in `traces`:
 
 ```kusto
-dependencies | where name in ("players.resolve_user", "scores.get_level_top_scores", "scores.get_level_scores_around_player")
+dependencies | where name in ("players.resolve_user", "scores.get_level_top_scores", "scores.get_level_scores_around_player", "scores.get_public_level_top_scores")
 customMetrics | where name startswith "leakout."
 requests | summarize count() by application_Version, bin(timestamp, 1h)
 ```
@@ -64,6 +75,7 @@ requests | summarize count() by application_Version, bin(timestamp, 1h)
 | `scores.submit_score` | Submitting a score |
 | `scores.get_level_top_scores` | Top 10 of a level |
 | `scores.get_level_scores_around_player` | The scores around the player's own score |
+| `scores.get_public_level_top_scores` | Public top 25 of a level for the website; `leaderboard.cache_hit` tells whether it came from the 30-minute memory cache |
 
 | Metric | Type | Attributes |
 | --- | --- | --- |
@@ -72,7 +84,7 @@ requests | summarize count() by application_Version, bin(timestamp, 1h)
 | `leakout.players.user_resolutions` | counter | `outcome` (`cache_hit`, `cache_miss`, `unknown`, `error`) |
 | `leakout.scores.submissions` | counter | `outcome` (`new_best`, `not_improved`, `error`) |
 | `leakout.scores.submission.duration` | histogram (s) | `outcome` |
-| `leakout.scores.leaderboard.requests` | counter | `leaderboard.kind` (`top`, `around_player`), `outcome` (`success`, `error`) |
+| `leakout.scores.leaderboard.requests` | counter | `leaderboard.kind` (`top`, `around_player`, `public_top`), `outcome` (`success`, `error`) |
 | `leakout.scores.leaderboard.duration` | histogram (s) | `leaderboard.kind`, `outcome` |
 
 Logs record a new player, a rejected sign-in, a new best score and unexpected failures, and carry the trace id of their request.

@@ -1,4 +1,5 @@
 using HexMaster.LeakOut.Api.Authentication;
+using HexMaster.LeakOut.Api.Cors;
 using HexMaster.LeakOut.Api.Endpoints;
 using HexMaster.LeakOut.Players;
 using HexMaster.LeakOut.Players.Data.PostgreSQL;
@@ -24,6 +25,7 @@ builder.Services.AddHostedService<PlayersDatabaseMigrator>();
 builder.Services.AddHostedService<ScoresDatabaseMigrator>();
 
 builder.Services.AddAccessTokenAuthentication();
+builder.Services.AddWebsiteCors(builder.Configuration);
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>
@@ -35,6 +37,8 @@ builder.Services.AddOpenApi(options =>
 var app = builder.Build();
 
 app.UseHttpsRedirection();
+// Before authentication, so a preflight from the website is answered without a token.
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -48,6 +52,7 @@ if (app.Environment.IsDevelopment())
 app.MapPlayerEndpoints();
 app.MapScoreEndpoints();
 app.MapLevelScoreEndpoints();
+app.MapPublicLevelScoreEndpoints();
 
 app.Run();
 

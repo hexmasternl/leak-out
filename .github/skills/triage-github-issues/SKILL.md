@@ -1,24 +1,26 @@
 ---
 name: triage-github-issues
-description: Triage GitHub issues for this repository. Use when the user asks to triage, groom, refine, clean up, label or flesh out one or more GitHub issues (by number, by URL, or "the open/untriaged issues"). Rewrites each issue into a complete story with acceptance criteria while keeping the reporter's original text, applies labels (feature, enhancement, bug, documentation, duplicate, invalid, question, wontfix — combinable), sets the issue type (Feature, Bug or Task), and links the OpenSpec change that implements the issue, proposing a new change autonomously when none exists in openspec/changes.
+description: Triage GitHub issues for this repository. Use when the user asks to triage, groom, refine, clean up, label or flesh out one or more GitHub issues (by number, by URL, or "the open/untriaged issues"). Rewrites each issue into a complete story with acceptance criteria while keeping the reporter's original text, applies labels (feature, enhancement, bug, documentation, duplicate, invalid, question, wontfix — combinable) plus at least one area label (app, server, website — combinable), sets the issue type (Feature, Bug or Task), and links the OpenSpec change that implements the issue, proposing a new change autonomously when none exists in openspec/changes.
 license: MIT
 compatibility: Requires git and the GitHub CLI (`gh`), authenticated with write access to the repository. Works from PowerShell or Git Bash on Windows.
 metadata:
   author: hexmasternl
-  version: "1.0"
+  version: "1.1"
 ---
 
 Triage GitHub issues: turn each one into a good, complete story, label it, give it a type, and link the OpenSpec change that covers it, creating that change when there is none.
 
-**Only untriaged issues are triaged.** An issue is **untriaged** when it has no labels at all, or no issue type. An issue with both at least one label and an issue type is triaged and is left alone.
+**Only untriaged issues are triaged.** An issue is **untriaged** when it has no labels at all, no issue type, or no area label (`app`, `server` or `website`). An issue with at least one label, an issue type and an area label is triaged and is left alone.
 
-**Input**: one or more issue numbers or URLs. If none are given, triage the open untriaged issues (`gh issue list --state open --json number,title,labels,issueType`, then keep those with an empty `labels` list or no `issueType`), and tell the user which ones you picked. Triage all of them, oldest first, even if the list is long. If the user names an issue that is already triaged, skip it and say so in your report; re-triage it only when the user explicitly asks for that issue to be triaged again.
+An issue that only lacks an area label (it already has labels and a type) gets a **light triage**: add the area label(s) from step 3 and leave the title, body, other labels, type and OpenSpec link as they are. Do the full triage only when the issue is also missing labels or a type.
+
+**Input**: one or more issue numbers or URLs. If none are given, triage the open untriaged issues (`gh issue list --state open --limit 200 --json number,title,labels,issueType`, then keep those with an empty `labels` list, no `issueType`, or none of the labels `app`, `server`, `website`), and tell the user which ones you picked. Triage all of them, oldest first, even if the list is long. If the user names an issue that is already triaged, skip it and say so in your report; re-triage it only when the user explicitly asks for that issue to be triaged again.
 
 ## What a triaged issue looks like
 
 1. A **title** that says what the issue is about in a few words, in the imperative for work items ("Add haptic feedback") or as the symptom for bugs ("Game crashes when the stack is empty"). Keep the original title if it is already good.
 2. A **body** that follows the matching template below, with the reporter's text kept verbatim at the bottom.
-3. One or more **labels** from the label set.
+3. One or more **labels** from the label set, including at least one **area label** (`app`, `server`, `website`).
 4. Exactly one **issue type**: `Feature`, `Bug` or `Task`.
 5. A link to the **OpenSpec change** that implements it. When there is none, triage creates one (step 2), so every actionable issue ends up with a change.
 
@@ -81,6 +83,16 @@ Labels may be combined. Use only these:
 | `invalid`       | Not actionable or not about this project (spam, wrong repo, nothing to do).                              |
 | `question`      | The reporter asks something rather than requests work, or the issue cannot be turned into a story without an answer from the reporter. |
 | `wontfix`       | Only when the user (the maintainer) has decided it will not be done. Never decide this yourself; propose it. |
+
+Every issue also gets at least one **area label** saying which product the work touches. Add every area that applies:
+
+| Label     | When                                                                                                          |
+| --------- | ------------------------------------------------------------------------------------------------------------- |
+| `app`     | The Android game app: anything under `app/` (game rules in `core`, Compose UI, Play Console, app CI/release). |
+| `server`  | The online game server: anything under `server/` (.NET API, Azure infrastructure, server CI/release).         |
+| `website` | The public website: anything under `website/` (Hugo site, its infrastructure and deployment).                 |
+
+Decide from what has to change, not from where the reporter noticed it: a leaderboard that shows wrong scores in the app because the server computes them wrongly is `server`; if both sides must change, it is `app` and `server`. Repository-wide work (agent config, OpenSpec tooling, shared docs) gets every area it affects, or the one it mainly serves; mention the choice in your report. `duplicate`, `invalid` and `wontfix` issues still get the area of the issue they are about.
 
 Rules of thumb:
 - `feature` and `enhancement` exclude each other; pick by whether the thing already exists.
@@ -191,7 +203,7 @@ gh api graphql -f query='{repository(owner:"hexmasternl",name:"leak-out"){issue(
 gh api graphql -f query='mutation($id:ID!,$type:ID!){updateIssue(input:{id:$id,issueTypeId:$type}){issue{number issueType{name}}}}' -f id=<issue-id> -f type=<type-id>
 ```
 
-Labels outside the table above are left alone (for example `good first issue`, `help wanted`). If one of the table's labels is missing from the repository, create it with `gh label create` and mention it.
+Labels outside the tables above are left alone (for example `good first issue`, `help wanted`). If one of the tables' labels is missing from the repository, create it with `gh label create` (area labels: `gh label create app --color 1D76DB --description "Android game app"`, `server` with `5319E7` "Online game server", `website` with `FBCA04` "Public website") and mention it.
 
 Never close, lock, assign or transfer an issue as part of triage. For a duplicate, an archived (done) OpenSpec change, or `invalid`/`wontfix`, suggest closing and let the user decide.
 
@@ -200,9 +212,9 @@ Never close, lock, assign or transfer an issue as part of triage. For a duplicat
 Re-read each issue (`gh issue view <n> --json title,labels,issueType`) to confirm the changes landed. Then report per issue, in one line each where possible:
 
 ```
-#85 Haptic feedback — Feature · feature · linked app-game-haptic-feedback
-#91 Reduce battery usage during play — Bug · bug, enhancement · proposed app-battery-frame-budget · 2 open questions
-#88 Upgrade androidx.fragment — Task · enhancement · linked app-play-console-policy-fixes (by topic)
+#85 Haptic feedback — Feature · feature, app · linked app-game-haptic-feedback
+#91 Reduce battery usage during play — Bug · bug, enhancement, app · proposed app-battery-frame-budget · 2 open questions
+#88 Upgrade androidx.fragment — Task · enhancement, app · linked app-play-console-policy-fixes (by topic)
 ```
 
 Follow with anything that needs the user: issues skipped because they were already triaged, open questions, suggested closes, possible duplicates, labels removed.

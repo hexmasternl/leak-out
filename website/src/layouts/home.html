@@ -37,6 +37,19 @@
   </div>
 </section>
 
+<section class="section" id="become-a-tester">
+  <div class="container">
+    <div class="card tester-card">
+      <h2>{{ T "testerTitle" }}</h2>
+      <p>{{ T "testerSectionText" }}</p>
+      <p>{{ T "testerIntro" }}</p>
+      {{ partial "tester-steps.html" . }}
+      <p class="tester-note">{{ T "testerDelay" }}</p>
+      <a class="button button-primary" href="#become-a-tester" data-tester-open>{{ T "testerSectionButton" }}</a>
+    </div>
+  </div>
+</section>
+
 <section class="section">
   <div class="container"><div class="prose">
     {{ .Content }}

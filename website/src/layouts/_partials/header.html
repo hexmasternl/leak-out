@@ -14,6 +14,8 @@
           <li><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current.RelPermalink }} aria-current="page"{{ end }}>{{ T (printf "nav_%s" $key) }}</a></li>
           {{- end }}
         {{- end }}
+          {{- /* Opens the tester invitation; without JavaScript it leads to the home page section. */}}
+          <li><a href="{{ site.Home.RelPermalink }}#become-a-tester" data-tester-open>{{ T "nav_tester" }}</a></li>
       </ul>
     </nav>
     {{ partial "language-switcher.html" . }}

@@ -26,5 +26,9 @@
     {{ block "main" . }}{{ end }}
   </main>
   {{ partial "footer.html" . }}
+  {{ partial "tester-invite.html" . }}
+  {{- with resources.Get "js/tester-invite.js" | minify | fingerprint }}
+  <script type="module" src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}"></script>
+  {{- end }}
 </body>
 </html>

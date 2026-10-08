@@ -1,0 +1,13 @@
+{{- /* The tester invitation dialog, opened by assets/js/tester-invite.js from the "Test the app" menu item,
+       the home page button and a 15-second timer. Without JavaScript it never opens and the triggers lead to
+       the home page section instead. Remove it when the game leaves closed testing. */ -}}
+<dialog class="tester-invite" id="tester-invite" aria-labelledby="tester-invite-title">
+  <div class="tester-invite-body">
+    <h2 id="tester-invite-title">{{ T "testerTitle" }}</h2>
+    <p>{{ T "testerIntro" }}</p>
+    {{ partial "tester-steps.html" . }}
+    <p><a href="{{ site.Params.playStoreUrl }}" rel="noopener">{{ T "testerPlayStore" }}</a></p>
+    <p class="tester-note">{{ T "testerDelay" }}</p>
+    <button type="button" class="button button-secondary" data-tester-close>{{ T "testerClose" }}</button>
+  </div>
+</dialog>

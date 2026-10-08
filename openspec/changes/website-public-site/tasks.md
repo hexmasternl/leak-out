@@ -30,6 +30,7 @@
 - [x] 5.2 Add `.github/workflows/website-pull-request.yml` (changes job, Hugo build with pinned version and `--panicOnWarning`, Bicep build, always reports a result); verify with `actionlint` if available and with a pull request that changes `website/`
 - [x] 5.3 Add `.github/workflows/website-deploy.yml` (push to `main` on `website/**` and the workflow, `workflow_dispatch`; OIDC Azure login, Bicep deployment, deployment token fetched at run time, `Azure/static-web-apps-deploy` with `skip_app_build`); verify with `actionlint` if available and that no token appears in the repository
 - [x] 5.4 Document the Azure federated credential, the GitHub variables and secrets, and the first manual run in `website/README.md`; add `website/` to `docs/repository-layout.md` and `README.md`; verify every secret and variable used by the workflows is documented
+- [x] 5.5 Serve the site on its custom domain `leakout.hexmaster.nl` (`customDomain` in main.bicepparam, CNAME already pointing at the Static Web App), build it for that address via the new `publicHostname` output, and tell visitors on the leaderboard page and in the FAQ that scores refresh every 30 minutes; verify with `az bicep build`, a `what-if` that only adds the custom domain, and a Hugo build
 
 ## 6. Integration
 

@@ -75,18 +75,20 @@ jobs:
           echo "resource-group=$(jq -r '.resourceGroupName.value' <<< "$outputs")" >> "$GITHUB_OUTPUT"
           echo "name=$(jq -r '.staticWebAppName.value' <<< "$outputs")" >> "$GITHUB_OUTPUT"
           echo "hostname=$(jq -r '.defaultHostname.value' <<< "$outputs")" >> "$GITHUB_OUTPUT"
+          echo "public-hostname=$(jq -r '.publicHostname.value' <<< "$outputs")" >> "$GITHUB_OUTPUT"
 
       # Built after the infrastructure so canonical, hreflang, Open Graph and sitemap URLs are absolute:
-      # WEBSITE_BASE_URL (the custom domain) when set, otherwise the Static Web App's own address.
+      # WEBSITE_BASE_URL when set, otherwise the public host name: the custom domain from
+      # main.bicepparam (leakout.hexmaster.nl), or the Static Web App's own address without one.
       # LEAKOUT_SCORE_SERVER_URL optionally overrides the score server in hugo.toml (also in the CSP).
       - name: Build the site
         env:
           WEBSITE_BASE_URL: ${{ vars.WEBSITE_BASE_URL }}
-          DEFAULT_HOSTNAME: ${{ steps.infrastructure.outputs.hostname }}
+          PUBLIC_HOSTNAME: ${{ steps.infrastructure.outputs.public-hostname }}
           HUGO_PARAMS_SCORESERVERURL: ${{ vars.LEAKOUT_SCORE_SERVER_URL }}
         run: |
           [[ -z "$HUGO_PARAMS_SCORESERVERURL" ]] && unset HUGO_PARAMS_SCORESERVERURL
-          base_url="${WEBSITE_BASE_URL:-https://$DEFAULT_HOSTNAME/}"
+          base_url="${WEBSITE_BASE_URL:-https://$PUBLIC_HOSTNAME/}"
           echo "Building for $base_url"
           hugo --source website/src --panicOnWarning --minify --baseURL "$base_url" \
             --destination "$GITHUB_WORKSPACE/public"

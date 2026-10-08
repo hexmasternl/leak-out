@@ -18,6 +18,14 @@ sealed interface Cell {
      * section was put there by the level, never by the player, and can never be replaced at all.
      */
     data class Pipe(val section: PipeSection, val liquidEntered: Boolean = false, val mandatory: Boolean = false) : Cell
+
+    /**
+     * One portal of a portal pair, put there by the level. [pair] is the pair's number, starting at
+     * 1, which picks its colour and symbol. Liquid goes in and out through [openSide]; [partner] is
+     * the cell of the other portal of the pair. A portal is not a section: it scores nothing and is
+     * never replaced.
+     */
+    data class Portal(val pair: Int, val openSide: Side, val partner: Position) : Cell
 }
 
 /**
@@ -48,11 +56,20 @@ class Board(val grid: GridSize, cells: Map<Position, Cell>) {
     override fun toString(): String = "Board($grid, $cells)"
 
     companion object {
-        /** The board a level starts with: its start, finish, blocked cells and unfilled mandatory sections, the rest empty. */
+        /**
+         * The board a level starts with: its start, finish, blocked cells, unfilled mandatory
+         * sections and portals, the rest empty.
+         */
         fun from(level: Level): Board = Board(
             level.grid,
             level.blocked.associateWith { Cell.Blocked } +
                 level.mandatory.associate { it.position to Cell.Pipe(it.section, mandatory = true) } +
+                level.portals.flatMapIndexed { index, pair ->
+                    listOf(
+                        pair.a.position to Cell.Portal(index + 1, pair.a.openSide, pair.b.position),
+                        pair.b.position to Cell.Portal(index + 1, pair.b.openSide, pair.a.position),
+                    )
+                } +
                 (level.start.position to Cell.Start(level.start.openSide)) +
                 (level.finish.position to Cell.Finish(level.finish.openSide)),
         )

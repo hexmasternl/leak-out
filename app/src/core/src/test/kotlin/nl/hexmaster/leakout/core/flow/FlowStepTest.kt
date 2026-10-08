@@ -117,6 +117,43 @@ class FlowStepTest {
         )
     }
 
+    /** The board of [level] with one portal pair: a at (2, 1) open to the left, b at (3, 2) open to the left. */
+    private val portalBoard: Board =
+        Board.from(level.copy(portals = listOf(TestLevels.pair(2, 1, Side.LEFT, 3, 2, Side.LEFT))))
+
+    @Test
+    fun `liquid enters portal a through its open side and leaves the pair from portal b`() {
+        assertEquals(Result.Enter(p(2, 1), Side.LEFT), after(portalBoard, p(1, 1), Side.RIGHT))
+        assertEquals(
+            FlowStep.Next.Portal(p(2, 1), Side.LEFT, exitPortal = p(3, 2), exit = Side.LEFT),
+            FlowStep.next(portalBoard, p(1, 1), Side.RIGHT, emptySet()),
+        )
+    }
+
+    @Test
+    fun `liquid enters portal b through its open side and leaves the pair from portal a`() {
+        assertEquals(
+            FlowStep.Next.Portal(p(3, 2), Side.LEFT, exitPortal = p(2, 1), exit = Side.LEFT),
+            FlowStep.next(portalBoard, p(2, 2), Side.RIGHT, emptySet()),
+        )
+    }
+
+    @Test
+    fun `liquid that reaches a portal through a closed side leaks`() {
+        assertEquals(Result.Leak(p(2, 2), Side.TOP), after(portalBoard, p(2, 2), Side.TOP))
+        assertEquals(
+            FlowStep.Next.Refused(p(2, 1), FlowStep.Gap.NO_OPENING),
+            FlowStep.next(portalBoard, p(2, 2), Side.TOP, emptySet()),
+        )
+    }
+
+    @Test
+    fun `liquid that reaches a passed pair leaks`() {
+        val used = portalPairUses(p(2, 1), p(3, 2))
+        assertEquals(Result.Leak(p(1, 1), Side.RIGHT), after(portalBoard, p(1, 1), Side.RIGHT, used))
+        assertEquals(Result.Leak(p(2, 2), Side.RIGHT), after(portalBoard, p(2, 2), Side.RIGHT, used))
+    }
+
     @Test
     fun `a cross channel is the axis of the entry side`() {
         assertEquals(Channel.HORIZONTAL, X.channelFor(Side.LEFT))

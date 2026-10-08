@@ -13,13 +13,13 @@ Paths are relative to `app/src/`; run Gradle from `app/src/` (`.\gradlew.bat` on
 
 ## 2. Board, placement and flow simulation
 
-- [ ] 2.1 Add `Cell.Portal(pair, openSide, partner)` and put both portals of every pair on the board in `Board.from(level)`. Verify with `BoardTest` (portals on a new and a restarted board).
-- [ ] 2.2 Make `Placement.check` reject a portal tile for hover and drop, whatever `allowReplace` says (reuse the fixed-pipe rejection reason if #135 is merged). Verify with `PlacementTest`.
-- [ ] 2.3 Add `Channel.PORTAL` and move the next-tile decision into one helper used by `FlowStep.after` and `RouteTracer.walk`: entering a portal through its open side enters the pair unless its channel is used; any other side leaks. Verify with `FlowStepTest` and `RouteTracerTest` cases (enter a to b, enter b to a, closed side, used pair).
-- [ ] 2.4 In `FlowSimulation`, run the head through a pair in one cell's time without the reservoir factor, leave it from the partner through the partner's open side, award no points, add no `PathStep` and leave the speed ramp count unchanged. Verify with `FlowSimulationTest` cases: timings at 400, 600 and 1,000 ms at 1 cell per second; leak at the exit portal; win through a pair; long tick across a pair; speed ramp after a pair; score unchanged by a pair.
-- [ ] 2.5 Count a pair as 1 in `GapDistance` (head inside a pair: `1 - progress`). Verify with `GapDistanceTest` cases for the two gap-warning scenarios with portals.
-- [ ] 2.6 Exclude portals from `AttemptSummary.freeCells` (Wall to Wall). Verify with an `AchievementRulesTest` case for a full board with portals.
-- [ ] 2.7 Add portal boards to `FlowStepRouteAgreementTest` and run `./gradlew :core:test`; confirm the flow wins on every board the route check calls complete.
+- [x] 2.1 Add `Cell.Portal(pair, openSide, partner)` and put both portals of every pair on the board in `Board.from(level)`. Verify with `BoardTest` (portals on a new and a restarted board).
+- [x] 2.2 Make `Placement.check` reject a portal tile for hover and drop, whatever `allowReplace` says (reuse the fixed-pipe rejection reason if #135 is merged). Verify with `PlacementTest`.
+- [x] 2.3 Add `Channel.PORTAL` and move the next-tile decision into one helper used by `FlowStep.after` and `RouteTracer.walk`: entering a portal through its open side enters the pair unless its channel is used; any other side leaks. Verify with `FlowStepTest` and `RouteTracerTest` cases (enter a to b, enter b to a, closed side, used pair).
+- [x] 2.4 In `FlowSimulation`, run the head through a pair in one cell's time without the reservoir factor, leave it from the partner through the partner's open side, award no points, add no `PathStep` and leave the speed ramp count unchanged. Verify with `FlowSimulationTest` cases: timings at 400, 600 and 1,000 ms at 1 cell per second; leak at the exit portal; win through a pair; long tick across a pair; speed ramp after a pair; score unchanged by a pair.
+- [x] 2.5 Count a pair as 1 in `GapDistance` (head inside a pair: `1 - progress`). Verify with `GapDistanceTest` cases for the two gap-warning scenarios with portals.
+- [x] 2.6 Exclude portals from `AttemptSummary.freeCells` (Wall to Wall). Verify with an `AchievementRulesTest` case for a full board with portals.
+- [x] 2.7 Add portal boards to `FlowStepRouteAgreementTest` and run `./gradlew :core:test`; confirm the flow wins on every board the route check calls complete.
 
 ## 3. Solver
 

@@ -1,7 +1,7 @@
 # app-updates Specification
 
 ## Purpose
-TBD - created by archiving change app-required-updates. Update Purpose after archive.
+Lets the maintainer require players to install a release with a major fix, while other releases stay optional, through Google Play In-App Updates and without a server of our own. The release pipeline sets the priority (app-deployment); the app reads it at start and blocks play or offers the update.
 
 ## Requirements
 

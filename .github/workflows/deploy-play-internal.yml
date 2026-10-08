@@ -89,7 +89,8 @@ jobs:
             bash scripts/resolve-update-priority.sh --labels "$labels" > "$RUNNER_TEMP/update.env"
           fi
           cat "$RUNNER_TEMP/update.env" >> "$GITHUB_ENV"
-          source "$RUNNER_TEMP/update.env"
+          # Read as data, not sourced: UPDATE_SOURCE contains spaces. Same loop as read_env in scripts/resolve-update-priority.test.sh.
+          while IFS='=' read -r key value; do export "$key=$value"; done < "$RUNNER_TEMP/update.env"
           {
             echo "### In-app update"
             echo ""

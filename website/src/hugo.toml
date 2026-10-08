@@ -7,6 +7,10 @@ disableKinds = ["taxonomy", "term", "RSS"]
 
 [params]
   playStoreUrl = "https://play.google.com/store/apps/details?id=nl.hexmaster.leakout"
+  # Closed testing: testers join the Google Group, then opt in on Google Play. Remove both, and the
+  # tester invitation, when the game leaves closed testing.
+  testerGroupUrl = "https://groups.google.com/g/leak-out"
+  testerOptInUrl = "https://play.google.com/apps/testing/nl.hexmaster.leakout"
   reportProblemUrl = "https://github.com/hexmasternl/leak-out-game/issues/new?template=bug_report.yml"
   requestFeatureUrl = "https://github.com/hexmasternl/leak-out-game/issues/new?template=feature_request.yml"
   # The score server the leaderboard reads from. Override per environment with

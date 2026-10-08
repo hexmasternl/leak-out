@@ -4,15 +4,13 @@
 # the semantic version GitVersion calculates from server-v<x.y.z> tags (server/GitVersion.yml).
 name: server-deploy
 
-# Cut-over from hexmasternl/leak-out-server: only by hand until the first deploy from this
-# repository succeeded. Then add, and disable deploy.yml in leak-out-server:
-#   push:
-#     branches: [main]
-#     paths:
-#       - 'server/**'
-#       - '.github/workflows/server-*.yml'
-#       - '.github/scripts/server-*'
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+      - '.github/workflows/server-*.yml'
+      - '.github/scripts/server-*'
   workflow_dispatch:
 
 permissions:

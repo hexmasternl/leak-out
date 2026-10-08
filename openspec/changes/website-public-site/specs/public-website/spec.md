@@ -76,3 +76,28 @@ Every page SHALL have a page title and a language attribute matching its languag
 #### Scenario: Automated accessibility check
 - **WHEN** an automated accessibility check runs over the built website
 - **THEN** it reports no missing image alternatives, page titles, language attributes or contrast failures
+
+### Requirement: Search engine metadata
+Every page SHALL have a unique title and meta description in its language, a canonical URL, alternate links to every translation plus an `x-default` link to the English page, and absolute URLs based on the site's public address. The website SHALL publish a sitemap of every page and translation and a `robots.txt` that points to it. The home page SHALL describe the game, and the FAQ page its questions and answers, as schema.org structured data. A missing page SHALL answer with status 404 and a page that is not indexed.
+
+#### Scenario: Translated page metadata
+- **WHEN** a search engine reads the Dutch rules page
+- **THEN** it finds a Dutch title and description, a canonical link to the Dutch rules page, and alternate links to the rules page in all five languages and `x-default`
+
+#### Scenario: Missing page
+- **WHEN** a visitor opens an address that does not exist
+- **THEN** the response is 404 Not Found with a page marked `noindex` that links to every language's home page
+
+### Requirement: Social sharing metadata
+Every page SHALL have Open Graph metadata (site name, title, description, type, URL, locale and alternate locales, and an image with its type, size and text alternative) and Twitter card metadata with a large image, so a shared link shows the game's artwork with the page's own title and description.
+
+#### Scenario: Share a page
+- **WHEN** a link to the German FAQ page is shared on a social network
+- **THEN** the preview shows the German title and description and the Leak Out feature graphic
+
+### Requirement: Performance and security best practices
+The website SHALL serve responsive, compressed images with their dimensions set, SHALL let browsers cache fingerprinted styles, scripts and images for a long time, and SHALL send security headers including a Content Security Policy that allows connections only to the website and the score server. An automated audit of the built site SHALL score at least 90 for performance and 100 for accessibility, best practices and SEO on mobile.
+
+#### Scenario: Audit
+- **WHEN** Lighthouse audits the English and translated pages with the mobile profile
+- **THEN** performance is at least 90 and accessibility, best practices and SEO are 100

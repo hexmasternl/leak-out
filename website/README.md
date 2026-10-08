@@ -30,7 +30,7 @@ Two workflows handle the website, separately from the app and the server:
 | Workflow | Runs on | Does |
 | --- | --- | --- |
 | `.github/workflows/website-pull-request.yml` | every pull request into `development` | Reports the check **website / build**: builds the site with `--panicOnWarning`, runs `npm test` and builds the Bicep. Skipped (counts as passed) when the pull request does not change `website/` or a `website-*` workflow. |
-| `.github/workflows/website-deploy.yml` | a push to `main` that changes `website/` or the workflow, or by hand (`workflow_dispatch`) | Builds and tests the site, deploys `infrastructure/main.bicep` at subscription scope, reads the Static Web App's deployment token, uploads the built site and smoke-tests every language's home page. |
+| `.github/workflows/website-deploy.yml` | a push to `main` that changes `website/` or the workflow, or by hand (`workflow_dispatch`) | Tests the leaderboard script, deploys `infrastructure/main.bicep` at subscription scope, builds the site for its public address, reads the Static Web App's deployment token, uploads the built site and smoke-tests the pages, sitemap, `robots.txt` and the security headers. |
 
 The infrastructure is the resource group `rg-leakout-web-prod-weu` with the Static Web App `stapp-leakout-prod-weu` (Free tier, West Europe). It is separate from the score server's resource group, so either can be changed or removed on its own.
 
@@ -43,8 +43,8 @@ The deploy job signs in to Azure with OpenID Connect, using **the same app regis
 | `AZURE_PROD_CLIENT_ID` | secret | yes | Client id of the app registration with the federated credential (shared with the server) |
 | `AZURE_PROD_TENANT_ID` | secret | yes | Its tenant id (shared with the server) |
 | `AZURE_PROD_SUBSCRIPTION_ID` | secret | yes | The subscription to deploy into (shared with the server) |
-| `WEBSITE_BASE_URL` | variable | no | The site's public address, for example `https://leakout.hexmaster.nl/`; gives the `hreflang` links absolute URLs. Without it links are root-relative. |
-| `LEAKOUT_SCORE_SERVER_URL` | variable | no | The score server the leaderboard reads; defaults to `scoreServerUrl` in `src/hugo.toml` |
+| `WEBSITE_BASE_URL` | variable | no | The site's public address with a trailing slash, for example `https://leakout.hexmaster.nl/`. Canonical, `hreflang`, Open Graph and sitemap URLs use it. Without it the site is built for the Static Web App's own address. |
+| `LEAKOUT_SCORE_SERVER_URL` | variable | no | The score server the leaderboard reads; defaults to `scoreServerUrl` in `src/hugo.toml`. The Content Security Policy follows it. |
 
 **No deployment token is stored anywhere.** The workflow reads it with `az staticwebapp secrets list` during each run and masks it in the log. The app registration needs permission to create resource groups and deploy at subscription scope, which it already has for the server (Contributor on the subscription).
 
@@ -66,6 +66,16 @@ If the website should ever use a different app registration: create one, give it
 
 The website is independent of the app and the server: disable `website-deploy.yml` or delete the resource group `rg-leakout-web-prod-weu`.
 
+## SEO, sharing and performance
+
+- **Search engines.** Every page has its own title and description, a canonical link, `hreflang` links to its translations plus `x-default` (English), and `robots` metadata. Hugo writes a sitemap index with one sitemap per language, and `robots.txt` points to it. The home page carries `VideoGame` and `WebSite` structured data and the FAQ page `FAQPage` data, all generated in `layouts/_partials/seo.html`. Missing pages answer 404 with a `noindex` page that links to every language.
+- **Sharing.** Every page has Open Graph and Twitter card metadata. The share image is a JPEG copy of the feature graphic (Hugo makes it at build time), because some crawlers do not read WebP. Its alternative text is translated.
+- **Absolute URLs.** Canonical, `hreflang`, Open Graph and sitemap URLs must be absolute, so the deploy workflow builds the site only after the infrastructure step, when the address is known (see `WEBSITE_BASE_URL`). A local build without `--baseURL` produces root-relative URLs, which is fine for previews.
+- **Performance.** Images are responsive WebP (`srcset` of 480, 800 and full width), the hero image loads with high priority and the rest lazily, both fonts are preloaded, CSS and JavaScript are minified and fingerprinted.
+- **Headers.** `assets/site/staticwebapp.config.json` is a template rendered into the site root: it caches fingerprinted CSS and JavaScript for a year and images and fonts for longer periods, rewrites 404s to `/404.html`, and sends a Content Security Policy that allows connections only to the site and the score server, plus HSTS, `nosniff`, `X-Frame-Options`, a referrer policy and a permissions policy. The web app manifest (`assets/site/site.webmanifest`) is rendered the same way.
+
+Checked with Lighthouse 12 (mobile profile) on pages in all five languages: performance 99–100, and accessibility, best practices and SEO 100.
+
 ## Layout of `src/`
 
 | Path | Holds |
@@ -76,7 +86,9 @@ The website is independent of the app and the server: disable `website-deploy.ym
 | `layouts/` | The site's own templates; no third-party theme |
 | `assets/css/main.css` | Styles, with the design system tokens as CSS custom properties |
 | `assets/js/leaderboard.js` | The leaderboard script, the only JavaScript on the site |
-| `assets/images/` | Raster images Hugo resizes to WebP at build time |
+| `assets/images/` | Raster images Hugo resizes at build time (WebP for pages, PNG icons, JPEG share image) |
+| `assets/site/` | Templates for the root files `site.webmanifest` and `staticwebapp.config.json` |
+| `layouts/_partials/seo.html` | Search engine, Open Graph and Twitter metadata and structured data |
 | `static/` | Files served as they are: SVG images and fonts |
 
 When library levels are added to the game, update `levelCount` in `hugo.toml` so the leaderboard can choose them.
@@ -88,7 +100,7 @@ Every asset is a **copy**, so the site never depends on files outside `website/`
 | File in `website/src/` | Copied from |
 | --- | --- |
 | `static/images/app-icon.svg` | `assets/icon/app-icon.svg` |
-| `static/images/app-icon-512.png` | `assets/icon/app-icon-512.png` |
+| `assets/images/app-icon-512.png` | `assets/icon/app-icon-512.png` (the 192 px and 180 px icons are made from it at build time) |
 | `assets/images/feature-graphic-1024x500.png` | `assets/store/feature-graphic-1024x500.png` |
 | `assets/images/screenshot-1.png` | `assets/store/Screenshot_20261001_144054.png` (title screen) |
 | `assets/images/screenshot-2.png` | `assets/store/Screenshot_20261001_144106.png` (level 8) |

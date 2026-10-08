@@ -35,3 +35,8 @@
 
 - [x] 6.1 Run an automated accessibility check (for example `pa11y-ci` or axe) over the built site and fix what it reports; verify it reports no missing alternatives, titles, language attributes or contrast failures
 - [ ] 6.2 After merging to `main`, run `website-deploy.yml`, then verify the live site in all five languages, the feedback links, and the leaderboard against the deployed server endpoint
+
+## 7. SEO, Open Graph and best practices
+
+- [x] 7.1 Add per-page canonical, `hreflang` (plus `x-default`), robots, Open Graph and Twitter card metadata, JSON-LD (`VideoGame` and `WebSite` on home, `FAQPage` on the FAQ), a `robots.txt` with the sitemap, localized 404 text and a web manifest; build in the deploy workflow after the infrastructure so every URL is absolute; verify the generated head of a translated page and that a missing page answers 404 with `noindex`
+- [x] 7.2 Add responsive WebP `srcset`s, a high-priority hero image, font preloads and a generated `staticwebapp.config.json` (long caching for fingerprinted files, CSP limited to the site and the score server, HSTS, nosniff, frame and referrer policies); verify with Lighthouse (mobile) on pages in all five languages: performance ≥ 90, accessibility, best practices and SEO 100, and the browser and accessibility checks still pass with the headers applied

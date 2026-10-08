@@ -1,13 +1,21 @@
 # Builds a signed release bundle of Leak Out and uploads it to the Play Console's private
-# testing track on every push to main. Setup of every secret, key and variable: docs/deployment.md
+# testing track on every push to main that changes the app. Setup of every secret, key and variable: docs/deployment.md
 # Versioning (GitVersion gives versionName x.y.z, versionCode derives from it): docs/deployment.md#versioning
 # Release notes (from the commits since the previous release tag): docs/deployment.md#release-notes
+# The app and the server release separately: docs/repository-layout.md
 
 name: Deploy to Play internal testing
 
 on:
   push:
     branches: [main]
+    # Server-only pushes do not release the app.
+    paths:
+      - 'app/**'
+      - '.github/workflows/deploy-play-internal.yml'
+      - 'scripts/compute-release-version.sh'
+      - 'scripts/generate-release-notes.sh'
+      - 'scripts/generate-release-notes.test.sh'
   workflow_dispatch:
 
 # One deployment at a time, in order: a newer run waits instead of cancelling the running one.
@@ -30,10 +38,10 @@ jobs:
       contents: write
     defaults:
       run:
-        working-directory: src
+        working-directory: app/src
     env:
       PACKAGE_NAME: nl.hexmaster.leakout
-      BUNDLE_PATH: src/app/build/outputs/bundle/release/app-release.aab
+      BUNDLE_PATH: app/src/app/build/outputs/bundle/release/app-release.aab
 
     steps:
       - name: Check out
@@ -83,6 +91,8 @@ jobs:
       - name: Run GitVersion
         id: gitversion
         uses: gittools/actions/gitversion/execute@7417b1089e2c7de93510f1901d656ddf60bb024f # v4.7.0
+        with:
+          configFilePath: app/GitVersion.yml
 
       - name: Compute version
         working-directory: .

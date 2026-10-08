@@ -1,0 +1,50 @@
+baseURL = "/"
+title = "Leak Out"
+defaultContentLanguage = "en"
+defaultContentLanguageInSubdir = false
+enableRobotsTXT = true
+disableKinds = ["taxonomy", "term", "RSS"]
+
+[params]
+  playStoreUrl = "https://play.google.com/store/apps/details?id=nl.hexmaster.leakout"
+  reportProblemUrl = "https://github.com/hexmasternl/leak-out-game/issues/new?template=bug_report.yml"
+  requestFeatureUrl = "https://github.com/hexmasternl/leak-out-game/issues/new?template=feature_request.yml"
+  # The score server the leaderboard reads from. Override per environment with
+  # HUGO_PARAMS_SCORESERVERURL.
+  scoreServerUrl = "https://rg-leakout-prod-neu-api.jollywater-e41c70f8.northeurope.azurecontainerapps.io"
+  # The number of library levels in the game (src/app/src/main/assets/levels). Update when levels are added.
+  levelCount = 96
+
+[languages]
+  [languages.en]
+    label = "English"
+    locale = "en"
+    contentDir = "content/en"
+    weight = 1
+  [languages.nl]
+    label = "Nederlands"
+    locale = "nl"
+    contentDir = "content/nl"
+    weight = 2
+  [languages.fr]
+    label = "Français"
+    locale = "fr"
+    contentDir = "content/fr"
+    weight = 3
+  [languages.de]
+    label = "Deutsch"
+    locale = "de"
+    contentDir = "content/de"
+    weight = 4
+  [languages.es]
+    label = "Español"
+    locale = "es"
+    contentDir = "content/es"
+    weight = 5
+
+[markup.goldmark.renderer]
+  unsafe = false
+
+[module.hugoVersion]
+  extended = true
+  min = "0.146.0"

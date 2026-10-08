@@ -1,0 +1,40 @@
+{{ define "main" }}
+<article class="section">
+  <div class="container">
+    <div class="prose">
+      <h1>{{ .Title }}</h1>
+      {{ .Content }}
+    </div>
+    {{- $strings := dict
+        "loading" (T "loading")
+        "empty" (T "empty")
+        "error" (T "error")
+        "tryAgain" (T "tryAgain")
+        "topScoresOf" (T "topScoresOf") }}
+    <div class="card leaderboard" id="leaderboard"
+         data-server="{{ site.Params.scoreServerUrl }}"
+         data-level-count="{{ site.Params.levelCount }}"
+         data-locale="{{ site.Language.Locale }}"
+         data-strings="{{ $strings | jsonify }}">
+      <form class="level-chooser" id="level-chooser">
+        <button type="button" class="button button-secondary" id="level-previous" aria-label="{{ T "previousLevel" }}">‹</button>
+        <label for="level-input">{{ T "level" }}</label>
+        <input id="level-input" name="level" type="number" inputmode="numeric" min="1" max="{{ site.Params.levelCount }}" value="1" required>
+        <button type="submit" class="button button-secondary">{{ T "showLevel" }}</button>
+        <button type="button" class="button button-secondary" id="level-next" aria-label="{{ T "nextLevel" }}">›</button>
+      </form>
+      <h2 class="leaderboard-caption" id="leaderboard-caption">{{ T "topScoresOf" }} 1</h2>
+      <div id="leaderboard-status" class="leaderboard-status" role="status" aria-live="polite"></div>
+      <table class="scores" id="leaderboard-table" aria-labelledby="leaderboard-caption">
+        <thead>
+          <tr><th scope="col">{{ T "rank" }}</th><th scope="col">{{ T "player" }}</th><th scope="col" class="num">{{ T "score" }}</th></tr>
+        </thead>
+        <tbody id="leaderboard-body"></tbody>
+      </table>
+    </div>
+  </div>
+</article>
+{{- with resources.Get "js/leaderboard.js" | minify | fingerprint }}
+<script type="module" src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}"></script>
+{{- end }}
+{{ end }}

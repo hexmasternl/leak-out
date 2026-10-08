@@ -1,0 +1,45 @@
+{{ define "main" }}
+<section class="hero">
+  <div class="container hero-inner">
+    <div class="hero-text">
+      <p class="eyebrow">{{ T "tagline" }}</p>
+      <h1>{{ .Params.heading }}</h1>
+      <p class="lead">{{ .Params.intro }}</p>
+      <a class="button button-primary" href="{{ site.Params.playStoreUrl }}" rel="noopener">{{ T "getItOnGooglePlay" }}</a>
+    </div>
+    <img class="hero-art" src="{{ "images/feature-graphic-1024x500.png" | relURL }}" alt="{{ T "featureGraphicAlt" }}" width="1024" height="500">
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2>{{ .Params.featuresHeading }}</h2>
+    <ul class="features">
+      {{- range .Params.features }}
+      <li class="card feature">
+        <img src="{{ printf "images/pipes/%s.svg" .icon | relURL }}" alt="" width="64" height="64">
+        <h3>{{ .title }}</h3>
+        <p>{{ .text }}</p>
+      </li>
+      {{- end }}
+    </ul>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2>{{ T "screenshotsHeading" }}</h2>
+    <div class="screenshots">
+      <img src="{{ "images/screenshot-1.png" | relURL }}" alt="{{ T "screenshotAlt1" }}" loading="lazy">
+      <img src="{{ "images/screenshot-2.png" | relURL }}" alt="{{ T "screenshotAlt2" }}" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container prose">
+    {{ .Content }}
+    <p><a class="button button-primary" href="{{ site.Params.playStoreUrl }}" rel="noopener">{{ T "getItOnGooglePlay" }}</a></p>
+  </div>
+</section>
+{{ end }}

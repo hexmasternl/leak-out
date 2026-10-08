@@ -1,0 +1,21 @@
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="{{ site.Home.RelPermalink }}">
+      <img src="{{ "images/app-icon-192.png" | relURL }}" alt="" width="40" height="40">
+      <span>{{ site.Title }}</span>
+    </a>
+    <nav class="site-nav" aria-label="{{ T "navLabel" }}">
+      <ul>
+        {{- $current := . }}
+        {{- range $key := slice "home" "rules" "faq" "leaderboard" }}
+          {{- $page := site.Home }}
+          {{- if ne $key "home" }}{{ $page = site.GetPage $key }}{{ end }}
+          {{- with $page }}
+          <li><a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $current.RelPermalink }} aria-current="page"{{ end }}>{{ T (printf "nav_%s" $key) }}</a></li>
+          {{- end }}
+        {{- end }}
+      </ul>
+    </nav>
+    {{ partial "language-switcher.html" . }}
+  </div>
+</header>

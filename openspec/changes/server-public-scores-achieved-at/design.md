@@ -37,4 +37,4 @@ No schema migration. Deploy the server (additive response field), then the websi
 
 ## Open Questions
 
-- Should the "when" column be hidden on narrow phone screens if the table no longer fits 360 px, or should the table scroll horizontally? Decide during implementation from how it looks.
+- _Resolved during implementation:_ the "when" column stays visible on phones and neither hides nor scrolls. Its text wraps ("vor 11 / Monaten"), and with tighter cell padding below 480 px the table fits 360 px. This was checked with long names and 8-digit scores in English and German.

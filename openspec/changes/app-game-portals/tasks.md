@@ -29,10 +29,10 @@ Paths are relative to `app/src/`; run Gradle from `app/src/` (`.\gradlew.bat` on
 
 ## 4. Rendering and accessibility
 
-- [ ] 4.1 Add the portal tokens (`portal.1` to `portal.3`, with symbols circle, triangle and square) to `docs/design-system.md` §2.5, their contrast against `surface.deep` to §2.8, and the portal drawing to §6.2, §6.4 and §7 (ring swirl, reduced motion). Verify each colour reaches 3:1 against `surface.deep` and record the ratio.
-- [ ] 4.2 Add the tokens to the Compose theme and draw portal cells on the playing field: empty-cell tile, straight stub from the open side to the centre, ring in the pair colour with the pair symbol, swirl on game time that freezes on pause and with reduced motion. Verify with a unit test for the token values and a screenshot check in the pipe lab or the gallery.
-- [ ] 4.3 Draw the liquid through a pair: progress 0–0.5 fills the entry stub towards the ring, 0.5–1 the exit stub outwards; both stay full afterwards. Verify with `app` unit tests for the progress split (`./gradlew :app:testDebugUnitTest`).
-- [ ] 4.4 Add the portal accessibility description (pair number, symbol, open side, partner cell, passed or not) as translatable strings. Verify with an `app` unit test for the description text.
+- [x] 4.1 Add the portal tokens (`portal.1` to `portal.3`, with symbols circle, triangle and square) to `docs/design-system.md` §2.5, their contrast against `surface.deep` to §2.8, and the portal drawing to §6.2, §6.4 and §7 (ring swirl, reduced motion). Verify each colour reaches 3:1 against `surface.deep` and record the ratio.
+- [x] 4.2 Add the tokens to the Compose theme and draw portal cells on the playing field: empty-cell tile, straight stub from the open side to the centre, ring in the pair colour with the pair symbol, swirl on game time that freezes on pause and with reduced motion. Verify with a unit test for the token values and a screenshot check in the pipe lab or the gallery.
+- [x] 4.3 Draw the liquid through a pair: progress 0–0.5 fills the entry stub towards the ring, 0.5–1 the exit stub outwards; both stay full afterwards. Verify with `app` unit tests for the progress split (`./gradlew :app:testDebugUnitTest`).
+- [x] 4.4 Add the portal accessibility description (pair number, symbol, open side, partner cell, passed or not) as translatable strings. Verify with an `app` unit test for the description text.
 
 ## 5. Level designer
 

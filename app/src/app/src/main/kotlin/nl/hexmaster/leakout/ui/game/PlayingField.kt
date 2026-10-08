@@ -151,6 +151,10 @@ var SemanticsPropertyReceiver.mandatoryTile by MandatoryTile
 val MissedMandatory = SemanticsPropertyKey<Boolean>("MissedMandatory")
 var SemanticsPropertyReceiver.missedMandatory by MissedMandatory
 
+/** Semantics on a portal cell: the symbol of its pair, which goes with the pair's colour. A test hook only. */
+val PortalTile = SemanticsPropertyKey<PortalSymbol>("PortalTile")
+var SemanticsPropertyReceiver.portalTile by PortalTile
+
 /**
  * The screen state of the playing field: the viewport and where the field sits on the screen.
  * Created again for every attempt, so a restart goes back to the starting view.
@@ -337,12 +341,14 @@ fun PlayingField(
                 valve = EndpointGlow.valve(now, liquid.isFlowing(), reducedMotion),
                 finish = EndpointGlow.finish(now, won, lost, reducedMotion),
                 reachPx = EndpointGeometry.GLOW_REACH_DP.dp.toPx(),
+                portalSwirl = PortalStyle.swirlDegrees(now, reducedMotion),
             )
             for (position in cells) {
                 val cell = board[position]
                 val fills = when (cell) {
                     is Cell.Pipe -> FieldLiquid.withHead(settledFills.fills(board, used, position, cell.section), position, flowing)
                     is Cell.Start -> FieldLiquid.startFills(position, cell.openSide, used, flowing)
+                    is Cell.Portal -> FieldLiquid.portalFills(position, cell, used, flowing)
                     else -> emptyMap()
                 }
                 val rect = viewport.cellRect(position)
@@ -431,6 +437,7 @@ private fun CellSemantics(
         CellNode(
             position, rect, cellDp, description, isHighlighted, texts, leakSide, isHead, channels, flashing, section, isReplacing,
             glow, startFilled, mandatory, isMissed = position in missed,
+            portal = (board[position] as? Cell.Portal)?.let { PortalStyle.symbol(it.pair) },
         )
     }
 }
@@ -457,6 +464,7 @@ private fun CellNode(
     startFilled: State<Float>?,
     mandatory: Boolean,
     isMissed: Boolean,
+    portal: PortalSymbol?,
 ) {
     val glowAlpha = glow?.value
     val filledFraction = startFilled?.value
@@ -479,6 +487,7 @@ private fun CellNode(
                 if (filledFraction != null) this.startFilled = filledFraction
                 if (mandatory) mandatoryTile = true
                 if (isMissed) missedMandatory = true
+                if (portal != null) portalTile = portal
             },
     )
 }
@@ -575,18 +584,72 @@ private fun DrawScope.drawCell(
                 drawPipe(pipes.prepared(cell.section), rect, fills, scratch)
             }
         }
+        is Cell.Portal -> {
+            drawRoundRect(LeakOutColors.SurfaceCard.copy(alpha = 0.06f), inset.topLeft, inset.size, corner)
+            drawStub(rect, cell.openSide, pipes, scratch, fills)
+            drawPortalRing(rect, cell.pair, glows.portalSwirl)
+        }
     }
 }
 
 /**
- * [cell] as the field draws it before the liquid starts: no liquid and no endpoint glow. The level
- * designer draws its grid with it, so a design looks like the game.
+ * [cell] as the field draws it before the liquid starts: no liquid, no endpoint glow and a still
+ * portal swirl. The level designer draws its grid with it, so a design looks like the game.
  */
 internal fun DrawScope.drawStillCell(cell: Cell, rect: Rect, pipes: PipeArtLibrary, scratch: LiquidScratch) =
-    drawCell(cell, rect, pipes, scratch, emptyMap(), EndpointGlows(valve = 0f, finish = 0f, reachPx = 0f))
+    drawCell(cell, rect, pipes, scratch, emptyMap(), EndpointGlows(valve = 0f, finish = 0f, reachPx = 0f, portalSwirl = 0f))
 
-/** The glow alphas of this frame, and how far past the wheel or ring the glow reaches, in pixels. */
-private class EndpointGlows(val valve: Float, val finish: Float, val reachPx: Float)
+/**
+ * The glow alphas of this frame, how far past the wheel or ring the glow reaches, in pixels, and
+ * the angle of the swirl on the portal rings, in degrees.
+ */
+private class EndpointGlows(val valve: Float, val finish: Float, val reachPx: Float, val portalSwirl: Float)
+
+/**
+ * The ring of a portal of pair [pair]: a `surface.deep` disc under a ring of the pair's colour, the
+ * size of the finish ring, with two lighter arcs turned [swirlDegrees] and the pair's symbol in
+ * `text.primary` in the middle. It covers the cut end of the stub, as the finish ring does.
+ */
+private fun DrawScope.drawPortalRing(rect: Rect, pair: Int, swirlDegrees: Float) {
+    val c = rect.center
+    val cell = rect.width
+    val g = EndpointGeometry
+    val color = PortalStyle.color(pair)
+    drawCircle(LeakOutColors.SurfaceDeep, cell * g.RING_RADIUS, c)
+    drawCircle(color, cell * g.RING_RADIUS, c, style = Stroke(cell * g.RING_WIDTH))
+    val arc = Rect(c, cell * g.RING_RADIUS)
+    for (start in listOf(swirlDegrees, swirlDegrees + 180f)) {
+        drawArc(
+            LeakOutColors.TextPrimary.copy(alpha = 0.55f),
+            startAngle = start,
+            sweepAngle = 70f,
+            useCenter = false,
+            topLeft = arc.topLeft,
+            size = arc.size,
+            style = Stroke(cell * g.RING_WIDTH * 0.5f, cap = StrokeCap.Round),
+        )
+    }
+    val mark = LeakOutColors.TextPrimary
+    when (PortalStyle.symbol(pair)) {
+        PortalSymbol.CIRCLE -> drawCircle(mark, cell * 0.075f, c)
+        PortalSymbol.TRIANGLE -> {
+            val r = cell * 0.1f
+            drawPath(
+                Path().apply {
+                    moveTo(c.x, c.y - r)
+                    lineTo(c.x + r * 0.866f, c.y + r * 0.5f)
+                    lineTo(c.x - r * 0.866f, c.y + r * 0.5f)
+                    close()
+                },
+                mark,
+            )
+        }
+        PortalSymbol.SQUARE -> {
+            val half = cell * 0.065f
+            drawRect(mark, topLeft = Offset(c.x - half, c.y - half), size = Size(half * 2f, half * 2f))
+        }
+    }
+}
 
 /**
  * The stub of a start or finish: the straight's pipe art (`H` for a left or right open side, `V`
@@ -877,6 +940,41 @@ private fun EndpointPairPreview(endpoint: Cell, side: Side) {
 internal fun EndpointPreviewStates(start: Boolean, modifier: Modifier = Modifier) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         for (side in Side.entries) EndpointPairPreview(if (start) Cell.Start(side) else Cell.Finish(side), side)
+    }
+}
+
+/**
+ * The portals of pairs 1 to 3, one row per pair, opening to every side, as in the design-system
+ * gallery. With [passed] every pair is drawn as passed, with full stubs.
+ */
+@Composable
+internal fun PortalPreviewStates(modifier: Modifier = Modifier, passed: Boolean = false) {
+    val grid = GridSize(Side.entries.size, 3)
+    val cells = (1..3).flatMap { pair ->
+        Side.entries.mapIndexed { x, side -> Position(x, pair - 1) to Cell.Portal(pair, side, partner = Position((x + 1) % grid.columns, pair - 1)) }
+    }.toMap()
+    val used = if (passed) cells.keys.map { ChannelUse(it, Channel.PORTAL) }.toSet() else emptySet()
+    val cell = FieldLayout.MIN_CELL
+    PlayingField(
+        board = Board(grid, cells),
+        state = rememberPlayingFieldState(grid, Position(0, 0)),
+        highlighted = null,
+        enabled = false,
+        modifier = modifier.size(cell * grid.columns, cell * grid.rows),
+        filled = used,
+        flow = { FlowState.Ended(used) },
+        reducedMotion = true,
+    )
+}
+
+@Preview(name = "Portal pairs 1 to 3, all open sides", widthDp = 400, heightDp = 160, backgroundColor = 0xFF0C1A2A, showBackground = true)
+@Composable
+private fun PortalPreview() {
+    LeakOutTheme {
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            PortalPreviewStates()
+            PortalPreviewStates(passed = true)
+        }
     }
 }
 

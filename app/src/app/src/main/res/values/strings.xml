@@ -38,6 +38,19 @@
     <string name="cell_mandatory_used">Mandatory %1$s, used</string>
     <!-- A mandatory section the liquid still has to pass through. %1$s: its name, one of the game_section_* strings. -->
     <string name="cell_mandatory_unused">Mandatory %1$s, not used yet</string>
+    <!-- A portal the liquid has not passed yet. Liquid that goes into one portal of a pair comes out of the other. %1$d: the pair's number (1 to 3). %2$s: the pair's symbol, one of the portal_symbol_* strings. %3$s: where it opens, one of the portal_opens_* strings. %4$d and %5$d: the column and row of the other portal of the pair, counted from 1. -->
+    <string name="cell_portal">Portal pair %1$d, %2$s, opens %3$s, leads to column %4$d, row %5$d, not passed yet</string>
+    <!-- A portal whose pair the liquid has passed. The arguments are those of cell_portal. -->
+    <string name="cell_portal_passed">Portal pair %1$d, %2$s, opens %3$s, leads to column %4$d, row %5$d, passed</string>
+    <!-- The symbol drawn in the portals of a pair, in cell_portal. -->
+    <string name="portal_symbol_circle">circle</string>
+    <string name="portal_symbol_triangle">triangle</string>
+    <string name="portal_symbol_square">square</string>
+    <!-- Where a portal opens, in cell_portal: "opens to the right". -->
+    <string name="portal_opens_left">to the left</string>
+    <string name="portal_opens_right">to the right</string>
+    <string name="portal_opens_top">upwards</string>
+    <string name="portal_opens_bottom">downwards</string>
     <!-- Screen reader text for the stack. %1$s: the name of the next pipe section, for example "Cross section". -->
     <string name="game_stack_next_section_description">Next: %1$s</string>
 

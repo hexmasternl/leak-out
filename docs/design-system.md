@@ -92,8 +92,13 @@ Liquid is always rendered as a vertical gradient `liquid.300 → liquid.500 → 
 | `reservoir.300` | `#C7B5FF` | Reservoir liquid highlight |
 | `reservoir.500` | `#A78BFA` | Reservoir tank tint, "slow" badge |
 | `reservoir.700` | `#7C5CE6` | Reservoir tank shadow |
+| `portal.1` | `#FF6FD8` | Ring of portal pair 1, symbol: circle |
+| `portal.2` | `#B8F25C` | Ring of portal pair 2, symbol: triangle |
+| `portal.3` | `#FF8A3D` | Ring of portal pair 3, symbol: square |
 
 The reservoir never recolours the liquid. Liquid stays aqua; the *tank* is violet so the player learns "violet = slow" without the flow ever changing colour.
+
+The portal colours tell the pairs of a level apart: both portals of a pair share their pair's colour, and pair *n* (the *n*-th entry of the level's `portals`) always takes `portal.n`. Each pair also has its own symbol, so colour is never the only cue. The three hues stay clear of the liquid aqua, the success green, the leak red and the reservoir violet. Like the rest of the board they are only drawn in the Deep palette.
 
 ### 2.6 Steel (pipes)
 
@@ -128,6 +133,10 @@ Minimum ratios (WCAG AA): 4.5:1 for body text, 3:1 for display text at 20 sp and
 | `liquid.500` on `surface.deep` | 8.2:1 |
 | `leak.500` on `surface.deep` | 5.6:1 |
 | `success.500` on `surface.deep` | 10.4:1 |
+| `portal.1` on `surface.deep` | 7.1:1 |
+| `portal.2` on `surface.deep` | 13.3:1 |
+| `portal.3` on `surface.deep` | 7.5:1 |
+| `text.primary` (portal symbol) on `surface.deep` | 16.3:1 |
 
 ---
 
@@ -562,6 +571,7 @@ The grid sits on a level 1 panel (`surface.base`, `radius.xl`, 12 dp padding). G
 | Locked (tap on filled/flowing) | flash `leak.tint` 240 ms | – | Toast |
 | Blocked | `surface.abyss` | none | Diagonal hatch in `line.subtle`, `radius.sm` |
 | Start, Finish | as Empty, without the "+" | as Empty | Start valve or checkered finish (6.4) drawn on the plain empty-cell tile. No colour wash: the colour lives only in the valve wheel and the finish ring |
+| Portal | as Empty, without the "+" | as Empty | Portal stub and ring (6.4) drawn on the plain empty-cell tile. Placed by the level, never removable. No colour wash: the pair colour lives only in the ring |
 
 Cell size is computed from the available width; the minimum is 44 dp so tap targets stay accessible.
 
@@ -588,6 +598,7 @@ Every pipe section is drawn from the same layers, in this order. Sizes are relat
 | `RES` | left edge → right edge, plus a centred tank | Always a horizontal section (L↔R, two-way). No top or bottom ports. Tank: circle radius 0.3 c, fill `reservoir.700 → reservoir.500` gradient, rim `steel.300`. Liquid fills the tank bottom-up during progress 0.1–0.9. A small "slow" badge sits at the top-right of the cell |
 | Start valve | stub from centre to the exit port | See *Start valve and checkered finish* below. Brass wheel radius 0.24 c with four spokes and a hub, a brass chevron on the stub pointing out of the exit port, brass glow pulsing on `motion.drift` while waiting |
 | Finish drain ("Checkered finish") | stub from the entry port to centre | See *Start valve and checkered finish* below. Ring radius 0.24 c stroke `success.500` filled with a 6 × 6 checker, success glow pulsing on `motion.pulse` until the win. Ring flashes solid on win |
+| Portal | stub from the open side to centre | See *Portal* below. Ring radius 0.24 c stroke in the pair colour (`portal.1` to `portal.3`) on a `surface.deep` disc, with the pair symbol in `text.primary` and a swirl turning on `motion.drift` |
 
 #### Start valve and checkered finish
 
@@ -615,6 +626,19 @@ Both endpoints are drawn on the empty-cell tile (6.2) in this order: glow (7.2),
 
 At the 44 dp minimum cell a square is about 3.2 dp; the 6 × 6 checker was checked at 44 dp in the gallery and reads, so no 4 × 4 fallback is used. The same geometry is the `finish-checkered` icon (8). Where the finish is named to people (the gallery, onboarding) it is the **checkered finish**; in code and specs it remains the finish drain or `Cell.Finish`.
 
+#### Portal
+
+A portal is drawn like an endpoint, on the empty-cell tile in this order: stub, ring, swirl, symbol. The stub is the straight's art clipped to the half between the centre and the open side, exactly as for the start and finish, so a section against the open side joins it.
+
+| Part | Geometry | Colour |
+|------|----------|--------|
+| Disc | circle, radius 0.24 c | `surface.deep` |
+| Ring | stroke 0.05 c centred on radius 0.24 c, the size of the finish ring | the pair colour: `portal.1`, `portal.2` or `portal.3` |
+| Swirl | two arcs on the ring, 70° each and 180° apart, stroke 0.025 c, round caps, turned one full turn per `motion.drift` (7.2) | `text.primary` at 55 % |
+| Symbol | pair 1: a filled circle, radius 0.075 c; pair 2: a filled triangle pointing up, circumradius 0.1 c; pair 3: a filled square, side 0.13 c; all centred | `text.primary` (Deep `#F2F7FB`) |
+
+Both portals of a pair look the same, and every pair of a level differs from the others in both colour and symbol. The liquid passes a pair in the time of one cell (6.5, 7.3): the entry portal's stub fills from its open side to the ring during the first half, the exit portal's stub from the ring to its open side during the second half, and both stay full afterwards.
+
 ### 6.5 Liquid rendering
 
 - The liquid is a stroke with the vertical gradient from 2.3 and, for the segment currently filling, an outer glow of 16 dp `liquid.glow` at 45 %.
@@ -635,7 +659,7 @@ At the 44 dp minimum cell a square is about 3.2 dp; the 6 × 6 checker was check
 | `motion.settle` | 240 ms | spring (stiffness medium, damping 0.75) | Cell state change |
 | `motion.pop` | 320 ms | spring (stiffness medium-low, damping 0.6) | Tile placement, dialog entry, win dialog star pop |
 | `motion.fall` | 120–260 ms + 120 ms | quadratic ease-in fall, then one bounce of at most 4 dp; 24 ms stagger per piece from the bottom up | Stack pieces dropping a slot |
-| `motion.drift` | 1 600 ms | ease-in-out, loop | Valve glow pulse |
+| `motion.drift` | 1 600 ms | ease-in-out, loop | Valve glow pulse, portal swirl |
 | `motion.pulse` | 2 000 ms | ease-in-out, loop | Finish ring pulse, current stack piece glow |
 | Liquid fill | continuous | linear | Driven by the simulation, never by an animator |
 
@@ -650,6 +674,7 @@ At the 44 dp minimum cell a square is about 3.2 dp; the 6 × 6 checker was check
 - **Threshold sparkle**: when the moving fill reaches `stars.one`, `stars.two` or `stars.three` (the end of the bar), a 600 ms procedural burst at that point: 6–8 `liquid.glow` and `brass.300` particles flying out 6–14 dp and fading, over a brief `brass.300` glow flash (radius 16 dp, fading out in the first 300 ms). Each threshold sparkles once per attempt; a jump past several thresholds sparkles each one as the fill passes it. Points beyond `stars.three` do not sparkle.
 - **Points popup**: when a section scores, its points ("+10", "+15", "+25", "+50") appear centred on its tile, above the section and the liquid. Text: Fredoka Bold at 0.33 c (the slim popup used 0.4 c, which read as too large). It is drawn in this order: a `liquid.glow` glow (blur 6 dp at 70 %), then the glyphs filled solid with `text.primary` on top. The fill is opaque, so the pipe and liquid never show through the digits. There is no outline or border of any kind: no dark ink outline, no `surface.deep` fill and no stroke. Timing: fade in over 150 ms (`FastOutSlowInEasing`) while growing from 80 % to 100 %, hold 500 ms, fade out over 350 ms (`FastOutLinearInEasing`), rising 0.25 c over the full 1 000 ms. Glow and fill both take the popup's alpha. Each award has its own popup. Game time, so it freezes on pause. The board is always drawn in the Deep palette, so the popup uses the Deep `text.primary` value in both themes.
 - **Endpoint glows**: a soft circle behind the valve wheel and behind the finish ring, radius 0.24 c + 12 dp, radial gradient from the element's colour (`brass.500`, `success.500`) at the glow alpha to transparent. The alpha is `0.45 + 0.45 × (1 − cos(2π t / T)) / 2`, easing between 45 % and 90 %. The valve pulses with *T* = `motion.drift` (1 600 ms) while the countdown runs and settles at a static 60 % the moment the liquid flows. The finish ring pulses with *T* = `motion.pulse` (2 000 ms) until the level is won; then the finish flash takes over and the ring stays solid. Both follow game time, so they freeze on pause.
+- **Portal swirl**: the two arcs on every portal ring (6.4) turn clockwise at a steady speed, one full turn per `motion.drift` (1 600 ms), linear. Game time, so the swirl freezes on pause.
 - **Win**: finish ring flashes, board dims to 60 %, dialog pops in, stars stagger 80 ms each with a small brass particle burst.
 - **Leak**: droplet burst, board shakes 2 dp for 200 ms, then the dialog pops in after 500 ms so the player sees where it went wrong.
 - **Missed mandatory section**: when the liquid reaches the finish with a mandatory section unused, the leak spurt comes out of the finish's open side, and every unused mandatory tile pulses twice in `leak.500` during the 1 s before the dialog: a fill at up to 35 % and a 3 dp edge, alpha `(1 − cos(4π t / 1 s)) / 2`. Game time, so it freezes on pause.
@@ -663,11 +688,11 @@ At the 44 dp minimum cell a square is about 3.2 dp; the 6 × 6 checker was check
 
 ### 7.3 Liquid progress
 
-Progress is a 0–1 value per segment from the engine. The renderer clips the liquid stroke by path length. For corners the join point is at 0.5. For the reservoir, 0–0.1 is the inlet stub, 0.1–0.9 fills the tank bottom-up, 0.9–1.0 is the outlet stub. The renderer never eases progress; smoothness comes from the engine ticking at frame rate.
+Progress is a 0–1 value per segment from the engine. The renderer clips the liquid stroke by path length. For corners the join point is at 0.5. For the reservoir, 0–0.1 is the inlet stub, 0.1–0.9 fills the tank bottom-up, 0.9–1.0 is the outlet stub. For a portal pair, 0–0.5 fills the entry portal's stub from its open side to the ring and 0.5–1 the exit portal's stub from the ring to its open side; the reservoir factor never applies to a pair. The renderer never eases progress; smoothness comes from the engine ticking at frame rate.
 
 ### 7.4 Reduced motion
 
-When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite). In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs and the play menu fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). The pause backdrop appears at full opacity at once and the pause panel fades in over 160 ms without the scale. The top 10 backdrop also appears at once and its panel fades in over 160 ms without the scale; its rows all fade in together over 160 ms without rising or staggering, and the loading ring is a still quarter arc instead of spinning. The stack pieces do not accelerate, bounce or stagger: they all slide to their new slot together over 160 ms ease-out, and the new top piece fades in in its slot over 160 ms. Liquid fill and the win tally are gameplay, so they are unaffected.
+When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite), and the portal rings do not swirl. In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs and the play menu fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). The pause backdrop appears at full opacity at once and the pause panel fades in over 160 ms without the scale. The top 10 backdrop also appears at once and its panel fades in over 160 ms without the scale; its rows all fade in together over 160 ms without rising or staggering, and the loading ring is a still quarter arc instead of spinning. The stack pieces do not accelerate, bounce or stagger: they all slide to their new slot together over 160 ms ease-out, and the new top piece fades in in its slot over 160 ms. Liquid fill and the win tally are gameplay, so they are unaffected.
 
 ---
 

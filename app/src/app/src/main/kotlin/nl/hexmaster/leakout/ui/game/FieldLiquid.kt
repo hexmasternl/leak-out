@@ -1,6 +1,7 @@
 package nl.hexmaster.leakout.ui.game
 
 import nl.hexmaster.leakout.core.board.Board
+import nl.hexmaster.leakout.core.board.Cell
 import nl.hexmaster.leakout.core.engine.FlowState
 import nl.hexmaster.leakout.core.flow.Channel
 import nl.hexmaster.leakout.core.flow.ChannelUse
@@ -17,7 +18,8 @@ import nl.hexmaster.leakout.ui.pipes.ChannelFill
  */
 object FieldLiquid {
     fun channelId(channel: Channel): String = when (channel) {
-        Channel.SINGLE -> "channel-main"
+        // A portal's stub is the straight's art, whose one channel is the main one.
+        Channel.SINGLE, Channel.PORTAL -> "channel-main"
         Channel.HORIZONTAL -> "channel-h"
         Channel.VERTICAL -> "channel-v"
     }
@@ -61,11 +63,24 @@ object FieldLiquid {
         return mapOf(channelId(Channel.SINGLE) to ChannelFill(0.5f + progress / 2f, openSide.opposite()))
     }
 
+    /**
+     * The liquid of a portal's stub, drawn like the start's on the straight's channel clipped to the
+     * half towards the open side, [PortalStyle.stubProgress] full. In the entry portal the liquid
+     * runs in from the open side towards the ring; in the exit portal it runs out from the ring.
+     */
+    fun portalFills(position: Position, portal: Cell.Portal, used: Set<ChannelUse>, head: FlowState.Flowing?): Map<String, ChannelFill> {
+        val progress = PortalStyle.stubProgress(position, portal, used, head)
+        if (progress <= 0f) return emptyMap()
+        val entering = head != null && head.channel == Channel.PORTAL && head.position == position && progress < 1f
+        val fill = if (entering) ChannelFill(progress / 2f, portal.openSide) else ChannelFill(0.5f + progress / 2f, portal.openSide.opposite())
+        return mapOf(channelId(Channel.PORTAL) to fill)
+    }
+
     /** A full channel shows the same from either side; this picks one it can be entered from. */
     private fun anyEntry(section: PipeSection, channel: Channel): Side = when (channel) {
         Channel.HORIZONTAL -> Side.LEFT
         Channel.VERTICAL -> Side.TOP
-        Channel.SINGLE -> Side.entries.first { it in section.openSides }
+        Channel.SINGLE, Channel.PORTAL -> Side.entries.first { it in section.openSides }
     }
 }
 

@@ -19,6 +19,7 @@ object LevelValidator {
     const val MIN_VISIBLE_STACK_SIZE: Int = 1
     const val MAX_VISIBLE_STACK_SIZE: Int = 10
     const val MAX_MANDATORY_SECTIONS: Int = 6
+    const val MAX_PORTAL_PAIRS: Int = 3
 
     /** The sections a level may list as mandatory. */
     val MANDATORY_KINDS: Set<PipeSection> = setOf(PipeSection.X, PipeSection.RES)
@@ -30,6 +31,7 @@ object LevelValidator {
         errors.checkEndpoints(level)
         errors.checkBlocked(level)
         errors.checkMandatory(level)
+        errors.checkPortals(level)
         errors.checkFlow(level.flow)
         errors.checkStack(level.stack)
         errors.checkRules(level.rules)
@@ -98,6 +100,44 @@ object LevelValidator {
                 error("$name.openSide", "The $name's open side ${endpoint.openSide} faces the edge of the grid, so it can never be connected")
             level.isBlocked(facing) ->
                 error("$name.openSide", "The $name is walled off: its facing cell $facing is blocked")
+            level.portalAt(facing) != null ->
+                error("$name.openSide", "The $name's facing cell $facing must not be a portal")
+        }
+    }
+
+    // A portal is checked like the start and finish, and must also keep clear of everything the
+    // level puts on the board. The facing-cell rules only apply to a portal inside the grid.
+    private fun MutableList<ValidationError>.checkPortals(level: Level) {
+        if (level.portals.size > MAX_PORTAL_PAIRS) {
+            error("portals", "A level can have at most $MAX_PORTAL_PAIRS portal pairs, but had ${level.portals.size}")
+        }
+        val firstField = mutableMapOf<Position, String>()
+        level.portals.forEachIndexed { index, pair ->
+            listOf("a" to pair.a, "b" to pair.b).forEach { (name, portal) ->
+                val field = "portals[$index].$name"
+                val cell = portal.position
+                when {
+                    cell !in level.grid -> error(field, "Portal at $cell lies outside the ${level.grid} grid")
+                    level.isBlocked(cell) -> error(field, "Portal at $cell is on a blocked cell")
+                    cell == level.start.position || cell == level.finish.position ->
+                        error(field, "Portal at $cell is on the start or finish; the start and finish cannot hold a portal")
+                    level.mandatoryAt(cell) != null -> error(field, "Portal at $cell is on a cell that holds a mandatory section")
+                    else -> checkPortalFacingCell(field, portal, level)
+                }
+                firstField.putIfAbsent(cell, field)?.let { error(field, "Portal at $cell duplicates $it") }
+            }
+        }
+    }
+
+    private fun MutableList<ValidationError>.checkPortalFacingCell(field: String, portal: Endpoint, level: Level) {
+        val facing = portal.facingCell
+        when {
+            facing !in level.grid ->
+                error("$field.openSide", "The portal's open side ${portal.openSide} faces the edge of the grid, so it can never be connected")
+            level.isBlocked(facing) ->
+                error("$field.openSide", "The portal is walled off: its facing cell $facing is blocked")
+            facing == level.start.position || facing == level.finish.position || level.portalAt(facing) != null ->
+                error("$field.openSide", "A portal must not face the start, the finish or another portal, but its facing cell $facing does")
         }
     }
 

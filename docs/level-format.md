@@ -30,6 +30,9 @@ Every level is one JSON file in `src/app/src/main/assets/levels/`, named `level_
   "mandatory": [                    // optional, at most 6; [] or absent for none
     { "x": 3, "y": 2, "section": "X" },
     { "x": 5, "y": 5, "section": "RES" }
+  ],
+  "portals": [                      // optional, at most 3 pairs; [] or absent for none
+    { "a": { "x": 1, "y": 6, "openSide": "TOP" }, "b": { "x": 5, "y": 1, "openSide": "BOTTOM" } }
   ]
 }
 ```
@@ -69,6 +72,7 @@ Defaults live in `LevelDefaults`. Each optional field can be overridden on its o
 | `rules.allowReplace` | true |
 | `rules.replacePenaltyMs` | 1500 |
 | `mandatory` | none (see [Mandatory sections](#mandatory-sections)) |
+| `portals` | none (see [Portal pairs](#portal-pairs)) |
 
 ## Coordinates and open sides
 
@@ -108,10 +112,10 @@ The level has no random seed. Every attempt deals a new stack, so a retry still 
 
 A level is rejected unless, for both the start and the finish:
 
-1. The cell lies inside the grid and is not blocked.
+1. The cell lies inside the grid and is not blocked or a portal.
 2. The start and the finish are different cells.
 3. The facing cell lies inside the grid. An open side that points at the grid edge can never be connected.
-4. The facing cell is not blocked.
+4. The facing cell is not blocked and is not a portal.
 5. The start's facing cell is not the finish, and the finish's facing cell is not the start.
 
 ```
@@ -133,12 +137,44 @@ A level is rejected unless:
 
 1. It lists at most 6 mandatory sections (`LevelValidator.MAX_MANDATORY_SECTIONS`).
 2. Each `section` is `X` (cross) or `RES` (reservoir). Straights and corners cannot be mandatory.
-3. Each cell lies inside the grid, is not blocked, and is not the start or the finish.
+3. Each cell lies inside the grid, is not blocked, and is not the start, the finish or a portal.
 4. No two mandatory sections share a cell.
 
 A mandatory section ignores its stack weight, so a level can have a mandatory cross while `stack.weights.X` is 0.
 
 For the liquid a mandatory section is an ordinary section of its kind: it is entered through an open side, scores its points and slows the liquid down inside a reservoir. A mandatory section is **used** once the liquid has run through every channel it has, in either direction: both the horizontal and the vertical channel of a cross, the single left-to-right channel of a reservoir. The level is only won when the liquid enters the finish after every mandatory section is used. If the liquid reaches the finish with a mandatory section still unused, the finish refuses it and the level is lost. In the same way the route only counts as complete, and fast forward only becomes available, once it runs through every mandatory channel.
+
+## Portal pairs
+
+`portals` links two cells of the board: liquid that enters one portal of a pair comes out of the other. Each pair has two portals, `a` and `b`, and each portal has the shape of the start and the finish: a cell (`x`, `y`) and the `openSide` that the liquid goes in and out through.
+
+```json
+"portals": [
+  { "a": { "x": 2, "y": 1, "openSide": "LEFT" }, "b": { "x": 6, "y": 5, "openSide": "RIGHT" } },
+  { "a": { "x": 1, "y": 7, "openSide": "TOP" },  "b": { "x": 4, "y": 0, "openSide": "BOTTOM" } }
+]
+```
+
+Pairs are numbered in the order they are listed: the first pair is pair 1. The number picks the pair's colour and symbol on the board (see the design system), so there is no colour field and two pairs can never look alike.
+
+A level is rejected unless:
+
+1. It lists at most 3 pairs (`LevelValidator.MAX_PORTAL_PAIRS`).
+2. Each portal lies inside the grid and is not on a blocked cell, the start, the finish, a mandatory section or another portal. The two portals of a pair are therefore different cells.
+3. Each portal's facing cell, the neighbour on its open side, lies inside the grid and is not blocked.
+4. A portal's facing cell is not the start, the finish or a portal, and the start's and finish's facing cells are not a portal.
+
+Errors name the portal, for example `portals[0].b`. Two portals, or a portal and the start or finish, may share a facing cell, and a portal's facing cell may hold a mandatory section.
+
+How the liquid passes a pair:
+
+- Liquid that leaves a tile into a portal through the portal's open side enters the pair, and comes out of the other portal through that portal's open side, into the cell it faces. Pairs work both ways: the liquid can enter either portal.
+- Liquid that reaches a portal through any other side leaks at the tile it left.
+- Passing a pair takes the time of one cell at the current speed, without the reservoir factor. It gives no points, and a pair does not count as a section for `flow.speedRampPerCell`.
+- A pair can be passed once per attempt. A portal has one open side and the tiles in front of a passed pair are filled, so a second pass cannot happen in play; the rule protects the route check against loops.
+- If the cell the exit portal faces does not take the liquid, it leaks at the exit portal.
+
+Portals are part of the level, like mandatory sections: they are on the board from the start, never come from the stack, and cannot be replaced or removed. They are not free cells, so they do not count for the designer's star thresholds or for the Wall to Wall achievement.
 
 ## Solvability
 
@@ -154,7 +190,7 @@ With mandatory sections, the route must run through every mandatory channel, ent
 
 ## Errors
 
-- **Parse errors** (shape and types) stop at the first problem and name the field by its path, for example `flow.cellsPerSecond`, `stack.weights.Z`, `blocked[1].y` or `mandatory[0].section`.
+- **Parse errors** (shape and types) stop at the first problem and name the field by its path, for example `flow.cellsPerSecond`, `stack.weights.Z`, `blocked[1].y`, `mandatory[0].section` or `portals[0].b`.
 - **Validation errors** (meaning) are all reported together, each naming its field, so a file can be fixed in one pass.
 
 ## Creating levels with the designer

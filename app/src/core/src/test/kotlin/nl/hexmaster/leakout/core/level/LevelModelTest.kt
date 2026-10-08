@@ -73,6 +73,30 @@ class LevelModelTest {
     }
 
     @Test
+    fun `free cells leave out blocked cells, the start and the finish`() {
+        // 7 by 9 grid, one blocked cell, start and finish.
+        assertEquals(60, TestLevels.valid().freeCells)
+    }
+
+    @Test
+    fun `free cells leave out portals`() {
+        val level = TestLevels.valid(portals = listOf(TestLevels.pair(2, 1, Side.LEFT, 5, 5, Side.RIGHT)))
+        assertEquals(58, level.freeCells)
+    }
+
+    @Test
+    fun `portal and partner are found from either cell of a pair`() {
+        val pair = TestLevels.pair(2, 1, Side.LEFT, 5, 5, Side.RIGHT)
+        val level = TestLevels.valid(portals = listOf(TestLevels.pair(1, 6, Side.TOP, 4, 6, Side.TOP), pair))
+        assertEquals(pair.a, level.portalAt(Position(2, 1)))
+        assertEquals(pair.b, level.partnerOf(Position(2, 1)))
+        assertEquals(pair.a, level.partnerOf(Position(5, 5)))
+        assertEquals(null, level.portalAt(Position(3, 3)))
+        assertEquals(null, level.partnerOf(Position(3, 3)))
+        assertEquals(listOf(Position(1, 6), Position(4, 6), Position(2, 1), Position(5, 5)), level.portalCells)
+    }
+
+    @Test
     fun `stars below the first threshold are zero`() {
         assertEquals(0, StarBenchmarks(100, 200, 350).starsFor(99))
     }

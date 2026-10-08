@@ -14,7 +14,12 @@ object TestLevels {
         rules: PlacementRules = PlacementRules(),
         stars: StarBenchmarks = StarBenchmarks(100, 200, 350),
         mandatory: List<MandatorySection> = emptyList(),
-    ): Level = Level(id, name, grid, start, finish, blocked, flow, stack, rules, stars, mandatory)
+        portals: List<PortalPair> = emptyList(),
+    ): Level = Level(id, name, grid, start, finish, blocked, flow, stack, rules, stars, mandatory, portals)
+
+    /** A portal pair with portal `a` at [ax], [ay] and portal `b` at [bx], [by]. */
+    fun pair(ax: Int, ay: Int, aSide: Side, bx: Int, by: Int, bSide: Side): PortalPair =
+        PortalPair(Endpoint(Position(ax, ay), aSide), Endpoint(Position(bx, by), bSide))
 
     fun weights(vararg overrides: Pair<PipeSection, Int>): Map<PipeSection, Int> =
         LevelDefaults.STACK_WEIGHTS + overrides

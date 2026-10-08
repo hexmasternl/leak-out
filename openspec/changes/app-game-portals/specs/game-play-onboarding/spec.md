@@ -1,12 +1,15 @@
 ## ADDED Requirements
 
 ### Requirement: Portal tip
-The first time the player starts a level with portal pairs, the game SHALL freeze before the countdown runs and show the portal tip, highlighting every portal on the board. The tip SHALL explain that liquid entering a portal through its open side comes out of the portal with the same colour and symbol, through that portal's open side, that pairs work both ways, and that portals cannot be replaced and score no points. The tip text SHALL be translatable and shown in every supported language.
+The first time the player sees a portal pair, that is the first time a level with portal pairs starts, the game SHALL freeze before the countdown runs and show the portal tip. The tip SHALL identify both portals of one pair, pair 1: it SHALL highlight those two portals in the pair colour and mark them as belonging together, with a two-headed link between them. The tip SHALL explain that the pair works both ways: liquid entering either portal through its open side comes out of the other portal of the pair, through that portal's open side. It SHALL also say that portals with the same colour belong together, that a pair can be used once, and that portals are part of the level: they do not come from the stack and cannot be replaced. The tip text SHALL be translatable and shown in every supported language.
 
 #### Scenario: First level with portals
-- **WHEN** the portal tip has not been seen and a level with two portal pairs starts
-- **THEN** the game is frozen, all four portals are highlighted and the portal tip is shown
+- **WHEN** the portal tip has not been seen and level 49, with one portal pair, starts
+- **THEN** the game is frozen, both portals of the pair are highlighted with a two-headed link between them, and the portal tip explains that liquid can enter either portal and comes out of the other
 
+#### Scenario: Several pairs on the first level with portals
+- **WHEN** the portal tip has not been seen and a level with two portal pairs starts
+- **THEN** both portals of pair 1 are highlighted and linked, and the portals of pair 2 are not highlighted
 #### Scenario: Portal tip shown once
 - **WHEN** the portal tip has been seen and a level with portals starts
 - **THEN** no portal tip is shown

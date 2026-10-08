@@ -79,11 +79,15 @@ The start and finish facing-cell rules SHALL apply to every portal. A portal's f
 - **THEN** the level is accepted
 
 ### Requirement: Portals are on the board from the start and cannot be replaced
-When an attempt starts or restarts, the board SHALL hold every portal of the level on its cell. Portals SHALL NOT come from the stack, SHALL NOT be replaced or removed, and SHALL stay on the board when the unused sections are removed after a win. A portal is not a placed section: it SHALL NOT count as an unused section.
+When an attempt starts or restarts, the board SHALL hold every portal of the level on its cell, as placed by the level designer. Portals SHALL NOT come from the stack and SHALL NOT appear in it, SHALL NOT be replaced or removed, and SHALL stay on the board when the unused sections are removed after a win. A portal is not a placed section: it SHALL NOT count as an unused section.
 
 #### Scenario: Level starts with its portals
 - **WHEN** a level with one portal pair starts
-- **THEN** both portals are on the board with no liquid and the stack is dealt as for any other level
+- **THEN** both portals are on the board with no liquid and the stack is dealt as for any other level, without a portal in it
+
+#### Scenario: Player cannot remove a portal
+- **WHEN** the player drops a section on a portal, with or without replacement allowed
+- **THEN** the drop is rejected and the portal stays on the board
 
 #### Scenario: Removal of unused sections after a win
 - **WHEN** a level with portals is won and the unused placed sections are removed
@@ -123,7 +127,7 @@ Each portal pair SHALL count as one channel. Once the liquid has passed a pair, 
 - **THEN** the level is lost by a leak at the tile the liquid left
 
 ### Requirement: Portal pairs are told apart by colour and symbol
-Both portals of a pair SHALL share a colour and a symbol, and every pair in a level SHALL have a colour and a symbol that no other pair has, so colour is never the only cue. Pair 1, 2 and 3 SHALL use the design system's first, second and third portal colour and symbol.
+The pair colour SHALL identify the pair: both portals of a pair SHALL share a colour, and every pair in a level SHALL have a colour that no other pair has. Each pair SHALL also have its own symbol, shared by both its portals, so colour is never the only cue. Pair 1, 2 and 3 SHALL use the design system's first, second and third portal colour and symbol.
 
 #### Scenario: Two pairs on the board
 - **WHEN** a level with two portal pairs is shown
@@ -151,24 +155,36 @@ The accessibility description of a portal cell SHALL say that it is a portal, it
 - **WHEN** a screen reader focuses portal `a` of pair 1, open to the right, whose partner is at column 7, row 4, before the liquid has passed it
 - **THEN** the description says that it is portal pair 1, names its symbol, says that it opens to the right and leads to column 7, row 4, and that the liquid has not passed it
 
-### Requirement: A chapter of 24 levels introduces portals
-The bundled levels SHALL include one chapter of 24 levels, filling one level library page, that introduces portal pairs. The chapter's first level SHALL have a single pair that the shortest route must use, and later levels SHALL add more pairs, up to three. Every level of the chapter SHALL pass the solver check, and at least one SHALL be solvable only through a portal pair. The page SHALL unlock by the existing page star rule.
+### Requirement: Portals appear occasionally from level 49 onwards
+The bundled levels 1 to 48 SHALL have no portal pairs. Level 49 SHALL be the first bundled level with a portal pair: it SHALL have exactly one pair, and its shortest route SHALL pass that pair. From level 50 to 96, portal pairs SHALL appear occasionally: some levels SHALL have portal pairs and most SHALL have none. No bundled level SHALL have more than three pairs. Every bundled level with portals SHALL pass the solver check, and at least one SHALL be solvable only through a portal pair. No level SHALL be added, removed or renumbered by this change.
 
-#### Scenario: Chapter fills one page
-- **WHEN** the level library shows the portal chapter's page
-- **THEN** it holds 24 levels, every one with at least one portal pair
+#### Scenario: No portals before level 49
+- **WHEN** the bundled levels 1 to 48 are loaded
+- **THEN** none of them has a portal pair
 
-#### Scenario: Chapter passes the solver check
+#### Scenario: Level 49 introduces portals
+- **WHEN** level 49 is loaded
+- **THEN** it has exactly one portal pair, and the solver's shortest route passes that pair
+
+#### Scenario: Portals are occasional
+- **WHEN** the bundled levels 50 to 96 are loaded
+- **THEN** some of them have portal pairs, fewer than half of them do, and none has more than three pairs
+
+#### Scenario: Levels with portals pass the solver check
 - **WHEN** the headless solvability suite runs over the bundled levels
-- **THEN** every level of the portal chapter is reported solvable
+- **THEN** every level with portal pairs is reported solvable, and at least one of them is unsolvable when its portals are removed
 
-### Requirement: Existing levels and progress are unaffected
-Adding portals SHALL NOT change levels 1 to 96, their ids, scores and star thresholds, or any saved level history, achievement or setting. A level without `portals` SHALL play exactly as before.
+### Requirement: Levels without portals and saved progress are unaffected
+Adding portals SHALL NOT change levels 1 to 48, nor any later level that gets no portal pair: their files, ids, star thresholds and play SHALL stay as before. Updating a level with portals SHALL keep its id. Saved level history, stars, achievements and settings SHALL be kept; stars already earned on an updated level SHALL NOT be taken away. An updated level's star thresholds SHALL still allow three stars.
 
-#### Scenario: Old level files unchanged
+#### Scenario: Unchanged level files
 - **WHEN** the change is applied
-- **THEN** the files for levels 1 to 96 are byte-identical to before, and each parses to the same level as before
+- **THEN** the files for levels 1 to 48, and for every later level without portals, are byte-identical to before, and each parses to the same level as before
 
 #### Scenario: Saved progress kept
-- **WHEN** a player who has finished levels 1 to 30 updates the app
-- **THEN** the level history still holds those 30 results with their stars, and the library opens the same pages as before
+- **WHEN** a player who has finished levels 1 to 60 with stars updates the app
+- **THEN** the level history still holds those 60 results with their stars, including those of updated levels, and the library opens the same pages as before
+
+#### Scenario: Three stars reachable on an updated level
+- **WHEN** the three-star reachability suite runs over a level that got portal pairs
+- **THEN** three stars are reported reachable

@@ -38,6 +38,19 @@
     <string name="cell_mandatory_used">Mandatory %1$s, used</string>
     <!-- A mandatory section the liquid still has to pass through. %1$s: its name, one of the game_section_* strings. -->
     <string name="cell_mandatory_unused">Mandatory %1$s, not used yet</string>
+    <!-- A portal the liquid has not passed yet. Liquid that goes into one portal of a pair comes out of the other. %1$d: the pair's number (1 to 3). %2$s: the pair's symbol, one of the portal_symbol_* strings. %3$s: where it opens, one of the portal_opens_* strings. %4$d and %5$d: the column and row of the other portal of the pair, counted from 1. -->
+    <string name="cell_portal">Portal pair %1$d, %2$s, opens %3$s, leads to column %4$d, row %5$d, not passed yet</string>
+    <!-- A portal whose pair the liquid has passed. The arguments are those of cell_portal. -->
+    <string name="cell_portal_passed">Portal pair %1$d, %2$s, opens %3$s, leads to column %4$d, row %5$d, passed</string>
+    <!-- The symbol drawn in the portals of a pair, in cell_portal. -->
+    <string name="portal_symbol_circle">circle</string>
+    <string name="portal_symbol_triangle">triangle</string>
+    <string name="portal_symbol_square">square</string>
+    <!-- Where a portal opens, in cell_portal: "opens to the right". -->
+    <string name="portal_opens_left">to the left</string>
+    <string name="portal_opens_right">to the right</string>
+    <string name="portal_opens_top">upwards</string>
+    <string name="portal_opens_bottom">downwards</string>
     <!-- Screen reader text for the stack. %1$s: the name of the next pipe section, for example "Cross section". -->
     <string name="game_stack_next_section_description">Next: %1$s</string>
 
@@ -218,6 +231,12 @@
     <string name="tip_mandatory_title">Mandatory Sections</string>
     <string name="tip_mandatory_text">These sections are already placed and can\'t be removed or replaced. The liquid must pass through every channel of each of them before it reaches the finish, or the level is lost.</string>
     <string name="tip_mandatory_target">mandatory sections on the field</string>
+    <!-- Title of the tip about portals: two linked cells on the field; liquid that goes into one comes out of the other. -->
+    <string name="tip_portal_title">Portals</string>
+    <!-- Tip about portals. A pair is two portals of the same colour; it can be entered from either portal, but used only once per attempt. Portals are placed by the level, not by the player. -->
+    <string name="tip_portal_text">Portals with the same colour belong together. Liquid that flows into either portal through its opening comes out of the other one, so a pair works both ways. Each pair can be used once. Portals are part of the level: they don\'t come from your stack and can\'t be replaced.</string>
+    <!-- What the portal tip highlights, read after tip_highlighted: "Highlighted: the two portals of a pair". -->
+    <string name="tip_portal_target">the two portals of a pair</string>
 
     <!-- Level designer (debug builds only, behind FeatureFlags.levelDesigner). Developer-facing copy, so not translated. -->
     <string name="welcome_level_designer" translatable="false">Level designer</string>
@@ -239,6 +258,7 @@
     <string name="designer_tool_block" translatable="false">Block</string>
     <string name="designer_tool_mandatory_cross" translatable="false">Mandatory cross</string>
     <string name="designer_tool_mandatory_reservoir" translatable="false">Mandatory reservoir</string>
+    <string name="designer_tool_portal" translatable="false">Portal</string>
     <string name="designer_clear_blocked" translatable="false">Clear blocked</string>
     <string name="designer_section_grid" translatable="false">Grid</string>
     <string name="designer_columns" translatable="false">Columns</string>
@@ -246,6 +266,9 @@
     <string name="designer_decrease" translatable="false">Fewer %1$s</string>
     <string name="designer_increase" translatable="false">More %1$s</string>
     <string name="designer_section_endpoints" translatable="false">Open sides</string>
+    <string name="designer_section_portal" translatable="false">Portal pair %1$d</string>
+    <string name="designer_portal_side" translatable="false">Opens</string>
+    <string name="designer_remove_pair" translatable="false">Remove pair</string>
     <string name="designer_start_side" translatable="false">Start</string>
     <string name="designer_finish_side" translatable="false">Finish</string>
     <string name="designer_section_level" translatable="false">Level</string>

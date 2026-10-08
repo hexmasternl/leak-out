@@ -71,7 +71,7 @@ class FieldLiquidTest {
                 val entry = when (channel) {
                     Channel.HORIZONTAL -> Side.LEFT
                     Channel.VERTICAL -> Side.TOP
-                    Channel.SINGLE -> Side.entries.first { it in section.openSides }
+                    Channel.SINGLE, Channel.PORTAL -> Side.entries.first { it in section.openSides }
                 }
                 fills = fills + (FieldLiquid.channelId(channel) to ChannelFill.full(entry))
             }

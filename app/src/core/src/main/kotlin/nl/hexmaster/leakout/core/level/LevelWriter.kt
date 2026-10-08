@@ -53,6 +53,16 @@ object LevelWriter {
                 }
             })
         }
+        if (level.portals.isNotEmpty()) {
+            put("portals", buildJsonArray {
+                level.portals.forEach { pair ->
+                    add(buildJsonObject {
+                        put("a", endpoint(pair.a))
+                        put("b", endpoint(pair.b))
+                    })
+                }
+            })
+        }
     }
 
     private fun endpoint(endpoint: Endpoint): JsonObject = buildJsonObject {

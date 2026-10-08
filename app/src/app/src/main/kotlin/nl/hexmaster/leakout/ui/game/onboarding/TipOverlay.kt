@@ -79,6 +79,9 @@ object TipOverlayTags {
     const val HINT_GHOST = "tip_hint_ghost"
     const val HINT_ARROW = "tip_hint_arrow"
 
+    /** The portal tip's two-headed link between the two portals of a pair. */
+    const val PORTAL_LINK = "tip_portal_link"
+
     /** The invisible layer that keeps a quick second tap after a tip closes from reaching the game. */
     const val TAP_GUARD = "tip_tap_guard"
 }
@@ -109,6 +112,7 @@ fun tipContent(tip: TipId, step: Int, reservoirPercent: Int): TipContent = when 
         TipContent(tip, step, stringResource(title), stringResource(text), stringResource(target))
     }
     TipId.Mandatory -> TipContent(tip, null, stringResource(R.string.tip_mandatory_title), stringResource(R.string.tip_mandatory_text), stringResource(R.string.tip_mandatory_target))
+    TipId.Portal -> TipContent(tip, null, stringResource(R.string.tip_portal_title), stringResource(R.string.tip_portal_text), stringResource(R.string.tip_portal_target))
     TipId.Cross -> TipContent(tip, null, stringResource(R.string.tip_cross_title), stringResource(R.string.tip_cross_text), stringResource(R.string.tip_cross_target))
     TipId.Reservoir -> TipContent(
         tip, null, stringResource(R.string.tip_reservoir_title), stringResource(R.string.tip_reservoir_text, reservoirPercent),
@@ -125,7 +129,8 @@ data class DragHint(val section: PipeSection, val from: Rect, val to: Rect)
  * every rect of [spotlights] (root pixels), the callout card beside them and, on the placing step,
  * the [hint]. It takes all pointer input, so nothing under it can be dragged, pinched or panned.
  * [onNext] and [onSkip] are the tour's Next and Skip tour, [onDone] its Let's go and a single tip's
- * Got it.
+ * Got it. With a [linkColor] the spotlight rings take that colour, and two spotlights are joined by
+ * a two-headed link in it: the portal tip's way of showing which two portals belong together.
  */
 @Composable
 fun TipOverlay(
@@ -137,6 +142,7 @@ fun TipOverlay(
     onDone: () -> Unit,
     reducedMotion: Boolean,
     modifier: Modifier = Modifier,
+    linkColor: Color? = null,
 ) {
     var origin by remember { mutableStateOf(Offset.Zero) }
     val local = spotlights.map { it.relativeTo(origin) }
@@ -177,8 +183,11 @@ fun TipOverlay(
             .graphicsLayer { alpha = entry.value }
             .pointerInput(Unit) { swallowTouchesOutsideButtons() },
     ) {
-        TipSpotlightScrim(shown, Modifier.clearAndSetSemantics { }, glowAlpha = glow)
+        TipSpotlightScrim(shown, Modifier.clearAndSetSemantics { }, glowAlpha = glow, ringColor = linkColor ?: LeakOutColors.LiquidGlow)
         hint?.let { DragHintLayer(it.copy(from = it.from.relativeTo(origin), to = it.to.relativeTo(origin)), reducedMotion) }
+        if (linkColor != null && local.size == 2) {
+            Canvas(Modifier.fillMaxSize().testTag(TipOverlayTags.PORTAL_LINK)) { drawPortalLink(local[0], local[1], linkColor) }
+        }
         CalloutLayer(spotlights = local, origin = { origin }, scale = { scale.value }) { pointer -> Callout(content, pointer, onNext, onSkip, onDone) }
     }
 }

@@ -69,6 +69,11 @@ object LeakOutColors {
     val SuccessTint = Color(0x293DDC97)
     val LeakTint = Color(0x29FF5A5F)
 
+    // 2.5 portal pairs: portal.1 (circle), portal.2 (triangle), portal.3 (square)
+    val Portal1 = Color(0xFFFF6FD8)
+    val Portal2 = Color(0xFFB8F25C)
+    val Portal3 = Color(0xFFFF8A3D)
+
     // 2.3 Liquid (hero colour)
     val LiquidGlow = Color(0xFF9DF3FF)
     val Liquid300 = Color(0xFF5EE7FF)

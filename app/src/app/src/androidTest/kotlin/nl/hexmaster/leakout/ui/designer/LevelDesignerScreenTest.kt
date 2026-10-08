@@ -30,11 +30,13 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import nl.hexmaster.leakout.core.level.DesignStatus
+import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.EndpointKind
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.LevelDraft
 import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.PipeSection
+import nl.hexmaster.leakout.core.level.PortalPair
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
@@ -234,5 +236,30 @@ class LevelDesignerScreenTest {
         compose.onNodeWithTag(DesignerTags.DISCARD_CONFIRM).performClick()
         compose.waitForIdle()
         assertEquals(1, backs)
+    }
+
+    private fun tapCell(cell: Position) {
+        val target = centreOf(cell)
+        compose.onNodeWithTag(DesignerTags.GRID).performTouchInput { click(target) }
+        compose.waitForIdle()
+    }
+
+    @Test
+    fun thePortalToolPlacesMovesAndRemovesAPair() {
+        show()
+        clickTag(DesignerTags.tool(DesignerTool.PORTAL))
+        tapCell(Position(2, 0))
+        tapCell(Position(4, 4))
+        assertEquals(listOf(PortalPair(Endpoint(Position(2, 0), Side.RIGHT), Endpoint(Position(4, 4), Side.RIGHT))), level.portals)
+
+        // Select the second portal, move it and open it downwards.
+        tapCell(Position(4, 4))
+        tapCell(Position(5, 0))
+        clickTag(DesignerTags.portalSide(Side.BOTTOM))
+        assertEquals(listOf(PortalPair(Endpoint(Position(2, 0), Side.RIGHT), Endpoint(Position(5, 0), Side.BOTTOM))), level.portals)
+
+        clickTag(DesignerTags.REMOVE_PAIR)
+        assertEquals(emptyList<PortalPair>(), level.portals)
+        compose.onNodeWithTag(DesignerTags.STATUS).performScrollTo().assertTextEquals("Valid and solvable")
     }
 }

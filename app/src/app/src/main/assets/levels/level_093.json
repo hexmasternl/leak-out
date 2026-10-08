@@ -35,5 +35,10 @@
     { "x": 5, "y": 16, "section": "X" },
     { "x": 18, "y": 13, "section": "RES" }
   ],
-  "stars": { "one": 2760, "two": 4130, "three": 5510 }
+  "portals": [
+    { "a": { "x": 21, "y": 18, "openSide": "RIGHT" }, "b": { "x": 8, "y": 9, "openSide": "BOTTOM" } },
+    { "a": { "x": 8, "y": 17, "openSide": "TOP" }, "b": { "x": 19, "y": 8, "openSide": "RIGHT" } },
+    { "a": { "x": 17, "y": 12, "openSide": "RIGHT" }, "b": { "x": 6, "y": 15, "openSide": "TOP" } }
+  ],
+  "stars": { "one": 2760, "two": 4130, "three": 5450 }
 }

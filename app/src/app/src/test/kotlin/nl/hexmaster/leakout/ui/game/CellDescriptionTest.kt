@@ -62,6 +62,38 @@ class CellDescriptionTest {
         )
     }
 
+    private val portalEnglish = english + mapOf(
+        R.string.cell_portal to "Portal pair %1\$d, %2\$s, opens %3\$s, leads to column %4\$d, row %5\$d, not passed yet",
+        R.string.cell_portal_passed to "Portal pair %1\$d, %2\$s, opens %3\$s, leads to column %4\$d, row %5\$d, passed",
+        R.string.portal_symbol_circle to "circle",
+        R.string.portal_symbol_triangle to "triangle",
+        R.string.portal_opens_right to "to the right",
+        R.string.portal_opens_top to "upwards",
+    )
+
+    private fun spokenPortal(cell: Cell.Portal, filled: Set<ChannelUse> = emptySet()): String =
+        CellDescription.text(CellDescription.of(cell, at, filled)) { id, args -> portalEnglish.getValue(id).format(*args) }
+
+    @Test
+    fun `a portal names its pair, symbol, open side and partner cell`() {
+        val portal = Cell.Portal(1, Side.RIGHT, partner = Position(6, 3))
+        assertEquals("Portal pair 1, circle, opens to the right, leads to column 7, row 4, not passed yet", spokenPortal(portal))
+    }
+
+    @Test
+    fun `a portal says when the liquid has passed its pair`() {
+        val portal = Cell.Portal(2, Side.TOP, partner = Position(0, 0))
+        assertEquals(
+            "Portal pair 2, triangle, opens upwards, leads to column 1, row 1, passed",
+            spokenPortal(portal, setOf(ChannelUse(at, Channel.PORTAL), ChannelUse(Position(0, 0), Channel.PORTAL))),
+        )
+    }
+
+    @Test
+    fun `every open side has its own spoken text`() {
+        assertEquals(Side.entries.size, Side.entries.map(CellDescription::opensTo).toSet().size)
+    }
+
     @Test
     fun `every section has its own spoken name`() {
         val names = PipeSection.entries.map { CellDescription.sectionName(it) }

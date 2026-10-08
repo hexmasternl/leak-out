@@ -27,6 +27,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlin.random.Random
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import androidx.test.platform.app.InstrumentationRegistry
+import nl.hexmaster.leakout.BundledLevels
 import nl.hexmaster.leakout.core.engine.FlowState
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.MandatorySection
@@ -371,5 +373,29 @@ class GameTipsTest {
         assertEquals(TipId.Intro, shownTip())
         tap(TipOverlayTags.SKIP)
         assertEquals(TipId.Mandatory, shownTip())
+    }
+
+    private fun level49(): Level =
+        checkNotNull(BundledLevels(InstrumentationRegistry.getInstrumentation().targetContext.assets).load(49))
+
+    @Test
+    fun level49ShowsThePortalTipWithBothPortalsHighlightedAndLinked() {
+        val level = level49()
+        val pair = level.portals.single()
+        val tips = InMemorySettingsRepository(initialSeenTips = setOf(TipId.Intro))
+        val session = show(level, GameSession(level, Random(7)), tips)
+        assertEquals(TipId.Portal, shownTip())
+        assertTrue(session.state.paused)
+        assertEquals(setOf(compose.cellRect(pair.a.position), compose.cellRect(pair.b.position)), spotlights().toSet())
+        compose.onNodeWithTag(TipOverlayTags.PORTAL_LINK, useUnmergedTree = true).assertExists()
+        tap(TipOverlayTags.DONE)
+        assertEquals(setOf(TipId.Intro, TipId.Portal), runBlocking { tips.seenTips.first() })
+    }
+
+    @Test
+    fun thePortalTipShowsOnce() {
+        val level = level49()
+        show(level, GameSession(level, Random(7)), InMemorySettingsRepository(initialSeenTips = setOf(TipId.Intro, TipId.Portal)))
+        assertEquals(null, shownTip())
     }
 }

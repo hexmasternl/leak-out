@@ -24,7 +24,7 @@
 ## 4. Secrets, environment and Azure
 
 - [ ] 4.1 Create the `production` environment in `hexmasternl/leak-out`, limited to `main`, and add the ten server secrets as environment secrets with values from their sources; verify `gh secret list -R hexmasternl/leak-out -e production` lists all ten
-- [ ] 4.2 Add a federated credential for `repo:hexmasternl/leak-out:environment:production` to the Azure app registration behind `AZURE_PROD_CLIENT_ID` (keep the old one); verify in the Azure portal that the credential exists
+- [x] 4.2 Add a federated credential for `repo:hexmasternl/leak-out:environment:production` to the Azure app registration behind `AZURE_PROD_CLIENT_ID` (keep the old one); verify in the Azure portal that the credential exists _(verified by use rather than in the portal: `server-deploy` on `main` signed in to Azure through OIDC with `environment: production` and succeeded, which needs this credential)_
 - [ ] 4.3 Update branch protection on `development`: require `server / build-test` and `server / bicep` (the new check names); verify an app-only pull request is mergeable
 
 ## 5. Documentation
@@ -35,6 +35,6 @@
 ## 6. Cut-over and integration
 
 - [x] 6.1 Run `./gradlew :core:test :app:testDebugUnitTest :app:assembleRelease` from `app/src/` and `dotnet build` + `dotnet test` on `server/src/`; verify both succeed, then open the pull request into `development` listing the feature branches that still use `src/`
-- [ ] 6.2 After `development` is merged into `main`: verify the app deploy runs (the merge changes `app/`), push the tag `server-v0.3.2` on the server import merge commit (design decision 5: without it the server's GitVersion fails), then run `server-deploy.yml` by hand and verify the Azure sign-in, the deployment and the `/alive` smoke test succeed
+- [x] 6.2 After `development` is merged into `main`: verify the app deploy runs (the merge changes `app/`), push the tag `server-v0.3.2` on the server import merge commit (design decision 5: without it the server's GitVersion fails), then run `server-deploy.yml` by hand and verify the Azure sign-in, the deployment and the `/alive` smoke test succeed _(the merge of #121 ran the app deploy successfully; `server-v0.3.2` is on the import commit `eeb2165`; `server-deploy`, run by hand after #124 and again after `a497732`, succeeded including Azure sign-in, deployment and the smoke test)_
 - [ ] 6.3 Enable the `push` trigger (`server/**` and the server workflows) in `server-deploy.yml` and disable `deploy.yml` in `leak-out-server`; verify a server-only push to `main` deploys the server and does not start the app deploy
 - [ ] 6.4 Remove the old federated credential, add a README pointer to this repository in `leak-out-server` and archive it; verify the repository shows as archived

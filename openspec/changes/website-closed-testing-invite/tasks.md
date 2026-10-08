@@ -7,9 +7,9 @@
 
 ## 2. Dialog, menu item and home section
 
-- [ ] 2.1 Create `layouts/_partials/tester-invite.html` with a native `<dialog>` holding the content from the spec, and include it once in `baseof.html`; verify in the built HTML that the pages of every language contain the dialog with the three links
-- [ ] 2.2 Add the "Test the app" item to the navigation in `header.html` as a link to `#become-a-tester` on the home page of the current language; verify it appears on every page of the built site
-- [ ] 2.3 Add the "Become a tester" section with `id="become-a-tester"` to `home.html`, showing the group and opt-in links and a button-styled link to the same anchor; verify the section in the built home page of each language
+- [x] 2.1 Create `layouts/_partials/tester-invite.html` with a native `<dialog>` holding the content from the spec, and include it once in `baseof.html`; verify in the built HTML that the pages of every language contain the dialog with the three links
+- [x] 2.2 Add the "Test the app" item to the navigation in `header.html` as a link to `#become-a-tester` on the home page of the current language; verify it appears on every page of the built site
+- [x] 2.3 Add the "Become a tester" section with `id="become-a-tester"` to `home.html`, showing the group and opt-in links and a button-styled link to the same anchor; verify the section in the built home page of each language
 - [ ] 2.4 Style the dialog, its backdrop and the section in `assets/css/main.css` following `docs/design-system.md`, and verify at phone width (360 px) in `hugo server` that the dialog fits without horizontal scrolling
 
 ## 3. Behaviour script

@@ -10,5 +10,5 @@
 ## 2. Website
 
 - [x] 2.1 In `website/src/assets/js/leaderboard.js`, keep `achievedAt` in `parseTopScores` (dropping invalid dates), add an exported `relativeTime(achievedAt, now, locale)` and a full-date formatter, add the relative and full date to `toRows`, and render a `<time>` cell in `createDomView`. Cover each unit, "now", future moments, a missing moment and Dutch output in `website/tests/leaderboard.test.js`; verify with `cd website && npm test`.
-- [ ] 2.2 Add the column header to `layouts/leaderboard.html` and a `when` text to every `i18n/*.yaml` (en, nl, de, fr, es); style the column in `assets/css/main.css` so the page has no horizontal scroll at 360 px. Verify with `hugo --source website/src --panicOnWarning`.
+- [x] 2.2 Add the column header to `layouts/leaderboard.html` and a `when` text to every `i18n/*.yaml` (en, nl, de, fr, es); style the column in `assets/css/main.css` so the page has no horizontal scroll at 360 px. Verify with `hugo --source website/src --panicOnWarning`.
 - [ ] 2.3 Describe the new column in the leaderboard section of `website/README.md` and check the text matches the behaviour.

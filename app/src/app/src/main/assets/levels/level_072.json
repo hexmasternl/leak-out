@@ -90,7 +90,7 @@
     { "x": 11, "y": 23 },
     { "x": 15, "y": 23 }
   ],
-  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.4 },
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.349 },
   "stack": { "weights": { "X": 6, "RES": 3 } },
   "mandatory": [
     { "x": 6, "y": 6, "section": "X" },

@@ -46,7 +46,7 @@
     { "x": 1, "y": 17 },
     { "x": 14, "y": 17 }
   ],
-  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.296 },
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.323 },
   "stack": { "weights": { "X": 6, "RES": 2 } },
   "mandatory": [
     { "x": 7, "y": 6, "section": "X" },

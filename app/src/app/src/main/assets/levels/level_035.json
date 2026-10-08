@@ -20,7 +20,7 @@
     { "x": 9, "y": 6 },
     { "x": 5, "y": 7 }
   ],
-  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.287 },
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.243 },
   "stack": { "weights": { "X": 6, "RES": 2 } },
   "stars": { "one": 460, "two": 690, "three": 920 }
 }

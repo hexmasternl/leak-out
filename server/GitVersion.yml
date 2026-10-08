@@ -1,5 +1,10 @@
-# Semantic versioning of the API image (see .github/workflows/deploy.yml).
+# Semantic versioning of the API image (see .github/workflows/server-deploy.yml).
 # Mainline versioning: every merge to main increments the patch version, so each deployment
-# gets a new release version without Git tags. "+semver: minor" or "+semver: major" in a
-# commit message bumps the minor or major version; a tag vX.Y.Z on main sets the base.
+# gets a new release version. "+semver: minor" or "+semver: major" in a commit message bumps
+# the minor or major version; a tag server-vX.Y.Z on main sets the base.
 workflow: TrunkBased/preview1
+# Only server-v<x.y.z> tags count: the app's v<x.y.z> release tags on main never move the
+# server's version (docs/repository-layout.md). Mainline versioning walks the history and cannot
+# cross the merge that imported this server into the repository (it has no merge base), so that
+# merge carries the tag server-v0.3.2, the last version deployed from leak-out-server.
+tag-prefix: 'server-v'

@@ -3,7 +3,8 @@
 # Bump minor or major with "+semver: minor" / "+semver: major" in a commit message (or PR title),
 # or by raising next-version below. Strategy: docs/deployment.md#versioning
 workflow: GitHubFlow/v1
-# Only v<x.y.z> tags count: the server's server-v<x.y.z> tags never move the app's version
-# (docs/repository-layout.md).
-tag-prefix: 'v'
+# Tags v<x.y.z> count; the server's server-v<x.y.z> tags never move the app's version, because the
+# prefix must start the tag (docs/repository-layout.md). Keep the v optional: GitVersion parses
+# next-version with the same prefix, and a required v would make it fail on "0.1.0".
+tag-prefix: '[vV]?'
 next-version: 0.1.0

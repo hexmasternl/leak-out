@@ -278,7 +278,7 @@ The workflow sets both versions of every release; nothing is bumped by hand.
 | `versionCode` | The number Google Play orders releases by; every upload must be higher than all earlier ones | `major × 1 000 000 + minor × 1 000 + patch`, so `0.2.1` → `2001` and `1.0.0` → `1000000` |
 | Git tag | `v<major>.<minor>.<patch>` on the released commit | Pushed by the workflow after a successful upload |
 
-GitVersion uses the GitHub Flow workflow: on `main` it starts from the newest `v*` tag and increments the **patch** (the very first release, with no tag yet, is `next-version` from `app/GitVersion.yml`: `0.1.0`). Its `tag-prefix: 'v'` makes it ignore the server's `server-v*` tags, so server releases never move the app's version. Because each release is tagged, each merge into `main` gives the next patch:
+GitVersion uses the GitHub Flow workflow: on `main` it starts from the newest `v*` tag and increments the **patch** (the very first release, with no tag yet, is `next-version` from `app/GitVersion.yml`: `0.1.0`). Its `tag-prefix` (`[vV]?`) must match at the start of a tag, so the server's `server-v*` tags never move the app's version. Because each release is tagged, each merge into `main` gives the next patch:
 
 | Merge into `main` | Version | Version code |
 | --- | --- | --- |

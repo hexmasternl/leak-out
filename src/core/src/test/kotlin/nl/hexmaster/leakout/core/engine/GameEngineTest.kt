@@ -502,6 +502,24 @@ class GameEngineTest {
     }
 
     @Test
+    fun `a tick keeps the same awards list while every award is visible`() {
+        val awards = listOf(Award(p(1, 0), 10, 0L), Award(p(2, 0), 15, 400L))
+        val state = engine.start(level).copy(awards = awards)
+        val ticked = engine.handle(state, Tick(Award.VISIBLE_MS - 1))
+        assertSame(awards, ticked.awards)
+        val fresh = engine.start(level)
+        assertSame(fresh.awards, engine.handle(fresh, Tick(16)).awards)
+    }
+
+    @Test
+    fun `a tick still drops the awards that have expired`() {
+        val awards = listOf(Award(p(1, 0), 10, 0L), Award(p(2, 0), 15, 400L))
+        val state = engine.start(level).copy(awards = awards)
+        assertEquals(listOf(awards[1]), engine.handle(state, Tick(Award.VISIBLE_MS)).awards)
+        assertEquals(emptyList(), engine.handle(state, Tick(Award.VISIBLE_MS + 400)).awards)
+    }
+
+    @Test
     fun `normal speed is refused when fast forward is off`() {
         val state = engine.start(level).withPipes(ROUTE)
         assertSame(state, engine.handle(state, NormalSpeed))

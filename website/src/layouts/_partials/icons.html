@@ -1,0 +1,7 @@
+{{- /* Icon sizes derived from the 512 px app icon: 192 px (browsers, manifest) and an opaque 180 px apple-touch-icon. */ -}}
+{{- $icon := resources.Get "images/app-icon-512.png" -}}
+{{- return dict
+    "icon192" ($icon.Resize "192x png")
+    "icon512" $icon
+    "apple" ($icon.Resize "180x png #0C1A2A")
+-}}

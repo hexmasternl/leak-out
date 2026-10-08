@@ -20,6 +20,7 @@ leak-out/
 ├── server/           online game server (.NET, Azure); has its own CLAUDE.md / AGENTS.md
 │   ├── src/          .NET solution and projects
 │   └── infrastructure/  Bicep templates
+├── website/          public Hugo website (website/src) and its Bicep (website/infrastructure); see website/README.md
 ├── docs/             project plan, design system, level format, repository layout
 ├── openspec/         specs (openspec/specs) and change proposals (openspec/changes); server specs are prefixed server-
 └── scripts/          repository tooling

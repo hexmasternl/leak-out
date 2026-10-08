@@ -1,0 +1,36 @@
+{{- /* Azure Static Web Apps configuration: caching, security headers and the 404 page. The CSP allows
+       connections only to this site and the score server the leaderboard reads. */ -}}
+{{- $scoreServer := urls.Parse site.Params.scoreServerUrl -}}
+{{- $scoreOrigin := printf "%s://%s" $scoreServer.Scheme $scoreServer.Host -}}
+{{- $csp := delimit (slice
+    "default-src 'self'"
+    "script-src 'self'"
+    "style-src 'self'"
+    "img-src 'self' data:"
+    "font-src 'self'"
+    (printf "connect-src 'self' %s" $scoreOrigin)
+    "manifest-src 'self'"
+    "object-src 'none'"
+    "base-uri 'self'"
+    "form-action 'self'"
+    "frame-ancestors 'none'"
+    "upgrade-insecure-requests") "; " -}}
+{{- $immutable := dict "cache-control" "public, max-age=31536000, immutable" -}}
+{{- dict
+    "trailingSlash" "auto"
+    "routes" (slice
+      (dict "route" "/css/*" "headers" $immutable)
+      (dict "route" "/js/*" "headers" $immutable)
+      (dict "route" "/images/*" "headers" (dict "cache-control" "public, max-age=2592000"))
+      (dict "route" "/fonts/*" "headers" (dict "cache-control" "public, max-age=31536000")))
+    "responseOverrides" (dict "404" (dict "rewrite" "/404.html"))
+    "globalHeaders" (dict
+      "content-security-policy" $csp
+      "strict-transport-security" "max-age=31536000; includeSubDomains"
+      "x-content-type-options" "nosniff"
+      "x-frame-options" "DENY"
+      "referrer-policy" "strict-origin-when-cross-origin"
+      "permissions-policy" "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+      "cross-origin-opener-policy" "same-origin")
+    "mimeTypes" (dict ".webmanifest" "application/manifest+json" ".ttf" "font/ttf" ".webp" "image/webp")
+  | jsonify (dict "indent" "  ") -}}

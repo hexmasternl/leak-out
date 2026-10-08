@@ -1,0 +1,78 @@
+{{- /* Search engine, Open Graph and Twitter metadata, and structured data. Absolute URLs come from
+       baseURL, which the deploy workflow sets to the site's public address. */ -}}
+{{- $title := cond .IsHome (printf "%s – %s" site.Title (T "tagline")) (printf "%s – %s" .Title site.Title) }}
+{{- $description := .Description | default (T "siteDescription") }}
+{{- $ogImage := (resources.Get "images/feature-graphic-1024x500.png").Resize "1024x jpg q85" }}
+{{- $isNotFound := eq .Kind "404" }}
+<meta name="description" content="{{ $description }}">
+{{- if $isNotFound }}
+<meta name="robots" content="noindex">
+{{- else }}
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="{{ .Permalink }}">
+{{- range .AllTranslations }}
+<link rel="alternate" hreflang="{{ .Language.Locale }}" href="{{ .Permalink }}">
+{{- end }}
+{{- range where .AllTranslations "Language.Lang" (index hugo.Sites 0).Language.Lang | first 1 }}
+<link rel="alternate" hreflang="x-default" href="{{ .Permalink }}">
+{{- end }}
+{{- end }}
+
+<meta property="og:site_name" content="{{ site.Title }}">
+<meta property="og:title" content="{{ $title }}">
+<meta property="og:description" content="{{ $description }}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ .Permalink }}">
+<meta property="og:locale" content="{{ partial "og-locale.html" site.Language.Lang }}">
+{{- range .Translations }}
+<meta property="og:locale:alternate" content="{{ partial "og-locale.html" .Language.Lang }}">
+{{- end }}
+<meta property="og:image" content="{{ $ogImage.Permalink }}">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="{{ $ogImage.Width }}">
+<meta property="og:image:height" content="{{ $ogImage.Height }}">
+<meta property="og:image:alt" content="{{ T "featureGraphicAlt" }}">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ $title }}">
+<meta name="twitter:description" content="{{ $description }}">
+<meta name="twitter:image" content="{{ $ogImage.Permalink }}">
+<meta name="twitter:image:alt" content="{{ T "featureGraphicAlt" }}">
+
+{{- if and .IsHome (not $isNotFound) }}
+{{- $game := dict
+    "@context" "https://schema.org"
+    "@type" "VideoGame"
+    "name" site.Title
+    "description" $description
+    "url" .Permalink
+    "inLanguage" site.Language.Locale
+    "image" $ogImage.Permalink
+    "genre" "Puzzle"
+    "gamePlatform" "Android"
+    "applicationCategory" "GameApplication"
+    "operatingSystem" "Android 8.0 or later"
+    "installUrl" site.Params.playStoreUrl
+    "author" (dict "@type" "Organization" "name" "HexMaster")
+}}
+<script type="application/ld+json">{{ $game | jsonify | safeJS }}</script>
+{{- $website := dict
+    "@context" "https://schema.org"
+    "@type" "WebSite"
+    "name" site.Title
+    "url" .Permalink
+    "inLanguage" site.Language.Locale
+}}
+<script type="application/ld+json">{{ $website | jsonify | safeJS }}</script>
+{{- end }}
+
+{{- with .Params.faq }}
+{{- $questions := slice }}
+{{- range . }}
+{{- $questions = $questions | append (dict
+    "@type" "Question"
+    "name" .question
+    "acceptedAnswer" (dict "@type" "Answer" "text" (.answer | markdownify | plainify | htmlUnescape))) }}
+{{- end }}
+<script type="application/ld+json">{{ dict "@context" "https://schema.org" "@type" "FAQPage" "inLanguage" site.Language.Locale "mainEntity" $questions | jsonify | safeJS }}</script>
+{{- end }}

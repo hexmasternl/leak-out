@@ -1,0 +1,14 @@
+{{ define "main" }}
+<article class="section">
+  <div class="container"><div class="prose faq">
+    <h1>{{ .Title }}</h1>
+    {{ .Content }}
+    {{- range .Params.faq }}
+    <details>
+      <summary>{{ .question }}</summary>
+      <div>{{ .answer | markdownify }}</div>
+    </details>
+    {{- end }}
+  </div></div>
+</article>
+{{ end }}

@@ -1,0 +1,13 @@
+{{ define "main" }}
+<article class="section">
+  <div class="container"><div class="prose">
+    <h1>{{ T "notFoundTitle" }}</h1>
+    <p>{{ T "notFoundText" }}</p>
+    <ul>
+      {{- range hugo.Sites }}
+      <li><a href="{{ .Home.RelPermalink }}" hreflang="{{ .Language.Locale }}" lang="{{ .Language.Locale }}">{{ .Language.Label }}</a></li>
+      {{- end }}
+    </ul>
+  </div></div>
+</article>
+{{ end }}

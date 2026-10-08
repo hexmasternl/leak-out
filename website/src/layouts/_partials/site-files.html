@@ -1,0 +1,8 @@
+{{- /* Site-wide generated files at the root: the web app manifest and the Static Web App configuration.
+       Published once, from the default language's home page. */ -}}
+{{- if eq site.Language.Lang (index hugo.Sites 0).Language.Lang }}
+{{- range slice "site.webmanifest" "staticwebapp.config.json" }}
+{{- $file := resources.Get (printf "site/%s" .) | resources.ExecuteAsTemplate . $ }}
+{{- $file.Publish }}
+{{- end }}
+{{- end }}

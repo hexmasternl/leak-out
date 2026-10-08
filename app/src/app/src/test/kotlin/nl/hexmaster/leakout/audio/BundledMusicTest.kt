@@ -9,7 +9,7 @@ import org.junit.Test
 /** The app's copy of the music must stay identical to the design source in the repository's `assets/audio/`. */
 class BundledMusicTest {
     private val bundledDir = File("src/main/assets/music")
-    private val sourceDir = File("../../assets/audio")
+    private val sourceDir = File("../../../assets/audio")
 
     private fun credits(dir: File): Playlist {
         val file = File(dir, "audio_credits.json")

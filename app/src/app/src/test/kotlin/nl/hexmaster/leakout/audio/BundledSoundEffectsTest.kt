@@ -9,7 +9,7 @@ import org.junit.Test
 /** The app's copy of the sound effects must stay identical to the design source in the repository's `assets/sfx/`. */
 class BundledSoundEffectsTest {
     private val bundledDir = File("src/main/assets/sfx")
-    private val sourceDir = File("../../assets/sfx")
+    private val sourceDir = File("../../../assets/sfx")
 
     private fun names(dir: File): Set<String> {
         assertTrue("missing $dir", dir.isDirectory)

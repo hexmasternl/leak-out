@@ -22,7 +22,7 @@ dependencies {
 val bundledLevelsDir: File = rootProject.file("app/src/main/assets/levels")
 
 // The level format doc. A test parses its full example so that the doc cannot drift from the parser.
-val levelFormatDoc: File = rootProject.file("../docs/level-format.md")
+val levelFormatDoc: File = rootProject.file("../../docs/level-format.md")
 
 tasks.test {
     useJUnitPlatform()

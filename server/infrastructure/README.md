@@ -5,12 +5,12 @@ Bicep templates that host the Leak Out server in Azure. One subscription-scope d
 | File | Scope | Contents |
 | --- | --- | --- |
 | `main.bicep` | subscription | Creates the resource group `resourceGroupName` in `location` and deploys `resources.bicep` into it |
-| `main.bicepparam` | | Non-secret defaults (resource group, region, max replicas) |
+| `main.bicepparam` | | Non-secret defaults (resource group, region, min and max replicas) |
 | `resources.bicep` | resource group | Wires the modules and builds the database connection strings |
 | `modules/monitoring.bicep` | resource group | Log Analytics workspace (`PerGB2018`, 30 days retention, 1 GB daily cap) and workspace-based Application Insights |
 | `modules/postgres.bicep` | resource group | PostgreSQL Flexible Server 17, `Standard_B1ms` Burstable, 32 GiB, no HA, no geo backup, TLS required, firewall rule `AllowAllAzureServices`, databases `playersdb` and `scoresdb` |
 | `modules/containerapps-env.bicep` | resource group | Consumption-only Container Apps environment that sends logs to the workspace |
-| `modules/api.bicep` | resource group | Container app `<resource group>-api` (container and OpenTelemetry service `hexmaster-leakout-api`, like the Aspire resource): external HTTPS ingress on port 8080, 0 to `maxReplicas` replicas on the `http-concurrency` rule (20 concurrent requests), `/alive` startup and liveness probes, `/health` readiness probe |
+| `modules/api.bicep` | resource group | Container app `<resource group>-api` (container and OpenTelemetry service `hexmaster-leakout-api`, like the Aspire resource): external HTTPS ingress on port 8080, `minReplicas` (1, so there is no cold start) to `maxReplicas` replicas on the `http-concurrency` rule (20 concurrent requests), `/alive` startup and liveness probes, `/health` readiness probe |
 
 Every resource is named `<resource group name>-<kind>`, so with the default resource group `rg-leakout-prod-swe` they are `rg-leakout-prod-swe-log`, `-appi`, `-psql`, `-cae` and `-api`. The names stay the same across redeploys. The PostgreSQL server name is also its host name and must be unique across Azure; the resource group name makes it so. Keep the resource group name at most 28 characters, because Container Apps and their environments allow at most 32.
 
@@ -22,6 +22,7 @@ Every resource is named `<resource group name>-<kind>`, so with the default reso
 | --- | --- | --- |
 | `resourceGroupName` | | `rg-leakout-prod-swe` |
 | `location` | | `northeurope` |
+| `minReplicas` | | `1`: keeps one warm replica; `0` lets the API scale to zero at the cost of a cold start of about 15 seconds. Must not exceed `maxReplicas` |
 | `maxReplicas` | | `3` |
 | `imageName` | | `API_IMAGE`: full image reference with tag, e.g. `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>` |
 | `serviceVersion` | | `SERVICE_VERSION`: version of the release, set by `server-deploy.yml` from the GitVersion `SemVer` (the image tag); reported as the OpenTelemetry `service.version` |

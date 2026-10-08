@@ -54,6 +54,10 @@ param authSigningKey string
 @secure()
 param applicationInsightsConnectionString string
 
+@description('Minimum number of replicas; 1 keeps a warm replica, 0 lets the app scale to zero.')
+@minValue(0)
+param minReplicas int = 1
+
 @description('Maximum number of replicas.')
 @minValue(1)
 param maxReplicas int = 3
@@ -192,7 +196,7 @@ resource containerApp 'Microsoft.App/containerApps@2026-07-01' = {
         }
       ]
       scale: {
-        minReplicas: 0
+        minReplicas: minReplicas <= maxReplicas ? minReplicas : fail('minReplicas (${minReplicas}) must not be greater than maxReplicas (${maxReplicas}).')
         maxReplicas: maxReplicas
         rules: [
           {

@@ -33,5 +33,8 @@
   ],
   "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.309 },
   "stack": { "weights": { "X": 6, "RES": 1 } },
-  "stars": { "one": 1220, "two": 1820, "three": 2430 }
+  "portals": [
+    { "a": { "x": 13, "y": 7, "openSide": "LEFT" }, "b": { "x": 3, "y": 3, "openSide": "RIGHT" } }
+  ],
+  "stars": { "one": 1220, "two": 1820, "three": 2410 }
 }

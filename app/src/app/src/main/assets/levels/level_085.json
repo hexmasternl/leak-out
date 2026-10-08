@@ -34,5 +34,9 @@
     { "x": 3, "y": 10, "section": "X" },
     { "x": 20, "y": 20, "section": "RES" }
   ],
-  "stars": { "one": 2760, "two": 4140, "three": 5520 }
+  "portals": [
+    { "a": { "x": 6, "y": 15, "openSide": "LEFT" }, "b": { "x": 14, "y": 19, "openSide": "TOP" } },
+    { "a": { "x": 19, "y": 15, "openSide": "BOTTOM" }, "b": { "x": 2, "y": 8, "openSide": "RIGHT" } }
+  ],
+  "stars": { "one": 2760, "two": 4140, "three": 5480 }
 }

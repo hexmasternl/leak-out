@@ -6,6 +6,7 @@ import nl.hexmaster.leakout.core.board.PlacementCheck.Reason
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.PlacementRules
 import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.level.TestLevels
 
 class PlacementTest {
@@ -52,6 +53,18 @@ class PlacementTest {
     fun `a pipe refuses when the level does not allow replacing`() {
         assertEquals(PlacementCheck.Rejected(Reason.REPLACE_NOT_ALLOWED), check(unfilled, rules.copy(allowReplace = false)))
         assertEquals(PlacementCheck.Place, check(Position(1, 1), rules.copy(allowReplace = false)))
+    }
+
+    @Test
+    fun `a portal refuses whether or not replacing is allowed`() {
+        val portal = Position(2, 6)
+        val withPortal = board.with(portal, Cell.Portal(1, Side.TOP, Position(5, 6)))
+        for (allowReplace in listOf(true, false)) {
+            assertEquals(
+                PlacementCheck.Rejected(Reason.FIXED),
+                Placement.check(withPortal, rules.copy(allowReplace = allowReplace), portal, 0, 0),
+            )
+        }
     }
 
     @Test

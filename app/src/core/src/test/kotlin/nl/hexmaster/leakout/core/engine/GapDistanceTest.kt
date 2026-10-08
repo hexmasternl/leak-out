@@ -62,6 +62,26 @@ class GapDistanceTest {
     }
 
     @Test
+    fun `a portal pair ahead counts as one section`() {
+        val state = fresh(engineLevel(portals = listOf(PORTAL_PAIR))).withPipes(p(1, 1) to H).headAt(p(1, 1), Side.LEFT, 0.5)
+        assertGap(1.5, state)
+    }
+
+    @Test
+    fun `a head inside a portal pair walks on from the exit portal`() {
+        val state = fresh(engineLevel(portals = listOf(PORTAL_PAIR))).withPipes(p(1, 1) to H).inPortalPair(0.25)
+        assertGap(0.75, state)
+    }
+
+    @Test
+    fun `the walk out of a portal pair follows the sections after it`() {
+        val state = fresh(engineLevel(portals = listOf(PORTAL_PAIR))).withPipes(PORTAL_ROUTE).atStart(0.5)
+        assertNull(GapDistance.of(state))
+        // Out of the pair into an H that leads past the finish, into the empty (1, 2).
+        assertGap(1.25, fresh(engineLevel(portals = listOf(PORTAL_PAIR))).withPipes(p(2, 2) to H).inPortalPair(0.75))
+    }
+
+    @Test
     fun `every connected section ahead counts as a whole one`() {
         val state = fresh().withPipes(p(1, 1) to H, p(2, 1) to H, p(3, 1) to H).atStart(0.0)
         assertGap(4.0, state)

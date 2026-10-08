@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.toSize
 import kotlin.math.floor
 import kotlin.math.min
 import nl.hexmaster.leakout.core.board.Board
+import nl.hexmaster.leakout.core.board.Cell
+import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.GridSize
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.Position
@@ -62,10 +64,11 @@ data class DesignerGridLayout(val grid: GridSize, val cellPx: Float, val origin:
 }
 
 /**
- * The design on the real playing field's look: cells, blocked cells, mandatory sections and the
- * endpoints with their open sides, drawn by the game's own cell drawing. [highlighted] cells, the
- * cells validation errors are about, get a `leak.500` frame; a solvable design's [path] is drawn
- * faintly through the cells as a hint.
+ * The design on the real playing field's look: cells, blocked cells, mandatory sections, portals
+ * and the endpoints with their open sides, drawn by the game's own cell drawing. The [unpaired]
+ * portal, still waiting for its partner, is drawn as the next pair. [highlighted] cells, the
+ * cells validation errors are about, get a `leak.500` frame and the [selected] portal a `brass.300`
+ * one; a solvable design's [path] is drawn faintly through the cells as a hint.
  *
  * A tap on a cell calls [onTap]. A drag calls [onDragStart] with the cell it started on as soon as
  * it moves into a second cell, then [onDrag] for every further cell it enters, and [onDragEnd] when
@@ -81,10 +84,15 @@ fun DesignerGrid(
     onDrag: (Position) -> Unit,
     onDragEnd: () -> Unit,
     modifier: Modifier = Modifier,
+    unpaired: Endpoint? = null,
+    selected: Position? = null,
 ) {
     val pipes = rememberPipeArtLibrary()
     val scratch = remember { LiquidScratch() }
-    val board = remember(level) { Board.from(level) }
+    val board = remember(level, unpaired) {
+        val complete = Board.from(level)
+        if (unpaired == null) complete else complete.with(unpaired.position, Cell.Portal(level.portals.size + 1, unpaired.openSide, unpaired.position))
+    }
     val grid = level.grid
     val currentGrid by rememberUpdatedState(grid)
     val tap by rememberUpdatedState(onTap)
@@ -143,11 +151,12 @@ fun DesignerGrid(
                 style = Stroke(layout.cellPx * 0.12f, cap = StrokeCap.Round, join = StrokeJoin.Round),
             )
         }
-        for (position in highlighted) {
+        val frames = highlighted.map { it to LeakOutColors.Leak500 } + listOfNotNull(selected?.let { it to LeakOutColors.Brass300 })
+        for ((position, color) in frames) {
             if (position !in grid) continue
             val rect = layout.cellRect(position).deflate(layout.cellPx * 0.04f)
             drawRoundRect(
-                LeakOutColors.Leak500,
+                color,
                 rect.topLeft,
                 rect.size,
                 CornerRadius(layout.cellPx * 0.14f),

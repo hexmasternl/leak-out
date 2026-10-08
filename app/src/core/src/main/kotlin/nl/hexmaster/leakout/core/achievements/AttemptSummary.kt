@@ -29,7 +29,7 @@ enum class RecordOutcome { FIRST_COMPLETION, NEW_HIGHSCORE, NO_IMPROVEMENT }
  * @param sectionsLeft exits of the liquid from placed sections; a cross passed twice counts twice.
  * @param crossesLeftTwice crosses the liquid left through both channels.
  * @param fastForwardAtWin whether fast forward was on when the liquid entered the finish; false on a loss.
- * @param freeCells grid cells that are not blocked, not the start and not the finish.
+ * @param freeCells grid cells that are not blocked, not the start, not the finish and not a portal.
  * @param piecesOnBoard sections on the board when the outcome was reached, mandatory ones included.
  * @param record what recording the win did to the history; null on a loss.
  * @param longestCrossChain the most crosses the liquid left one directly after the other.
@@ -119,9 +119,11 @@ data class AttemptSummary(
 
         /**
          * The cells of [level]'s shortest route as [LevelSolver] finds it, or null when it finds none.
-         * A mandatory cross is on the solver's path twice but is one cell.
+         * A mandatory cross is on the solver's path twice but is one cell, and portals are on it but
+         * hold no section.
          */
-        fun minimumSections(level: Level): Int? = (LevelSolver.solve(level) as? SolverResult.Solvable)?.path?.distinct()?.size
+        fun minimumSections(level: Level): Int? = (LevelSolver.solve(level) as? SolverResult.Solvable)?.path
+            ?.distinct()?.count { level.portalAt(it) == null }
 
         private val STRAIGHTS = setOf(PipeSection.H, PipeSection.V)
         private val CORNERS = setOf(PipeSection.LT, PipeSection.LB, PipeSection.RT, PipeSection.RB)
@@ -146,9 +148,9 @@ data class AttemptSummary(
             return longest
         }
 
-        /** The cells of [level] that can hold a section: not blocked, not the start and not the finish. */
+        /** The cells of [level] that can hold a section: not blocked, not the start, not the finish and not a portal. */
         fun freeCells(level: Level): Int {
-            val fixed = (level.blocked + level.start.position + level.finish.position).toSet()
+            val fixed = (level.blocked + level.start.position + level.finish.position + level.portalCells).toSet()
             return (0 until level.grid.columns).sumOf { x ->
                 (0 until level.grid.rows).count { y -> Position(x, y) !in fixed }
             }

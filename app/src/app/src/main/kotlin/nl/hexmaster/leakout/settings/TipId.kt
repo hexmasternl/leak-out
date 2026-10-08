@@ -8,6 +8,7 @@ package nl.hexmaster.leakout.settings
 enum class TipId(val key: String) {
     Intro("intro"),
     Mandatory("mandatory"),
+    Portal("portal"),
     Cross("cross"),
     Reservoir("reservoir"),
     ;

@@ -90,10 +90,13 @@ object DesignerTags {
     const val DISCARD_DIALOG = "designer_discard_dialog"
     const val DISCARD_CANCEL = "designer_discard_cancel"
     const val DISCARD_CONFIRM = "designer_discard_confirm"
+    const val REMOVE_PAIR = "designer_remove_pair"
 
     fun tool(tool: DesignerTool): String = "designer_tool_${tool.name.lowercase()}"
 
     fun side(kind: EndpointKind, side: Side): String = "designer_side_${kind.name.lowercase()}_${side.name.lowercase()}"
+
+    fun portalSide(side: Side): String = "designer_portal_side_${side.name.lowercase()}"
 
     fun field(field: NumberField): String = "designer_field_" + when (field) {
         is NumberField.Weight -> "weight_${field.section.name.lowercase()}"
@@ -140,6 +143,8 @@ fun LevelDesignerScreen(
             onDrag = viewModel::onDrag,
             onDragEnd = viewModel::onDragEnd,
             modifier = Modifier.weight(1f).fillMaxHeight(),
+            unpaired = state.draft.unpaired,
+            selected = state.draft.selectedPortal.takeIf { state.tool == DesignerTool.PORTAL },
         )
         DesignerPanel(
             state = state,
@@ -232,7 +237,7 @@ private fun DesignerPanel(
         )
 
         Section(stringResource(R.string.designer_section_tools)) {
-            // Start, Finish and Block on the first row, the two mandatory section tools on the second.
+            // Start, Finish and Block on the first row, the two mandatory section tools and Portal on the second.
             DesignerTool.entries.chunked(3).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     row.forEach { tool ->
@@ -275,6 +280,19 @@ private fun DesignerPanel(
         Section(stringResource(R.string.designer_section_endpoints)) {
             SideSelector(stringResource(R.string.designer_start_side), EndpointKind.START, state.level.start.openSide, viewModel::setOpenSide)
             SideSelector(stringResource(R.string.designer_finish_side), EndpointKind.FINISH, state.level.finish.openSide, viewModel::setOpenSide)
+        }
+
+        val portal = state.draft.selectedPortalEndpoint.takeIf { state.tool == DesignerTool.PORTAL }
+        if (portal != null) {
+            Section(stringResource(R.string.designer_section_portal, state.draft.pairNumberAt(portal.position) ?: 0)) {
+                SideChips(stringResource(R.string.designer_portal_side), portal.openSide, viewModel::setPortalOpenSide, DesignerTags::portalSide)
+                Chip(
+                    label = stringResource(R.string.designer_remove_pair),
+                    selected = false,
+                    onClick = viewModel::removeSelectedPair,
+                    modifier = Modifier.fillMaxWidth().testTag(DesignerTags.REMOVE_PAIR),
+                )
+            }
         }
 
         Section(stringResource(R.string.designer_section_level)) {
@@ -337,6 +355,7 @@ private fun toolLabel(tool: DesignerTool): Int = when (tool) {
     DesignerTool.BLOCK -> R.string.designer_tool_block
     DesignerTool.MANDATORY_CROSS -> R.string.designer_tool_mandatory_cross
     DesignerTool.MANDATORY_RESERVOIR -> R.string.designer_tool_mandatory_reservoir
+    DesignerTool.PORTAL -> R.string.designer_tool_portal
 }
 
 /** A calculated star threshold: its label over its value, which cannot be edited. */
@@ -452,15 +471,20 @@ private fun StepButton(symbol: String, description: String, enabled: Boolean, on
 }
 
 @Composable
-private fun SideSelector(label: String, kind: EndpointKind, current: Side, onSelect: (EndpointKind, Side) -> Unit) {
+private fun SideSelector(label: String, kind: EndpointKind, current: Side, onSelect: (EndpointKind, Side) -> Unit) =
+    SideChips(label, current, { onSelect(kind, it) }) { DesignerTags.side(kind, it) }
+
+/** A label and one chip per side, [current] selected. */
+@Composable
+private fun SideChips(label: String, current: Side, onSelect: (Side) -> Unit, tag: (Side) -> String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(label, style = LeakOutTextStyles.BodySm, color = LeakOutColors.TextPrimary, modifier = Modifier.width(48.dp))
         Side.entries.forEach { side ->
             Chip(
                 label = side.name,
                 selected = side == current,
-                onClick = { onSelect(kind, side) },
-                modifier = Modifier.weight(1f).testTag(DesignerTags.side(kind, side)),
+                onClick = { onSelect(side) },
+                modifier = Modifier.weight(1f).testTag(tag(side)),
             )
         }
     }

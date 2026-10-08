@@ -24,7 +24,7 @@ object Placement {
         if (nowMs < lockUntilMs) return PlacementCheck.Rejected(PlacementCheck.Reason.LOCKED)
         return when (val cell = board[at]) {
             Cell.Empty -> PlacementCheck.Place
-            Cell.Blocked, is Cell.Start, is Cell.Finish -> PlacementCheck.Rejected(PlacementCheck.Reason.FIXED)
+            Cell.Blocked, is Cell.Start, is Cell.Finish, is Cell.Portal -> PlacementCheck.Rejected(PlacementCheck.Reason.FIXED)
             is Cell.Pipe -> when {
                 cell.mandatory -> PlacementCheck.Rejected(PlacementCheck.Reason.FIXED)
                 cell.liquidEntered -> PlacementCheck.Rejected(PlacementCheck.Reason.FILLED)

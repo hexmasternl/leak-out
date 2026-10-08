@@ -17,6 +17,8 @@ import nl.hexmaster.leakout.core.level.PipeSection.RES
 import nl.hexmaster.leakout.core.level.PipeSection.RT
 import nl.hexmaster.leakout.core.level.PipeSection.V
 import nl.hexmaster.leakout.core.level.PipeSection.X
+import nl.hexmaster.leakout.core.flow.portalPairUses
+import nl.hexmaster.leakout.core.level.PortalPair
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.level.TestLevels
@@ -168,6 +170,40 @@ class RouteTracerTest {
     fun `a mandatory section on an unfinished route does not change why it is open`() {
         val level = level(mandatory = listOf(MandatorySection(p(4, 4), RES)))
         assertEquals(Route.Open(p(2, 1), Route.Reason.EMPTY), trace(level, p(1, 1) to H))
+    }
+
+    // Portal pair a at (2, 1) open to the left, b at (3, 2) open to the left, facing (2, 2) above the finish.
+    private fun portalLevel(a: Endpoint = Endpoint(p(2, 1), Side.LEFT), b: Endpoint = Endpoint(p(3, 2), Side.LEFT)): Level =
+        level().copy(portals = listOf(PortalPair(a, b)))
+
+    @Test
+    fun `a route through portal a and out of portal b is complete and leaves the portals out`() {
+        assertEquals(Route.Complete(listOf(p(1, 1), p(2, 2))), trace(portalLevel(), p(1, 1) to H, p(2, 2) to RB))
+    }
+
+    @Test
+    fun `a route through portal b and out of portal a is complete`() {
+        val level = portalLevel(a = Endpoint(p(3, 2), Side.LEFT), b = Endpoint(p(2, 1), Side.LEFT))
+        assertEquals(Route.Complete(listOf(p(1, 1), p(2, 2))), trace(level, p(1, 1) to H, p(2, 2) to RB))
+    }
+
+    @Test
+    fun `a closed side of a portal leaves the route open`() {
+        val level = portalLevel(a = Endpoint(p(2, 1), Side.TOP))
+        assertEquals(Route.Open(p(2, 1), Route.Reason.NO_OPENING), trace(level, p(1, 1) to H, p(2, 2) to RB))
+    }
+
+    @Test
+    fun `an empty tile in front of the exit portal leaves the route open there`() {
+        assertEquals(Route.Open(p(2, 2), Route.Reason.EMPTY), trace(portalLevel(), p(1, 1) to H))
+    }
+
+    @Test
+    fun `a passed pair is a loop`() {
+        val level = portalLevel()
+        val walk = RouteTracer.walk(board(level, p(1, 1) to H), level, p(0, 1), Side.RIGHT, portalPairUses(p(2, 1), p(3, 2)))
+        assertEquals(Route.Open(p(2, 1), Route.Reason.LOOP), walk.open)
+        assertEquals(listOf(p(1, 1)), walk.cells)
     }
 
     @Test

@@ -243,4 +243,40 @@ class AttemptSummaryTest {
         assertEquals(summary.freeCells, summary.piecesOnBoard)
         assertTrue(Achievement.WALL_TO_WALL in evaluateAttempt(summary).newlyUnlocked)
     }
+
+    /**
+     * 4 by 4. Start (0, 0) open right, finish (3, 3) open left, and one portal pair: (2, 0) open
+     * left and (0, 3) open right. An H at (1, 0) leads into the pair, two H's on the bottom row
+     * lead out of it into the finish.
+     */
+    private val portalLevel = TestLevels.valid(
+        id = 13,
+        grid = GridSize(4, 4),
+        start = Endpoint(Position(0, 0), Side.RIGHT),
+        finish = Endpoint(Position(3, 3), Side.LEFT),
+        blocked = emptyList(),
+        flow = FlowSettings(initialDelayMs = 2_000, cellsPerSecond = 2.0),
+        stack = StackSettings(weights = TestLevels.weights()),
+        portals = listOf(TestLevels.pair(2, 0, Side.LEFT, 0, 3, Side.RIGHT)),
+    )
+
+    @Test
+    fun `free cells leave out portals`() {
+        assertEquals(16 - 4, AttemptSummary.freeCells(portalLevel))
+    }
+
+    @Test
+    fun `a full board with portals on a win is wall to wall`() {
+        val route = listOf(Position(1, 0), Position(1, 3), Position(2, 3))
+        val spares = (0 until 4).flatMap { x -> (0 until 4).map { y -> Position(x, y) } }
+            .filter { it != portalLevel.start.position && it != portalLevel.finish.position }
+            .filter { portalLevel.portalAt(it) == null && it !in route }
+        val built = (route + spares).fold(engine.start(portalLevel)) { s, at -> s.place(at, PipeSection.H) }
+        val won = built.runToEnd()
+        assertIs<Outcome.Won>(won.outcome)
+        val summary = AttemptSummary.from(won, null)
+        assertEquals(12, summary.freeCells)
+        assertEquals(12, summary.piecesOnBoard)
+        assertTrue(Achievement.WALL_TO_WALL in evaluateAttempt(summary).newlyUnlocked)
+    }
 }

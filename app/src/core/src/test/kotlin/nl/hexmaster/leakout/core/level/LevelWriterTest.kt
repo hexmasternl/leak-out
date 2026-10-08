@@ -76,8 +76,30 @@ class LevelWriterTest {
             rules = PlacementRules(allowReplace = false, replacePenaltyMs = 750),
             blocked = listOf(Position(3, 4), Position(2, 2)),
             mandatory = listOf(MandatorySection(Position(3, 2), PipeSection.X)),
+            portals = listOf(TestLevels.pair(1, 6, Side.TOP, 5, 1, Side.BOTTOM)),
         )
         assertEquals(level, reparse(level))
+    }
+
+    @Test
+    fun `portal pairs are written in order with both portals`() {
+        val portals = listOf(
+            TestLevels.pair(2, 1, Side.LEFT, 6, 5, Side.LEFT),
+            TestLevels.pair(1, 3, Side.BOTTOM, 5, 3, Side.TOP),
+        )
+        val json = tree(minimal.copy(portals = portals))
+        assertEquals("portals", json.keys.last())
+        val written = json.getValue("portals").jsonArray.map { pair ->
+            fun portal(name: String): Endpoint = pair.jsonObject.getValue(name).jsonObject.let {
+                Endpoint(
+                    Position(it.getValue("x").jsonPrimitive.content.toInt(), it.getValue("y").jsonPrimitive.content.toInt()),
+                    Side.valueOf(it.getValue("openSide").jsonPrimitive.content),
+                )
+            }
+            assertEquals(listOf("a", "b"), pair.jsonObject.keys.toList())
+            PortalPair(portal("a"), portal("b"))
+        }
+        assertEquals(portals, written)
     }
 
     @Test

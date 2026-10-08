@@ -376,9 +376,10 @@ private fun GameTips(
     val revealMarginPx = with(LocalDensity.current) { RevealMargin.toPx() }
 
     val mandatory = session.select { state.level.mandatory.map { it.position } }
+    val portalPairs = session.select { state.level.portals.size }
 
     fun due(atLevelStart: Boolean): List<TipId> =
-        TipScheduler.dueTips(stack, outcome, seen.orEmpty(), atLevelStart, visibleSlots.orEmpty(), mandatory)
+        TipScheduler.dueTips(stack, outcome, seen.orEmpty(), atLevelStart, visibleSlots.orEmpty(), mandatory, portalPairs)
 
     LaunchedEffect(session, attempt, seen != null, visibleSlots != null, checked) {
         if (checked != attempt && seen != null && visibleSlots != null) session.offerTips(due(atLevelStart = true), atLevelStart = true)
@@ -402,8 +403,10 @@ private fun GameTips(
         val tip = session.closeTip() ?: return
         guardingTaps = true
         scope.launch { tips.markTipSeen(tip) }
-        // After the tour and the mandatory tip, which may pan, the field goes back to the view the level starts with.
-        if (tip == TipId.Intro || tip == TipId.Mandatory) scope.launch { fieldState.animateTo(fieldState.initialView(), reducedMotion) }
+        // After the tour and the mandatory and portal tips, which may pan, the field goes back to the view the level starts with.
+        if (tip == TipId.Intro || tip == TipId.Mandatory || tip == TipId.Portal) {
+            scope.launch { fieldState.animateTo(fieldState.initialView(), reducedMotion) }
+        }
     }
     BackHandler(enabled = activeTip != null && !pauseDialogShown) { close() }
 
@@ -419,8 +422,10 @@ private fun GameTips(
     val level = session.state.level
     val hintCell = remember(attempt, stack) { TipScheduler.hintCell(level, session.state.board) }
     // Field targets outside the view are panned into it first.
+    val portalCells = TipScheduler.portalTipCells(level)
     val revealed = when {
         tip == TipId.Mandatory -> mandatory.firstOrNull()
+        tip == TipId.Portal -> portalCells.firstOrNull()
         tip != TipId.Intro -> null
         step == 1 -> level.finish.position
         step == 3 -> hintCell
@@ -446,6 +451,11 @@ private fun GameTips(
             val field = targets.fieldBounds()
             mandatory.mapNotNull(targets::cell).filter { field == null || it.overlaps(field) }
         }
+        // Both portals of pair 1 that are in the field's view, linked when both are.
+        TipId.Portal -> {
+            val field = targets.fieldBounds()
+            portalCells.mapNotNull(targets::cell).filter { field == null || it.overlaps(field) }
+        }
     }
     val hint = if (tip == TipId.Intro && step == 3) {
         val from = targets.slot(next)
@@ -462,6 +472,7 @@ private fun GameTips(
         onSkip = ::close,
         onDone = ::close,
         reducedMotion = reducedMotion,
+        linkColor = if (tip == TipId.Portal) PortalStyle.color(1) else null,
     )
 }
 

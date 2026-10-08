@@ -355,4 +355,164 @@ class LevelDraftTest {
         assertEquals(null, DesignStatus.cellOf("blocked[7]", level))
         assertEquals(null, DesignStatus.cellOf("stars.one", level))
     }
+
+    // Portals (blank: 7 by 5, start at 0,2 open right, finish at 6,2 open left)
+
+    private val pairDraft = blank.tapPortal(Position(1, 1)).tapPortal(Position(6, 3))
+
+    @Test
+    fun `two taps with the portal tool place a pair`() {
+        assertEquals(
+            listOf(PortalPair(Endpoint(Position(1, 1), Side.RIGHT), Endpoint(Position(6, 3), Side.LEFT))),
+            pairDraft.level.portals,
+        )
+        assertEquals(null, pairDraft.unpaired)
+        assertEquals(1, pairDraft.pairNumberAt(Position(1, 1)))
+        assertEquals(1, pairDraft.pairNumberAt(Position(6, 3)))
+        assertIs<DesignStatus.Solvable>(pairDraft.status)
+    }
+
+    @Test
+    fun `a new portal in the last column opens to the left, otherwise to the right`() {
+        assertEquals(Side.LEFT, blank.tapPortal(Position(6, 0)).unpaired?.openSide)
+        assertEquals(Side.RIGHT, blank.tapPortal(Position(3, 0)).unpaired?.openSide)
+    }
+
+    @Test
+    fun `an unfinished pair is invalid and its portal is highlighted`() {
+        val draft = blank.tapPortal(Position(1, 1))
+        assertEquals(Endpoint(Position(1, 1), Side.RIGHT), draft.unpaired)
+        assertEquals(emptyList(), draft.level.portals)
+        val status = assertIs<DesignStatus.Invalid>(draft.status)
+        assertEquals(listOf("portals[0].b"), status.errors.map { it.field })
+        assertTrue("second portal" in status.errors.single().message)
+        assertEquals(setOf(Position(1, 1)), status.highlightedCells)
+        assertTrue(!status.isPlayable)
+    }
+
+    @Test
+    fun `tapping a portal selects it and tapping it again deselects it`() {
+        val selected = pairDraft.tapPortal(Position(6, 3))
+        assertEquals(Position(6, 3), selected.selectedPortal)
+        assertEquals(Endpoint(Position(6, 3), Side.LEFT), selected.selectedPortalEndpoint)
+        assertEquals(null, selected.tapPortal(Position(6, 3)).selectedPortal)
+        assertEquals(pairDraft.level, selected.level)
+    }
+
+    @Test
+    fun `a selected portal moves to a free cell with its open side`() {
+        val moved = pairDraft.tapPortal(Position(6, 3)).tapPortal(Position(5, 4))
+        assertEquals(Endpoint(Position(5, 4), Side.LEFT), moved.level.portals.single().b)
+        assertEquals(Endpoint(Position(1, 1), Side.RIGHT), moved.level.portals.single().a)
+        assertEquals(Position(5, 4), moved.selectedPortal)
+    }
+
+    @Test
+    fun `the selected portal's open side can be changed`() {
+        val draft = pairDraft.tapPortal(Position(1, 1)).setPortalOpenSide(Side.TOP)
+        assertEquals(Side.TOP, draft.level.portals.single().a.openSide)
+        assertEquals(Side.LEFT, draft.level.portals.single().b.openSide)
+        assertSame(pairDraft, pairDraft.setPortalOpenSide(Side.TOP))
+    }
+
+    @Test
+    fun `remove pair removes both portals and the later pairs move up`() {
+        val two = pairDraft.tapPortal(Position(2, 4)).tapPortal(Position(4, 0))
+        val secondPair = two.level.portals[1]
+        val removed = two.tapPortal(Position(6, 3)).removeSelectedPair()
+        assertEquals(listOf(secondPair), removed.level.portals)
+        assertEquals(1, removed.pairNumberAt(Position(2, 4)))
+        assertEquals(null, removed.portalAt(Position(1, 1)))
+        assertEquals(null, removed.selectedPortal)
+    }
+
+    @Test
+    fun `remove pair on the unpaired portal removes it`() {
+        val draft = pairDraft.tapPortal(Position(2, 4))
+        val removed = draft.tapPortal(Position(2, 4)).removeSelectedPair()
+        assertEquals(null, removed.unpaired)
+        assertEquals(pairDraft.level, removed.level)
+    }
+
+    @Test
+    fun `the portal tool does nothing on a blocked cell, an endpoint or a mandatory section`() {
+        val draft = blank.toggleBlocked(Position(3, 3)).toggleMandatory(Position(3, 1), PipeSection.X)
+        for (cell in listOf(Position(3, 3), Position(0, 2), Position(6, 2), Position(3, 1), Position(9, 9))) {
+            assertSame(draft, draft.tapPortal(cell), "cell $cell")
+        }
+    }
+
+    @Test
+    fun `at most three pairs`() {
+        val three = pairDraft.tapPortal(Position(2, 4)).tapPortal(Position(4, 0)).tapPortal(Position(2, 0)).tapPortal(Position(4, 4))
+        assertEquals(3, three.level.portals.size)
+        assertSame(three, three.tapPortal(Position(3, 3)))
+    }
+
+    @Test
+    fun `shrinking removes a pair with a portal outside the grid and keeps the others`() {
+        val wide = blank.resize(10, 5)
+            .tapPortal(Position(9, 1)).tapPortal(Position(2, 3))
+            .tapPortal(Position(1, 1)).tapPortal(Position(3, 0))
+        val shrunk = wide.resize(8, 5)
+        assertEquals(listOf(wide.level.portals[1]), shrunk.level.portals)
+    }
+
+    @Test
+    fun `portals are not free cells for the star thresholds`() {
+        val sixty = blank.resize(7, 9).toggleBlocked(Position(3, 4))
+        assertEquals(StarBenchmarks(360, 450, 600), sixty.level.stars)
+        val withPair = sixty.tapPortal(Position(1, 1)).tapPortal(Position(5, 5))
+        assertEquals(StarBenchmarks(350, 440, 580), withPair.level.stars)
+        assertEquals(StarBenchmarks.forFreeCells(59), sixty.tapPortal(Position(1, 1)).level.stars)
+    }
+
+    @Test
+    fun `the start, finish, block and mandatory tools leave portals alone`() {
+        assertSame(pairDraft, pairDraft.placeStart(Position(1, 1)))
+        assertSame(pairDraft, pairDraft.placeFinish(Position(6, 3)))
+        assertSame(pairDraft, pairDraft.toggleBlocked(Position(1, 1)))
+        assertSame(pairDraft, pairDraft.toggleMandatory(Position(6, 3), PipeSection.RES))
+        val painted = pairDraft.paintBlocked(row(1, 0..2), blocked = true)
+        assertEquals(listOf(Position(0, 1), Position(2, 1)), painted.level.blocked)
+        assertEquals(pairDraft.level.portals, painted.level.portals)
+    }
+
+    @Test
+    fun `other edits keep the unpaired and the selected portal`() {
+        val draft = pairDraft.tapPortal(Position(2, 4)).tapPortal(Position(1, 1))
+        val edited = draft.withName("Portals").toggleBlocked(Position(4, 4))
+        assertEquals(draft.unpaired, edited.unpaired)
+        assertEquals(Position(1, 1), edited.selectedPortal)
+    }
+
+    @Test
+    fun `a walled-off portal is listed by its field and highlighted`() {
+        val draft = pairDraft.toggleBlocked(Position(5, 3))
+        val status = assertIs<DesignStatus.Invalid>(draft.status)
+        assertEquals(listOf("portals[0].b.openSide"), status.errors.map { it.field })
+        assertEquals(setOf(Position(6, 3)), status.highlightedCells)
+    }
+
+    @Test
+    fun `a design only solvable through a portal pair is solvable`() {
+        val walled = blank.paintBlocked((0 until 5).map { Position(3, it) }, blocked = true)
+        assertIs<DesignStatus.Unsolvable>(walled.status)
+        val withPair = walled.tapPortal(Position(1, 0)).tapPortal(Position(5, 4))
+        assertIs<DesignStatus.Solvable>(withPair.status)
+    }
+
+    @Test
+    fun `a copied level keeps its portal pairs`() {
+        val source = TestLevels.valid(portals = listOf(TestLevels.pair(2, 1, Side.LEFT, 6, 5, Side.LEFT)))
+        assertEquals(source.portals, LevelDraft(source).level.portals)
+    }
+
+    @Test
+    fun `portal error fields map to cells`() {
+        val level = pairDraft.level
+        assertEquals(Position(1, 1), DesignStatus.cellOf("portals[0].a", level))
+        assertEquals(Position(6, 3), DesignStatus.cellOf("portals[0].b.openSide", level))
+        assertEquals(null, DesignStatus.cellOf("portals[1].a", level))
+    }
 }

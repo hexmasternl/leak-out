@@ -302,6 +302,7 @@ fun PlayingField(
     val popupTexts = remember(textMeasurer, density) { PopupTextCache(textMeasurer) }
     val pipes = rememberPipeArtLibrary()
     val scratch = remember { LiquidScratch() }
+    val settledFills = remember { SettledFillCache() }
     val won = winAgeMs != null
     val currentNowMs by rememberUpdatedState(nowMs)
     val currentFlow by rememberUpdatedState(flow)
@@ -340,7 +341,7 @@ fun PlayingField(
             for (position in cells) {
                 val cell = board[position]
                 val fills = when (cell) {
-                    is Cell.Pipe -> FieldLiquid.fills(position, cell.section, used, flowing)
+                    is Cell.Pipe -> FieldLiquid.withHead(settledFills.fills(board, used, position, cell.section), position, flowing)
                     is Cell.Start -> FieldLiquid.startFills(position, cell.openSide, used, flowing)
                     else -> emptyMap()
                 }

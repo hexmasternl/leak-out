@@ -17,7 +17,7 @@ Tracks [#91](https://github.com/hexmasternl/leak-out/issues/91).
 
 - [x] 3.1 In `core` `GameEngine.advance`, keep the same `awards` list when it is empty or its oldest award is still visible. Add `GameEngineTest` cases: same instance kept while every award is visible, expired awards still dropped. Verify with `./gradlew :core:test`
 - [x] 3.2 Cache popup `TextLayoutResult`s by text in `PlayingField.drawPopups` (decision 4). Verify that the points popup instrumented tests still pass, running only the affected test class
-- [ ] 3.3 Split `FieldLiquid` into settled fills and head fill and cache the settled part per `(board, used)` identity in `PlayingField`. Add `FieldLiquidTest` cases showing settled + head equals the old `fills` result for straight, cross and reservoir tiles, with and without the head. Verify with `./gradlew :app:testDebugUnitTest --tests '*FieldLiquid*'`
+- [x] 3.3 Split `FieldLiquid` into settled fills and head fill and cache the settled part per `(board, used)` identity in `PlayingField`. Add `FieldLiquidTest` cases showing settled + head equals the old `fills` result for straight, cross and reservoir tiles, with and without the head. Verify with `./gradlew :app:testDebugUnitTest --tests '*FieldLiquid*'`
 
 ## 4. Integration
 

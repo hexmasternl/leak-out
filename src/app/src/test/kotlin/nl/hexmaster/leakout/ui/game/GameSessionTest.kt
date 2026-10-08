@@ -2,6 +2,7 @@ package nl.hexmaster.leakout.ui.game
 
 import kotlin.random.Random
 import nl.hexmaster.leakout.core.board.Cell
+import nl.hexmaster.leakout.core.engine.Award
 import nl.hexmaster.leakout.core.engine.FlowState
 import nl.hexmaster.leakout.core.engine.GameCommand.FastForward
 import nl.hexmaster.leakout.core.engine.GameCommand.Pause
@@ -242,6 +243,52 @@ class GameSessionTest {
         assertFalse(session.showLostDialog)
         assertEquals(10 + 15 + 10 + 10 + 15, session.state.score)
         assertTrue(session.state.flow is FlowState.Ended)
+    }
+
+    @Test
+    fun `the clock is needed while playing, paused or not`() {
+        val session = session()
+        assertTrue(session.needsClock)
+        session.send(Tick(5_000))
+        assertTrue(session.needsClock)
+        session.send(Pause)
+        assertTrue(session.needsClock)
+    }
+
+    @Test
+    fun `after a loss the clock is needed until the leak effect has ended`() {
+        val session = session()
+        session.send(Tick(11_000)) // nothing placed: the start leaks
+        assertTrue(session.state.outcome is Outcome.Lost)
+        session.send(Tick(LeakTiming.EFFECT_MS - 1 - session.lossAgeMs))
+        assertTrue(session.needsClock)
+        session.send(Tick(1))
+        assertTrue(session.state.awards.isEmpty())
+        assertFalse(session.needsClock)
+        assertTrue(session.showLostDialog)
+    }
+
+    @Test
+    fun `after a loss the clock is needed while an award is still visible`() {
+        val session = session()
+        session.send(Tick(11_000))
+        session.skipLeakEffect()
+        assertFalse(session.needsClock)
+        session.state = session.state.copy(awards = listOf(Award(Position(0, 0), 10, session.state.clockMs - 1)))
+        assertTrue(session.needsClock)
+        session.send(Tick(Award.VISIBLE_MS))
+        assertTrue(session.state.awards.isEmpty())
+        assertFalse(session.needsClock)
+    }
+
+    @Test
+    fun `restart after the clock went idle needs the clock again`() {
+        val session = session()
+        session.send(Tick(11_000))
+        session.skipLeakEffect()
+        assertFalse(session.needsClock)
+        assertTrue(session.send(Restart))
+        assertTrue(session.needsClock)
     }
 
     @Test

@@ -2,6 +2,7 @@ package nl.hexmaster.leakout.ui.game
 
 import kotlin.random.Random
 import nl.hexmaster.leakout.core.board.Cell
+import nl.hexmaster.leakout.core.engine.Award
 import nl.hexmaster.leakout.core.engine.GameCommand.Pause
 import nl.hexmaster.leakout.core.engine.GameCommand.Place
 import nl.hexmaster.leakout.core.engine.GameCommand.Restart
@@ -182,6 +183,39 @@ class GameSessionWinTest {
         val before = session.state
         session.skipWinAnimation()
         assertEquals(before, session.state)
+    }
+
+    @Test
+    fun `after a win the clock is needed until the tally has ended`() {
+        val session = won()
+        assertTrue(session.needsClock)
+        val end = WinTally.totalDurationMs(session.state.finalScore!!, 1)
+        session.tickToDialogAge(end - 1)
+        assertTrue(session.needsClock)
+        session.send(Tick(1))
+        assertTrue(session.state.awards.isEmpty())
+        assertFalse(session.needsClock)
+        assertTrue(session.winFrame!!.buttonsEnabled)
+    }
+
+    @Test
+    fun `after a win the clock is needed while an award is still visible`() {
+        val session = won()
+        session.skipWinAnimation()
+        assertFalse(session.needsClock)
+        session.state = session.state.copy(awards = listOf(Award(Position(3, 3), 15, session.state.clockMs - 1)))
+        assertTrue(session.needsClock)
+        session.send(Tick(Award.VISIBLE_MS))
+        assertFalse(session.needsClock)
+    }
+
+    @Test
+    fun `restart after a win needs the clock again`() {
+        val session = won()
+        session.skipWinAnimation()
+        assertFalse(session.needsClock)
+        assertTrue(session.send(Restart))
+        assertTrue(session.needsClock)
     }
 
     @Test

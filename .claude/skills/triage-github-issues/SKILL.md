@@ -12,7 +12,7 @@ Triage GitHub issues: turn each one into a good, complete story, label it, give 
 
 **Only untriaged issues are triaged.** An issue is **untriaged** when it has no labels at all, or no issue type. An issue with both at least one label and an issue type is triaged and is left alone.
 
-**Input**: one or more issue numbers or URLs. If none are given, triage the open untriaged issues (`gh issue list --state open --json number,title,labels,issueType`, then keep those with an empty `labels` list or no `issueType`), and tell the user which ones you picked. If that list is long (more than ~10), ask which ones to do first. If the user names an issue that is already triaged, skip it and say so in your report; re-triage it only when the user explicitly asks for that issue to be triaged again.
+**Input**: one or more issue numbers or URLs. If none are given, triage the open untriaged issues (`gh issue list --state open --json number,title,labels,issueType`, then keep those with an empty `labels` list or no `issueType`), and tell the user which ones you picked. Triage all of them, oldest first, even if the list is long. If the user names an issue that is already triaged, skip it and say so in your report; re-triage it only when the user explicitly asks for that issue to be triaged again.
 
 ## What a triaged issue looks like
 
@@ -159,9 +159,9 @@ Acceptance criteria are the heart of the story: each one is something a tester c
 
 If the issue already follows this format (an explicit re-triage, or an issue that lost its labels or type), update it in place instead of nesting a second "Original report".
 
-### 6. Show, then apply
+### 6. Apply
 
-Updating an issue is visible to everyone, so show the user the proposed title, labels (added/removed), type, OpenSpec link and body for each issue, and apply only after they agree. If the user already said to apply directly ("just triage them", "go ahead"), apply without asking.
+Triage runs autonomously: apply the title, labels, type and body straight away, without showing a draft or asking for approval first. The maintainer has authorised this; anything that needs their decision goes under **Open questions** in the issue and in your report, not into a question that blocks the triage.
 
 Write the body to a file in your scratchpad (not the repository), then:
 

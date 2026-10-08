@@ -31,7 +31,7 @@
     { "x": 8, "y": 14 },
     { "x": 17, "y": 14 }
   ],
-  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.235 },
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.309 },
   "stack": { "weights": { "X": 6, "RES": 1 } },
   "portals": [
     { "a": { "x": 13, "y": 7, "openSide": "LEFT" }, "b": { "x": 3, "y": 3, "openSide": "RIGHT" } }

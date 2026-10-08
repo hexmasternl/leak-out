@@ -34,7 +34,7 @@
     { "x": 10, "y": 11 },
     { "x": 12, "y": 11 }
   ],
-  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.4 },
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.3 },
   "stack": { "weights": { "X": 6, "RES": 3 } },
   "mandatory": [
     { "x": 4, "y": 3, "section": "X" },

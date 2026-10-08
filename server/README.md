@@ -44,7 +44,9 @@ A few read-only endpoints need no token, for the public website ([website/README
 
 | Endpoint | Returns |
 | --- | --- |
-| `GET /api/public/levels/{level}/scores/top` | The 25 best scores of a level in ranking order: `{ "level": 3, "entries": [{ "position": 1, "displayName": "Ann", "score": 600 }] }`. No player ids. 400 with a validation error when `level` is below 1. |
+| `GET /api/public/levels/{level}/scores/top` | The 25 best scores of a level in ranking order: `{ "level": 3, "entries": [{ "position": 1, "displayName": "Ann", "score": 600, "achievedAt": "2026-10-01T14:30:00+00:00" }] }`. No player ids. 400 with a validation error when `level` is below 1. |
+
+- **`achievedAt`.** The moment the server received that best score (`level_scores.achieved_at`, from the server's clock), as ISO 8601 with offset in UTC. A later equal or lower score does not change it. Only the public top scores carry it: the app's leaderboards (`/api/levels/{level}/scores/top`, `/around-me`) have no dates or times.
 
 - **Caching.** Each level's result is kept in the API's memory cache for **30 minutes** (`GetPublicLevelTopScoresQueryHandler.CacheDuration`), so a new score can take up to 30 minutes to appear, and each replica reads the database at most once per level in that time. A failed read is not cached. Responses also carry `Cache-Control: public, max-age=60`.
 - **CORS.** Only the origins in `Website:AllowedOrigins` may call them from a browser, with GET and no credentials. `appsettings.json` allows `https://leakout.hexmaster.nl`; another origin, for example the Static Web App's own `*.azurestaticapps.net` address, can be added there or as the app setting `Website__AllowedOrigins__1`. The authenticated endpoints send no CORS headers.

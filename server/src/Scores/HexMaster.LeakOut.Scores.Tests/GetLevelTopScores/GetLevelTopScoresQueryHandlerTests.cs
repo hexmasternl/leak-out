@@ -16,6 +16,8 @@ public sealed class GetLevelTopScoresQueryHandlerTests : IDisposable
 {
     private const int Level = 3;
 
+    private static readonly DateTimeOffset AchievedAt = new(2026, 10, 1, 14, 30, 0, TimeSpan.Zero);
+
     private readonly Faker _faker = new();
     private readonly Mock<ILevelScoreRepository> _repository = new();
     private readonly Mock<IPlayerProfileService> _playerProfiles = new();
@@ -28,10 +30,10 @@ public sealed class GetLevelTopScoresQueryHandlerTests : IDisposable
     {
         var ranked = new[]
         {
-            new RankedLevelScore(1, Guid.CreateVersion7(), 600),
-            new RankedLevelScore(2, Guid.CreateVersion7(), 500),
-            new RankedLevelScore(3, Guid.CreateVersion7(), 500),
-            new RankedLevelScore(4, Guid.CreateVersion7(), 500),
+            new RankedLevelScore(1, Guid.CreateVersion7(), 600, AchievedAt),
+            new RankedLevelScore(2, Guid.CreateVersion7(), 500, AchievedAt),
+            new RankedLevelScore(3, Guid.CreateVersion7(), 500, AchievedAt),
+            new RankedLevelScore(4, Guid.CreateVersion7(), 500, AchievedAt),
         };
         var names = RepositoryReturns(ranked);
 
@@ -57,7 +59,7 @@ public sealed class GetLevelTopScoresQueryHandlerTests : IDisposable
     public async Task Handle_FewerThanTenScores_ReturnsThemAll()
     {
         var ranked = Enumerable.Range(1, 4)
-            .Select(p => new RankedLevelScore(p, Guid.CreateVersion7(), 1000 - p * 10))
+            .Select(p => new RankedLevelScore(p, Guid.CreateVersion7(), 1000 - p * 10, AchievedAt))
             .ToArray();
         RepositoryReturns(ranked);
 
@@ -83,9 +85,9 @@ public sealed class GetLevelTopScoresQueryHandlerTests : IDisposable
     {
         var ranked = new[]
         {
-            new RankedLevelScore(1, Guid.CreateVersion7(), 900),
-            new RankedLevelScore(2, _requestingPlayer, 800),
-            new RankedLevelScore(3, Guid.CreateVersion7(), 700),
+            new RankedLevelScore(1, Guid.CreateVersion7(), 900, AchievedAt),
+            new RankedLevelScore(2, _requestingPlayer, 800, AchievedAt),
+            new RankedLevelScore(3, Guid.CreateVersion7(), 700, AchievedAt),
         };
         RepositoryReturns(ranked);
 
@@ -98,7 +100,7 @@ public sealed class GetLevelTopScoresQueryHandlerTests : IDisposable
     public async Task Handle_LooksUpAllNamesInOneBatch()
     {
         var ranked = Enumerable.Range(1, 10)
-            .Select(p => new RankedLevelScore(p, Guid.CreateVersion7(), 1000 - p))
+            .Select(p => new RankedLevelScore(p, Guid.CreateVersion7(), 1000 - p, AchievedAt))
             .ToArray();
         RepositoryReturns(ranked);
 
@@ -117,8 +119,8 @@ public sealed class GetLevelTopScoresQueryHandlerTests : IDisposable
     [InlineData("  ")]
     public async Task Handle_PlayerWithoutDisplayName_ShowsUnknownPlayer(string? displayName)
     {
-        var known = new RankedLevelScore(1, Guid.CreateVersion7(), 900);
-        var nameless = new RankedLevelScore(2, Guid.CreateVersion7(), 800);
+        var known = new RankedLevelScore(1, Guid.CreateVersion7(), 900, AchievedAt);
+        var nameless = new RankedLevelScore(2, Guid.CreateVersion7(), 800, AchievedAt);
         var names = new Dictionary<Guid, string> { [known.UserId] = "Ann" };
         if (displayName is not null)
         {
@@ -147,8 +149,8 @@ public sealed class GetLevelTopScoresQueryHandlerTests : IDisposable
     {
         var ranked = new[]
         {
-            new RankedLevelScore(1, Guid.CreateVersion7(), 900),
-            new RankedLevelScore(2, _requestingPlayer, 800),
+            new RankedLevelScore(1, Guid.CreateVersion7(), 900, AchievedAt),
+            new RankedLevelScore(2, _requestingPlayer, 800, AchievedAt),
         };
         var names = RepositoryReturns(ranked);
 

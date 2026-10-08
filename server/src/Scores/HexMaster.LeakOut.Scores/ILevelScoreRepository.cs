@@ -37,5 +37,8 @@ public sealed record LevelScoreSubmission(int BestScore, bool IsNewBest);
 /// <summary>A player's stored best score on a level and the moment it was achieved.</summary>
 public sealed record BestLevelScore(int Score, DateTimeOffset AchievedAt);
 
-/// <summary>A player's best score on a level with its position in the level's ranking.</summary>
-public sealed record RankedLevelScore(int Position, Guid UserId, int Score);
+/// <summary>
+/// A player's best score on a level with its position in the level's ranking and the moment the server
+/// received that score.
+/// </summary>
+public sealed record RankedLevelScore(int Position, Guid UserId, int Score, DateTimeOffset AchievedAt);

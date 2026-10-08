@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using HexMaster.LeakOut.Api.Tests.Helpers;
 using HexMaster.LeakOut.Scores.Abstractions.DataTransferObjects;
 using HexMaster.LeakOut.Scores.Features.GetLevelScoresAroundPlayer;
@@ -44,6 +45,18 @@ public sealed class LevelScoreEndpointsTests : IClassFixture<LeakOutApiFactory>
         Assert.NotNull(body);
         Assert.Equal(3, body.Level);
         Assert.Equal(leaderboard.Entries, body.Entries);
+    }
+
+    [Fact]
+    public async Task GetLevelTopScores_EntriesCarryNoMoment()
+    {
+        _factory.GetLevelTopScoresHandler
+            .Setup(h => h.Handle(new GetLevelTopScoresQuery(_playerId, 3), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new LevelLeaderboardDto(3, [new LeaderboardEntryDto(1, "Bob", 600, IsCurrentPlayer: false)]));
+
+        var response = await GetAsync("/api/levels/3/scores/top", TestTokens.Create());
+
+        await AssertEntriesCarryNoMomentAsync(response);
     }
 
     [Fact]
@@ -111,6 +124,27 @@ public sealed class LevelScoreEndpointsTests : IClassFixture<LeakOutApiFactory>
         Assert.NotNull(body);
         Assert.Equal(3, body.Level);
         Assert.Equal(leaderboard.Entries, body.Entries);
+    }
+
+    [Fact]
+    public async Task GetLevelScoresAroundPlayer_EntriesCarryNoMoment()
+    {
+        _factory.GetLevelScoresAroundPlayerHandler
+            .Setup(h => h.Handle(new GetLevelScoresAroundPlayerQuery(_playerId, 3), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new LevelLeaderboardDto(3, [new LeaderboardEntryDto(128, "Ann", 526, IsCurrentPlayer: true)]));
+
+        var response = await GetAsync("/api/levels/3/scores/around-me", TestTokens.Create());
+
+        await AssertEntriesCarryNoMomentAsync(response);
+    }
+
+    /// <summary>The app's leaderboards carry no dates or times: only the public top scores do.</summary>
+    private static async Task AssertEntriesCarryNoMomentAsync(HttpResponseMessage response)
+    {
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        var entry = Assert.Single(json.RootElement.GetProperty("entries").EnumerateArray());
+        Assert.Equal(["position", "displayName", "score", "isCurrentPlayer"], entry.EnumerateObject().Select(p => p.Name));
     }
 
     [Fact]

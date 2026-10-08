@@ -1,6 +1,6 @@
 # Semantic versioning of the API image (see .github/workflows/server-deploy.yml).
-# Mainline versioning: every merge to main increments the patch version, so each deployment
-# gets a new release version. "+semver: minor" or "+semver: major" in a commit message bumps
+# Two merges to main can get the same version: the deploy workflow adds the short commit sha
+# to the image tag so every deployment is unique. "+semver: minor" or "+semver: major" in a commit message bumps
 # the minor or major version; a tag server-vX.Y.Z on main sets the base.
 workflow: TrunkBased/preview1
 # Only server-v<x.y.z> tags count: the app's v<x.y.z> release tags on main never move the

@@ -25,7 +25,7 @@ Every resource is named `<resource group name>-<kind>`, so with the default reso
 | `minReplicas` | | `1`: keeps one warm replica; `0` lets the API scale to zero at the cost of a cold start of about 15 seconds. Must not exceed `maxReplicas` |
 | `maxReplicas` | | `3` |
 | `imageName` | | `API_IMAGE`: full image reference with tag, e.g. `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>` |
-| `serviceVersion` | | `SERVICE_VERSION`: version of the release, set by `server-deploy.yml` from the GitVersion `SemVer` (the image tag); reported as the OpenTelemetry `service.version` |
+| `serviceVersion` | | `SERVICE_VERSION`: version of the release, set by `server-deploy.yml` from the GitVersion `SemVer` (the image tag is `<SemVer>-<short commit sha>`); reported as the OpenTelemetry `service.version` |
 | `registryServer` | | `ACR_LOGIN_SERVER` |
 | `registryUsername` | | `ACR_LOGIN_USERNAME` |
 | `registryPassword` | yes | `ACR_LOGIN_PASSWORD` |
@@ -71,7 +71,7 @@ Besides these, the container app sets plain environment variables: `ASPNETCORE_E
    ```bash
    az acr login --name nvv54gsk4pteu   # or: docker login nvv54gsk4pteu.azurecr.io
    dotnet publish src/HexMaster.LeakOut.Api -c Release -t:PublishContainer \
-     -p:ContainerImageTags=<version>   # registry, repository and non-root user come from the project
+     -p:ContainerImageTags=<version>-<sha>   # registry, repository and non-root user come from the project
    ```
 
 ## Manual deployment

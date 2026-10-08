@@ -2,8 +2,8 @@
 
 ## 1. Content and configuration
 
-- [ ] 1.1 Add `testerGroupUrl` (`https://groups.google.com/g/leak-out`) and `testerOptInUrl` (`https://play.google.com/apps/testing/nl.hexmaster.leakout`) to `[params]` in `website/src/hugo.toml`, and verify `hugo --source website/src --panicOnWarning` still builds
-- [ ] 1.2 Add the texts (menu item "Test the app", dialog title, explanation, the two steps, Play Store link text, 15-minute note, close label, home section heading, text and button) to all five `website/src/i18n/*.yaml` files, and verify the build with `--panicOnWarning` reports no missing translation
+- [x] 1.1 Add `testerGroupUrl` (`https://groups.google.com/g/leak-out`) and `testerOptInUrl` (`https://play.google.com/apps/testing/nl.hexmaster.leakout`) to `[params]` in `website/src/hugo.toml`, and verify `hugo --source website/src --panicOnWarning` still builds
+- [x] 1.2 Add the texts (menu item "Test the app", dialog title, explanation, the two steps, Play Store link text, 15-minute note, close label, home section heading, text and button) to all five `website/src/i18n/*.yaml` files, and verify the build with `--panicOnWarning` reports no missing translation
 
 ## 2. Dialog, menu item and home section
 

@@ -10,7 +10,7 @@ Tracks [#91](https://github.com/hexmasternl/leak-out/issues/91).
 
 ## 2. Tick cap
 
-- [ ] 2.1 Add the pure `TickPacer` (decision 3, `MIN_TICK_MS = 12`) with JVM tests: at 60 Hz every frame ticks; at 120 Hz every second frame ticks (60/s); at 90 and 144 Hz the expected rates; the sum of the deltas always equals the elapsed whole milliseconds (no time lost); the first frame after a (re)start sends 0. Verify with `./gradlew :app:testDebugUnitTest --tests '*TickPacer*'`
+- [x] 2.1 Add the pure `TickPacer` (decision 3, `MIN_TICK_MS = 12`) with JVM tests: at 60 Hz every frame ticks; at 120 Hz every second frame ticks (60/s); at 90 and 144 Hz the expected rates (50/s and 72/s); the sum of the deltas always equals the elapsed whole milliseconds (no time lost); the first frame after a (re)start sends 0. Verify with `./gradlew :app:testDebugUnitTest --tests '*TickPacer*'`
 - [ ] 2.2 Use `TickPacer` in `GameClock` and keep pause/resume (no time leaks in from a pause). Verify by rerunning the existing instrumented game tests that drive the clock (`GameEngineScreenTest`, `GamePlayHudTest`, `GapHeartbeatTest`, `GapWarningScreenTest`, `HudBarsTest`, `GameTipsTest`) on the emulator
 
 ## 3. Easy allocation cuts

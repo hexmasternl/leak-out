@@ -60,6 +60,7 @@ import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -69,6 +70,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import kotlin.math.abs
@@ -297,6 +299,7 @@ fun PlayingField(
     val currentEnabled by rememberUpdatedState(enabled)
     val currentOnTap by rememberUpdatedState(onTap)
     val textMeasurer = rememberTextMeasurer()
+    val popupTexts = remember(textMeasurer, density) { PopupTextCache(textMeasurer) }
     val pipes = rememberPipeArtLibrary()
     val scratch = remember { LiquidScratch() }
     val won = winAgeMs != null
@@ -360,7 +363,7 @@ fun PlayingField(
                 val frame = finishFlashFrame(winAgeMs())
                 for (position in cells) if (board[position] is Cell.Finish) drawFinishRing(viewport.cellRect(position), frame)
             }
-            drawPopups(awards, now, viewport, textMeasurer)
+            drawPopups(awards, now, viewport, popupTexts)
         }
         CellSemantics(
             board, viewport, highlighted, awards, leakAt?.let { at -> leakSide?.let { at to it } }, head, filled, won,
@@ -803,12 +806,29 @@ private fun DrawScope.drawFinishRing(rect: Rect, frame: FinishFlashFrame) {
 }
 
 /**
+ * The measured popup texts, so a frame does not measure "+10" again. Only a handful of point texts
+ * exist; the text size follows the zoom, so a new size drops the layouts measured at the old one.
+ */
+private class PopupTextCache(private val textMeasurer: TextMeasurer) {
+    private var fontSize = TextUnit.Unspecified
+    private val layouts = HashMap<String, TextLayoutResult>()
+
+    fun layout(text: String, style: TextStyle): TextLayoutResult {
+        if (style.fontSize != fontSize) {
+            layouts.clear()
+            fontSize = style.fontSize
+        }
+        return layouts.getOrPut(text) { textMeasurer.measure(text, style) }
+    }
+}
+
+/**
  * "+N" for every popup whose tile touches the field, as [PopupStyle] describes: Fredoka bold at a
  * third of a tile, a liquid-glow halo under an opaque light fill, centred on the tile and
  * lifted by its rise. Off-field popups are skipped but keep their timing, since the age comes from
  * [nowMs].
  */
-private fun DrawScope.drawPopups(popups: List<Award>, nowMs: Long, viewport: FieldViewport, textMeasurer: TextMeasurer) {
+private fun DrawScope.drawPopups(popups: List<Award>, nowMs: Long, viewport: FieldViewport, texts: PopupTextCache) {
     if (popups.isEmpty()) return
     val field = Rect(Offset.Zero, size)
     val style = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Bold, fontSize = (viewport.cellPx * PopupStyle.TEXT_FRACTION).toSp())
@@ -817,7 +837,7 @@ private fun DrawScope.drawPopups(popups: List<Award>, nowMs: Long, viewport: Fie
         val frame = popupFrame(popup.ageAt(nowMs)) ?: continue
         val rect = viewport.cellRect(popup.position)
         if (!rect.overlaps(field)) continue
-        val layout = textMeasurer.measure(PointsFormat.text(popup.points), style)
+        val layout = texts.layout(PointsFormat.text(popup.points), style)
         val center = rect.center - Offset(0f, frame.rise * viewport.cellPx)
         val topLeft = center - Offset(layout.size.width / 2f, layout.size.height / 2f)
         scale(frame.scale, pivot = center) {

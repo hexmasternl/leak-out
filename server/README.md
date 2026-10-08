@@ -106,7 +106,7 @@ To make them mandatory (once, by a repository admin): **Settings → Branches �
 
 ## Deployment
 
-Every push to `main` that changes `server/`, a server workflow or the coverage gate script (and a manual run of **Actions → server-deploy → Run workflow**) runs [`.github/workflows/server-deploy.yml`](../.github/workflows/server-deploy.yml). Pushes that only change the app do not deploy the server, and server pushes do not release the app. *During the cut-over from `leak-out-server` the workflow only has the manual trigger; the `push` trigger is added once the first manual deploy from this repository succeeded.*
+Every push to `main` that changes `server/`, a server workflow or the coverage gate script (and a manual run of **Actions → server-deploy → Run workflow**) runs [`.github/workflows/server-deploy.yml`](../.github/workflows/server-deploy.yml). Pushes that only change the app do not deploy the server, and server pushes do not release the app.
 
 1. **server / build-test**: the same build, tests and 80% gate as the pull request check. A failure stops the run; nothing is published or deployed.
 2. **publish**: calculates the version with [GitVersion](GitVersion.yml) (`configFilePath: server/GitVersion.yml`), publishes the API container image with `dotnet publish /t:PublishContainer` (no Dockerfile) and pushes it as `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>`, then fails if the image would run as root.

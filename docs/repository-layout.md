@@ -77,9 +77,9 @@ The commit that merged the server's history into this repository has no merge ba
 | Side | Where | Documented in |
 | --- | --- | --- |
 | App | environment `play-store` (limited to `main`) | [docs/deployment.md](deployment.md) |
-| Server | repository secrets; the deploy job runs in environment `production` (limited to `main`), which Azure's federated credential trusts | [server/README.md](../server/README.md#secrets-and-settings) |
+| Server | repository secrets; the deploy job runs in environment `production`, which Azure's federated credential trusts | [server/README.md](../server/README.md#secrets-and-settings) |
 | Website | the server's `AZURE_PROD_*` secrets and federated credential (its deploy job also runs in `production`); no deployment token is stored | [website/README.md](../website/README.md#secrets-and-variables) |
 
 ## History
 
-The app moved from `src/` to `app/src/` with `git mv`; `git log --follow` shows its history from before the move. The server came from [hexmasternl/leak-out-server](https://github.com/hexmasternl/leak-out-server), rewritten with `git filter-repo --to-subdirectory-filter server` and merged, so `git log -- server/...` shows its original commits. That repository is archived once the server deploys from here.
+The app moved from `src/` to `app/src/` with `git mv`; `git log --follow` shows its history from before the move. The server came from [hexmasternl/leak-out-server](https://github.com/hexmasternl/leak-out-server), rewritten with `git filter-repo --to-subdirectory-filter server` and merged, so `git log -- server/...` shows its original commits. That repository was archived on 8 October 2026, once the server deployed from here.

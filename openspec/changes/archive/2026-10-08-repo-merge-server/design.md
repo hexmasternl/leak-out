@@ -46,7 +46,7 @@ App tags stay `v<x.y.z>` so existing tags, version codes and release-note ranges
 The release-notes script restricts its commit list to `-- app/` with `--first-parent`-aware handling: a merge counts when `git diff --quiet <merge>^1 <merge> -- app/` reports a change. Its tests gain a server-only merge case.
 
 ### 7. Secrets in the `production` environment
-The server's secrets are recreated as **environment** secrets of a new `production` environment (limited to `main`), not repository secrets, matching how `play-store` holds the app's secrets. Since the deploy job uses `environment: production`, the Azure federated credential subject becomes `repo:hexmasternl/leak-out:environment:production`. Values come from their sources (Azure portal, Google Cloud console, the ACR admin page, the password manager for `POSTGRES_ADMIN_PASSWORD`); GitHub cannot export them.
+The server's secrets were planned as **environment** secrets of a new `production` environment limited to `main`, matching how `play-store` holds the app's secrets. During the cut-over they were added as **repository** secrets instead, and the `production` environment has no branch limit; the deploy only runs from `main` through its trigger. Since the deploy job uses `environment: production`, the Azure federated credential subject becomes `repo:hexmasternl/leak-out:environment:production`. Values come from their sources (Azure portal, Google Cloud console, the ACR admin page, the password manager for `POSTGRES_ADMIN_PASSWORD`); GitHub cannot export them.
 
 ### 8. Cut-over order
 1. Land the move on `development` with the server deploy workflow present but only `workflow_dispatch` enabled.

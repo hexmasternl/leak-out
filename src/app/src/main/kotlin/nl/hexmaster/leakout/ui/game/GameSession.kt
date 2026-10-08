@@ -226,12 +226,30 @@ class GameSession(level: Level, private val engine: GameEngine = GameEngine()) {
      * the end of the tally, and [send] then removes every remaining unused section.
      */
     fun skipWinAnimation() {
-        val score = state.finalScore ?: return
-        if (state.outcome !is Outcome.Won) return
-        val end = WinTiming.FINISH_EFFECT_MS + WinTally.totalDurationMs(score, state.finalStars)
+        val end = winEffectsEndMs() ?: return
         val remaining = end - winAgeMs
         if (remaining > 0) send(GameCommand.Tick(remaining))
     }
+
+    /** The win age at which the finish flash and the tally have both ended; null unless won. */
+    private fun winEffectsEndMs(): Long? {
+        val score = state.finalScore ?: return null
+        if (state.outcome !is Outcome.Won) return null
+        return WinTiming.FINISH_EFFECT_MS + WinTally.totalDurationMs(score, state.finalStars)
+    }
+
+    /**
+     * Whether the game screen must keep ticking the clock (spec `game-play-frame-budget`): always
+     * while playing, and after the end only until every effect driven by the clock has finished:
+     * the leak effect, or the finish flash and the tally, and the last points popup. After that the
+     * screen is still, and a tick would only redraw the same frame.
+     */
+    val needsClock: Boolean
+        get() = when (state.outcome) {
+            Outcome.Playing -> true
+            is Outcome.Lost -> lossAgeMs < LeakTiming.EFFECT_MS || state.awards.isNotEmpty()
+            is Outcome.Won -> winAgeMs < (winEffectsEndMs() ?: 0L) || state.awards.isNotEmpty()
+        }
 
     /** The attempt that was recorded and what recording it did; the win path records each attempt once. */
     private var recorded: Pair<Int, RecordResult>? by mutableStateOf(null)

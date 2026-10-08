@@ -1,5 +1,6 @@
 package nl.hexmaster.leakout.ui.game
 
+import nl.hexmaster.leakout.core.board.Board
 import nl.hexmaster.leakout.core.engine.FlowState
 import nl.hexmaster.leakout.core.flow.Channel
 import nl.hexmaster.leakout.core.flow.ChannelUse
@@ -21,16 +22,21 @@ object FieldLiquid {
         Channel.VERTICAL -> "channel-v"
     }
 
-    fun fills(position: Position, section: PipeSection, used: Set<ChannelUse>, head: FlowState.Flowing?): Map<String, ChannelFill> {
+    fun fills(position: Position, section: PipeSection, used: Set<ChannelUse>, head: FlowState.Flowing?): Map<String, ChannelFill> =
+        withHead(settledFills(position, section, used), position, head)
+
+    /** The channels of the section on [position] the liquid has run through, all full; they only change with [used]. */
+    fun settledFills(position: Position, section: PipeSection, used: Set<ChannelUse>): Map<String, ChannelFill> {
         var fills: Map<String, ChannelFill> = emptyMap()
         for (channel in Channel.entries) {
             if (ChannelUse(position, channel) in used) fills = fills + (channelId(channel) to ChannelFill.full(anyEntry(section, channel)))
         }
-        if (head != null && head.position == position) {
-            fills = fills + (channelId(head.channel) to ChannelFill(head.progress.toFloat(), head.entry))
-        }
         return fills
     }
+
+    /** [settled] with the channel the [head] is in filled up to its progress, when the head is on [position]. */
+    fun withHead(settled: Map<String, ChannelFill>, position: Position, head: FlowState.Flowing?): Map<String, ChannelFill> =
+        if (head != null && head.position == position) settled + (channelId(head.channel) to ChannelFill(head.progress.toFloat(), head.entry)) else settled
 
     /**
      * How far the liquid has come out of the start valve at [start], 0 to 1: dry before the flow,
@@ -60,5 +66,25 @@ object FieldLiquid {
         Channel.HORIZONTAL -> Side.LEFT
         Channel.VERTICAL -> Side.TOP
         Channel.SINGLE -> Side.entries.first { it in section.openSides }
+    }
+}
+
+/**
+ * The [FieldLiquid.settledFills] of the field's tiles, worked out once per board and set of used
+ * channels instead of every frame. The engine keeps the same instances while the head moves inside
+ * a tile, so they are compared by identity; a new board or used set starts the cache afresh.
+ */
+class SettledFillCache {
+    private var board: Board? = null
+    private var used: Set<ChannelUse>? = null
+    private val fills = HashMap<Position, Map<String, ChannelFill>>()
+
+    fun fills(board: Board, used: Set<ChannelUse>, position: Position, section: PipeSection): Map<String, ChannelFill> {
+        if (board !== this.board || used !== this.used) {
+            fills.clear()
+            this.board = board
+            this.used = used
+        }
+        return fills.getOrPut(position) { FieldLiquid.settledFills(position, section, used) }
     }
 }

@@ -1,6 +1,6 @@
 ---
 name: triage-github-issues
-description: Triage GitHub issues for this repository. Use when the user asks to triage, groom, refine, clean up, label or flesh out one or more GitHub issues (by number, by URL, or "the open/untriaged issues"). Rewrites each issue into a complete story with acceptance criteria while keeping the reporter's original text, applies labels (feature, enhancement, bug, documentation, duplicate, invalid, question, wontfix — combinable), sets the issue type (Feature, Bug or Task), and links the OpenSpec change that implements the issue when one exists in openspec/changes.
+description: Triage GitHub issues for this repository. Use when the user asks to triage, groom, refine, clean up, label or flesh out one or more GitHub issues (by number, by URL, or "the open/untriaged issues"). Rewrites each issue into a complete story with acceptance criteria while keeping the reporter's original text, applies labels (feature, enhancement, bug, documentation, duplicate, invalid, question, wontfix — combinable), sets the issue type (Feature, Bug or Task), and links the OpenSpec change that implements the issue, proposing a new change autonomously when none exists in openspec/changes.
 license: MIT
 compatibility: Requires git and the GitHub CLI (`gh`), authenticated with write access to the repository. Works from PowerShell or Git Bash on Windows.
 metadata:
@@ -8,11 +8,11 @@ metadata:
   version: "1.0"
 ---
 
-Triage GitHub issues: turn each one into a good, complete story, label it, give it a type, and link the OpenSpec change that covers it.
+Triage GitHub issues: turn each one into a good, complete story, label it, give it a type, and link the OpenSpec change that covers it, creating that change when there is none.
 
 **Only untriaged issues are triaged.** An issue is **untriaged** when it has no labels at all, or no issue type. An issue with both at least one label and an issue type is triaged and is left alone.
 
-**Input**: one or more issue numbers or URLs. If none are given, triage the open untriaged issues (`gh issue list --state open --json number,title,labels,issueType`, then keep those with an empty `labels` list or no `issueType`), and tell the user which ones you picked. If that list is long (more than ~10), ask which ones to do first. If the user names an issue that is already triaged, skip it and say so in your report; re-triage it only when the user explicitly asks for that issue to be triaged again.
+**Input**: one or more issue numbers or URLs. If none are given, triage the open untriaged issues (`gh issue list --state open --json number,title,labels,issueType`, then keep those with an empty `labels` list or no `issueType`), and tell the user which ones you picked. Triage all of them, oldest first, even if the list is long. If the user names an issue that is already triaged, skip it and say so in your report; re-triage it only when the user explicitly asks for that issue to be triaged again.
 
 ## What a triaged issue looks like
 
@@ -20,7 +20,7 @@ Triage GitHub issues: turn each one into a good, complete story, label it, give 
 2. A **body** that follows the matching template below, with the reporter's text kept verbatim at the bottom.
 3. One or more **labels** from the label set.
 4. Exactly one **issue type**: `Feature`, `Bug` or `Task`.
-5. A link to the **OpenSpec change** that implements it, if there is one.
+5. A link to the **OpenSpec change** that implements it. When there is none, triage creates one (step 2), so every actionable issue ends up with a change.
 
 ## Steps
 
@@ -48,7 +48,18 @@ grep -rlE "(#|issues/)<n>\b" openspec/changes --include=proposal.md
 - A hit is only a match if the proposal is **about** this issue (it says "Tracked in #n", "Fixes #n" or the like). Proposals also mention other issues as dependencies ("Depends on ... (#80)"); those are not matches.
 - If grep finds nothing, also scan the folder names and the `## Why` sections of the active changes in `openspec/changes/` (skip `archive/`) for the same topic. Only link a change found this way if it clearly covers the issue, and say in your report that the match is by topic.
 - Active change → link `openspec/changes/<change-name>/`. Archived change → link `openspec/changes/archive/<date>-<change-name>/` and mention that it has been implemented and archived; the issue can probably be closed (ask, do not close it yourself).
-- No change → write nothing about OpenSpec in the issue. Mention in your report that a change can be proposed with `/opsx:propose`.
+- No change → create one, see below. Skip this only for issues labelled `duplicate`, `invalid` or `wontfix`; those get no change and nothing about OpenSpec in the issue.
+
+#### Creating the change when none exists
+
+Do this autonomously, as part of the triage, without asking for approval:
+
+1. Make sure you are on an up-to-date `development` (`git fetch origin`, `git switch development`, `git merge --ff-only origin/development`). Never create a change on `main`. If the main checkout has uncommitted work on another branch, add a temporary worktree for `development` under `../leak-out-worktrees/` instead of switching.
+2. Pick a kebab-case name that follows the existing changes (`app-<area>-<topic>` for app work, `repo-<topic>` for repository/CI work, and so on), and check that it is not already taken in `openspec/changes/` or `openspec/changes/archive/`.
+3. Follow the `openspec-propose` skill to create every artifact up to apply-ready (proposal, design, specs, tasks), with these differences: never stop to ask the user; decide from the issue, the specs and the code, and put whatever needs the maintainer's decision under **Open Questions** in `design.md` (the same questions as in the issue).
+4. Link the change to the issue: the proposal's `## Why` section ends with `Tracked in [#<n>](https://github.com/hexmasternl/leak-out/issues/<n>).`, and the issue body gets the **OpenSpec change** section (step 5).
+5. Run `openspec validate <change-name>` and fix what it reports.
+6. Commit only the change folder on `development` with the message `<change-name>: propose change for #<n>` (plus the attribution trailer), and push `development`. The link in the issue only works once the push has landed.
 
 Link to the folder on the `development` branch, where changes are created:
 
@@ -119,7 +130,7 @@ As a <player | maintainer | ...>, I want <capability>, so that <benefit>.
 
 ## OpenSpec change
 
-<Only when a change was found:> Implemented by [`<change-name>`](https://github.com/hexmasternl/leak-out/tree/development/openspec/changes/<change-name>).
+<Found or created in step 2; omit for duplicate, invalid and wontfix issues:> Implemented by [`<change-name>`](https://github.com/hexmasternl/leak-out/tree/development/openspec/changes/<change-name>).
 
 ---
 
@@ -159,9 +170,9 @@ Acceptance criteria are the heart of the story: each one is something a tester c
 
 If the issue already follows this format (an explicit re-triage, or an issue that lost its labels or type), update it in place instead of nesting a second "Original report".
 
-### 6. Show, then apply
+### 6. Apply
 
-Updating an issue is visible to everyone, so show the user the proposed title, labels (added/removed), type, OpenSpec link and body for each issue, and apply only after they agree. If the user already said to apply directly ("just triage them", "go ahead"), apply without asking.
+Triage runs autonomously: apply the title, labels, type and body straight away, without showing a draft or asking for approval first. The maintainer has authorised this; anything that needs their decision goes under **Open questions** in the issue and in your report, not into a question that blocks the triage.
 
 Write the body to a file in your scratchpad (not the repository), then:
 
@@ -190,7 +201,7 @@ Re-read each issue (`gh issue view <n> --json title,labels,issueType`) to confir
 
 ```
 #85 Haptic feedback — Feature · feature · linked app-game-haptic-feedback
-#91 Reduce battery usage during play — Bug · bug, enhancement · no OpenSpec change (propose with /opsx:propose) · 2 open questions
+#91 Reduce battery usage during play — Bug · bug, enhancement · proposed app-battery-frame-budget · 2 open questions
 #88 Upgrade androidx.fragment — Task · enhancement · linked app-play-console-policy-fixes (by topic)
 ```
 

@@ -44,7 +44,7 @@ Add `val needsClock: Boolean` to `GameSession`. It is true while the outcome is 
 
 The loop still waits for every frame, but only sends a tick once at least `MIN_TICK_MS = 12` ms have built up since the last one. Time accumulates in whole milliseconds as today, so the clock never loses or gains time. The resulting tick rates:
 - 60 Hz (16.7 ms frames) → every frame, 60/s.
-- 90 Hz (11.1 ms) → every second frame, 45/s.
+- 90 Hz (11.1 ms) → mostly every second frame; the kept remainder lets every ninth frame tick alone, so 50/s.
 - 120 Hz (8.3 ms) → every second frame, 60/s.
 - 144 Hz (6.9 ms) → every second frame, 72/s.
 
@@ -63,6 +63,6 @@ The decision "tick now?" is a small pure helper (`TickPacer`: given the frame ti
 ## Risks / Trade-offs
 
 - [An end effect we missed keeps animating from the clock and freezes when it idles] → the table above was taken from every `nowMs`/age reader in `PlayingField`/`GameHud`. An instrumented test checks that the lost and won screens reach the idle state with the leak puddle / solid finish ring shown. Any other clock reader would show up as a frozen frame in that test's screenshot check.
-- [90 Hz panels tick at 45/s, so the liquid moves slightly less smoothly] → the liquid moves about 1 tile per second, so 45 steps a second is still sub-pixel to a few pixels per step. This is acceptable, and it can be tuned by changing `MIN_TICK_MS`.
+- [90 Hz panels tick at 50/s, so the liquid moves slightly less smoothly] → the liquid moves about 1 tile per second, so 50 steps a second is still sub-pixel to a few pixels per step. This is acceptable, and it can be tuned by changing `MIN_TICK_MS`.
 - [Instrumented tests that advance the clock in sub-16 ms steps] → existing tests advance by frames or by whole durations. The pacer test documents the threshold.
 - [The gap warning heartbeat or other sounds depend on ticks after the end] → they key on the outcome being playing. The existing `GapHeartbeatTest` is rerun.

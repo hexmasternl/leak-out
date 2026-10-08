@@ -158,11 +158,18 @@ class GameEngine(private val random: Random = Random.Default) {
     private fun advance(state: GameState, dtMs: Long): GameState {
         if (dtMs <= 0) return state
         val clockMs = state.clockMs + dtMs
-        val moved = state.copy(clockMs = clockMs, awards = state.awards.filter { it.ageAt(clockMs) < Award.VISIBLE_MS })
+        val moved = state.copy(clockMs = clockMs, awards = visibleAwards(state.awards, clockMs))
         if (state.outcome !is Outcome.Playing) return moved
         val next = FlowSimulation.advance(moved, dtMs * state.flowTimeScale)
         return if (next.outcome !is Outcome.Playing && next.replacement != null) next.copy(replacement = null) else next
     }
+
+    /**
+     * The [awards] still visible at [clockMs]. They are oldest first, so while the oldest is visible
+     * every one is, and the same list is kept instead of copied on every tick.
+     */
+    private fun visibleAwards(awards: List<Award>, clockMs: Long): List<Award> =
+        if (awards.isEmpty() || awards.first().ageAt(clockMs) < Award.VISIBLE_MS) awards else awards.filter { it.ageAt(clockMs) < Award.VISIBLE_MS }
 
     /** Puts the replacement's section on its tile and ends the replacement. Nothing lands after the attempt ended. */
     private fun land(state: GameState): GameState {

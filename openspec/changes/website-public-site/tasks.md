@@ -35,7 +35,7 @@
 ## 6. Integration
 
 - [x] 6.1 Run an automated accessibility check (for example `pa11y-ci` or axe) over the built site and fix what it reports; verify it reports no missing alternatives, titles, language attributes or contrast failures
-- [ ] 6.2 After merging to `main`, run `website-deploy.yml`, then verify the live site in all five languages, the feedback links, and the leaderboard against the deployed server endpoint
+- [x] 6.2 After merging to `main`, run `website-deploy.yml`, then verify the live site in all five languages, the feedback links, and the leaderboard against the deployed server endpoint _(`website-deploy` succeeded on `main` after #122 and #124; on 2026-10-08 `/`, `/nl/`, `/de/`, `/fr/` and `/es/` answered 200 with the right `lang` and a translated title, the bug report and feature request links open the issue templates of the public `hexmasternl/leak-out-game`, and `/api/public/levels/1/scores/top` answered 200 with `access-control-allow-origin: https://leakout.hexmaster.nl` and live scores)_
 
 ## 7. SEO, Open Graph and best practices
 

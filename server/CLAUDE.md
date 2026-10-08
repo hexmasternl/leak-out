@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) and GitHub Copilot (as `AGENTS.md`, an identical copy) when working on the game server in `server/`. The server shares the Leak Out repository with the Android app (`app/`); the repository-wide instructions are in the root `CLAUDE.md` and the layout in `docs/repository-layout.md`. Paths below are relative to `server/`.
 
 ## Project state
 
@@ -34,10 +34,10 @@ The AppHost needs three parameters in its user secrets: `Parameters:google-clien
 - **HexMaster.LeakOut.Aspire.AppHost** (Aspire SDK 13.x) — local orchestration. Registers PostgreSQL (`postgres`, data volume) with database `playersdb`, the auth parameters, and the API as resource `hexmaster-leakout-api` in `AppHost.cs`. New services, databases, caches, etc. are added here and referenced into the API with `.WithReference(...)`.
 - **HexMaster.LeakOut.Aspire.ServiceDefaults** — shared cross-cutting setup (`Extensions.cs`): OpenTelemetry (logs/metrics/traces, OTLP exporter when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, Azure Monitor when `APPLICATIONINSIGHTS_CONNECTION_STRING` is set), service discovery, standard HTTP resilience on all `HttpClient`s, and health checks. `/health` and `/alive` are mapped **in every environment** as anonymous endpoints, because the Azure Container Apps startup, liveness (`/alive`) and readiness (`/health`) probes depend on them; they are not traced. Never put them behind `IsDevelopment()`. Any new service project should reference this project and call the same two extension methods.
 
-## Git workflow
+## Git workflow and CI
 
-`main` is production; `development` (from `main`) is the integration branch. Issues and OpenSpec changes are implemented on a branch from `development` in a worktree under `D:\projects\github.com\hexmasternl\leak-out-server-worktrees`, with frequent small commits, an 80% coverage gate, and a PR into `development`. Only proposing and archiving OpenSpec changes is committed directly to `development`. Full rules in the `git-workflow` skill (`.claude/skills/git-workflow/SKILL.md`).
+The repository-wide flow applies (root `CLAUDE.md`): `main` is production, `development` the integration branch, and every OpenSpec change is implemented on `feature/<change-name>` in a worktree under `../leak-out-worktrees/` (the `openspec-work-on-change` skill). Server specs live in the root `openspec/specs/server-*`; name server changes `server-<name>`. Pull requests that change `server/` must keep the 80% coverage gate. The server's workflows are `.github/workflows/server-build-test.yml`, `server-pull-request.yml` and `server-deploy.yml`; they only build or deploy when `server/` or a server workflow changes, and the server is versioned from `server-v<x.y.z>` tags (`GitVersion.yml`).
 
 ## Conventions
 
-This is a HexMaster C# codebase: nullable reference types and implicit usings are enabled in every project. The project-scoped `hexmaster-coding-standards` MCP server (`.mcp.json`, tools `list_documents`, `get_document`, `find_documents_by_tag`, `recommend_skills`) defines the house style — consult it when writing or reviewing C#. Do not apply Lodder Software standards (the `lodder-csharp` plugin) here; they don't apply to this project.
+This is a HexMaster C# codebase: nullable reference types and implicit usings are enabled in every project. The project-scoped `hexmaster-coding-standards` MCP server (the repository root's `.mcp.json`, tools `list_documents`, `get_document`, `find_documents_by_tag`, `recommend_skills`) defines the house style — consult it when writing or reviewing C#. Do not apply Lodder Software standards (the `lodder-csharp` plugin) here; they don't apply to this project.

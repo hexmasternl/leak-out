@@ -13,7 +13,7 @@
 - [x] 2.2 Rearrange per design.md decision 3: keep the solution and projects in `server/src/`, the Bicep templates in `server/infrastructure/`, and `global.json`, `Directory.Build.props`, `CodeCoverage.settings.xml`, `GitVersion.yml`, `README.md`, `docs/` and `.gitignore` in `server/`; drop `server/LICENSE` if identical to the root one; verify `dotnet test` runs from `server/` (Testcontainers needs Docker; record if skipped)
 - [x] 2.3 Add `tag-prefix: 'server-v'` to `server/GitVersion.yml`; verify on a scratch branch with a `v9.9.9` tag that GitVersion with `server/GitVersion.yml` ignores it, and with a `server-v9.9.9` tag that GitVersion with `app/GitVersion.yml` ignores it
 - [x] 2.4 Move the server's OpenSpec specs to `openspec/specs/server-<name>/`, its archived changes to `openspec/changes/archive/` (prefix clashes with `server-`) and update cross-references; rewrite `server-ci-cd` for the new workflow names, paths and environment; verify `openspec validate --specs` passes
-- [ ] 2.5 Keep `server/CLAUDE.md` and add `server/AGENTS.md` with the same content; move server skills that do not exist here to `.claude/skills/` (keep this repository's `openspec-*` and `triage-github-issues`), drop `.agents/` and the server's `.github/skills|prompts`, merge `.mcp.json`; run `node scripts/sync-agent-config.mjs` and verify `--check` reports in sync
+- [x] 2.5 Keep `server/CLAUDE.md` and add `server/AGENTS.md` with the same content; move server skills that do not exist here to `.claude/skills/` (keep this repository's `openspec-*` and `triage-github-issues`), drop `.agents/` and the server's `.github/skills|prompts`, merge `.mcp.json`; run `node scripts/sync-agent-config.mjs` and verify `--check` reports in sync
 
 ## 3. Server workflows
 

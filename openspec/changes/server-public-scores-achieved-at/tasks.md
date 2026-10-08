@@ -2,9 +2,9 @@
 
 ## 1. Server
 
-- [ ] 1.1 Add `AchievedAt` (`DateTimeOffset`) to `RankedLevelScore` and select `achieved_at` in `LevelScoreRepository.GetRankedAsync`; extend `LevelScoreRepositoryTests` to assert the returned moment, including that a later lower score leaves it unchanged. Verify with `dotnet test` on the Scores tests.
-- [ ] 1.2 Add `AchievedAt` to `PublicLeaderboardEntryDto` and fill it in `GetPublicLevelTopScoresQueryHandler`; extend `GetPublicLevelTopScoresQueryHandlerTests` to assert the moment is passed through, and verify they pass.
-- [ ] 1.3 In `PublicLevelScoreEndpointsTests`, assert each JSON entry has `achievedAt` in ISO 8601 with offset; in `LevelScoreEndpointsTests`, assert the app's top scores and window responses contain no `achievedAt`. Verify with `dotnet test server/src/leak-out-server.slnx`.
+- [x] 1.1 Add `AchievedAt` (`DateTimeOffset`) to `RankedLevelScore` and select `achieved_at` in `LevelScoreRepository.GetRankedAsync`; extend `LevelScoreRepositoryTests` to assert the returned moment, including that a later lower score leaves it unchanged. Verify with `dotnet test` on the Scores tests.
+- [x] 1.2 Add `AchievedAt` to `PublicLeaderboardEntryDto` and fill it in `GetPublicLevelTopScoresQueryHandler`; extend `GetPublicLevelTopScoresQueryHandlerTests` to assert the moment is passed through, and verify they pass.
+- [x] 1.3 In `PublicLevelScoreEndpointsTests`, assert each JSON entry has `achievedAt` in ISO 8601 with offset; in `LevelScoreEndpointsTests`, assert the app's top scores and window responses contain no `achievedAt`. Verify with `dotnet test server/src/leak-out-server.slnx`.
 - [ ] 1.4 Document the `achievedAt` field under the public endpoints in `server/README.md` and check the example response matches the endpoint test.
 
 ## 2. Website

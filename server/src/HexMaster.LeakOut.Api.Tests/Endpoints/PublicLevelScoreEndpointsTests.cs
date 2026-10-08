@@ -25,8 +25,8 @@ public sealed class PublicLevelScoreEndpointsTests : IClassFixture<LeakOutApiFac
     {
         HandlerReturns(new PublicLevelLeaderboardDto(3,
         [
-            new PublicLeaderboardEntryDto(1, "Bob", 600),
-            new PublicLeaderboardEntryDto(2, "Ann", 540),
+            new PublicLeaderboardEntryDto(1, "Bob", 600, new DateTimeOffset(2026, 10, 1, 14, 30, 0, TimeSpan.Zero)),
+            new PublicLeaderboardEntryDto(2, "Ann", 540, new DateTimeOffset(2025, 3, 9, 8, 5, 12, TimeSpan.Zero)),
         ]));
 
         var response = await SendAsync(HttpMethod.Get, "/api/public/levels/3/scores/top");
@@ -40,7 +40,24 @@ public sealed class PublicLevelScoreEndpointsTests : IClassFixture<LeakOutApiFac
         Assert.Equal("Bob", first.GetProperty("displayName").GetString());
         Assert.Equal(600, first.GetProperty("score").GetInt32());
         // Nothing about the players beyond the display name.
-        Assert.Equal(["position", "displayName", "score"], first.EnumerateObject().Select(p => p.Name));
+        Assert.Equal(["position", "displayName", "score", "achievedAt"], first.EnumerateObject().Select(p => p.Name));
+    }
+
+    [Fact]
+    public async Task GetPublicLevelTopScores_EveryEntryHasTheMomentInIso8601WithOffset()
+    {
+        HandlerReturns(new PublicLevelLeaderboardDto(3,
+        [
+            new PublicLeaderboardEntryDto(1, "Bob", 600, new DateTimeOffset(2026, 10, 1, 14, 30, 0, TimeSpan.Zero)),
+            new PublicLeaderboardEntryDto(2, "Ann", 540, new DateTimeOffset(2025, 3, 9, 8, 5, 12, TimeSpan.Zero)),
+        ]));
+
+        var response = await SendAsync(HttpMethod.Get, "/api/public/levels/3/scores/top");
+
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(
+            ["2026-10-01T14:30:00+00:00", "2025-03-09T08:05:12+00:00"],
+            json.RootElement.GetProperty("entries").EnumerateArray().Select(e => e.GetProperty("achievedAt").GetString()));
     }
 
     [Fact]

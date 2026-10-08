@@ -117,11 +117,11 @@ public sealed class LevelScoreRepositoryTests(PostgreSqlFixture database)
 
         Assert.Equal(
             [
-                new RankedLevelScore(1, high, 900),
-                new RankedLevelScore(2, tieEarlierA, 500),
-                new RankedLevelScore(3, tieEarlierB, 500),
-                new RankedLevelScore(4, tieLater, 500),
-                new RankedLevelScore(5, low, 100),
+                new RankedLevelScore(1, high, 900, Now),
+                new RankedLevelScore(2, tieEarlierA, 500, Now),
+                new RankedLevelScore(3, tieEarlierB, 500, Now),
+                new RankedLevelScore(4, tieLater, 500, Now.AddDays(1)),
+                new RankedLevelScore(5, low, 100, Now),
             ],
             ranked);
     }
@@ -158,7 +158,33 @@ public sealed class LevelScoreRepositoryTests(PostgreSqlFixture database)
 
         var ranked = await GetRankedAsync(level, 10, 10);
 
-        Assert.Equal([new RankedLevelScore(11, PlayerId(2), 20), new RankedLevelScore(12, PlayerId(1), 10)], ranked);
+        Assert.Equal([new RankedLevelScore(11, PlayerId(2), 20, Now), new RankedLevelScore(12, PlayerId(1), 10, Now)], ranked);
+    }
+
+    [Fact]
+    public async Task GetRankedAsync_LaterLowerScore_KeepsTheMomentOfTheBestScore()
+    {
+        var level = UniqueLevel();
+        await SubmitAsync(PlayerId(1), level, 540, Now);
+        await SubmitAsync(PlayerId(1), level, 300, Now.AddDays(2));
+
+        var entry = Assert.Single(await GetRankedAsync(level, 0, 10));
+
+        Assert.Equal(540, entry.Score);
+        Assert.Equal(Now, entry.AchievedAt);
+    }
+
+    [Fact]
+    public async Task GetRankedAsync_LaterHigherScore_ReturnsItsMoment()
+    {
+        var level = UniqueLevel();
+        await SubmitAsync(PlayerId(1), level, 300, Now);
+        await SubmitAsync(PlayerId(1), level, 540, Now.AddDays(2));
+
+        var entry = Assert.Single(await GetRankedAsync(level, 0, 10));
+
+        Assert.Equal(540, entry.Score);
+        Assert.Equal(Now.AddDays(2), entry.AchievedAt);
     }
 
     [Fact]

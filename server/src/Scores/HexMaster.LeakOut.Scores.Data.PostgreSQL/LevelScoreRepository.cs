@@ -59,10 +59,12 @@ public sealed class LevelScoreRepository(ScoresDbContext dbContext) : ILevelScor
             .ThenBy(s => s.UserId)
             .Skip(offset)
             .Take(count)
-            .Select(s => new { s.UserId, s.Score })
+            .Select(s => new { s.UserId, s.Score, s.AchievedAt })
             .ToListAsync(ct);
 
-        return rows.Select((row, index) => new RankedLevelScore(offset + index + 1, row.UserId, row.Score)).ToList();
+        return rows
+            .Select((row, index) => new RankedLevelScore(offset + index + 1, row.UserId, row.Score, row.AchievedAt))
+            .ToList();
     }
 
     public async Task<BestLevelScore?> GetBestAsync(Guid userId, int level, CancellationToken ct) =>

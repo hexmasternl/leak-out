@@ -13,9 +13,12 @@ leak-out/
 ├── server/
 │   ├── src/      the game server: .NET solution and projects
 │   └── infrastructure/  Bicep templates for Azure
+├── website/      the public website: Hugo site (website/src) and its Azure infrastructure (website/infrastructure)
 ├── docs/         project plan, design system, repository layout
 └── openspec/     specs and change proposals
 ```
+
+The website is built and deployed on its own; see [website/README.md](website/README.md).
 
 Run Gradle commands from `app/src/`:
 

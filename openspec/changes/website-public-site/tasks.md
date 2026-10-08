@@ -29,7 +29,7 @@
 - [x] 5.1 Write `website/infrastructure/main.bicep` and `main.bicepparam` for the Static Web App (Free tier, optional custom domain parameter); verify `az bicep build --file website/infrastructure/main.bicep` reports no errors
 - [x] 5.2 Add `.github/workflows/website-pull-request.yml` (changes job, Hugo build with pinned version and `--panicOnWarning`, Bicep build, always reports a result); verify with `actionlint` if available and with a pull request that changes `website/`
 - [x] 5.3 Add `.github/workflows/website-deploy.yml` (push to `main` on `website/**` and the workflow, `workflow_dispatch`; OIDC Azure login, Bicep deployment, deployment token fetched at run time, `Azure/static-web-apps-deploy` with `skip_app_build`); verify with `actionlint` if available and that no token appears in the repository
-- [ ] 5.4 Document the Azure federated credential, the GitHub variables and secrets, and the first manual run in `website/README.md`; add `website/` to `docs/repository-layout.md` and `README.md`; verify every secret and variable used by the workflows is documented
+- [x] 5.4 Document the Azure federated credential, the GitHub variables and secrets, and the first manual run in `website/README.md`; add `website/` to `docs/repository-layout.md` and `README.md`; verify every secret and variable used by the workflows is documented _(docs/repository-layout.md does not exist on development yet; it arrives with `repo-merge-server`, which must add `website/` when the two meet. `website/` is in README.md and CLAUDE.md meanwhile)_
 
 ## 6. Integration
 

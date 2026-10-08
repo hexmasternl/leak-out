@@ -7,7 +7,7 @@
 
 ## 2. Play In-App Updates wrapper
 
-- [ ] 2.1 Pin the newest stable `com.google.android.play:app-update` and `app-update-ktx` in `gradle/libs.versions.toml` and add them to `app/build.gradle.kts`; verify `./gradlew :app:assembleDebug` succeeds and the merged manifest gains no new permission besides any the library itself declares (record which)
+- [x] 2.1 Pin the newest stable `com.google.android.play:app-update` and `app-update-ktx` in `gradle/libs.versions.toml` and add them to `app/build.gradle.kts`; verify `./gradlew :app:assembleDebug` succeeds and the merged manifest gains no new permission besides any the library itself declares (record which) — app-update 2.1.0 adds no permission: the merged debug manifest keeps exactly INTERNET, ACCESS_NETWORK_STATE, VIBRATE and the dynamic-receiver permission
 - [ ] 2.2 Add the `AppUpdates` interface, `PlayAppUpdates` (wrapping `AppUpdateManager`, every failure → no update) and `FakeAppUpdates`; add JVM tests for `PlayAppUpdates` using Play's `FakeAppUpdateManager` covering no update, priority 5, priority 0, a thrown exception and the flexible download reaching `DOWNLOADED`, and verify `./gradlew :app:testDebugUnitTest --tests "*AppUpdates*"` passes
 - [ ] 2.3 Add `UpdateViewModel` that checks on `onStart`, feeds `UpdateGate`, resumes an immediate update that is in progress on `onResume`, and exposes the state to Compose; add a JVM test with `FakeAppUpdates` for start, return to foreground and check failure, and verify it passes
 

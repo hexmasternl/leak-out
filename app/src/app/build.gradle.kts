@@ -153,6 +153,10 @@ dependencies {
     // The app uses no fragments: this only overrides the outdated fragment 1.1.0 that Play services asks for (issue #88).
     implementation(libs.androidx.fragment)
 
+    // Play In-App Updates: asks Play for a newer version and its priority (openspec/specs/app-updates).
+    implementation(libs.play.app.update)
+    implementation(libs.play.app.update.ktx)
+
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
 

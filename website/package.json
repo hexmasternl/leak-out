@@ -1,0 +1,12 @@
+{
+  "name": "leak-out-website",
+  "private": true,
+  "type": "module",
+  "description": "Unit tests for the Leak Out website's leaderboard script. The site itself is built with Hugo.",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\""
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,6 +1,7 @@
 using HexMaster.LeakOut.Api.Authentication;
 using HexMaster.LeakOut.Api.Cors;
 using HexMaster.LeakOut.Api.Endpoints;
+using HexMaster.LeakOut.Api.Versioning;
 using HexMaster.LeakOut.Players;
 using HexMaster.LeakOut.Players.Data.PostgreSQL;
 using HexMaster.LeakOut.Players.Observability;
@@ -35,6 +36,9 @@ builder.Services.AddOpenApi(options =>
 });
 
 var app = builder.Build();
+
+// First, so every response says which build answered it.
+app.UseApiVersionHeader();
 
 app.UseHttpsRedirection();
 // Before authentication, so a preflight from the website is answered without a token.

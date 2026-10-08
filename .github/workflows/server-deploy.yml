@@ -1,7 +1,10 @@
 # Builds, tests, versions, publishes and deploys the game server (server/) from main to Azure
 # (see server/README.md, "Deployment", and docs/repository-layout.md).
 # The image name comes from the API project (ContainerRegistry, ContainerRepository); the tag is
-# the semantic version GitVersion calculates from server-v<x.y.z> tags (server/GitVersion.yml).
+# <semver>-<short commit sha>: the semantic version GitVersion calculates from server-v<x.y.z> tags
+# (server/GitVersion.yml) plus the commit. GitVersion can give two merges the same version; the
+# commit keeps every tag unique, so a deployment always changes the container app's image and rolls
+# out a new revision instead of leaving the old image running under a reused tag.
 name: server-deploy
 
 on:
@@ -42,6 +45,7 @@ jobs:
     # so GitHub drops any job output that contains it. The deploy job reads it again.
     outputs:
       version: ${{ steps.gitversion.outputs.semVer }}
+      tag: ${{ steps.container.outputs.tag }}
     steps:
       # GitVersion needs the full history to calculate the version.
       - uses: actions/checkout@v7
@@ -71,10 +75,12 @@ jobs:
             -getProperty:ContainerRegistry -getProperty:ContainerRepository)
           registry=$(jq -r '.Properties.ContainerRegistry' <<< "$properties")
           repository=$(jq -r '.Properties.ContainerRepository' <<< "$properties")
+          tag="$VERSION-${GITHUB_SHA::7}"
           echo "registry=$registry" >> "$GITHUB_OUTPUT"
-          echo "image=$registry/$repository:$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "image=$registry/$repository:$tag" >> "$GITHUB_OUTPUT"
           echo "### Image" >> "$GITHUB_STEP_SUMMARY"
-          echo "\`$registry/$repository:$VERSION\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`$registry/$repository:$tag\`" >> "$GITHUB_STEP_SUMMARY"
 
       - uses: docker/login-action@v4
         with:
@@ -83,14 +89,15 @@ jobs:
           password: ${{ secrets.ACR_LOGIN_PASSWORD }}
 
       - name: Publish container image
+        # The informational version is what the API returns in its X-API-Version header.
         env:
           VERSION: ${{ steps.gitversion.outputs.semVer }}
-          INFORMATIONAL_VERSION: ${{ steps.gitversion.outputs.informationalVersion }}
+          TAG: ${{ steps.container.outputs.tag }}
         run: |
           dotnet publish src/HexMaster.LeakOut.Api -c Release -t:PublishContainer \
-            -p:ContainerImageTags="$VERSION" \
+            -p:ContainerImageTags="$TAG" \
             -p:Version="$VERSION" \
-            -p:InformationalVersion="$INFORMATIONAL_VERSION"
+            -p:InformationalVersion="$VERSION+${GITHUB_SHA::7}"
 
       # The API must never run as root (ContainerUser in the API project).
       - name: Verify the image runs as non-root
@@ -126,18 +133,18 @@ jobs:
       - name: Read container settings from the API project
         id: container
         env:
-          VERSION: ${{ needs.publish.outputs.version }}
+          TAG: ${{ needs.publish.outputs.tag }}
         run: |
           properties=$(dotnet msbuild src/HexMaster.LeakOut.Api \
             -getProperty:ContainerRegistry -getProperty:ContainerRepository)
           registry=$(jq -r '.Properties.ContainerRegistry' <<< "$properties")
           repository=$(jq -r '.Properties.ContainerRepository' <<< "$properties")
-          if [[ -z "$registry" || -z "$repository" || -z "$VERSION" ]]; then
-            echo "::error::Container registry, repository or version is empty"
+          if [[ -z "$registry" || -z "$repository" || -z "$TAG" ]]; then
+            echo "::error::Container registry, repository or image tag is empty"
             exit 1
           fi
           echo "registry=$registry" >> "$GITHUB_OUTPUT"
-          echo "image=$registry/$repository:$VERSION" >> "$GITHUB_OUTPUT"
+          echo "image=$registry/$repository:$TAG" >> "$GITHUB_OUTPUT"
 
       # The API refuses to start without the Google settings, and an empty registry or database
       # credential would only fail inside Azure. Fail here, before anything changes.
@@ -192,19 +199,26 @@ jobs:
           echo "### Deployed" >> "$GITHUB_STEP_SUMMARY"
           echo "\`$API_IMAGE\` to https://$fqdn" >> "$GITHUB_STEP_SUMMARY"
 
-      # The container app scales to zero, so the first request may wait for a cold start.
+      # The container app scales to zero, so the first request may wait for a cold start. Healthy is
+      # not enough: the X-API-Version header must name this build, or the old image is still serving.
       - name: Smoke test
         env:
           FQDN: ${{ steps.deployment.outputs.fqdn }}
+          EXPECTED_VERSION: ${{ needs.publish.outputs.version }}
         run: |
+          expected="$EXPECTED_VERSION+${GITHUB_SHA::7}"
           for attempt in $(seq 1 30); do
-            if curl --fail --silent --show-error --max-time 10 "https://$FQDN/alive"; then
-              echo
-              echo "https://$FQDN/alive is healthy"
-              exit 0
+            if headers=$(curl --fail --silent --show-error --max-time 10 --dump-header - --output /dev/null "https://$FQDN/alive"); then
+              actual=$(grep -i '^x-api-version:' <<< "$headers" | cut -d' ' -f2- | tr -d '\r')
+              if [[ "$actual" == "$expected" ]]; then
+                echo "https://$FQDN/alive is healthy and runs $actual"
+                exit 0
+              fi
+              echo "Attempt $attempt: healthy, but runs '$actual' instead of '$expected'"
+            else
+              echo "Attempt $attempt: not healthy yet"
             fi
-            echo "Attempt $attempt: not healthy yet"
             sleep 10
           done
-          echo "::error::https://$FQDN/alive did not become healthy"
+          echo "::error::https://$FQDN/alive did not become healthy on version $expected"
           exit 1

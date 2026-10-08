@@ -5,10 +5,14 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>e419bfa5-547a-45d8-b3fd-c669af68899a</UserSecretsId>
+    <!-- The deploy workflow sets InformationalVersion to <semver>+<short sha>, returned in the
+         X-API-Version header; keep the SDK from appending the full commit sha to it. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
   <!-- Container image for Azure Container Apps: dotnet publish -c Release /t:PublishContainer (no Dockerfile).
-       The deploy workflow sets the tag (ContainerImageTags) to the GitVersion semantic version.
+       The deploy workflow tags it <GitVersion semver>-<short commit sha>, unique per commit, so every
+       deployment changes the container app's image and rolls out a new revision.
        ContainerUser pins the non-root 'app' user of the .NET base image, which listens on the
        unprivileged port 8080, so the API never runs as root. -->
   <PropertyGroup>

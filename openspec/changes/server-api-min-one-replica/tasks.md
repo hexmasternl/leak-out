@@ -7,4 +7,4 @@
 
 ## 2. Docs
 
-- [ ] 2.1 Update `server/infrastructure/README.md` (parameter table gets `minReplicas`, default `1`; the `modules/api.bicep` row says 1 to `maxReplicas` replicas) and the header comment in `modules/api.bicep`. Verify with a grep for "from 0 replicas" and "0 to `maxReplicas`".
+- [x] 2.1 Update `server/infrastructure/README.md` (parameter table gets `minReplicas`, default `1`; the `modules/api.bicep` row says 1 to `maxReplicas` replicas) and the header comment in `modules/api.bicep`. Verify with a grep for "from 0 replicas" and "0 to `maxReplicas`".

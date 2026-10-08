@@ -1,11 +1,18 @@
-# Builds, tests, versions, publishes and deploys main to Azure (see README.md, "Deployment").
+# Builds, tests, versions, publishes and deploys the game server (server/) from main to Azure
+# (see server/README.md, "Deployment", and docs/repository-layout.md).
 # The image name comes from the API project (ContainerRegistry, ContainerRepository); the tag is
-# the semantic version GitVersion calculates (GitVersion.yml).
-name: deploy
+# the semantic version GitVersion calculates from server-v<x.y.z> tags (server/GitVersion.yml).
+name: server-deploy
 
+# Cut-over from hexmasternl/leak-out-server: only by hand until the first deploy from this
+# repository succeeded. Then add, and disable deploy.yml in leak-out-server:
+#   push:
+#     branches: [main]
+#     paths:
+#       - 'server/**'
+#       - '.github/workflows/server-*.yml'
+#       - '.github/scripts/server-*'
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -21,9 +28,14 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
 
+defaults:
+  run:
+    working-directory: server
+
 jobs:
   build-test:
-    uses: ./.github/workflows/build-test.yml
+    name: server
+    uses: ./.github/workflows/server-build-test.yml
 
   publish:
     needs: build-test
@@ -40,14 +52,17 @@ jobs:
 
       - uses: actions/setup-dotnet@v6
         with:
-          global-json-file: global.json
+          global-json-file: server/global.json
 
       - uses: gittools/actions/gitversion/setup@v4
         with:
           versionSpec: '6.3.x'
 
+      # Only server-v<x.y.z> tags count, never the app's v<x.y.z> release tags.
       - id: gitversion
         uses: gittools/actions/gitversion/execute@v4
+        with:
+          configFilePath: server/GitVersion.yml
 
       - name: Read container settings from the API project
         id: container
@@ -100,7 +115,7 @@ jobs:
       contents: read
       id-token: write
     env:
-      # Must match location in infrastructure/main.bicepparam: ARM rejects a deployment name
+      # Must match location in server/infrastructure/main.bicepparam: ARM rejects a deployment name
       # reused in another location.
       DEPLOYMENT_LOCATION: northeurope
     steps:
@@ -108,7 +123,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v6
         with:
-          global-json-file: global.json
+          global-json-file: server/global.json
 
       - name: Read container settings from the API project
         id: container

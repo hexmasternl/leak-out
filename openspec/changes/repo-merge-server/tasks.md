@@ -17,9 +17,9 @@
 
 ## 3. Server workflows
 
-- [ ] 3.1 Move the server workflows to `.github/workflows/server-build-test.yml`, `server-pull-request.yml` and `server-deploy.yml`, and `coverage-gate.sh` to `.github/scripts/server-coverage-gate.sh`; point restore, build, test, coverage, `dotnet msbuild`/`publish` and artifact paths at `server/src/`, `global-json-file` at `server/global.json`, and the Bicep build and `az deployment` at `server/infrastructure/main.bicep` and `main.bicepparam`; verify with `actionlint` if available
+- [x] 3.1 Move the server workflows to `.github/workflows/server-build-test.yml`, `server-pull-request.yml` and `server-deploy.yml`, and `coverage-gate.sh` to `.github/scripts/server-coverage-gate.sh`; point restore, build, test, coverage, `dotnet msbuild`/`publish` and artifact paths at `server/src/`, `global-json-file` at `server/global.json`, and the Bicep build and `az deployment` at `server/infrastructure/main.bicep` and `main.bicepparam`; verify with `actionlint` if available
 - [ ] 3.2 In `server-pull-request.yml` add a `changes` job (`git diff --name-only` against the base) and run `build-test` and `bicep` only when `server/` or a server workflow changed; verify with a pull request into `development` that only changes `app/` (checks pass without building) and one that changes `server/` (server builds and tests)
-- [ ] 3.3 In `server-deploy.yml` use GitVersion `configFilePath: server/GitVersion.yml`, keep `environment: production` and the concurrency group, and for now only enable `workflow_dispatch` (cut-over step 1); verify the workflow file has no `push` trigger yet
+- [x] 3.3 In `server-deploy.yml` use GitVersion `configFilePath: server/GitVersion.yml`, keep `environment: production` and the concurrency group, and for now only enable `workflow_dispatch` (cut-over step 1); verify the workflow file has no `push` trigger yet
 
 ## 4. Secrets, environment and Azure
 

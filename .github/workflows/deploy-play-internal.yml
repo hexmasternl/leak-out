@@ -2,6 +2,7 @@
 # testing track on every push to main that changes the app. Setup of every secret, key and variable: docs/deployment.md
 # Versioning (GitVersion gives versionName x.y.z, versionCode derives from it): docs/deployment.md#versioning
 # Release notes (from the commits since the previous release tag): docs/deployment.md#release-notes
+# In-app update priority (from the release pull request's update label): docs/deployment.md#required-updates
 # The app and the server release separately: docs/repository-layout.md
 
 name: Deploy to Play internal testing
@@ -16,7 +17,14 @@ on:
       - 'scripts/compute-release-version.sh'
       - 'scripts/generate-release-notes.sh'
       - 'scripts/generate-release-notes.test.sh'
+      - 'scripts/resolve-update-priority.sh'
+      - 'scripts/resolve-update-priority.test.sh'
   workflow_dispatch:
+    inputs:
+      required-update:
+        description: 'Required update: players must install this release before they can play on (in-app update priority 5 instead of 0)'
+        type: boolean
+        required: true
 
 # One deployment at a time, in order: a newer run waits instead of cancelling the running one.
 concurrency:
@@ -36,6 +44,8 @@ jobs:
     permissions:
       # Pushes the v<x.y.z> tag of each release, which the next run's GitVersion builds on.
       contents: write
+      # Reads the update label of the pull request merged as the pushed commit.
+      pull-requests: read
     defaults:
       run:
         working-directory: app/src
@@ -49,6 +59,48 @@ jobs:
         with:
           # GitVersion needs the full history and every tag.
           fetch-depth: 0
+
+      # Before anything is built: a release without a decided update priority is never uploaded.
+      # A push takes the update label of the pull request merged as this commit, a manual run its
+      # required-update input. Unlike the release notes, a failure here stops the run.
+      - name: Resolve in-app update priority
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          REQUIRED_UPDATE: ${{ inputs.required-update }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          bash scripts/resolve-update-priority.test.sh
+          source_detail="manual run"
+          if [ "$EVENT_NAME" = workflow_dispatch ]; then
+            bash scripts/resolve-update-priority.sh --manual "$REQUIRED_UPDATE" > "$RUNNER_TEMP/update.env"
+          else
+            pulls=$(gh api "repos/$GITHUB_REPOSITORY/commits/$COMMIT_SHA/pulls")
+            pull=$(jq -c --arg sha "$COMMIT_SHA" \
+              'map(select(.base.ref == "main" and .merge_commit_sha == $sha)) | first // empty' <<< "$pulls")
+            if [ -z "$pull" ]; then
+              echo "::error::No pull request into main was merged as $COMMIT_SHA, so the update priority is unknown. Release through a labelled pull request, or start the workflow by hand. See docs/deployment.md#required-updates."
+              exit 1
+            fi
+            number=$(jq -r '.number' <<< "$pull")
+            source_detail="pull request #$number"
+            labels=$(jq -r '.labels[].name' <<< "$pull")
+            bash scripts/resolve-update-priority.sh --labels "$labels" > "$RUNNER_TEMP/update.env"
+          fi
+          cat "$RUNNER_TEMP/update.env" >> "$GITHUB_ENV"
+          source "$RUNNER_TEMP/update.env"
+          {
+            echo "### In-app update"
+            echo ""
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| Update | $UPDATE_KIND |"
+            echo "| In-app update priority | \`$UPDATE_PRIORITY\` |"
+            echo "| Decided by | $UPDATE_SOURCE ($source_detail) |"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Update $UPDATE_KIND, priority $UPDATE_PRIORITY, from the $UPDATE_SOURCE ($source_detail)"
 
       - name: Set up JDK 21
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
@@ -190,6 +242,8 @@ jobs:
           status: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}
           # whatsnew-<locale> files, written by "Generate release notes".
           whatsNewDirectory: ${{ runner.temp }}/whatsnew
+          # 5 makes the release a required update in the app, 0 an optional one; set by "Resolve in-app update priority".
+          inAppUpdatePriority: ${{ env.UPDATE_PRIORITY }}
 
       # Only after a successful upload: the tag is what makes the next commit on main the next patch.
       - name: Tag the release

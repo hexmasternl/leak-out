@@ -2,7 +2,7 @@
 
 Every push to `main` that changes the app builds a signed release of Leak Out and uploads it to the Play Console's private testing track, so testers get the new build within minutes. This guide explains how that works and how to set up every key, account, secret and variable it needs, from an empty Play Console to a green run.
 
-You only do this setup once. After that, releasing is merging `development` into `main`.
+You only do this setup once. After that, releasing is merging `development` into `main` through a pull request labelled `update-optional` or `update-required` (see [Required updates](#required-updates)).
 
 - [How it works](#how-it-works)
 - [What you need](#what-you-need)
@@ -16,25 +16,27 @@ You only do this setup once. After that, releasing is merging `development` into
 - [8. Run the workflow](#8-run-the-workflow)
 - [Versioning](#versioning)
 - [Release notes](#release-notes)
+- [Required updates](#required-updates)
 - [Troubleshooting](#troubleshooting)
 - [Maintenance](#maintenance)
 - [Reference: every secret and variable](#reference-every-secret-and-variable)
 
 ## How it works
 
-The workflow is [`.github/workflows/deploy-play-internal.yml`](../.github/workflows/deploy-play-internal.yml). It runs on every push to `main` that changes a file under `app/` (or the workflow itself, or the release scripts it runs: `scripts/compute-release-version.sh`, `scripts/generate-release-notes.sh` and its tests), and you can also start it by hand. Pushes that only change the server (`server/`) or docs do not release the app; the server has its own workflows ([repository-layout.md](repository-layout.md)). It builds from `app/src/`, the app's Gradle root. Only one deployment runs at a time; a newer one waits for the running one to finish.
+The workflow is [`.github/workflows/deploy-play-internal.yml`](../.github/workflows/deploy-play-internal.yml). It runs on every push to `main` that changes a file under `app/` (or the workflow itself, or the release scripts it runs: `scripts/compute-release-version.sh`, `scripts/generate-release-notes.sh`, `scripts/resolve-update-priority.sh` and their tests), and you can also start it by hand. Pushes that only change the server (`server/`) or docs do not release the app; the server has its own workflows ([repository-layout.md](repository-layout.md)). It builds from `app/src/`, the app's Gradle root. Only one deployment runs at a time; a newer one waits for the running one to finish.
 
 On each run it:
 
-1. checks that all five secrets are set (and stops with the names of any that are missing);
-2. runs the JVM unit tests (`:core:test`, `:app:testDebugUnitTest`) and stops if any fail;
-3. works out the **version** with GitVersion (`versionName` `x.y.z`) and the **version code** from it (see [Versioning](#versioning));
-4. writes the **release notes** from the commits since the previous release (see [Release notes](#release-notes));
-5. decodes the upload keystore and builds `app-release.aab` signed with the **upload key**;
-6. checks that the bundle really is signed;
-7. keeps the bundle as a workflow artifact for 14 days;
-8. uploads it with the release notes to the Play Console track in `PLAY_TRACK` (default: internal testing), then tags the commit `v<x.y.z>`;
-9. deletes the decoded keystore, whether the run succeeded or not.
+1. decides whether the release is a **required or optional update** for players, from the update label of the pull request that was merged (or the `required-update` input of a manual run), and stops before building anything when it can't (see [Required updates](#required-updates));
+2. checks that all five secrets are set (and stops with the names of any that are missing);
+3. runs the JVM unit tests (`:core:test`, `:app:testDebugUnitTest`) and stops if any fail;
+4. works out the **version** with GitVersion (`versionName` `x.y.z`) and the **version code** from it (see [Versioning](#versioning));
+5. writes the **release notes** from the commits since the previous release (see [Release notes](#release-notes));
+6. decodes the upload keystore and builds `app-release.aab` signed with the **upload key**;
+7. checks that the bundle really is signed;
+8. keeps the bundle as a workflow artifact for 14 days;
+9. uploads it with the release notes and the in-app update priority to the Play Console track in `PLAY_TRACK` (default: internal testing), then tags the commit `v<x.y.z>`;
+10. deletes the decoded keystore, whether the run succeeded or not.
 
 Three keys and accounts are involved. It helps to keep them apart:
 
@@ -258,12 +260,12 @@ gh variable set PLAY_RELEASE_STATUS --body completed   # roll out without review
 
 ## 8. Run the workflow
 
-The deployment starts on its own when `development` is merged into `main`. To run it without a new merge, open the **Actions** tab, choose **Deploy to Play internal testing**, then **Run workflow** with branch `main`. The *Run workflow* button only appears once the workflow file is on `main`.
+The deployment starts on its own when a labelled `development` → `main` pull request is merged. To run it without a new merge, open the **Actions** tab, choose **Deploy to Play internal testing**, then **Run workflow** with branch `main`, and tick or leave **Required update** (the `required-update` input; see [Required updates](#required-updates)). The *Run workflow* button only appears once the workflow file is on `main`.
 
 A successful run:
 
 - shows every step green, including *Verify bundle signature*, *Upload to Google Play* and *Remove upload keystore*;
-- has a **summary** with the version, the version code, the track, the release status and the commit;
+- has a **summary** with the in-app update (required or optional, its priority and what decided it), the version, the version code, the track, the release status and the commit;
 - has an artifact `leak-out-<version>-<version code>` with the uploaded `.aab`, kept for 14 days.
 
 In the Play Console, the release appears under **Test and release → Testing → Internal testing → Releases**, named after its version (for example `1001 (0.1.1)`). With the default `PLAY_RELEASE_STATUS` it is a draft: review its translations and roll it out (see [Translations](#translations)). Testers who opted in then get the update through the Play Store, usually within minutes.
@@ -344,9 +346,56 @@ That prints the notes of the latest commit on `main` since the release before it
 
 **Release notes never stop a deployment.** If the tests or the script fail, the run logs a warning and uploads with `Bug fixes and improvements.`. Fix the script on a feature branch; the next release gets proper notes again (they cover everything since the previous tag, so nothing is lost).
 
+## Required updates
+
+The app asks Google Play, when it starts and whenever it comes back to the foreground, whether a newer version is available and how urgent it is (spec `app-updates`). The urgency is the release's **in-app update priority**, 0 to 5, which the workflow sets on every upload. Every release pull request into `main` decides it with one of two labels:
+
+| Label | Priority | What players see |
+| --- | --- | --- |
+| `update-optional` | `0` | At start, a prompt they can dismiss. If they accept, the update downloads in the background while they play; once downloaded, the app offers to restart and install it, but never during a level. |
+| `update-required` | `5` | A blocking update screen instead of the welcome screen. It only offers **Update** (Play's full-screen update) and **Close game**; Back closes the app, and no level can start until the update is installed. A player who is in a level finishes it first: next level and restart then lead to the update screen. |
+
+Use `update-required` only for major fixes, such as a crash or a broken level, that players must not keep running into. Use `update-optional` for everything else. The app treats priority 4 and up as required, so 1–3 and 4 stay free for later use without an app change.
+
+**Exactly one label, enforced.** The workflow [`.github/workflows/release-update-label.yml`](../.github/workflows/release-update-label.yml) runs on every pull request into `main` when it is opened, reopened, updated, labelled or unlabelled. Its job, **Release update label**, fails unless the pull request has exactly one of the two labels; adding the missing label runs it again. It needs no secrets. Pull requests into `development` don't need a label and don't run the check.
+
+**Make it a required status check on `main`** (once, by hand; it is a repository setting, not code). With a ruleset: **Settings → Rules → Rulesets → New ruleset → New branch ruleset**, target the default branch (`main`), turn on **Require status checks to pass**, add the check **Release update label** (it can only be picked after it has run once, so open the first release pull request first), and save with enforcement **Active**. With classic branch protection: **Settings → Branches → Add branch protection rule** for `main`, tick **Require status checks to pass before merging** and add **Release update label**. Or with the GitHub CLI:
+
+```sh
+gh api -X POST repos/hexmasternl/leak-out/rulesets --input - <<'EOF'
+{
+  "name": "main: release update label",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": { "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] } },
+  "rules": [
+    { "type": "required_status_checks",
+      "parameters": { "strict_required_status_checks_policy": false,
+                      "required_status_checks": [ { "context": "Release update label" } ] } }
+  ]
+}
+EOF
+```
+
+**The deploy reads the same label.** Right after checkout, the *Resolve in-app update priority* step looks up the pull request into `main` that was merged as the pushed commit, and [`scripts/resolve-update-priority.sh`](../scripts/resolve-update-priority.sh) turns its label into the priority (its tests, `bash scripts/resolve-update-priority.test.sh`, run first). When there is no such pull request (a direct push) or it has no label or both, the run fails before anything is built, uploaded or tagged. So a release never goes out with a guessed priority, even if the required status check is missing.
+
+**Manual runs** have no pull request, so *Run workflow* asks for the `required-update` input instead: ticked gives priority 5, unticked priority 0.
+
+**A priority can't be changed after upload.** Google Play keeps the priority a release was uploaded with. To make a release required after the fact, ship a new release (for example a manual run, or a pull request with a small fix) labelled `update-required`.
+
+**Testing it.** In-app updates only work for installs from Google Play, so debug builds and sideloaded APKs never see an update and simply play on. To try it, install a release from the internal testing track on a tester's device, then release a newer one with `update-required`. Play caches update information, so the newer version can take a while to show up as available (see [Troubleshooting](#troubleshooting)).
+
 ## Troubleshooting
 
 Find the failing step in the run's log. The upload step prints Google's error message, which is usually one of these.
+
+### No pull request into main was merged as … / The pull request needs exactly one of the labels update-optional or update-required
+
+The *Resolve in-app update priority* step stopped the run before anything was built, uploaded or tagged. Either the commit reached `main` without a pull request, or the release pull request had no update label or both. The priority can't be added to a finished run, so start the workflow by hand (*Run workflow*, with the right `required-update` choice), or merge the next release through a pull request with exactly one label. The same message on a pull request into `main` comes from the **Release update label** check: add `update-optional` or `update-required` and it runs again (see [Required updates](#required-updates)).
+
+### A required update does not show up on a device
+
+The device only learns about an update from Google Play, which caches it. Check that the installed version came from the Play Store (testing track opt-in), not from Android Studio or an APK: other installs never see updates. Then open the app's page in the Play Store, which refreshes the cache, and start the app again. It can take a while after a rollout before Play reports the new version as available. Until then the player can keep playing; this delays the required update but never breaks it.
 
 ### Secret … is not set in the play-store environment
 
@@ -483,6 +532,15 @@ Repository variables:
 | --- | --- | --- |
 | `PLAY_TRACK` | `internal` | The Play track to upload to |
 | `PLAY_RELEASE_STATUS` | `draft` | The release status (`completed` rolls out without review) |
+
+Pull request labels and workflow inputs (see [Required updates](#required-updates)):
+
+| Name | Kind | Effect |
+| --- | --- | --- |
+| `update-optional` | label on the pull request into `main` | Uploads the release with in-app update priority `0`: an optional update |
+| `update-required` | label on the pull request into `main` | Uploads the release with in-app update priority `5`: a required update |
+| `required-update` | input of a manual run (required, boolean) | Ticked: priority `5`; unticked: priority `0` |
+| `Release update label` | job of `release-update-label.yml` | The required status check on `main` that enforces exactly one label |
 
 Gradle inputs (set by the workflow, or by you for a local signed build):
 

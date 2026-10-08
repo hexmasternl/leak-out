@@ -62,6 +62,8 @@ import nl.hexmaster.leakout.ui.splash.SplashGate
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import nl.hexmaster.leakout.ui.title.ExitConfirmation
 import nl.hexmaster.leakout.ui.title.WelcomeScreen
+import nl.hexmaster.leakout.ui.update.UpdateGateHost
+import nl.hexmaster.leakout.update.UpdateViewModel
 
 /** The screens, until a navigation library is worth adding. */
 private sealed interface Screen {
@@ -172,6 +174,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // Google Play update checks and the update screens' state (openspec/specs/app-updates).
+    private val updateViewModel: UpdateViewModel by viewModels {
+        viewModelFactory { initializer { UpdateViewModel(appContainer.appUpdates, appContainer.updateGate) } }
+    }
+
     // Read once: the installed version does not change while the process runs.
     private val appInfo: AppInfo by lazy {
         @Suppress("DEPRECATION") // The int-flag overload works on every supported API level (min 26).
@@ -222,62 +229,71 @@ class MainActivity : ComponentActivity() {
                     }
                     // The only way into the designer, and a no-op while its flag is off.
                     val openDesigner = { if (FeatureFlags.levelDesigner) screen = Screen.Designer }
-                    when (val current = screen) {
-                        is Screen.Game -> {
-                            val next = remember(current.level) { levels.next(current.level) }
-                            GameScreen(
+                    // A required update replaces every screen but a level; the level is finished first.
+                    UpdateGateHost(
+                        viewModel = updateViewModel,
+                        inLevel = screen is Screen.Game || screen is Screen.TestPlay,
+                        onWelcome = screen == Screen.Welcome,
+                        onCloseApp = { finishAffinity() },
+                    ) { mayStartLevel ->
+                        when (val current = screen) {
+                            is Screen.Game -> {
+                                val next = remember(current.level) { levels.next(current.level) }
+                                GameScreen(
+                                    level = current.level,
+                                    onExit = { screen = Screen.Welcome },
+                                    onNextLevel = next?.let { { screen = Screen.Game(it) } },
+                                    history = history,
+                                    achievements = appContainer.tracker,
+                                    soundEffects = soundEffectsViewModel.soundEffects,
+                                    haptics = hapticsViewModel.haptics,
+                                    tips = settings,
+                                    scores = appContainer.scores,
+                                    topScores = topScores,
+                                    mayStartLevel = mayStartLevel,
+                                )
+                            }
+                            is Screen.TestPlay -> TestPlayScreen(
                                 level = current.level,
-                                onExit = { screen = Screen.Welcome },
-                                onNextLevel = next?.let { { screen = Screen.Game(it) } },
-                                history = history,
-                                achievements = appContainer.tracker,
+                                onExit = { screen = Screen.Designer },
                                 soundEffects = soundEffectsViewModel.soundEffects,
                                 haptics = hapticsViewModel.haptics,
-                                tips = settings,
-                                scores = appContainer.scores,
-                                topScores = topScores,
+                            )
+                            Screen.Designer -> LevelDesignerScreen(
+                                viewModel = designerViewModel,
+                                onTestPlay = { screen = Screen.TestPlay(it) },
+                                onBack = { screen = Screen.Welcome },
+                            )
+                            Screen.Library -> LevelLibraryScreen(
+                                viewModel = library,
+                                onStartLevel = { id -> levels.load(id)?.let { screen = Screen.Game(it) } },
+                                onBack = { screen = Screen.Welcome },
+                            )
+                            Screen.Settings -> SettingsScreen(
+                                viewModel = settingsViewModel,
+                                appInfo = appInfo,
+                                onBack = { screen = Screen.Welcome },
+                                onSoundPreview = soundEffectsViewModel.soundEffects::preview,
+                                onMusicVolumePreview = music::previewVolume,
+                                onSignIn = { playGames.auth.signIn(this@MainActivity) },
+                                onOpenAchievements = { screen = Screen.Achievements },
+                            )
+                            Screen.Achievements -> AchievementsScreen(
+                                viewModel = achievementsViewModel,
+                                onBack = { screen = Screen.Settings },
+                                onOpenPlayGames = { showPlayGamesAchievements(this@MainActivity) },
+                            )
+                            Screen.Welcome -> WelcomeScreen(
+                                resolveNextLevel = ::resolveNextLevel,
+                                onStartLevel = { id -> levels.load(id)?.let { screen = Screen.Game(it) } },
+                                onOpenLevelLibrary = openLibrary,
+                                onSettings = { screen = Screen.Settings },
+                                onExit = { finishAffinity() },
+                                onOpenLevelDesigner = if (FeatureFlags.levelDesigner) openDesigner else null,
+                                shouldConfirmExit = exitConfirmation::shouldAsk,
+                                onExitAnswered = exitConfirmation::answered,
                             )
                         }
-                        is Screen.TestPlay -> TestPlayScreen(
-                            level = current.level,
-                            onExit = { screen = Screen.Designer },
-                            soundEffects = soundEffectsViewModel.soundEffects,
-                            haptics = hapticsViewModel.haptics,
-                        )
-                        Screen.Designer -> LevelDesignerScreen(
-                            viewModel = designerViewModel,
-                            onTestPlay = { screen = Screen.TestPlay(it) },
-                            onBack = { screen = Screen.Welcome },
-                        )
-                        Screen.Library -> LevelLibraryScreen(
-                            viewModel = library,
-                            onStartLevel = { id -> levels.load(id)?.let { screen = Screen.Game(it) } },
-                            onBack = { screen = Screen.Welcome },
-                        )
-                        Screen.Settings -> SettingsScreen(
-                            viewModel = settingsViewModel,
-                            appInfo = appInfo,
-                            onBack = { screen = Screen.Welcome },
-                            onSoundPreview = soundEffectsViewModel.soundEffects::preview,
-                            onMusicVolumePreview = music::previewVolume,
-                            onSignIn = { playGames.auth.signIn(this@MainActivity) },
-                            onOpenAchievements = { screen = Screen.Achievements },
-                        )
-                        Screen.Achievements -> AchievementsScreen(
-                            viewModel = achievementsViewModel,
-                            onBack = { screen = Screen.Settings },
-                            onOpenPlayGames = { showPlayGamesAchievements(this@MainActivity) },
-                        )
-                        Screen.Welcome -> WelcomeScreen(
-                            resolveNextLevel = ::resolveNextLevel,
-                            onStartLevel = { id -> levels.load(id)?.let { screen = Screen.Game(it) } },
-                            onOpenLevelLibrary = openLibrary,
-                            onSettings = { screen = Screen.Settings },
-                            onExit = { finishAffinity() },
-                            onOpenLevelDesigner = if (FeatureFlags.levelDesigner) openDesigner else null,
-                            shouldConfirmExit = exitConfirmation::shouldAsk,
-                            onExitAnswered = exitConfirmation::answered,
-                        )
                     }
                 }
             }

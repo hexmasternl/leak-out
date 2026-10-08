@@ -16,7 +16,7 @@ faq:
   - question: "Comment gagner plus d'étoiles ?"
     answer: "Faites passer le liquide par plus de sections, utilisez coudes et croix (un second passage dans une croix rapporte 50 points) et ne laissez pas de sections que le liquide n'atteint jamais : chacune coûte 3 points. Tous les points sont dans les [règles](/fr/rules/)."
   - question: "Comment apparaître dans le classement ?"
-    answer: "Connectez-vous à Google Play Games dans les paramètres du jeu, puis gagnez un niveau. Votre meilleur score sur chaque niveau est envoyé au classement, qui montre le top 25 de chaque niveau."
+    answer: "Connectez-vous à Google Play Games dans les paramètres du jeu, puis gagnez un niveau. Votre meilleur score sur chaque niveau est envoyé au classement, qui montre le top 25 de chaque niveau. Il est mis à jour toutes les 30 minutes : un nouveau score peut mettre jusqu'à une demi-heure à apparaître."
   - question: "Quel nom apparaît dans le classement ?"
     answer: "Votre nom d'affichage Google Play Games. Vous pouvez le modifier dans l'application Google Play Jeux."
   - question: "J'ai trouvé un bug ou j'ai une idée. Où le signaler ?"

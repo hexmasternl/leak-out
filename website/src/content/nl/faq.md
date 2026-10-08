@@ -16,7 +16,7 @@ faq:
   - question: "Hoe verdien ik meer sterren?"
     answer: "Laat de vloeistof door meer delen stromen, gebruik bochten en kruisen (een tweede keer door een kruis levert 50 punten op) en laat geen delen liggen waar de vloeistof nooit komt: elk kost 3 punten. Alle punten staan in de [spelregels](/nl/rules/)."
   - question: "Hoe kom ik op de ranglijst?"
-    answer: "Log in de instellingen van het spel in bij Google Play Games en win een level. Je beste score op elk level gaat naar de ranglijst, die de top 25 van elk level laat zien."
+    answer: "Log in de instellingen van het spel in bij Google Play Games en win een level. Je beste score op elk level gaat naar de ranglijst, die de top 25 van elk level laat zien. Die wordt elke 30 minuten bijgewerkt, dus het kan tot een half uur duren voordat een nieuwe score verschijnt."
   - question: "Welke naam staat er op de ranglijst?"
     answer: "Je weergavenaam in Google Play Games. Die kun je wijzigen in de Google Play Games-app."
   - question: "Ik heb een fout gevonden of een idee. Waar kan ik dat kwijt?"

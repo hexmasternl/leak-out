@@ -55,3 +55,6 @@ output staticWebAppName string = website.outputs.name
 
 @description('Default host name of the Static Web App: the origin to allow in the score server CORS settings.')
 output defaultHostname string = website.outputs.defaultHostname
+
+@description('Host name the site is published under: the custom domain when set, otherwise the default host name.')
+output publicHostname string = empty(customDomain) ? website.outputs.defaultHostname : customDomain

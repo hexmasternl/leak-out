@@ -20,9 +20,9 @@
 
 ## 4. Server public top scores (after `repo-merge-server`)
 
-- [ ] 4.1 Add `GET /api/public/levels/{level}/scores/top` as an anonymous minimal API endpoint that reuses the level ranking with a limit of 25 and returns level plus entries (position, display name, score) without player ids; verify with integration tests for 40 scores, no scores, level 0 and a request without a token
-- [ ] 4.2 Add the CORS policy (allowed origins from configuration, set in Bicep app settings) and per-client rate limiting plus `Cache-Control: public, max-age=60` to that endpoint; verify with tests for an allowed origin, a disallowed origin and a 429 after exceeding the limit
-- [ ] 4.3 Document the endpoint in the server's docs; verify `dotnet test` on `server/src/` passes and the coverage gate holds
+- [x] 4.1 Add `GET /api/public/levels/{level}/scores/top` as an anonymous minimal API endpoint backed by a `GetPublicLevelTopScores` query slice that reuses the level ranking with a limit of 25 and returns level plus entries (position, display name, score) without player ids; verify with handler tests (ranking order, top 25 requested, unknown names, empty level) and endpoint tests (200 without a token and the website's JSON shape, empty level, level 0 and -2 give 400)
+- [x] 4.2 Keep each level's result in the memory cache for 30 minutes (failures not cached), send `Cache-Control: public, max-age=60`, and add the CORS policy `Website` with origins from `Website:AllowedOrigins` (`https://leakout.hexmaster.nl` in appsettings.json); verify with tests for a cache hit, separate levels, the 30-minute expiry, no caching after a failure, an allowed origin, a preflight without a token, a disallowed origin and no CORS on the authenticated leaderboard
+- [x] 4.3 Document the endpoint, its caching and CORS in `server/README.md` (with the span and metric kind) and add a sample to the `.http` file; verify the full server suite as CI runs it passes and the coverage gate holds
 
 ## 5. Infrastructure and deployment
 
@@ -30,6 +30,7 @@
 - [x] 5.2 Add `.github/workflows/website-pull-request.yml` (changes job, Hugo build with pinned version and `--panicOnWarning`, Bicep build, always reports a result); verify with `actionlint` if available and with a pull request that changes `website/`
 - [x] 5.3 Add `.github/workflows/website-deploy.yml` (push to `main` on `website/**` and the workflow, `workflow_dispatch`; OIDC Azure login, Bicep deployment, deployment token fetched at run time, `Azure/static-web-apps-deploy` with `skip_app_build`); verify with `actionlint` if available and that no token appears in the repository
 - [x] 5.4 Document the Azure federated credential, the GitHub variables and secrets, and the first manual run in `website/README.md`; add `website/` to `docs/repository-layout.md` and `README.md`; verify every secret and variable used by the workflows is documented
+- [x] 5.5 Serve the site on its custom domain `leakout.hexmaster.nl` (`customDomain` in main.bicepparam, CNAME already pointing at the Static Web App), build it for that address via the new `publicHostname` output, and tell visitors on the leaderboard page and in the FAQ that scores refresh every 30 minutes; verify with `az bicep build`, a `what-if` that only adds the custom domain, and a Hugo build
 
 ## 6. Integration
 

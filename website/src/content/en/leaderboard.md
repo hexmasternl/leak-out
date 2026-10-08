@@ -4,4 +4,4 @@ description: "The 25 best scores of every Leak Out level."
 layout: leaderboard
 ---
 
-Choose a level to see its 25 best scores. Scores come from players who are signed in to Google Play Games.
+Choose a level to see its 25 best scores. Scores come from players who are signed in to Google Play Games. The leaderboard is refreshed every 30 minutes, so a new score can take a while to appear.

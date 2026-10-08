@@ -1,5 +1,7 @@
 package nl.hexmaster.leakout.update
 
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
@@ -92,6 +94,14 @@ class UpdateViewModel(
     /** Update on the blocking screen. */
     fun updateNow() {
         flowRequests.trySend(UpdateFlow.Required)
+    }
+
+    /** Opens a requested Play flow with the activity's [launcher]; one that cannot start leaves everything as it was. */
+    fun launch(flow: UpdateFlow, launcher: ActivityResultLauncher<IntentSenderRequest>) {
+        when (flow) {
+            UpdateFlow.Required -> updates.startRequiredUpdate(launcher)
+            UpdateFlow.Optional -> updates.startOptionalUpdate(launcher)
+        }
     }
 
     /** A Play flow came back, completed or cancelled: the next check tells which. */

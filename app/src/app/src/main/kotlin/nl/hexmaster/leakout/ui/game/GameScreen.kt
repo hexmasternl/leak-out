@@ -101,6 +101,10 @@ import nl.hexmaster.leakout.ui.theme.LeakOutColors
  * without it nothing is sent (test play). With [topScores], the pause, level complete and level lost
  * dialogs offer the level's global top 10 (spec `level-top-scores`); without it they show no Top 10
  * button (test play, or a build without a score server).
+ *
+ * Before next level or restart starts another attempt it asks [mayStartLevel]; when a required app
+ * update closed the gate (spec `app-updates`) the attempt is left through [onExit] instead, which
+ * leads to the blocking update screen. The running attempt itself is never interrupted.
  */
 @Composable
 fun GameScreen(
@@ -116,6 +120,7 @@ fun GameScreen(
     haptics: Haptics? = null,
     scores: ScoreSubmissions? = null,
     topScores: TopScoresAccess? = null,
+    mayStartLevel: () -> Boolean = { true },
 ) {
     // The display stays on for the whole game screen, its dialogs included.
     KeepScreenOn()
@@ -278,10 +283,19 @@ fun GameScreen(
     }
     }
 
+    // Next level and restart start a new attempt only while no required update closed the gate.
+    val restartOrLeave: () -> Unit = { if (mayStartLevel()) session.restart(achievements) else onExit() }
     if (showPauseDialog) {
         PauseDialog(
             onResume = { session.resumeByUser() },
-            onRestart = { session.restart(achievements) },
+            onRestart = {
+                if (mayStartLevel()) {
+                    session.restart(achievements)
+                } else {
+                    session.abandonAttempt(achievements)
+                    onExit()
+                }
+            },
             onExit = {
                 session.abandonAttempt(achievements)
                 onExit()
@@ -293,7 +307,7 @@ fun GameScreen(
         LevelLostDialog(
             level = currentLevel.id,
             score = session.select { state.score },
-            onRestart = { session.restart(achievements) },
+            onRestart = restartOrLeave,
             onExit = onExit,
             reason = session.select { (state.outcome as? Outcome.Lost)?.reason ?: LossReason.LEAK },
             unlocked = session.select { unlockedThisAttempt },
@@ -309,8 +323,8 @@ fun GameScreen(
                 score = score,
                 frame = frame,
                 hasNextLevel = onNextLevel != null,
-                onNextLevel = { onNextLevel?.invoke() },
-                onRestart = { session.restart(achievements) },
+                onNextLevel = { if (mayStartLevel()) onNextLevel?.invoke() else onExit() },
+                onRestart = restartOrLeave,
                 onExit = onExit,
                 newBest = session.select { recordResult is RecordResult.NewHighscore },
                 unlocked = session.select { unlockedThisAttempt },

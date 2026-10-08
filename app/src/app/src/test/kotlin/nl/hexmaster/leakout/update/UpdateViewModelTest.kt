@@ -104,6 +104,25 @@ class UpdateViewModelTest {
     }
 
     @Test
+    fun `a requested flow opens the matching Play flow`() = runTest {
+        val vm = UpdateViewModel(updates)
+        vm.launch(UpdateFlow.Required, NoLauncher)
+        vm.launch(UpdateFlow.Optional, NoLauncher)
+        assertEquals(1, updates.requiredStarts)
+        assertEquals(1, updates.optionalStarts)
+    }
+
+    @Test
+    fun `a flow result checks again`() = runTest {
+        updates.next = required
+        val vm = UpdateViewModel(updates)
+        vm.onStart(owner)
+        vm.onFlowResult()
+        assertEquals(2, updates.checks)
+        assertTrue("a cancelled update keeps the blocking screen", vm.gate.value.showBlockingScreen())
+    }
+
+    @Test
     fun `a finished download is offered for install outside a level only`() = runTest {
         updates.next = optional
         val vm = UpdateViewModel(updates)

@@ -36,8 +36,8 @@ Paths are relative to `app/src/`; run Gradle from `app/src/` (`.\gradlew.bat` on
 
 ## 5. Level designer
 
-- [ ] 5.1 Extend `LevelDraft` with portal pairs (second portal optional), the selected portal, and the unfinished-pair error; exclude portals from the calculated star thresholds; remove a pair with a portal outside a shrunk grid. Verify with `LevelDraftTest` cases for every new designer scenario (place, move, open side, remove, unfinished pair, at most three, shrink, thresholds).
-- [ ] 5.2 Make the Start, Finish, Block and mandatory tools leave portals alone. Verify with `LevelDraftTest` cases.
+- [x] 5.1 Extend `LevelDraft` with portal pairs (second portal optional), the selected portal, and the unfinished-pair error; exclude portals from the calculated star thresholds; remove a pair with a portal outside a shrunk grid. Verify with `LevelDraftTest` cases for every new designer scenario (place, move, open side, remove, unfinished pair, at most three, shrink, thresholds).
+- [x] 5.2 Make the Start, Finish, Block and mandatory tools leave portals alone. Verify with `LevelDraftTest` cases.
 - [ ] 5.3 Add the Portal tool, open side control and Remove pair action to the designer screen, highlight portal errors on the grid, and keep portals through export, test play and saved state. Verify with `LevelDesignerViewModel` unit tests and by running `./gradlew :app:testDebugUnitTest`.
 - [ ] 5.4 Update the "Creating levels with the designer" section of `docs/level-format.md` with the Portal tool.
 

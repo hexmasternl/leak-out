@@ -7,6 +7,7 @@ using 'main.bicep'
 param resourceGroupName = 'rg-leakout-prod'
 param location = 'northeurope'
 param locationAbbreviation = 'neu'
+param minReplicas = 1
 param maxReplicas = 3
 
 param imageName = readEnvironmentVariable('API_IMAGE')

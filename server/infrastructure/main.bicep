@@ -46,6 +46,10 @@ param googleClientSecret string
 @minLength(32)
 param authSigningKey string
 
+@description('Minimum number of API replicas; 1 keeps a warm replica, 0 lets the API scale to zero.')
+@minValue(0)
+param minReplicas int = 1
+
 @description('Maximum number of API replicas.')
 @minValue(1)
 param maxReplicas int = 3
@@ -71,6 +75,7 @@ module resources 'resources.bicep' = {
     googleClientId: googleClientId
     googleClientSecret: googleClientSecret
     authSigningKey: authSigningKey
+    minReplicas: minReplicas
     maxReplicas: maxReplicas
   }
 }

@@ -13,6 +13,7 @@ import nl.hexmaster.leakout.core.level.PipeSection.RES
 import nl.hexmaster.leakout.core.level.PipeSection.V
 import nl.hexmaster.leakout.core.level.PipeSection.X
 import nl.hexmaster.leakout.core.level.PlacementRules
+import nl.hexmaster.leakout.core.level.PortalPair
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.level.StackSettings
@@ -37,7 +38,39 @@ class TipSchedulerTest {
         visible: Set<Int> = allVisible,
         outcome: Outcome = Outcome.Playing,
         mandatory: List<Position> = emptyList(),
-    ) = TipScheduler.dueTips(stack, outcome, seen, atLevelStart, visible, mandatory)
+        portalPairs: Int = 0,
+    ) = TipScheduler.dueTips(stack, outcome, seen, atLevelStart, visible, mandatory, portalPairs)
+
+    @Test
+    fun `the portal tip is due at the start of the first level with portals`() {
+        assertEquals(listOf(TipId.Portal), due(seen = setOf(TipId.Intro), portalPairs = 1))
+    }
+
+    @Test
+    fun `the portal tip is shown once and only at level start`() {
+        assertEquals(emptyList<TipId>(), due(seen = setOf(TipId.Intro, TipId.Portal), portalPairs = 1))
+        assertEquals(emptyList<TipId>(), due(seen = setOf(TipId.Intro), atLevelStart = false, portalPairs = 1))
+        assertEquals(emptyList<TipId>(), due(seen = setOf(TipId.Intro), portalPairs = 0))
+    }
+
+    @Test
+    fun `the portal tip comes after the intro tour and the mandatory tip and before the cross tip`() {
+        assertEquals(listOf(TipId.Intro, TipId.Portal, TipId.Cross), due(stack(H, X, V, H, V), portalPairs = 1))
+        assertEquals(
+            listOf(TipId.Intro, TipId.Mandatory, TipId.Portal, TipId.Cross, TipId.Reservoir),
+            due(stack(H, X, RES, H, V), mandatory = listOf(Position(2, 2)), portalPairs = 2),
+        )
+    }
+
+    @Test
+    fun `the portal tip highlights both portals of pair 1 only`() {
+        val pairOne = PortalPair(Endpoint(Position(1, 0), Side.RIGHT), Endpoint(Position(3, 2), Side.LEFT))
+        val pairTwo = PortalPair(Endpoint(Position(1, 3), Side.TOP), Endpoint(Position(2, 0), Side.BOTTOM))
+        val start = Endpoint(Position(0, 1), Side.RIGHT)
+        assertEquals(listOf(Position(1, 0), Position(3, 2)), TipScheduler.portalTipCells(level(start).copy(portals = listOf(pairOne))))
+        assertEquals(listOf(Position(1, 0), Position(3, 2)), TipScheduler.portalTipCells(level(start).copy(portals = listOf(pairOne, pairTwo))))
+        assertEquals(emptyList<Position>(), TipScheduler.portalTipCells(level(start)))
+    }
 
     // 3.1
 

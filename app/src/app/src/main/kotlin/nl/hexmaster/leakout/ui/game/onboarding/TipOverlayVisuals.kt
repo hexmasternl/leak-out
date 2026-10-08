@@ -86,6 +86,7 @@ fun TipSpotlightScrim(
     spotlights: () -> List<Rect>,
     modifier: Modifier = Modifier,
     glowAlpha: () -> Float = { TipOverlayMetrics.RING_GLOW_ALPHA },
+    ringColor: Color = LeakOutColors.LiquidGlow,
 ) {
     Canvas(modifier.fillMaxSize()) {
         val holes = spotlightShapes(spotlights())
@@ -94,7 +95,7 @@ fun TipSpotlightScrim(
             Path.combine(PathOperation.Difference, acc, Path().apply { addRoundRect(hole) })
         }
         drawPath(scrim, LeakOutColors.Scrim)
-        for (hole in holes) drawRing(hole, glow)
+        for (hole in holes) drawRing(hole, glow, ringColor)
     }
 }
 
@@ -104,19 +105,19 @@ private fun DrawScope.spotlightShapes(spotlights: List<Rect>): List<RoundRect> {
     return spotlights.map { RoundRect(it.inflate(padding), radius) }
 }
 
-/** The 2 dp ring and its blurred `G` glow around one cut-out. */
-private fun DrawScope.drawRing(hole: RoundRect, glowAlpha: Float) {
+/** The 2 dp ring and its blurred `G` glow around one cut-out, in [ringColor]. */
+private fun DrawScope.drawRing(hole: RoundRect, glowAlpha: Float, ringColor: Color) {
     val ring = TipOverlayMetrics.RingWidth.toPx()
     drawIntoCanvas { canvas ->
         val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-            color = LeakOutColors.LiquidGlow.copy(alpha = glowAlpha).toArgb()
+            color = ringColor.copy(alpha = glowAlpha).toArgb()
             style = android.graphics.Paint.Style.STROKE
             strokeWidth = ring * 3
             maskFilter = android.graphics.BlurMaskFilter(TipOverlayMetrics.RingGlowBlur.toPx() / 2, android.graphics.BlurMaskFilter.Blur.NORMAL)
         }
         canvas.nativeCanvas.drawRoundRect(hole.left, hole.top, hole.right, hole.bottom, hole.topLeftCornerRadius.x, hole.topLeftCornerRadius.y, paint)
     }
-    drawPath(Path().apply { addRoundRect(hole) }, LeakOutColors.LiquidGlow, style = Stroke(ring))
+    drawPath(Path().apply { addRoundRect(hole) }, ringColor, style = Stroke(ring))
 }
 
 /**
@@ -200,11 +201,32 @@ private fun DrawScope.drawPointer(pointer: TipPointer) {
 /** The reduced-motion drag hint: a 2 dp `liquid.glow` arrow from [from] to [to], in pixels. */
 fun DrawScope.drawHintArrow(from: Offset, to: Offset) {
     val stroke = 2.dp.toPx()
-    val head = 10.dp.toPx()
     drawLine(LeakOutColors.LiquidGlow, from, to, stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+    drawArrowHead(from, to, LeakOutColors.LiquidGlow, stroke)
+}
+
+/**
+ * The portal tip's link: a 2 dp line in the pair's [color] with an arrow head at both ends, between
+ * the spotlights [a] and [b] (pixels), so it reads "either way".
+ */
+fun DrawScope.drawPortalLink(a: Rect, b: Rect, color: Color) {
+    val stroke = 2.dp.toPx()
+    val direction = (b.center - a.center).let { it / it.getDistance().coerceAtLeast(1f) }
+    // Just outside the spotlights, so the heads point at the portals instead of into them.
+    val gap = TipOverlayMetrics.SpotlightPadding.toPx() + 4.dp.toPx()
+    val from = a.center + direction * (minOf(a.width, a.height) / 2 + gap)
+    val to = b.center - direction * (minOf(b.width, b.height) / 2 + gap)
+    drawLine(color, from, to, stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+    drawArrowHead(from, to, color, stroke)
+    drawArrowHead(to, from, color, stroke)
+}
+
+/** A 10 dp arrow head at [to] for a line coming from [from]. */
+private fun DrawScope.drawArrowHead(from: Offset, to: Offset, color: Color, stroke: Float) {
+    val head = 10.dp.toPx()
     val direction = (to - from).let { it / it.getDistance().coerceAtLeast(1f) }
     val normal = Offset(-direction.y, direction.x)
     val base = to - direction * head
-    drawLine(LeakOutColors.LiquidGlow, to, base + normal * (head / 2), stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round)
-    drawLine(LeakOutColors.LiquidGlow, to, base - normal * (head / 2), stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+    drawLine(color, to, base + normal * (head / 2), stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+    drawLine(color, to, base - normal * (head / 2), stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round)
 }

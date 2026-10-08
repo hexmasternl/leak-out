@@ -43,9 +43,9 @@ Paths are relative to `app/src/`; run Gradle from `app/src/` (`.\gradlew.bat` on
 
 ## 6. First-time tip
 
-- [ ] 6.1 Add `TipId.PORTAL`, show it before the countdown the first time a level with portals starts, and order it after the mandatory section tip and before the cross and reservoir tips. Verify with unit tests for the tip queue (first level with portals, shown once, order with the intro tour and the cross tip).
-- [ ] 6.2 In the tip overlay, highlight both portals of pair 1 in the pair colour and draw a two-headed link between them; other pairs are not highlighted. The text explains that liquid entering either portal comes out of the other (both ways), that same-colour portals belong together, that a pair can be used once, and that portals are part of the level. Verify with an `app` unit test for the highlighted cells on a one-pair and a two-pair level.
-- [ ] 6.3 Add the tip title, explanation and the portal accessibility strings to `res/values/strings.xml` with translator comments, so Play Console translates them into every supported language (Dutch, German, French, Spanish, Italian, Portuguese (Brazil)). Verify the existing string resource tests and lint pass (`./gradlew :app:testDebugUnitTest :app:lintDebug`).
+- [x] 6.1 Add `TipId.PORTAL`, show it before the countdown the first time a level with portals starts, and order it after the mandatory section tip and before the cross and reservoir tips. Verify with unit tests for the tip queue (first level with portals, shown once, order with the intro tour and the cross tip).
+- [x] 6.2 In the tip overlay, highlight both portals of pair 1 in the pair colour and draw a two-headed link between them; other pairs are not highlighted. The text explains that liquid entering either portal comes out of the other (both ways), that same-colour portals belong together, that a pair can be used once, and that portals are part of the level. Verify with an `app` unit test for the highlighted cells on a one-pair and a two-pair level.
+- [x] 6.3 Add the tip title, explanation and the portal accessibility strings to `res/values/strings.xml` with translator comments, so Play Console translates them into every supported language (Dutch, German, French, Spanish, Italian, Portuguese (Brazil)). Verify the existing string resource tests and lint pass (`./gradlew :app:testDebugUnitTest :app:lintDebug`).
 
 ## 7. Portals in levels 49 to 96
 

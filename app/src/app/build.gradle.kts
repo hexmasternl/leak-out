@@ -98,6 +98,11 @@ android {
         assets.directories.add("$projectDir/schemas")
     }
 
+    // Android stubs return defaults in JVM tests, so Play's FakeAppUpdateManager can run there (PlayAppUpdatesTest).
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true

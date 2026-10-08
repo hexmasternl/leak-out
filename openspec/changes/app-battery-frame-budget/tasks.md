@@ -21,5 +21,5 @@ Tracks [#91](https://github.com/hexmasternl/leak-out/issues/91).
 
 ## 4. Integration
 
-- [ ] 4.1 Run `./gradlew :core:test :app:testDebugUnitTest` and verify that everything passes
+- [x] 4.1 Run `./gradlew :core:test :app:testDebugUnitTest` and verify that everything passes
 - [ ] 4.2 On the emulator or a device, open the level lost and level complete dialogs, wait 30 s, and compare `adb shell dumpsys gfxinfo nl.hexmaster.leakout` frame counts before and after the change. Expect close to 0 new frames while idle. Record the numbers on #91

@@ -1,6 +1,6 @@
-# leak-out-server
+# Leak Out game server
 
-The score server of the Leak Out game: a .NET 10 minimal API orchestrated by .NET Aspire, with PostgreSQL.
+The score server of the Leak Out game: a .NET 10 minimal API orchestrated by .NET Aspire, with PostgreSQL. It lives in `server/` of the Leak Out repository, next to the Android app in `app/`; until October 2026 it had its own repository, `hexmasternl/leak-out-server` (archived), whose history was imported here. Paths in this file are relative to `server/` unless they start with `.github/`; how the two sides are built and released apart: [docs/repository-layout.md](../docs/repository-layout.md).
 
 ## Running locally
 
@@ -81,28 +81,28 @@ Logs record a new player, a rejected sign-in, a new best score and unexpected fa
 
 ## Continuous integration
 
-Every pull request into `development` runs [`.github/workflows/pull-request.yml`](.github/workflows/pull-request.yml) with two checks:
+Every pull request into `development` runs [`.github/workflows/server-pull-request.yml`](../.github/workflows/server-pull-request.yml). A first job, `server / changes`, looks at the files the pull request changes; the two checks below only do their work when it changes `server/`, a `.github/workflows/server-*.yml` workflow or `.github/scripts/server-coverage-gate.sh`. Otherwise (an app-only pull request) they are skipped, which counts as passed, so they never block app work:
 
 | Check | What it does |
 | --- | --- |
-| `build-test / build-test` | Restores and builds the solution, runs every test project with code coverage (the Scores tests start PostgreSQL with Testcontainers), merges the reports and fails when total line coverage is below 80%. The coverage appears in the run summary; the merged report and the `.trx` test results are attached as artifacts. |
-| `bicep` | Compiles `infrastructure/main.bicep` and its modules. |
+| `server / build-test` | Restores and builds the solution, runs every test project with code coverage (the Scores tests start PostgreSQL with Testcontainers), merges the reports and fails when total line coverage is below 80%. The coverage appears in the run summary; the merged report and the `.trx` test results are attached as artifacts. |
+| `server / bicep` | Compiles `infrastructure/main.bicep` and its modules. |
 
-Both are defined in [`.github/workflows/build-test.yml`](.github/workflows/build-test.yml) (shared with the deploy workflow) and `pull-request.yml`. Do not rename those jobs: the check names are what branch protection refers to.
+Both are defined in [`.github/workflows/server-build-test.yml`](../.github/workflows/server-build-test.yml) (shared with the deploy workflow; its `enabled` input skips the job while keeping the check name) and `server-pull-request.yml`. Do not rename those jobs (`server` calling `build-test`, and `server / bicep`): the check names are what branch protection refers to.
 
-To make them mandatory (once, by a repository admin): **Settings → Branches → Add branch ruleset** (or classic rule) for `development`, enable **Require status checks to pass**, and add `build-test / build-test` and `bicep`. A check only appears in the list after it has run once, so open a pull request first. Protecting `main` the same way is recommended, because `main` should only change through the `development` → `main` pull request.
+To make them mandatory (once, by a repository admin): **Settings → Branches → Add branch ruleset** (or classic rule) for `development`, enable **Require status checks to pass**, and add `server / build-test` and `server / bicep`. A check only appears in the list after it has run once, so open a pull request first. Protecting `main` the same way is recommended, because `main` should only change through the `development` → `main` pull request.
 
 ## Deployment
 
-Every push to `main` (and a manual run of **Actions → deploy → Run workflow**) runs [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml):
+Every push to `main` that changes `server/`, a server workflow or the coverage gate script (and a manual run of **Actions → server-deploy → Run workflow**) runs [`.github/workflows/server-deploy.yml`](../.github/workflows/server-deploy.yml). Pushes that only change the app do not deploy the server, and server pushes do not release the app. *During the cut-over from `leak-out-server` the workflow only has the manual trigger; the `push` trigger is added once the first manual deploy from this repository succeeded.*
 
-1. **build-test**: the same build, tests and 80% gate as the pull request check. A failure stops the run; nothing is published or deployed.
-2. **publish**: calculates the version with [GitVersion](GitVersion.yml), publishes the API container image with `dotnet publish /t:PublishContainer` (no Dockerfile) and pushes it as `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>`, then fails if the image would run as root.
+1. **server / build-test**: the same build, tests and 80% gate as the pull request check. A failure stops the run; nothing is published or deployed.
+2. **publish**: calculates the version with [GitVersion](GitVersion.yml) (`configFilePath: server/GitVersion.yml`), publishes the API container image with `dotnet publish /t:PublishContainer` (no Dockerfile) and pushes it as `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>`, then fails if the image would run as root.
 3. **deploy** (environment `production`): logs in to Azure with OpenID Connect and runs the subscription-scope deployment of [`infrastructure/main.bicep`](infrastructure/README.md) with the new image, then calls `https://<api-host>/alive` until it answers.
 
 ### Versions and image tags
 
-The image is tagged with the semantic version GitVersion calculates (mainline versioning, `GitVersion.yml`): every merge to `main` increments the patch version (`0.0.3`, `0.0.4`, ...), so each deployment has its own tag and no tag is overwritten. Put `+semver: minor` or `+semver: major` in a commit message (for example in the `development` → `main` merge) to bump the minor or major version; a Git tag `vX.Y.Z` on `main` sets a new base. The version is also the assembly version, and the informational version includes the commit SHA.
+The image is tagged with the semantic version GitVersion calculates (mainline versioning, `GitVersion.yml`): every merge to `main` increments the patch version (`0.0.3`, `0.0.4`, ...), so each deployment has its own tag and no tag is overwritten. Put `+semver: minor` or `+semver: major` in a commit message (for example in the `development` → `main` merge) to bump the minor or major version; a Git tag `server-vX.Y.Z` on `main` sets a new base. Only `server-v*` tags count (`tag-prefix: 'server-v'`): the app's `v*` release tags never move the server's version. The merge that imported the server into this repository has no merge base, which mainline versioning cannot walk past, so that merge commit carries the tag `server-v0.3.2` (the last version deployed from `leak-out-server`); it must exist before the first deploy from this repository. The version is also the assembly version, and the informational version includes the commit SHA.
 
 The registry and repository are set in `src/HexMaster.LeakOut.Api/HexMaster.LeakOut.Api.csproj` (`ContainerRegistry`, `ContainerRepository`); the workflow reads them from there. `ContainerUser` pins the non-root `app` user (UID 1654) of the .NET base image, which listens on the unprivileged port 8080.
 
@@ -110,7 +110,7 @@ To roll back, run the deploy workflow manually on an earlier commit of `main`; i
 
 ### Secrets and settings
 
-Repository secrets (**Settings → Secrets and variables → Actions**):
+Secrets of the `hexmasternl/leak-out` repository (**Settings → Secrets and variables → Actions**). GitHub never shows a secret's value, so they were re-entered by hand from their sources when the server moved here (Azure portal, Google Cloud console, the registry's *Access keys* page, the password manager for `POSTGRES_ADMIN_PASSWORD`). The app's secrets are separate: they live in the `play-store` environment ([docs/deployment.md](../docs/deployment.md)).
 
 | Secret | Used by | Purpose |
 | --- | --- | --- |
@@ -119,23 +119,23 @@ Repository secrets (**Settings → Secrets and variables → Actions**):
 | `AZURE_PROD_CLIENT_ID` | deploy | Client id of the app registration the workflow logs in with (OIDC, no client secret) |
 | `AZURE_PROD_TENANT_ID` | deploy | Entra tenant id |
 | `AZURE_PROD_SUBSCRIPTION_ID` | deploy | Subscription the deployment runs in |
-| `POSTGRES_ADMIN_PASSWORD` | deploy | Admin password of the PostgreSQL server (login `leakoutadmin`). **Still to be created.** |
+| `POSTGRES_ADMIN_PASSWORD` | deploy | Admin password of the PostgreSQL server (login `leakoutadmin`) |
 | `GOOGLE_CLIENT_ID` | deploy | Client id of the **web** OAuth client (the game's `serverClientId`), becomes `GooglePlayGames:ClientId` |
 | `GOOGLE_CLIENT_SECRET` | deploy | Secret of that web OAuth client, becomes `GooglePlayGames:ClientSecret` |
 | `GOOGLE_SIGNING_KEY` | deploy | The API's own JWT signing key (at least 32 characters), becomes `Authentication:SigningKey`. Not a Google credential; rotating it signs every player out. |
 
-The deploy job fails before logging in to Azure when one of the registry, PostgreSQL or Google secrets is empty, and names it. The `ACR_LOGIN_SERVER` secret is no longer used: the registry comes from the API project.
+The deploy job fails before logging in to Azure when one of the registry, PostgreSQL or Google secrets is empty, and names it. `ACR_LOGIN_SERVER` exists but is no longer read: the registry comes from the API project.
 
 Once, in GitHub and Azure:
 
-1. Create the environment **production** (**Settings → Environments**). Add required reviewers there if deployments should wait for approval, and limit its deployment branches to `main`.
-2. Give the app registration behind `AZURE_PROD_CLIENT_ID` a federated credential for GitHub Actions with entity type **Environment**, i.e. subject `repo:hexmasternl/leak-out-server:environment:production`, audience `api://AzureADTokenExchange`:
+1. Create the environment **production** (**Settings → Environments**). Add required reviewers there if deployments should wait for approval, and limit its deployment branches to `main`. The deploy job runs in it, which is what the Azure sign-in trusts.
+2. Give the app registration behind `AZURE_PROD_CLIENT_ID` a federated credential for GitHub Actions with entity type **Environment**, i.e. subject `repo:hexmasternl/leak-out:environment:production`, audience `api://AzureADTokenExchange`:
 
    ```bash
    az ad app federated-credential create --id <client-id> --parameters '{
-     "name": "github-production",
+     "name": "github-leak-out-production",
      "issuer": "https://token.actions.githubusercontent.com",
-     "subject": "repo:hexmasternl/leak-out-server:environment:production",
+     "subject": "repo:hexmasternl/leak-out:environment:production",
      "audiences": ["api://AzureADTokenExchange"]
    }'
    ```

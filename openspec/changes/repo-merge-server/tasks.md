@@ -29,8 +29,8 @@
 
 ## 5. Documentation
 
-- [ ] 5.1 Write `docs/repository-layout.md` (folders, which workflow builds and releases what, tags `v*` and `server-v*`, where each side's secrets are documented) and link it from `CLAUDE.md` and `README.md`; add the server's secrets, environment and federated credential setup to `server/docs` or `server/README.md`; verify every secret name in the server workflows appears in that guide and vice versa
-- [ ] 5.2 Update `docs/deployment.md` for `app/src/` paths, `app/GitVersion.yml` and the path-filtered trigger; verify every path it mentions exists
+- [x] 5.1 Write `docs/repository-layout.md` (folders, which workflow builds and releases what, tags `v*` and `server-v*`, where each side's secrets are documented) and link it from `CLAUDE.md` and `README.md`; add the server's secrets, environment and federated credential setup to `server/docs` or `server/README.md`; verify every secret name in the server workflows appears in that guide and vice versa
+- [x] 5.2 Update `docs/deployment.md` for `app/src/` paths, `app/GitVersion.yml` and the path-filtered trigger; verify every path it mentions exists
 
 ## 6. Cut-over and integration
 

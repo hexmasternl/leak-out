@@ -458,7 +458,7 @@ The app sends the scores of won levels to the Leak Out score server (in [`server
 | Server base URL | `leakout.scoreServerUrl` | `LEAKOUT_SCORE_SERVER_URL` | `https://rg-leakout-prod-neu-api.jollywater-e41c70f8.northeurope.azurecontainerapps.io` (the live Container App's own host; change it when the server gets a custom domain) |
 | Web OAuth client id | `leakout.scoreServerClientId` | `LEAKOUT_SCORE_SERVER_CLIENT_ID` | `201820010117-uteqrtu77v48c9ovd8d9k9qan0sktcj4.apps.googleusercontent.com` |
 
-- The client id must be the **same web client id** the server uses as `GooglePlayGames:ClientId` (see the server's [`docs/auth-setup.md`](../server/docs/auth-setup.md)). With another id every sign-in to the server fails, and scores stay queued.
+- The client id must be the **same web client id** the server uses as `GooglePlayGames:ClientId` (see [`server/docs/auth-setup.md`](../server/docs/auth-setup.md)). With another id every sign-in to the server fails, and scores stay queued.
 - The URL must start with `https://`. A blank value, or one that is not https, turns score posting off: nothing is queued or sent and the level complete dialog shows no status dot.
 - Scores won offline wait in a queue on the device (one per level, the highest) and are sent when the device is online again, the player signs in, the app starts or the next level is won. If the server moves (for example to a custom domain) and an old build can no longer reach it, its scores wait in the queue until the player updates to a build with the new URL.
 - To change the URL without a code change, set `LEAKOUT_SCORE_SERVER_URL` for the release build step of the workflow, or pass `-Pleakout.scoreServerUrl=...`.

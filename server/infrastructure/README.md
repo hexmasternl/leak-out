@@ -24,7 +24,7 @@ Every resource is named `<resource group name>-<kind>`, so with the default reso
 | `location` | | `northeurope` |
 | `maxReplicas` | | `3` |
 | `imageName` | | `API_IMAGE`: full image reference with tag, e.g. `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>` |
-| `serviceVersion` | | `SERVICE_VERSION`: version of the release, set by `deploy.yml` from the GitVersion `SemVer` (the image tag); reported as the OpenTelemetry `service.version` |
+| `serviceVersion` | | `SERVICE_VERSION`: version of the release, set by `server-deploy.yml` from the GitVersion `SemVer` (the image tag); reported as the OpenTelemetry `service.version` |
 | `registryServer` | | `ACR_LOGIN_SERVER` |
 | `registryUsername` | | `ACR_LOGIN_USERNAME` |
 | `registryPassword` | yes | `ACR_LOGIN_PASSWORD` |

@@ -31,7 +31,13 @@ new_repo() {
   git config user.name test && git config user.email test@test && git config commit.gpgsign false && git config tag.gpgsign false
   commit "initial commit"
 }
-commit() { git commit -q --allow-empty "${@/#/-m}"; } # each argument is one paragraph of the message
+# commit_in <folder> <paragraph>...: a commit that adds a file under <folder>, one -m per paragraph.
+commit_in() {
+  local folder="$1"; shift
+  mkdir -p "$folder" && mktemp -p "$folder" change.XXXXXX > /dev/null && git add "$folder"
+  git commit -q "${@/#/-m}"
+}
+commit() { commit_in app "$@"; } # an app change; each argument is one paragraph of the message
 # feature_pr <number> <change-name> <PR title> [<commit message> ...]: a merged pull request from
 # feature/<change-name>, with one commit per message (each message may hold several paragraphs, split on |).
 feature_pr() {
@@ -93,6 +99,34 @@ git checkout -q main
 git merge -q --no-ff feature/app-hud -m "Merge pull request #9 from owner/feature/app-hud" -m "app-hud: hud title" \
   -m "Release-note: A clearer HUD"
 expect_ok "a trailer on the merge commit counts for its PR" HEAD '• A clearer HUD'
+
+# --- app and server --------------------------------------------------------------------------
+new_repo server-only
+feature_pr 1 app-welcome-screen "app-welcome-screen: a welcome screen"
+git checkout -q -b feature/server-scores
+commit_in server "server-scores: store scores" "Release-note: Faster scores"
+commit_in server "server-scores: tidy"
+git checkout -q main
+git merge -q --no-ff feature/server-scores -m "Merge pull request #2 from owner/feature/server-scores"   -m "server-scores: store scores faster"
+commit_in server "server-fix: fix the server" "Release-note: A server fix"
+expect_ok "server-only merges and commits give no notes" HEAD '• A welcome screen'
+
+new_repo app-and-server
+git checkout -q -b feature/app-scores
+commit_in server "app-scores: the endpoint"
+commit "app-scores: the screen"
+git checkout -q main
+git merge -q --no-ff feature/app-scores -m "Merge pull request #3 from owner/feature/app-scores" -m "app-scores: top scores"
+expect_ok "a merge that changes the app and the server counts" HEAD '• Top scores'
+
+new_repo before-the-move
+git checkout -q -b feature/app-glow
+commit_in src "app-glow: glow"
+git checkout -q main
+git merge -q --no-ff feature/app-glow -m "Merge pull request #4 from owner/feature/app-glow" -m "app-glow: pipes glow"
+feature_pr 5 app-pause "app-pause: pause the game"
+expect_ok "app changes in src/ from before the move still count" HEAD $'• Pipes glow
+• Pause the game'
 
 # --- noise and order -------------------------------------------------------------------------
 new_repo noise

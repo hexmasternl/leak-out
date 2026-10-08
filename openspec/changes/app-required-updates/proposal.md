@@ -24,9 +24,9 @@ Once a release fixes a serious problem, there is no way to make players move to 
 
 ## Impact
 
-- `src/gradle/libs.versions.toml`, `src/app/build.gradle.kts`: Play In-App Updates library.
-- `src/core`: pure decision logic for "required, optional or none" and for deferring a required update until the current level ends.
-- `src/app`: an update checker wrapping `AppUpdateManager`, the blocking update screen and the optional update prompt, wired into `MainActivity` and the game screen; new strings in every supported language.
+- `app/src/gradle/libs.versions.toml`, `app/src/app/build.gradle.kts`: Play In-App Updates library.
+- `app/src/core`: pure decision logic for "required, optional or none" and for deferring a required update until the current level ends.
+- `app/src/app`: an update checker wrapping `AppUpdateManager`, the blocking update screen and the optional update prompt, wired into `MainActivity` and the game screen; new strings in every supported language.
 - `.github/workflows/release-update-label.yml` (new), `.github/workflows/deploy-play-internal.yml`, `scripts/resolve-update-priority.sh` (new) with `scripts/resolve-update-priority.test.sh`.
 - `docs/deployment.md`; a one-time repository setting (required status check on `main`) that the maintainer applies by hand.
 - No level format, settings or save data changes.

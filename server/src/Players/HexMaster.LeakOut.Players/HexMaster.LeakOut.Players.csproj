@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.12" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HexMaster.LeakOut.Players.Abstractions\HexMaster.LeakOut.Players.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Core\HexMaster.LeakOut.Core\HexMaster.LeakOut.Core.csproj" />
+  </ItemGroup>
+</Project>

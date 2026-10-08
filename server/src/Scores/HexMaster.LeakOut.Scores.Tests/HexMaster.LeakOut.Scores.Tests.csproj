@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- xUnit v3 test projects are executables running on Microsoft.Testing.Platform. -->
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Bogus" Version="35.6.5" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" Version="10.10.0" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.12.0" />
+    <PackageReference Include="Moq" Version="4.21.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.15.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.v3" Version="4.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HexMaster.LeakOut.Scores\HexMaster.LeakOut.Scores.csproj" />
+    <ProjectReference Include="..\HexMaster.LeakOut.Scores.Data.PostgreSQL\HexMaster.LeakOut.Scores.Data.PostgreSQL.csproj" />
+  </ItemGroup>
+
+</Project>

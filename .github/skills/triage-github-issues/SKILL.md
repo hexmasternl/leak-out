@@ -34,7 +34,7 @@ Read the comments too: they often hold the reproduction steps, screenshots or th
 
 - **Project scope**: `docs/project-plan.md` (roadmap and milestones), `docs/design-system.md`, `docs/level-format.md`.
 - **Current behaviour**: `openspec/specs/<capability>/spec.md` describes what the app does today. Search it for the feature the issue talks about; this decides `feature` vs `enhancement` and supplies the right names for screens and concepts.
-- **Code**, only when needed to pin down a bug or name the affected area (`src/core`, `src/app`).
+- **Code**, only when needed to pin down a bug or name the affected area (`app/src/core`, `app/src/app`, `server/src`).
 - **Possible duplicates**: `gh issue list --state all --search "<keywords>" --json number,title,state`.
 
 ### 2. Find the OpenSpec change

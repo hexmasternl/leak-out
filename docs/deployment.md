@@ -1,6 +1,6 @@
 # Deploying to Google Play
 
-Every push to `main` builds a signed release of Leak Out and uploads it to the Play Console's private testing track, so testers get the new build within minutes. This guide explains how that works and how to set up every key, account, secret and variable it needs, from an empty Play Console to a green run.
+Every push to `main` that changes the app builds a signed release of Leak Out and uploads it to the Play Console's private testing track, so testers get the new build within minutes. This guide explains how that works and how to set up every key, account, secret and variable it needs, from an empty Play Console to a green run.
 
 You only do this setup once. After that, releasing is merging `development` into `main`.
 
@@ -22,7 +22,7 @@ You only do this setup once. After that, releasing is merging `development` into
 
 ## How it works
 
-The workflow is [`.github/workflows/deploy-play-internal.yml`](../.github/workflows/deploy-play-internal.yml). It runs on every push to `main`, and you can also start it by hand. Only one deployment runs at a time; a newer one waits for the running one to finish.
+The workflow is [`.github/workflows/deploy-play-internal.yml`](../.github/workflows/deploy-play-internal.yml). It runs on every push to `main` that changes a file under `app/` (or the workflow itself, or the release scripts it runs: `scripts/compute-release-version.sh`, `scripts/generate-release-notes.sh` and its tests), and you can also start it by hand. Pushes that only change the server (`server/`) or docs do not release the app; the server has its own workflows ([repository-layout.md](repository-layout.md)). It builds from `app/src/`, the app's Gradle root. Only one deployment runs at a time; a newer one waits for the running one to finish.
 
 On each run it:
 
@@ -53,7 +53,7 @@ Three keys and accounts are involved. It helps to keep them apart:
 - **App signing key**: Google's, through *Play App Signing*. Google signs what reaches testers' phones with it. You never handle it, so it cannot be lost.
 - **Service account**: a Google Cloud robot account. Its JSON key lets the workflow call the Play Developer API for this one app.
 
-Local builds are not affected. Without the `LEAKOUT_UPLOAD_*` environment variables, `:app:bundleRelease` makes an unsigned bundle, exactly as before, and the version code is the one in `src/app/build.gradle.kts`. You never need the keystore to develop.
+Local builds are not affected. Without the `LEAKOUT_UPLOAD_*` environment variables, `:app:bundleRelease` makes an unsigned bundle, exactly as before, and the version code is the one in `app/src/app/build.gradle.kts`. You never need the keystore to develop.
 
 ## What you need
 
@@ -106,16 +106,16 @@ The Play Developer API cannot create an app, and the first upload decides which 
 
 1. Open the [Play Console](https://play.google.com/console) and choose **Create app**.
 2. Fill in the app name (*Leak Out*), default language, *App or game*: **Game**, *Free or paid*, and accept the declarations.
-3. The package name is not asked here. It is fixed by the first bundle you upload, and it must be **`nl.hexmaster.leakout`** (the `applicationId` in `src/app/build.gradle.kts`). Once set, it can never change.
+3. The package name is not asked here. It is fixed by the first bundle you upload, and it must be **`nl.hexmaster.leakout`** (the `applicationId` in `app/src/app/build.gradle.kts`). Once set, it can never change.
 
 ### 2.2 Build a signed bundle locally
 
-From the repository's `src/` folder, point the build at the keystore from step 1 and use **version code 1**.
+From the repository's `app/src/` folder, point the build at the keystore from step 1 and use **version code 1**.
 
 Windows PowerShell:
 
 ```powershell
-$env:LEAKOUT_UPLOAD_STORE_FILE     = "D:\projects\github.com\hexmasternl\leak-out\src\leak-out-upload.jks"
+$env:LEAKOUT_UPLOAD_STORE_FILE     = "D:\projects\github.com\hexmasternl\leak-out\app\src\leak-out-upload.jks"
 $env:LEAKOUT_UPLOAD_STORE_PASSWORD = "BK^OZM*3YVWAzGks^4fv@1iHkyxf1kvL"
 $env:LEAKOUT_UPLOAD_KEY_ALIAS      = "upload"
 $env:LEAKOUT_UPLOAD_KEY_PASSWORD   = "BK^OZM*3YVWAzGks^4fv@1iHkyxf1kvL"
@@ -132,7 +132,7 @@ export LEAKOUT_UPLOAD_KEY_PASSWORD='<keystore password>'
 ./gradlew :app:bundleRelease -PversionCode=1
 ```
 
-The bundle is `src/app/build/outputs/bundle/release/app-release.aab`. Confirm it is signed: `jarsigner -verify src/app/build/outputs/bundle/release/app-release.aab` must print `jar verified.` (the warnings about a self-signed certificate are normal).
+The bundle is `app/src/app/build/outputs/bundle/release/app-release.aab`. Confirm it is signed: `jarsigner -verify app/src/app/build/outputs/bundle/release/app-release.aab` must print `jar verified.` (the warnings about a self-signed certificate are normal).
 
 Close the terminal afterwards (or remove the four variables), so the passwords don't linger in your shell.
 
@@ -274,11 +274,11 @@ The workflow sets both versions of every release; nothing is bumped by hand.
 
 | | What it is | Where it comes from |
 | --- | --- | --- |
-| `versionName` | The version testers see: `<major>.<minor>.<patch>`, for example `0.2.1` | [GitVersion](https://gitversion.net) 6 (`MajorMinorPatch`), configured in [`GitVersion.yml`](../GitVersion.yml) |
+| `versionName` | The version testers see: `<major>.<minor>.<patch>`, for example `0.2.1` | [GitVersion](https://gitversion.net) 6 (`MajorMinorPatch`), configured in [`app/GitVersion.yml`](../app/GitVersion.yml) |
 | `versionCode` | The number Google Play orders releases by; every upload must be higher than all earlier ones | `major × 1 000 000 + minor × 1 000 + patch`, so `0.2.1` → `2001` and `1.0.0` → `1000000` |
 | Git tag | `v<major>.<minor>.<patch>` on the released commit | Pushed by the workflow after a successful upload |
 
-GitVersion uses the GitHub Flow workflow: on `main` it starts from the newest `v*` tag and increments the **patch** (the very first release, with no tag yet, is `next-version` from `GitVersion.yml`: `0.1.0`). Because each release is tagged, each merge into `main` gives the next patch:
+GitVersion uses the GitHub Flow workflow: on `main` it starts from the newest `v*` tag and increments the **patch** (the very first release, with no tag yet, is `next-version` from `app/GitVersion.yml`: `0.1.0`). Its `tag-prefix` (`[vV]?`) must match at the start of a tag, so the server's `server-v*` tags never move the app's version. Because each release is tagged, each merge into `main` gives the next patch:
 
 | Merge into `main` | Version | Version code |
 | --- | --- | --- |
@@ -288,7 +288,7 @@ GitVersion uses the GitHub Flow workflow: on `main` it starts from the newest `v
 | another fix | `0.2.1` | `2001` |
 | a breaking change with `+semver: major` | `1.0.0` | `1000000` |
 
-To bump the minor or major version, put `+semver: minor` or `+semver: major` in any commit message that reaches `main` (a squash-merge PR title counts). You can also raise `next-version` in `GitVersion.yml`; it only takes effect when it is above the newest tag. `+semver: none` (or `skip`) keeps the version, which makes the run fail, so don't use it for a release.
+To bump the minor or major version, put `+semver: minor` or `+semver: major` in any commit message that reaches `main` (a squash-merge PR title counts). You can also raise `next-version` in `app/GitVersion.yml`; it only takes effect when it is above the newest tag. `+semver: none` (or `skip`) keeps the version, which makes the run fail, so don't use it for a release.
 
 **Why the version code always increases.** The formula keeps the order of the versions as long as minor and patch stay at or below 999 and major at or below 2099 (the largest code, `2099999999`, is just under Play's limit of `2100000000`). GitVersion only moves forward from the newest tag, and before building, [`scripts/compute-release-version.sh`](../scripts/compute-release-version.sh) refuses a version that doesn't fit the formula, is below the newest release tag, or whose tag already sits on a different commit. So the run fails before uploading rather than sending Play a code that is too low. Its tests: `bash scripts/compute-release-version.test.sh`.
 
@@ -304,7 +304,7 @@ Local builds keep `versionName` `0.1.0` and `versionCode` `1` unless you pass `-
 
 Every release in the Play Console gets a "What's new" text that the workflow writes from the commits it releases. Nobody types them in by hand.
 
-**Where they come from.** [`scripts/generate-release-notes.sh`](../scripts/generate-release-notes.sh) looks at the commits since the previous `v*` release tag (the whole history for the very first release):
+**Where they come from.** [`scripts/generate-release-notes.sh`](../scripts/generate-release-notes.sh) looks at the commits since the previous `v*` release tag (the whole history for the very first release), and only at those that change the app: a commit counts when it changes `app/` (or `src/`, where the app lived before the server joined the repository), a merge when it changes `app/` compared with its first parent. Server-only pull requests and commits never give a note:
 
 | In the range | Becomes |
 | --- | --- |
@@ -451,14 +451,14 @@ This is a change to the workflow, so make it as its own OpenSpec change.
 
 ## Score server
 
-The app sends the scores of won levels to the Leak Out score server ([leak-out-server](https://github.com/hexmasternl/leak-out-server)) when the player is signed in to Play Games (spec `online-score-submission`). Two build settings point it at the server. Neither is secret, so the defaults live in `src/app/build.gradle.kts` and CI needs nothing until they change:
+The app sends the scores of won levels to the Leak Out score server (in [`server/`](../server)) when the player is signed in to Play Games (spec `online-score-submission`). Two build settings point it at the server. Neither is secret, so the defaults live in `app/src/app/build.gradle.kts` and CI needs nothing until they change:
 
 | Setting | Gradle property | Environment variable | Default |
 | --- | --- | --- | --- |
 | Server base URL | `leakout.scoreServerUrl` | `LEAKOUT_SCORE_SERVER_URL` | `https://rg-leakout-prod-neu-api.jollywater-e41c70f8.northeurope.azurecontainerapps.io` (the live Container App's own host; change it when the server gets a custom domain) |
 | Web OAuth client id | `leakout.scoreServerClientId` | `LEAKOUT_SCORE_SERVER_CLIENT_ID` | `201820010117-uteqrtu77v48c9ovd8d9k9qan0sktcj4.apps.googleusercontent.com` |
 
-- The client id must be the **same web client id** the server uses as `GooglePlayGames:ClientId` (see the server's `docs/auth-setup.md`). With another id every sign-in to the server fails, and scores stay queued.
+- The client id must be the **same web client id** the server uses as `GooglePlayGames:ClientId` (see [`server/docs/auth-setup.md`](../server/docs/auth-setup.md)). With another id every sign-in to the server fails, and scores stay queued.
 - The URL must start with `https://`. A blank value, or one that is not https, turns score posting off: nothing is queued or sent and the level complete dialog shows no status dot.
 - Scores won offline wait in a queue on the device (one per level, the highest) and are sent when the device is online again, the player signs in, the app starts or the next level is won. If the server moves (for example to a custom domain) and an old build can no longer reach it, its scores wait in the queue until the player updates to a build with the new URL.
 - To change the URL without a code change, set `LEAKOUT_SCORE_SERVER_URL` for the release build step of the workflow, or pass `-Pleakout.scoreServerUrl=...`.

@@ -26,5 +26,5 @@
 
 ## 5. Integration
 
-- [ ] 5.1 Run `./gradlew :core:test :app:testDebugUnitTest` and `./gradlew :app:assembleRelease` from `src/` and verify both succeed
+- [ ] 5.1 Run `./gradlew :core:test :app:testDebugUnitTest` and `./gradlew :app:assembleRelease` from `app/src/` and verify both succeed
 - [ ] 5.2 After two consecutive releases on the internal testing track (the second labelled `update-required`), verify on a tester's device that the older version shows the blocking update screen and updates through Play; or record that this check is deferred and why

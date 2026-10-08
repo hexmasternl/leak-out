@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>e419bfa5-547a-45d8-b3fd-c669af68899a</UserSecretsId>
+  </PropertyGroup>
+
+  <!-- Container image for Azure Container Apps: dotnet publish -c Release /t:PublishContainer (no Dockerfile).
+       The deploy workflow sets the tag (ContainerImageTags) to the GitVersion semantic version.
+       ContainerUser pins the non-root 'app' user of the .NET base image, which listens on the
+       unprivileged port 8080, so the API never runs as root. -->
+  <PropertyGroup>
+    <ContainerRegistry>nvv54gsk4pteu.azurecr.io</ContainerRegistry>
+    <ContainerRepository>leak-out/game-server-api</ContainerRepository>
+    <ContainerUser>app</ContainerUser>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HexMaster.LeakOut.Aspire\HexMaster.LeakOut.Aspire.ServiceDefaults\HexMaster.LeakOut.Aspire.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Players\HexMaster.LeakOut.Players\HexMaster.LeakOut.Players.csproj" />
+    <ProjectReference Include="..\Players\HexMaster.LeakOut.Players.Data.PostgreSQL\HexMaster.LeakOut.Players.Data.PostgreSQL.csproj" />
+    <ProjectReference Include="..\Scores\HexMaster.LeakOut.Scores\HexMaster.LeakOut.Scores.csproj" />
+    <ProjectReference Include="..\Scores\HexMaster.LeakOut.Scores.Data.PostgreSQL\HexMaster.LeakOut.Scores.Data.PostgreSQL.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,34 @@
+# Required checks for pull requests into development: "build-test / build-test" and "bicep".
+# Keep the job names stable; branch protection refers to them (see README.md).
+name: pull-request
+
+on:
+  pull_request:
+    branches: [development]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pull-request-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    uses: ./.github/workflows/build-test.yml
+
+  bicep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Compiles main.bicep and every module it references. main.bicepparam is not built here:
+      # it reads the deployment secrets from environment variables that only the deploy job has.
+      - name: Build Bicep templates
+        run: |
+          if [[ ! -f infrastructure/main.bicep ]]; then
+            echo "No infrastructure/main.bicep; nothing to validate."
+            exit 0
+          fi
+          az bicep install
+          az bicep build --file infrastructure/main.bicep --stdout > /dev/null

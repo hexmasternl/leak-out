@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "hexmaster-coding-standards": {
+      "type": "http",
+      "url": "https://standards-mcp.hexmaster.nl"
+    },
+    "aspire": {
+      "command": "aspire",
+      "args": [
+        "agent",
+        "mcp"
+      ]
+    }
+  }
+}

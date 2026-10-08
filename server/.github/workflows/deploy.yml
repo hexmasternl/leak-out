@@ -1,0 +1,197 @@
+# Builds, tests, versions, publishes and deploys main to Azure (see README.md, "Deployment").
+# The image name comes from the API project (ContainerRegistry, ContainerRepository); the tag is
+# the semantic version GitVersion calculates (GitVersion.yml).
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Deployments never overlap and are never cancelled half-way.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  build-test:
+    uses: ./.github/workflows/build-test.yml
+
+  publish:
+    needs: build-test
+    runs-on: ubuntu-latest
+    # Only the version crosses jobs: the registry name equals the ACR admin user name (a secret),
+    # so GitHub drops any job output that contains it. The deploy job reads it again.
+    outputs:
+      version: ${{ steps.gitversion.outputs.semVer }}
+    steps:
+      # GitVersion needs the full history to calculate the version.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - uses: gittools/actions/gitversion/setup@v4
+        with:
+          versionSpec: '6.3.x'
+
+      - id: gitversion
+        uses: gittools/actions/gitversion/execute@v4
+
+      - name: Read container settings from the API project
+        id: container
+        env:
+          VERSION: ${{ steps.gitversion.outputs.semVer }}
+        run: |
+          properties=$(dotnet msbuild src/HexMaster.LeakOut.Api \
+            -getProperty:ContainerRegistry -getProperty:ContainerRepository)
+          registry=$(jq -r '.Properties.ContainerRegistry' <<< "$properties")
+          repository=$(jq -r '.Properties.ContainerRepository' <<< "$properties")
+          echo "registry=$registry" >> "$GITHUB_OUTPUT"
+          echo "image=$registry/$repository:$VERSION" >> "$GITHUB_OUTPUT"
+          echo "### Image" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`$registry/$repository:$VERSION\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ${{ steps.container.outputs.registry }}
+          username: ${{ secrets.ACR_LOGIN_USERNAME }}
+          password: ${{ secrets.ACR_LOGIN_PASSWORD }}
+
+      - name: Publish container image
+        env:
+          VERSION: ${{ steps.gitversion.outputs.semVer }}
+          INFORMATIONAL_VERSION: ${{ steps.gitversion.outputs.informationalVersion }}
+        run: |
+          dotnet publish src/HexMaster.LeakOut.Api -c Release -t:PublishContainer \
+            -p:ContainerImageTags="$VERSION" \
+            -p:Version="$VERSION" \
+            -p:InformationalVersion="$INFORMATIONAL_VERSION"
+
+      # The API must never run as root (ContainerUser in the API project).
+      - name: Verify the image runs as non-root
+        env:
+          IMAGE: ${{ steps.container.outputs.image }}
+        run: |
+          docker pull --quiet "$IMAGE"
+          user=$(docker image inspect "$IMAGE" --format '{{.Config.User}}')
+          if [[ -z "$user" || "$user" == "root" || "$user" == 0 || "$user" == 0:* ]]; then
+            echo "::error::Image $IMAGE runs as root (user '${user}'); set ContainerUser in the API project"
+            exit 1
+          fi
+          echo "Image $IMAGE runs as user '$user'"
+
+  deploy:
+    needs: publish
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      # Must match location in infrastructure/main.bicepparam: ARM rejects a deployment name
+      # reused in another location.
+      DEPLOYMENT_LOCATION: northeurope
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Read container settings from the API project
+        id: container
+        env:
+          VERSION: ${{ needs.publish.outputs.version }}
+        run: |
+          properties=$(dotnet msbuild src/HexMaster.LeakOut.Api \
+            -getProperty:ContainerRegistry -getProperty:ContainerRepository)
+          registry=$(jq -r '.Properties.ContainerRegistry' <<< "$properties")
+          repository=$(jq -r '.Properties.ContainerRepository' <<< "$properties")
+          if [[ -z "$registry" || -z "$repository" || -z "$VERSION" ]]; then
+            echo "::error::Container registry, repository or version is empty"
+            exit 1
+          fi
+          echo "registry=$registry" >> "$GITHUB_OUTPUT"
+          echo "image=$registry/$repository:$VERSION" >> "$GITHUB_OUTPUT"
+
+      # The API refuses to start without the Google settings, and an empty registry or database
+      # credential would only fail inside Azure. Fail here, before anything changes.
+      - name: Check required secrets
+        env:
+          ACR_LOGIN_USERNAME: ${{ secrets.ACR_LOGIN_USERNAME }}
+          ACR_LOGIN_PASSWORD: ${{ secrets.ACR_LOGIN_PASSWORD }}
+          POSTGRES_ADMIN_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_SIGNING_KEY: ${{ secrets.GOOGLE_SIGNING_KEY }}
+        run: |
+          missing=0
+          for name in ACR_LOGIN_USERNAME ACR_LOGIN_PASSWORD POSTGRES_ADMIN_PASSWORD \
+                      GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET GOOGLE_SIGNING_KEY; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Secret $name is not set"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_PROD_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_PROD_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_PROD_SUBSCRIPTION_ID }}
+
+      # main.bicepparam reads every value below with readEnvironmentVariable(), so no value
+      # appears on the command line.
+      - name: Deploy infrastructure and API
+        id: deployment
+        env:
+          API_IMAGE: ${{ steps.container.outputs.image }}
+          SERVICE_VERSION: ${{ needs.publish.outputs.version }}
+          ACR_LOGIN_SERVER: ${{ steps.container.outputs.registry }}
+          ACR_LOGIN_USERNAME: ${{ secrets.ACR_LOGIN_USERNAME }}
+          ACR_LOGIN_PASSWORD: ${{ secrets.ACR_LOGIN_PASSWORD }}
+          POSTGRES_ADMIN_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_SIGNING_KEY: ${{ secrets.GOOGLE_SIGNING_KEY }}
+        run: |
+          fqdn=$(az deployment sub create \
+            --name "leakout-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --location "$DEPLOYMENT_LOCATION" \
+            --template-file infrastructure/main.bicep \
+            --parameters infrastructure/main.bicepparam \
+            --only-show-errors \
+            --query properties.outputs.apiFullyQualifiedDomainName.value --output tsv)
+          echo "fqdn=$fqdn" >> "$GITHUB_OUTPUT"
+          echo "### Deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`$API_IMAGE\` to https://$fqdn" >> "$GITHUB_STEP_SUMMARY"
+
+      # The container app scales to zero, so the first request may wait for a cold start.
+      - name: Smoke test
+        env:
+          FQDN: ${{ steps.deployment.outputs.fqdn }}
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error --max-time 10 "https://$FQDN/alive"; then
+              echo
+              echo "https://$FQDN/alive is healthy"
+              exit 0
+            fi
+            echo "Attempt $attempt: not healthy yet"
+            sleep 10
+          done
+          echo "::error::https://$FQDN/alive did not become healthy"
+          exit 1

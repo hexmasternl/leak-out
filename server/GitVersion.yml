@@ -1,0 +1,5 @@
+# Semantic versioning of the API image (see .github/workflows/deploy.yml).
+# Mainline versioning: every merge to main increments the patch version, so each deployment
+# gets a new release version without Git tags. "+semver: minor" or "+semver: major" in a
+# commit message bumps the minor or major version; a tag vX.Y.Z on main sets the base.
+workflow: TrunkBased/preview1

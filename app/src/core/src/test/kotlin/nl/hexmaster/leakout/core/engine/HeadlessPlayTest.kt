@@ -10,12 +10,14 @@ import nl.hexmaster.leakout.core.board.Cell
 import nl.hexmaster.leakout.core.engine.GameCommand.Place
 import nl.hexmaster.leakout.core.engine.GameCommand.Tick
 import nl.hexmaster.leakout.core.level.Endpoint
+import nl.hexmaster.leakout.core.level.FlowSettings
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.LevelParser
 import nl.hexmaster.leakout.core.level.LevelSolver
 import nl.hexmaster.leakout.core.level.MandatorySection
 import nl.hexmaster.leakout.core.level.ParseResult
 import nl.hexmaster.leakout.core.level.PipeSection
+import nl.hexmaster.leakout.core.level.PortalPair
 import nl.hexmaster.leakout.core.level.Position
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.level.SolverResult
@@ -35,15 +37,17 @@ class HeadlessPlayTest {
 
     /**
      * The straight or corner section for each cell of the solver's path, so the path carries the
-     * liquid. The level's mandatory sections are already on the board and are left out.
+     * liquid. The level's mandatory sections and portals are already on the board and are left out;
+     * a cell next to a portal on the path connects towards that portal, so towards its open side.
      */
     private fun routeFor(level: Level): List<Pair<Position, PipeSection>> {
         val path = assertIs<SolverResult.Solvable>(LevelSolver.solve(level)).path
         val cells = listOf(level.start.position) + path + level.finish.position
-        return path.mapIndexed { i, cell ->
+        return path.mapIndexedNotNull { i, cell ->
+            if (level.mandatoryAt(cell) != null || level.portalAt(cell) != null) return@mapIndexedNotNull null
             val sides = setOf(sideTowards(cell, cells[i]), sideTowards(cell, cells[i + 2]))
             cell to PipeSection.entries.first { it != PipeSection.X && it != PipeSection.RES && it.openSides == sides }
-        }.filter { (cell, _) -> level.mandatoryAt(cell) == null }
+        }
     }
 
     private fun sideTowards(from: Position, to: Position): Side = Side.entries.first { from.neighbour(it) == to }
@@ -154,6 +158,36 @@ class HeadlessPlayTest {
         assertEquals(Position(2, 4) to Side.TOP, lost.at to lost.side)
         assertEquals(25 + 10 + 15 + 15 + 15, end.score)
         assertTrue(engine.handle(end, Place(Position(4, 4))) === end, "no placing after the loss")
+    }
+
+    /**
+     * A wall in column 2 splits the board. The start (0, 1) open right is on the left, the finish
+     * (4, 4) open at the top on the right. Only the portal pair crosses the wall: (0, 4) open at the
+     * top and (3, 0) open at the bottom. The stack deals standard sections only, and the countdown
+     * is long, as the few spare tiles mean many replacements.
+     */
+    private val portalLevel = engineLevel(
+        flow = FlowSettings(initialDelayMs = 300_000, cellsPerSecond = 1.0),
+        section = null,
+        blocked = (0 until 5).map { Position(2, it) },
+        start = Endpoint(Position(0, 1), Side.RIGHT),
+        finish = Endpoint(Position(4, 4), Side.TOP),
+        portals = listOf(PortalPair(Endpoint(Position(0, 4), Side.TOP), Endpoint(Position(3, 0), Side.BOTTOM))),
+    )
+
+    @Test
+    fun `a level that is only solvable through a portal pair is won by following the solver's path`() {
+        val route = routeFor(portalLevel)
+        assertTrue(route.none { (at, _) -> portalLevel.portalAt(at) != null })
+        val built = build(engine.start(portalLevel), route)
+        assertTrue(built.routeComplete)
+
+        val end = play(built)
+        assertIs<Outcome.Won>(end.outcome)
+        assertEquals(route.sumOf { (_, section) -> if (section == PipeSection.H || section == PipeSection.V) 10 else 15 }, end.score)
+        assertTrue(route.all { (at, _) -> (end.board[at] as Cell.Pipe).liquidEntered })
+        assertIs<Cell.Portal>(end.board[Position(0, 4)])
+        assertTrue(end.finalScore!!.unusedSections.none { portalLevel.portalAt(it) != null })
     }
 
     @Test

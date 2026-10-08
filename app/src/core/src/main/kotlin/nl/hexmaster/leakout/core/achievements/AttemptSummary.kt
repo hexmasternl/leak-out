@@ -119,9 +119,11 @@ data class AttemptSummary(
 
         /**
          * The cells of [level]'s shortest route as [LevelSolver] finds it, or null when it finds none.
-         * A mandatory cross is on the solver's path twice but is one cell.
+         * A mandatory cross is on the solver's path twice but is one cell, and portals are on it but
+         * hold no section.
          */
-        fun minimumSections(level: Level): Int? = (LevelSolver.solve(level) as? SolverResult.Solvable)?.path?.distinct()?.size
+        fun minimumSections(level: Level): Int? = (LevelSolver.solve(level) as? SolverResult.Solvable)?.path
+            ?.distinct()?.count { level.portalAt(it) == null }
 
         private val STRAIGHTS = setOf(PipeSection.H, PipeSection.V)
         private val CORNERS = setOf(PipeSection.LT, PipeSection.LB, PipeSection.RT, PipeSection.RB)

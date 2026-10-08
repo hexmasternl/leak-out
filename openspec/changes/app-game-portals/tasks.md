@@ -23,9 +23,9 @@ Paths are relative to `app/src/`; run Gradle from `app/src/` (`.\gradlew.bat` on
 
 ## 3. Solver
 
-- [ ] 3.1 Teach `LevelSolver` to treat a portal's facing cell as linked to the partner's facing cell, include the two portal cells in the returned path, and let `canAdjoin` accept a portal facing a mandatory channel. Verify with `LevelSolverTest` cases: a level that is only solvable through a pair, a pair that does not cross the wall (unsolvable), a pair combined with a mandatory reservoir, and a level without portals giving the same path as before.
-- [ ] 3.2 Update `HeadlessPlayTest` and `ScriptedPlay` to skip portal cells when they turn the solver's path into sections, connecting each neighbour of a portal towards the portal's open side. Verify by running `./gradlew :core:test` with a portal test level in the headless suite.
-- [ ] 3.3 Update the Solvability section of `docs/level-format.md` for portals and check it against the implementation.
+- [x] 3.1 Teach `LevelSolver` to treat a portal's facing cell as linked to the partner's facing cell, include the two portal cells in the returned path, and let `canAdjoin` accept a portal facing a mandatory channel. Verify with `LevelSolverTest` cases: a level that is only solvable through a pair, a pair that does not cross the wall (unsolvable), a pair combined with a mandatory reservoir, and a level without portals giving the same path as before.
+- [x] 3.2 Update `HeadlessPlayTest` and `ScriptedPlay` to skip portal cells when they turn the solver's path into sections, connecting each neighbour of a portal towards the portal's open side. Verify by running `./gradlew :core:test` with a portal test level in the headless suite.
+- [x] 3.3 Update the Solvability section of `docs/level-format.md` for portals and check it against the implementation.
 
 ## 4. Rendering and accessibility
 

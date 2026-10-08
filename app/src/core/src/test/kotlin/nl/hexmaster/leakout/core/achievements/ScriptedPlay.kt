@@ -52,12 +52,14 @@ internal class ScriptedPlay(private val engine: GameEngine) {
     /**
      * The section for every tile of [path], which runs in flow order from the start's facing cell to
      * the finish's facing cell. A tile on the path twice is a cross passed once per axis; it is placed
-     * once. Mandatory tiles are already on the board, so they are left out.
+     * once. Mandatory tiles and portals are already on the board, so they are left out; a tile next
+     * to a portal on the path connects towards that portal.
      */
     fun routeOf(level: Level, path: List<Position>): List<Pair<Position, PipeSection>> {
         val cells = listOf(level.start.position) + path + level.finish.position
-        val sides = path.indices.groupBy({ path[it] }, { setOf(sideTowards(cells[it + 1], cells[it]), sideTowards(cells[it + 1], cells[it + 2])) })
-        return path.distinct().filter { level.mandatoryAt(it) == null }.map { at ->
+        val sides = path.indices.filter { level.portalAt(path[it]) == null }
+            .groupBy({ path[it] }, { setOf(sideTowards(cells[it + 1], cells[it]), sideTowards(cells[it + 1], cells[it + 2])) })
+        return path.distinct().filter { level.mandatoryAt(it) == null && level.portalAt(it) == null }.map { at ->
             val uses = sides.getValue(at)
             val section = if (uses.size == 2) {
                 assertEquals(Side.entries.toSet(), uses[0] + uses[1], "the cross on $at is not passed once per axis")
@@ -76,7 +78,8 @@ internal class ScriptedPlay(private val engine: GameEngine) {
      * [path] grown by detours until none fits: a step from `a` to `b` becomes `a, a', b', b`, where
      * `a'` and `b'` are the free, unused cells next to them on the same side. The path stays a
      * single line without crossings, so it is still a valid route. Steps into or out of a mandatory
-     * tile are kept, so the liquid still passes it straight through its channel.
+     * tile are kept, so the liquid still passes it straight through its channel, and so are steps
+     * into, through and out of a portal pair.
      */
     fun grow(level: Level, path: List<Position>): List<Position> {
         val free = freeCells(level).filter { level.mandatoryAt(it) == null }.toSet()
@@ -88,7 +91,7 @@ internal class ScriptedPlay(private val engine: GameEngine) {
             for (i in 0 until route.size - 1) {
                 val a = route[i]
                 val b = route[i + 1]
-                if (level.mandatoryAt(a) != null || level.mandatoryAt(b) != null) continue
+                if (listOf(a, b).any { level.mandatoryAt(it) != null || level.portalAt(it) != null }) continue
                 val step = sideTowards(a, b)
                 val detour = Side.entries.filter { it != step && it != step.opposite() }
                     .map { a.neighbour(it) to b.neighbour(it) }
@@ -189,7 +192,7 @@ internal class ScriptedPlay(private val engine: GameEngine) {
 
     fun freeCells(level: Level): List<Position> =
         (0 until level.grid.rows).flatMap { y -> (0 until level.grid.columns).map { x -> Position(x, y) } }
-            .filter { !level.isBlocked(it) && it != level.start.position && it != level.finish.position }
+            .filter { !level.isBlocked(it) && it != level.start.position && it != level.finish.position && level.portalAt(it) == null }
 
     companion object {
         private val levelsDir: File by lazy {

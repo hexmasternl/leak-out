@@ -6,7 +6,7 @@ The public website of Leak Out: home, rules, FAQ and leaderboard, in English, Du
 website/
 ├── src/              the Hugo site (configuration, content per language, layouts, styles, scripts, images)
 ├── infrastructure/   Bicep for the Azure Static Web App
-└── tests/            unit tests for the leaderboard script (Node's built-in test runner)
+└── tests/            unit tests for the leaderboard and tester invitation scripts (Node's built-in test runner)
 ```
 
 ## Build, run and test locally
@@ -16,12 +16,24 @@ Install **Hugo extended 0.165.0**, the version the workflows use (change it in b
 ```sh
 hugo server --source website/src                 # live preview on http://localhost:1313
 hugo --source website/src --panicOnWarning       # production build into website/src/public
-cd website && npm test                           # leaderboard tests; no npm install needed
+cd website && npm test                           # script tests; no npm install needed
 ```
 
-The site works without JavaScript, except for the leaderboard. To try the leaderboard against a local score server, override its address: `HUGO_PARAMS_SCORESERVERURL=http://localhost:5000 hugo server --source website/src`.
+The site works without JavaScript, except for the leaderboard and the tester invitation dialog. To try the leaderboard against a local score server, override its address: `HUGO_PARAMS_SCORESERVERURL=http://localhost:5000 hugo server --source website/src`.
 
 The translations were written by one contributor; native speakers are welcome to review `content/<lang>/` and `i18n/<lang>.yaml`.
+
+## Tester invitation (closed testing)
+
+While Leak Out is in closed testing on Google Play, only members of the [leak-out Google Group](https://groups.google.com/g/leak-out) who opt in at `testerOptInUrl` can install it. The site invites visitors to become a tester:
+
+- A dialog (`layouts/_partials/tester-invite.html`, a native `<dialog>`) on every page explains the two steps, links to the group, the opt-in page and the Play Store listing, and says the app can take up to 15 minutes to become available.
+- It opens from **Test the app** in the navigation and from the button in the **Become a tester** section of the home page (`#become-a-tester`), and on its own after 15 seconds on a page.
+- Any close (button, Escape, backdrop) stores `leakout.testerInvite.dismissed = "1"` in the visitor's `localStorage`; after that it only opens from the menu item or the button. The value never leaves the browser, so the "no tracking" promise holds. Clear it in the browser's developer tools to see the automatic opening again.
+- Without JavaScript the menu item and the button are plain links to the home page section, which shows the same steps.
+- The logic is in `assets/js/tester-invite.js`, tested by `tests/tester-invite.test.js`.
+
+**Remove it when closed testing ends:** delete the two partials `tester-invite.html` and `tester-steps.html`, the script and its test, their lines in `baseof.html`, `header.html` and `home.html`, the tester styles in `main.css`, the `tester*` and `nav_tester` texts in `i18n/`, and `testerGroupUrl` and `testerOptInUrl` in `hugo.toml`.
 
 ## Deployment
 
@@ -84,12 +96,13 @@ Checked with Lighthouse 12 (mobile profile) on pages in all five languages: perf
 
 | Path | Holds |
 | --- | --- |
-| `hugo.toml` | Languages and site parameters: Play Store URL, issue form URLs, score server URL, `levelCount` |
+| `hugo.toml` | Languages and site parameters: Play Store URL, closed testing URLs, issue form URLs, score server URL, `levelCount` |
 | `content/<lang>/` | The pages per language: `_index.md` (home), `rules.md`, `faq.md`, `leaderboard.md` |
 | `i18n/<lang>.yaml` | Shared UI strings (navigation, footer, leaderboard states) |
 | `layouts/` | The site's own templates; no third-party theme |
 | `assets/css/main.css` | Styles, with the design system tokens as CSS custom properties |
-| `assets/js/leaderboard.js` | The leaderboard script, the only JavaScript on the site |
+| `assets/js/leaderboard.js` | The leaderboard script |
+| `assets/js/tester-invite.js` | Opens and dismisses the tester invitation dialog |
 | `assets/images/` | Raster images Hugo resizes at build time (WebP for pages, PNG icons, JPEG share image) |
 | `assets/site/` | Templates for the root files `site.webmanifest` and `staticwebapp.config.json` |
 | `layouts/_partials/seo.html` | Search engine, Open Graph and Twitter metadata and structured data |

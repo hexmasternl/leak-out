@@ -232,7 +232,8 @@ public sealed class GetLevelScoresAroundPlayerQueryHandlerTests : IDisposable
             .Select(p => new RankedLevelScore(
                 p,
                 p == position ? _requestingPlayer : Guid.CreateVersion7(),
-                p == position ? playerScore : playerScore + (position - p) * 10))
+                p == position ? playerScore : playerScore + (position - p) * 10,
+                AchievedAt))
             .ToArray();
         var names = ranking.ToDictionary(s => s.UserId, _ => _faker.Internet.UserName());
 

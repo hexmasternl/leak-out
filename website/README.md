@@ -78,6 +78,8 @@ To move to another domain: create its CNAME to the Static Web App's default host
 
 The leaderboard page reads `GET /api/public/levels/{level}/scores/top` on the score server in the visitor's browser ([server/README.md](../server/README.md#public-endpoints)). The server only allows that cross-origin request from `https://leakout.hexmaster.nl`, so the leaderboard shows its error state on any other address, including the `azurestaticapps.net` one and local previews. To test locally against the real server, add the local origin to `Website:AllowedOrigins` of a locally running server. The server keeps each level's top 25 for 30 minutes, which the leaderboard page and the FAQ tell visitors.
 
+Each entry also shows when its score was set, from the response's `achievedAt` (the moment the server received that best score). The script turns it into relative time in the page's language with `Intl.RelativeTimeFormat`, in the largest whole unit that fits: minutes, hours, days, weeks, months (30 days) or years (365 days), such as "2 days ago" or "1 jaar geleden". Under a minute, and for a moment in the future when clocks differ, it shows "now". The text sits in a `<time>` element whose `title` holds the full date and time in the visitor's time zone, shown on hover. An entry without a valid `achievedAt` is still shown, with an empty "when" cell. Because this is computed in the browser, it stays correct despite the server's 30-minute cache. The only translated text is the column header (`when` in `i18n/<lang>.yaml`). On phones the column wraps rather than hiding, so the table fits 360 px.
+
 ### Rolling back
 
 The website is independent of the app and the server: disable `website-deploy.yml` or delete the resource group `rg-leakout-web-prod-weu`.

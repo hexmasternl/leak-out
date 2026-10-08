@@ -85,7 +85,8 @@ public sealed partial class GetPublicLevelTopScoresQueryHandler(
                 displayNames.TryGetValue(s.UserId, out var name) && !string.IsNullOrWhiteSpace(name)
                     ? name
                     : GetLevelTopScoresQueryHandler.UnknownPlayerName,
-                s.Score))
+                s.Score,
+                s.AchievedAt))
             .ToList();
 
         return new PublicLevelLeaderboardDto(level, entries);

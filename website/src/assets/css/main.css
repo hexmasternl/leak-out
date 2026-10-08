@@ -657,6 +657,31 @@ a:hover {
   overflow-wrap: anywhere;
 }
 
+/* When the score was set: secondary to the score, and allowed to wrap ("2 weeks / ago") on a phone. */
+.scores .when {
+  text-align: right;
+}
+
+.scores td.when {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.scores td.when time {
+  cursor: help;
+}
+
+@media (max-width: 479px) {
+  .scores th,
+  .scores td {
+    padding: var(--space-2) var(--space-1);
+  }
+
+  .scores td.rank {
+    width: 2.5em;
+  }
+}
+
 /* Footer */
 
 .site-footer {

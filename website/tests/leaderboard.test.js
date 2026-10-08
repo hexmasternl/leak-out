@@ -6,6 +6,8 @@ import {
   topScoresUrl,
   parseTopScores,
   toRows,
+  relativeTime,
+  fullDate,
   createLeaderboard,
   createDomView,
 } from "../src/assets/js/leaderboard.js";
@@ -84,9 +86,25 @@ describe("parseTopScores", () => {
     assert.deepEqual(entries.map((e) => e.position), Array.from({ length: 25 }, (_, i) => i + 1));
     assert.equal(entries[0].score, 5000);
   });
-  test("keeps only position, display name and score", () => {
+  test("keeps only position, display name, score and moment", () => {
     const [entry] = parseTopScores({ entries: [{ position: 1, displayName: "Ann", score: 120, playerId: "secret" }] });
-    assert.deepEqual(entry, { position: 1, displayName: "Ann", score: 120 });
+    assert.deepEqual(entry, { position: 1, displayName: "Ann", score: 120, achievedAt: null });
+  });
+  test("keeps the moment the score was received", () => {
+    const [entry] = parseTopScores({
+      entries: [{ position: 1, displayName: "Ann", score: 540, achievedAt: "2026-10-01T14:30:00+00:00" }],
+    });
+    assert.deepEqual(entry.achievedAt, new Date(Date.UTC(2026, 9, 1, 14, 30)));
+  });
+  test("drops a missing or invalid moment but keeps the entry", () => {
+    const entries = parseTopScores({
+      entries: [
+        { position: 1, displayName: "Ann", score: 3, achievedAt: "not a date" },
+        { position: 2, displayName: "Bob", score: 2, achievedAt: 1759329000000 },
+        { position: 3, displayName: "Cid", score: 1 },
+      ],
+    });
+    assert.deepEqual(entries.map((e) => e.achievedAt), [null, null, null]);
   });
   test("returns no entries for a level without scores", () => assert.deepEqual(parseTopScores({ level: 7, entries: [] }), []));
   test("rejects a response without entries", () => {
@@ -98,8 +116,75 @@ describe("parseTopScores", () => {
 describe("toRows", () => {
   test("formats scores with the page's digit grouping", () => {
     const entries = [{ position: 1, displayName: "Ann", score: 12500 }];
-    assert.deepEqual(toRows(entries, "en"), [{ position: "1", displayName: "Ann", score: "12,500" }]);
+    assert.deepEqual(toRows(entries, "en"), [
+      { position: "1", displayName: "Ann", score: "12,500", when: "", whenFull: "", whenIso: "" },
+    ]);
     assert.equal(toRows(entries, "de")[0].score, "12.500");
+  });
+  test("adds when the score was set, relative to now and in full", () => {
+    const achievedAt = new Date("2026-10-06T09:00:00Z");
+    const [row] = toRows([{ position: 1, displayName: "Ann", score: 540, achievedAt }], "en", NOW);
+    assert.equal(row.when, "2 days ago");
+    assert.equal(row.whenFull, fullDate(achievedAt, "en"));
+    assert.equal(row.whenIso, "2026-10-06T09:00:00.000Z");
+  });
+});
+
+const NOW = new Date("2026-10-08T12:00:00Z");
+
+function ago(milliseconds) {
+  return new Date(NOW.getTime() - milliseconds);
+}
+
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
+describe("relativeTime", () => {
+  test("is now under a minute", () => {
+    assert.equal(relativeTime(ago(20 * SECOND), NOW, "en"), "now");
+    assert.equal(relativeTime(NOW, NOW, "en"), "now");
+  });
+  test("is now for a moment in the future", () => assert.equal(relativeTime(ago(-5 * MINUTE), NOW, "en"), "now"));
+  test("counts minutes", () => {
+    assert.equal(relativeTime(ago(MINUTE), NOW, "en"), "1 minute ago");
+    assert.equal(relativeTime(ago(59 * MINUTE + 59 * SECOND), NOW, "en"), "59 minutes ago");
+  });
+  test("counts hours", () => {
+    assert.equal(relativeTime(ago(HOUR), NOW, "en"), "1 hour ago");
+    assert.equal(relativeTime(ago(23 * HOUR + 59 * MINUTE), NOW, "en"), "23 hours ago");
+  });
+  test("counts days", () => {
+    assert.equal(relativeTime(ago(DAY), NOW, "en"), "1 day ago");
+    assert.equal(relativeTime(ago(2 * DAY + 3 * HOUR), NOW, "en"), "2 days ago");
+    assert.equal(relativeTime(ago(6 * DAY), NOW, "en"), "6 days ago");
+  });
+  test("counts weeks", () => {
+    assert.equal(relativeTime(ago(7 * DAY), NOW, "en"), "1 week ago");
+    assert.equal(relativeTime(ago(29 * DAY), NOW, "en"), "4 weeks ago");
+  });
+  test("counts months", () => {
+    assert.equal(relativeTime(ago(30 * DAY), NOW, "en"), "1 month ago");
+    assert.equal(relativeTime(ago(364 * DAY), NOW, "en"), "12 months ago");
+  });
+  test("counts years", () => {
+    assert.equal(relativeTime(ago(365 * DAY), NOW, "en"), "1 year ago");
+    assert.equal(relativeTime(ago(800 * DAY), NOW, "en"), "2 years ago");
+  });
+  test("speaks the page's language", () => {
+    assert.equal(relativeTime(ago(425 * DAY), NOW, "nl"), "1 jaar geleden");
+    assert.equal(relativeTime(ago(2 * DAY), NOW, "nl"), "2 dagen geleden");
+    assert.equal(relativeTime(ago(20 * SECOND), NOW, "nl"), "nu");
+  });
+});
+
+describe("fullDate", () => {
+  test("formats the date and time in the page's language", () => {
+    const moment = new Date("2026-10-01T14:30:00Z");
+    // Newer ICU versions put a narrow no-break space before "PM".
+    assert.equal(fullDate(moment, "en", "UTC").replace(/\s/g, " "), "Oct 1, 2026, 2:30 PM");
+    assert.equal(fullDate(moment, "nl", "UTC"), "1 okt 2026, 14:30");
   });
 });
 
@@ -223,9 +308,34 @@ describe("createDomView", () => {
     assert.equal(el["leaderboard-status"].children.length, 0);
     const cells = el["leaderboard-body"].children.map((tr) => tr.children.map((td) => td.textContent));
     assert.deepEqual(cells, [
-      ["1", "Player 1", "5,000"],
-      ["2", "Player 2", "4,990"],
+      ["1", "Player 1", "5,000", ""],
+      ["2", "Player 2", "4,990", ""],
     ]);
+  });
+
+  test("when is a time element with the full date on hover", () => {
+    const doc = fakeLeaderboardDocument();
+    const view = createDomView(doc, strings);
+    const achievedAt = new Date("2026-10-06T09:00:00Z");
+    view.showEntries(3, toRows([{ position: 1, displayName: "Ann", score: 540, achievedAt }], "en", NOW));
+    const whenCell = doc.elements["leaderboard-body"].children[0].children[3];
+    assert.equal(whenCell.className, "when");
+    const [time] = whenCell.children;
+    assert.equal(time.tagName, "TIME");
+    assert.equal(time.textContent, "2 days ago");
+    assert.equal(time.attributes.datetime, "2026-10-06T09:00:00.000Z");
+    assert.equal(time.attributes.title, fullDate(achievedAt, "en"));
+  });
+
+  test("an entry without a moment has an empty when cell", () => {
+    const doc = fakeLeaderboardDocument();
+    const view = createDomView(doc, strings);
+    view.showEntries(3, toRows([{ position: 1, displayName: "Ann", score: 540, achievedAt: null }], "en", NOW));
+    const row = doc.elements["leaderboard-body"].children[0];
+    assert.equal(row.children.length, 4);
+    assert.equal(row.children[1].textContent, "Ann");
+    assert.equal(row.children[3].children.length, 0);
+    assert.equal(row.children[3].textContent, "");
   });
 
   test("a display name is shown as text, never as markup", () => {

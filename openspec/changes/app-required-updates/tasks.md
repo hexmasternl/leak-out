@@ -2,8 +2,8 @@
 
 ## 1. Update decision logic in core
 
-- [ ] 1.1 Add `core/.../core/update/UpdateStatus.kt` with `UpdateStatus` (`None`, `Optional`, `Required`) and `classifyUpdate(available, priority)` (priority ≥ 4 → required); add `UpdateStatusTest` covering not available, priorities 0, 3, 4 and 5, and an out-of-range priority, and verify `./gradlew :core:test --tests "*UpdateStatusTest"` passes
-- [ ] 1.2 Add `UpdateGate` (design.md, "Pure decision logic in core") with `mayStartLevel`, blocking-screen and once-per-process optional-prompt rules, including a required update found during a level; add `UpdateGateTest` covering every scenario of `specs/app-updates` that does not need Play, and verify `./gradlew :core:test --tests "*UpdateGateTest"` passes
+- [x] 1.1 Add `core/.../core/update/UpdateStatus.kt` with `UpdateStatus` (`None`, `Optional`, `Required`) and `classifyUpdate(available, priority)` (priority ≥ 4 → required); add `UpdateStatusTest` covering not available, priorities 0, 3, 4 and 5, and an out-of-range priority, and verify `./gradlew :core:test --tests "*UpdateStatusTest"` passes
+- [x] 1.2 Add `UpdateGate` (design.md, "Pure decision logic in core") with `mayStartLevel`, blocking-screen and once-per-process optional-prompt rules, including a required update found during a level; add `UpdateGateTest` covering every scenario of `specs/app-updates` that does not need Play, and verify `./gradlew :core:test --tests "*UpdateGateTest"` passes
 
 ## 2. Play In-App Updates wrapper
 

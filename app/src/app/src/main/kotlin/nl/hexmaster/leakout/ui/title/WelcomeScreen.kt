@@ -57,6 +57,7 @@ object WelcomeScreenTags {
     const val SETTINGS = "welcome_settings"
     const val EXIT = "welcome_exit"
     const val LEVEL_DESIGNER = "welcome_level_designer"
+    const val VERSION = "welcome_version"
 }
 
 /**
@@ -72,6 +73,10 @@ object WelcomeScreenTags {
  *
  * When [onOpenLevelDesigner] is not null (the level designer feature flag is on), a small level
  * designer button sits in the top-right corner; without it the button is not composed at all.
+ *
+ * When [versionLabel] is not null on the first composition, it is shown in the bottom-right corner
+ * as a [StartupVersionLabel] that fades out after 5 s; [onVersionLabelShown] is called when it
+ * appears, so the host can pass null from then on.
  *
  * @param resolveNextLevel a fresh snapshot of the next level to be played. When it throws, the
  *   dialog stays open and nothing is navigated to.
@@ -90,7 +95,11 @@ fun WelcomeScreen(
     onOpenLevelDesigner: (() -> Unit)? = null,
     shouldConfirmExit: suspend () -> Boolean = { true },
     onExitAnswered: suspend (neverShowAgain: Boolean) -> Unit = {},
+    versionLabel: String? = null,
+    onVersionLabelShown: () -> Unit = {},
 ) {
+    // Fixed at the first composition: the host clearing it once shown must not cut the fade short.
+    val startupVersion = remember { versionLabel }
     var showPlayMenu by rememberSaveable { mutableStateOf(false) }
     // One choice at a time: a second tap while the history is read is ignored.
     var resolving by remember { mutableStateOf(false) }
@@ -239,6 +248,16 @@ fun WelcomeScreen(
                     .align(Alignment.TopEnd)
                     .padding(horizontal = horizontalInset, vertical = verticalInset)
                     .padding(8.dp),
+            )
+        }
+        if (startupVersion != null) {
+            StartupVersionLabel(
+                text = startupVersion,
+                onShown = onVersionLabelShown,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(horizontal = horizontalInset, vertical = verticalInset)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
             )
         }
     }

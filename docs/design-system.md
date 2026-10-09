@@ -551,6 +551,10 @@ The stack column sits on the left of the screen, so stack tips open to the right
 
 **Screen reader**: when a tip appears it is announced as a polite live region: the title, the text, the target ("Highlighted: start valve") and, in the tour, "Step 1 of 5". The card is one pane (`paneTitle` = the title) and its buttons follow the text in reading order. The scrim and the game under it are hidden from accessibility while the tip is shown.
 
+### 5.10 Startup version label
+
+When the app starts, the welcome screen shows the installed version as "v<versionName> (<versionCode>)" (for example "v1.4.0 (57)") in its lower-right corner, so testers can see the build without opening Settings > About. It sits inside the safe area with the same 16 dp horizontal and 8 dp vertical margin as the Play / Settings / Exit row, in `caption` and `text.secondary` on the art, with no background. It is decorative: it takes no touches and does not move the title or the buttons. It is shown once per app process: returning to the welcome screen from another screen does not show it again, also when the player left before it faded. Timing is in 7.2.
+
 ---
 
 ## 6. Game board
@@ -684,6 +688,7 @@ Both portals of a pair look the same, and every pair of a level differs from the
 - **Leak splash** (leak dialog, 5.6): when the dialog opens, 6 droplets in `liquid.500` with `liquid.glow` highlights fly out of a `leak.500` centre blob towards the edge of the splash box over 600 ms ease-out, once, and rest there. It does not loop.
 - **Tip entry** (5.9): the scrim with its spotlight fades from 0 to 72 % over `motion.quick` while the callout card scales 0.92 → 1 with `motion.pop`, as a dialog does. The glow ring fades in with the scrim, then pulses on `motion.pulse`. Closing the last tip fades the scrim and card out over `motion.quick`.
 - **Tip step change** (5.9): the spotlight cut-out and glow ring move and resize from the old target to the new one with `motion.settle`; the card moves to its new place with `motion.settle` while its content cross-fades over `motion.quick`. When the field has to pan to show the target, the pan runs first with `motion.settle`, then the spotlight moves.
+- **Startup version label** (5.10): fully visible for 5 s after the welcome screen first appears, then fades from 100 % to 0 % opacity over 300 ms ease-out and leaves the screen.
 - **Drag hint** (5.9, intro step 4): one loop takes `motion.pulse` (2 000 ms): the ghost fades in on the next slot over `motion.quick`, travels to the hint cell over 1 200 ms ease-in-out, rests there 400 ms with the cell in its valid target look, fades out over `motion.quick`, and the loop restarts. It runs while the step is shown.
 
 ### 7.3 Liquid progress
@@ -692,7 +697,7 @@ Progress is a 0–1 value per segment from the engine. The renderer clips the li
 
 ### 7.4 Reduced motion
 
-When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite), and the portal rings do not swirl. In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs and the play menu fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). The pause backdrop appears at full opacity at once and the pause panel fades in over 160 ms without the scale. The top 10 backdrop also appears at once and its panel fades in over 160 ms without the scale; its rows all fade in together over 160 ms without rising or staggering, and the loading ring is a still quarter arc instead of spinning. The stack pieces do not accelerate, bounce or stagger: they all slide to their new slot together over 160 ms ease-out, and the new top piece fades in in its slot over 160 ms. Liquid fill and the win tally are gameplay, so they are unaffected.
+When the system "remove animations" setting is on: no springs (replace with 160 ms ease-out), no glow pulses (static glow at 60 %), no board shake, no droplet burst (a single static splash sprite), and the portal rings do not swirl. In the HUD the countdown bar disappears at once instead of fading, the score bar fill changes over 160 ms ease-out instead of 600 ms, and there is no threshold sparkle. The result dialogs and the play menu fade in over 160 ms ease-out without the scale, and the leak splash is a still sprite (the blob with its droplets at rest). The pause backdrop appears at full opacity at once and the pause panel fades in over 160 ms without the scale. The top 10 backdrop also appears at once and its panel fades in over 160 ms without the scale; its rows all fade in together over 160 ms without rising or staggering, and the loading ring is a still quarter arc instead of spinning. The stack pieces do not accelerate, bounce or stagger: they all slide to their new slot together over 160 ms ease-out, and the new top piece fades in in its slot over 160 ms. The startup version label still holds for 5 s, then fades out over 160 ms ease-out instead of 300 ms. Liquid fill and the win tally are gameplay, so they are unaffected.
 
 ---
 

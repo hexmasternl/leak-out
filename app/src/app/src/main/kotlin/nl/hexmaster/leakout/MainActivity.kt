@@ -61,6 +61,7 @@ import nl.hexmaster.leakout.ui.settings.SettingsViewModel
 import nl.hexmaster.leakout.ui.splash.SplashGate
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import nl.hexmaster.leakout.ui.title.ExitConfirmation
+import nl.hexmaster.leakout.ui.title.StartupVersion
 import nl.hexmaster.leakout.ui.title.WelcomeScreen
 import nl.hexmaster.leakout.ui.update.UpdateGateHost
 import nl.hexmaster.leakout.update.UpdateViewModel
@@ -292,6 +293,8 @@ class MainActivity : ComponentActivity() {
                                 onOpenLevelDesigner = if (FeatureFlags.levelDesigner) openDesigner else null,
                                 shouldConfirmExit = exitConfirmation::shouldAsk,
                                 onExitAnswered = exitConfirmation::answered,
+                                versionLabel = if (versionLabelShown) null else StartupVersion.format(appInfo),
+                                onVersionLabelShown = { versionLabelShown = true },
                             )
                         }
                     }
@@ -303,6 +306,12 @@ class MainActivity : ComponentActivity() {
     /** The next level from a snapshot of the history, read when the player picks on the play menu. */
     private suspend fun resolveNextLevel(): NextLevel = withContext(Dispatchers.IO) {
         NextLevelResolver.resolve(levels.levelCount(), history.asHistoryReader().stars().first())
+    }
+
+    private companion object {
+        // Process lifetime: the version label shows once when the app starts, not on every return.
+        @Volatile
+        var versionLabelShown = false
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {

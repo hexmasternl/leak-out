@@ -27,7 +27,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** The overlay on its own: the reduced-motion drag hint, the button layout and taps on the buttons. */
+/** The overlay on its own: the reduced-motion drag and tap hints, the button layout and taps on the buttons. */
 @RunWith(AndroidJUnit4::class)
 class TipOverlayTest {
     @get:Rule
@@ -54,6 +54,45 @@ class TipOverlayTest {
         compose.mainClock.advanceTimeBy(1_000)
         compose.onNodeWithTag(TipOverlayTags.HINT_ARROW).assertIsDisplayed()
         compose.onNodeWithTag(TipOverlayTags.HINT_GHOST).assertIsDisplayed()
+    }
+
+    private fun showTapStep(reducedMotion: Boolean) {
+        val cell = Rect(Offset(300f, 150f), Size(80f, 80f))
+        compose.setContent {
+            LeakOutTheme {
+                Box(Modifier.size(640.dp, 360.dp)) {
+                    TipOverlay(
+                        content = TipContent(TipId.Intro, 4, "Pro Tip: Tap to Place", "Tap an empty cell.", "an empty cell"),
+                        spotlights = listOf(cell),
+                        hint = TapHint(cell),
+                        onNext = {}, onSkip = {}, onDone = {},
+                        reducedMotion = reducedMotion,
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun withAnimationsOffTheTapToPlaceStepShowsAStillRingAndNoDragHint() {
+        compose.mainClock.autoAdvance = false
+        showTapStep(reducedMotion = true)
+        compose.mainClock.advanceTimeBy(1_000)
+        compose.onNodeWithTag(TipOverlayTags.HINT_TAP).assertIsDisplayed()
+        compose.onNodeWithTag(TipOverlayTags.HINT_GHOST).assertDoesNotExist()
+        compose.onNodeWithTag(TipOverlayTags.HINT_ARROW).assertDoesNotExist()
+        compose.onNodeWithTag(TipOverlayTags.NEXT).assertIsDisplayed()
+    }
+
+    @Test
+    fun thePulsingTapHintDoesNotRecomposeTheOverlayEveryFrame() {
+        compose.mainClock.autoAdvance = false
+        showTapStep(reducedMotion = false)
+        compose.mainClock.advanceTimeBy(1_000)
+        val settled = TipOverlayProbe.compositions
+        compose.mainClock.advanceTimeBy(2_000)
+        assertTrue("recomposed ${TipOverlayProbe.compositions - settled} times", TipOverlayProbe.compositions - settled <= 1)
+        compose.onNodeWithTag(TipOverlayTags.HINT_TAP).assertIsDisplayed()
     }
 
     private fun showStartStep(

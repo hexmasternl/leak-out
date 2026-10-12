@@ -357,8 +357,8 @@ enum class PlaceResult {
     Rejected,
 }
 
-/** The number of steps of the intro tour: start, finish, stack, placing, zoom and pan. */
-const val INTRO_STEPS = 5
+/** The number of steps of the intro tour: start, finish, stack, placing, tap to place, zoom and pan. */
+const val INTRO_STEPS = 6
 
 object LeakTiming {
     /** How long the leak is shown on the field before the level lost dialog appears. */

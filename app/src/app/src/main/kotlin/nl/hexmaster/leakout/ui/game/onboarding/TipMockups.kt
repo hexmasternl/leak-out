@@ -45,7 +45,7 @@ import nl.hexmaster.leakout.ui.theme.LeakOutTheme
  * the real HUD, stack rail and field of a small level under the real [TipOverlay], with animations
  * off. No button does anything.
  */
-enum class TipMockupStep { Start, Placing, Cross }
+enum class TipMockupStep { Start, Placing, Tap, Cross }
 
 object TipMockupTags {
     const val SCENE = "tip_mockup_scene"
@@ -104,6 +104,7 @@ fun TipMockupScene(step: TipMockupStep, modifier: Modifier = Modifier) {
             val spotlights = when (step) {
                 TipMockupStep.Start -> listOfNotNull(targets.cell(MockLevel.start.position))
                 TipMockupStep.Placing -> listOfNotNull(targets.slot(next), hintCell?.let(targets::cell))
+                TipMockupStep.Tap -> listOfNotNull(hintCell?.let(targets::cell))
                 TipMockupStep.Cross -> listOfNotNull(crossSlot?.let(targets::slot))
             }
             // Wait one layout pass, until the targets are known.
@@ -111,9 +112,14 @@ fun TipMockupScene(step: TipMockupStep, modifier: Modifier = Modifier) {
             val content = when (step) {
                 TipMockupStep.Start -> tipContent(TipId.Intro, 0, 30)
                 TipMockupStep.Placing -> tipContent(TipId.Intro, 3, 30)
+                TipMockupStep.Tap -> tipContent(TipId.Intro, 4, 30)
                 TipMockupStep.Cross -> tipContent(TipId.Cross, 0, 30)
             }
-            val hint = if (step == TipMockupStep.Placing && spotlights.size == 2) DragHint(stack.next, spotlights[0], spotlights[1]) else null
+            val hint: TipHint? = when (step) {
+                TipMockupStep.Placing -> if (spotlights.size == 2) DragHint(stack.next, spotlights[0], spotlights[1]) else null
+                TipMockupStep.Tap -> TapHint(spotlights[0])
+                else -> null
+            }
             TipOverlay(content, spotlights, hint, onNext = {}, onSkip = {}, onDone = {}, reducedMotion = true)
         }
     }
@@ -129,6 +135,12 @@ private fun TipMockupStartPreview() {
 @Composable
 private fun TipMockupPlacingPreview() {
     LeakOutTheme { TipMockupScene(TipMockupStep.Placing) }
+}
+
+@Preview(name = "Tip mock-up: tap to place step, 640 × 360", widthDp = 640, heightDp = 360)
+@Composable
+private fun TipMockupTapPreview() {
+    LeakOutTheme { TipMockupScene(TipMockupStep.Tap) }
 }
 
 @Preview(name = "Tip mock-up: cross tip on the stack, 640 × 360", widthDp = 640, heightDp = 360)

@@ -71,6 +71,8 @@ import nl.hexmaster.leakout.settings.SettingsRepository
 import nl.hexmaster.leakout.settings.TipId
 import nl.hexmaster.leakout.ui.components.KeepScreenOn
 import nl.hexmaster.leakout.ui.game.onboarding.DragHint
+import nl.hexmaster.leakout.ui.game.onboarding.TapHint
+import nl.hexmaster.leakout.ui.game.onboarding.TipHint
 import nl.hexmaster.leakout.ui.game.onboarding.LocalTipTargets
 import nl.hexmaster.leakout.ui.game.onboarding.TipOverlay
 import nl.hexmaster.leakout.ui.game.onboarding.TipOverlayTags
@@ -428,7 +430,7 @@ private fun GameTips(
         tip == TipId.Portal -> portalCells.firstOrNull()
         tip != TipId.Intro -> null
         step == 1 -> level.finish.position
-        step == 3 -> hintCell
+        step == 3 || step == 4 -> hintCell
         else -> null
     }
     LaunchedEffect(tip, step, revealed) {
@@ -442,6 +444,7 @@ private fun GameTips(
             1 -> listOfNotNull(targets.cell(level.finish.position))
             2 -> listOfNotNull(targets.stackColumn)
             3 -> listOfNotNull(targets.slot(next), hintCell?.let(targets::cell))
+            4 -> listOfNotNull(hintCell?.let(targets::cell))
             else -> listOfNotNull(targets.fieldBounds())
         }
         TipId.Cross -> listOfNotNull(TipScheduler.tipSlot(stack, PipeSection.X, visibleSlots.orEmpty())?.let(targets::slot))
@@ -457,12 +460,15 @@ private fun GameTips(
             portalCells.mapNotNull(targets::cell).filter { field == null || it.overlaps(field) }
         }
     }
-    val hint = if (tip == TipId.Intro && step == 3) {
-        val from = targets.slot(next)
-        val to = hintCell?.let(targets::cell)
-        if (from != null && to != null) DragHint(stack.next, from, to) else null
-    } else {
-        null
+    val hint: TipHint? = when {
+        tip != TipId.Intro -> null
+        step == 3 -> {
+            val from = targets.slot(next)
+            val to = hintCell?.let(targets::cell)
+            if (from != null && to != null) DragHint(stack.next, from, to) else null
+        }
+        step == 4 -> hintCell?.let(targets::cell)?.let(::TapHint)
+        else -> null
     }
     TipOverlay(
         content = tipContent(tip, step, TipText.percent(level.flow.reservoirSpeedFactor)),

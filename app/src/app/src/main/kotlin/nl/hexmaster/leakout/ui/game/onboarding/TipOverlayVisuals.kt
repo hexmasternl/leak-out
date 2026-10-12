@@ -67,6 +67,13 @@ object TipOverlayMetrics {
     val ButtonSpacing: Dp = 12.dp
 
     const val GHOST_ALPHA = 0.5f
+
+    /** The tap hint (intro step 5): a ring the width of a fingertip around a small dot on the hint cell. */
+    val TapRingRadius: Dp = 22.dp
+    val TapRingWidth: Dp = 2.dp
+    val TapDotRadius: Dp = 5.dp
+    const val TAP_RING_ALPHA = 0.9f
+    const val TAP_DOT_ALPHA = 0.9f
 }
 
 /** The edge of the callout card that faces its target, where the pointer sits. */

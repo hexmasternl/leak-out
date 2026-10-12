@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlin.math.abs
 import kotlin.random.Random
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -86,6 +87,14 @@ class GameTipsTest {
         .firstOrNull()?.config?.getOrNull(ShownTip)
 
     private fun spotlights(): List<Rect> = compose.onNodeWithTag(TipOverlayTags.OVERLAY).fetchSemanticsNode().config[TipSpotlights]
+
+    /** The same rects, allowing a pixel of rounding between the field's cell bounds and the spotlight. */
+    private fun assertRectsClose(expected: List<Rect>, actual: List<Rect>) {
+        assertEquals(expected.size, actual.size)
+        expected.zip(actual).forEach { (e, a) ->
+            assertTrue("$a is not within a pixel of $e", abs(e.left - a.left) <= 1f && abs(e.top - a.top) <= 1f && abs(e.right - a.right) <= 1f && abs(e.bottom - a.bottom) <= 1f)
+        }
+    }
 
     private fun tap(tag: String) {
         compose.onNodeWithTag(tag, useUnmergedTree = true).performClick()
@@ -210,7 +219,7 @@ class GameTipsTest {
         tap(TipOverlayTags.NEXT)
         stepShown(5)
         compose.onNode(hasText("Pro Tip: Tap to Place"), useUnmergedTree = true).assertIsDisplayed()
-        assertEquals(listOf(compose.cellRect(hintCell)), spotlights())
+        assertRectsClose(listOf(compose.cellRect(hintCell)), spotlights())
         compose.onNodeWithTag(TipOverlayTags.HINT_TAP, useUnmergedTree = true).assertIsDisplayed()
         compose.onAllNodesWithTag(TipOverlayTags.HINT_GHOST, useUnmergedTree = true).assertCountEquals(0)
         compose.onNodeWithTag(TipOverlayTags.NEXT, useUnmergedTree = true).assertIsDisplayed()

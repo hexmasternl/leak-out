@@ -11,7 +11,7 @@ The intro tour is five fixed steps driven by one step index: `INTRO_STEPS` in `u
 - Reuse the tour's step machinery, animations, accessibility and tests; the new step is one more index, not a new kind of tip.
 
 **Non-Goals:**
-- Showing the new step to players who have already finished the tour. The tour is one "seen" flag and stays that way.
+- Showing the new step to players who have already finished the tour. The tour is one "seen" flag and stays that way; "Show tips again" on the settings screen replays it, new step included.
 - Changing how tapping places a section, or the placing rules.
 - A new single tip (like the cross tip) for tapping.
 
@@ -26,7 +26,7 @@ The intro tour is five fixed steps driven by one step index: `INTRO_STEPS` in `u
 ## Risks / Trade-offs
 
 - [The tour gets longer, and more players skip it] → One short step with a one-line pro tip; "Skip tour" is unchanged. The step sits where it adds to what the player just learned, not at the end.
-- [Existing players never learn about tapping] → Accepted for this change; the tour is a one-time flag. A "replay tour" setting would solve it and is out of scope.
+- [Existing players never learn about tapping] → Accepted for this change; the tour is a one-time flag. A player can replay it with "Show tips again" on the settings screen.
 - [Instrumented tests that count "Next" taps to walk the tour break] → The tour tests use `INTRO_STEPS` or skip the tour; the ones that count taps are updated in this change.
 - [Automatic translation of "Pro Tip" reads oddly in some languages] → Same mechanism as every other string; the title can be simplified to "Tap to Place" if a translation turns out wrong.
 

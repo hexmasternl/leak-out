@@ -218,6 +218,9 @@
     <string name="tip_intro_place_title">Placing Sections</string>
     <string name="tip_intro_place_text">Drag the next section from the stack onto an empty cell. Build a pipe from the start to the finish.</string>
     <string name="tip_intro_place_target">next section and an empty cell</string>
+    <string name="tip_intro_tap_title">Pro Tip: Tap to Place</string>
+    <string name="tip_intro_tap_text">You can also tap an empty cell to place the next section there. It is much faster than dragging.</string>
+    <string name="tip_intro_tap_target">an empty cell</string>
     <string name="tip_intro_zoom_title">Zoom and Pan</string>
     <string name="tip_intro_zoom_text">Pinch to zoom in or out, and drag the field to move around a larger level.</string>
     <string name="tip_intro_zoom_target">playing field</string>

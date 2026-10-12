@@ -31,6 +31,9 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
@@ -79,6 +82,9 @@ object TipOverlayTags {
     const val HINT_GHOST = "tip_hint_ghost"
     const val HINT_ARROW = "tip_hint_arrow"
 
+    /** The tap to place step's ring on the hint cell: pulsing, or still with reduced motion. */
+    const val HINT_TAP = "tip_hint_tap"
+
     /** The portal tip's two-headed link between the two portals of a pair. */
     const val PORTAL_LINK = "tip_portal_link"
 
@@ -107,6 +113,7 @@ fun tipContent(tip: TipId, step: Int, reservoirPercent: Int): TipContent = when 
             1 -> Triple(R.string.tip_intro_finish_title, R.string.tip_intro_finish_text, R.string.tip_intro_finish_target)
             2 -> Triple(R.string.tip_intro_stack_title, R.string.tip_intro_stack_text, R.string.tip_intro_stack_target)
             3 -> Triple(R.string.tip_intro_place_title, R.string.tip_intro_place_text, R.string.tip_intro_place_target)
+            4 -> Triple(R.string.tip_intro_tap_title, R.string.tip_intro_tap_text, R.string.tip_intro_tap_target)
             else -> Triple(R.string.tip_intro_zoom_title, R.string.tip_intro_zoom_text, R.string.tip_intro_zoom_target)
         }
         TipContent(tip, step, stringResource(title), stringResource(text), stringResource(target))
@@ -120,14 +127,29 @@ fun tipContent(tip: TipId, step: Int, reservoirPercent: Int): TipContent = when 
     )
 }
 
-/** The drag hint of the placing step: the [section] ghost travels from [from] to [to] (root pixels). */
+/** The animated hint a tour step shows over its spotlights, in root pixels. A step shows one hint at most. */
 @Immutable
-data class DragHint(val section: PipeSection, val from: Rect, val to: Rect)
+sealed interface TipHint {
+    /** The same hint in the overlay's own coordinates, whose top left sits at [origin] in the root. */
+    fun relativeTo(origin: Offset): TipHint
+}
+
+/** The drag hint of the placing step: the [section] ghost travels from [from] to [to]. */
+@Immutable
+data class DragHint(val section: PipeSection, val from: Rect, val to: Rect) : TipHint {
+    override fun relativeTo(origin: Offset) = copy(from = from.relativeTo(origin), to = to.relativeTo(origin))
+}
+
+/** The tap hint of the tap to place step: a finger-sized ring pulses on the [cell]. */
+@Immutable
+data class TapHint(val cell: Rect) : TipHint {
+    override fun relativeTo(origin: Offset) = copy(cell = cell.relativeTo(origin))
+}
 
 /**
  * The tip overlay of design-system.md 5.9 over the whole game screen: the scrim with a spotlight on
- * every rect of [spotlights] (root pixels), the callout card beside them and, on the placing step,
- * the [hint]. It takes all pointer input, so nothing under it can be dragged, pinched or panned.
+ * every rect of [spotlights] (root pixels), the callout card beside them and, on the placing and
+ * the tap to place step, the [hint]. It takes all pointer input, so nothing under it can be dragged, pinched or panned.
  * [onNext] and [onSkip] are the tour's Next and Skip tour, [onDone] its Let's go and a single tip's
  * Got it. With a [linkColor] the spotlight rings take that colour, and two spotlights are joined by
  * a two-headed link in it: the portal tip's way of showing which two portals belong together.
@@ -136,7 +158,7 @@ data class DragHint(val section: PipeSection, val from: Rect, val to: Rect)
 fun TipOverlay(
     content: TipContent,
     spotlights: List<Rect>,
-    hint: DragHint?,
+    hint: TipHint?,
     onNext: () -> Unit,
     onSkip: () -> Unit,
     onDone: () -> Unit,
@@ -184,7 +206,11 @@ fun TipOverlay(
             .pointerInput(Unit) { swallowTouchesOutsideButtons() },
     ) {
         TipSpotlightScrim(shown, Modifier.clearAndSetSemantics { }, glowAlpha = glow, ringColor = linkColor ?: LeakOutColors.LiquidGlow)
-        hint?.let { DragHintLayer(it.copy(from = it.from.relativeTo(origin), to = it.to.relativeTo(origin)), reducedMotion) }
+        when (val shownHint = hint?.relativeTo(origin)) {
+            is DragHint -> DragHintLayer(shownHint, reducedMotion)
+            is TapHint -> TapHintLayer(shownHint, reducedMotion)
+            null -> Unit
+        }
         if (linkColor != null && local.size == 2) {
             Canvas(Modifier.fillMaxSize().testTag(TipOverlayTags.PORTAL_LINK)) { drawPortalLink(local[0], local[1], linkColor) }
         }
@@ -365,9 +391,45 @@ private fun DragHintLayer(hint: DragHint, reducedMotion: Boolean) {
     }
 }
 
-/** The "valid target" look of design-system.md 6.2 on the hint cell. */
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawValidTarget() {
+/**
+ * The tap to place step's hint: on the centre of the hint cell a ring grows from a dot to a finger's
+ * width while it fades, once per `motion.pulse`, with the cell in its valid target look; with
+ * [reducedMotion] the ring stands still at full size. The animation is read while drawing, so the
+ * overlay does not recompose every frame.
+ */
+@Composable
+private fun TapHintLayer(hint: TapHint, reducedMotion: Boolean) {
+    val progress: () -> Float = if (reducedMotion) {
+        { 1f }
+    } else {
+        val loop = rememberInfiniteTransition(label = "tapHint")
+        loop.animateFloat(
+            0f, 1f,
+            infiniteRepeatable(
+                keyframes {
+                    durationMillis = 2_000
+                    0f at 0
+                    1f at 1_000 using FastOutSlowInEasing
+                    1f at 2_000
+                },
+            ),
+            label = "tapHintProgress",
+        ).let { value -> { value.value } }
+    }
+    val still = reducedMotion
+    Canvas(Modifier.fillMaxSize().testTag(TipOverlayTags.HINT_TAP)) {
+        val p = progress()
+        translate(hint.cell.left, hint.cell.top) { drawValidTarget(hint.cell.size) }
+        val ringAlpha = if (still) TipOverlayMetrics.TAP_RING_ALPHA else TipOverlayMetrics.TAP_RING_ALPHA * (1f - p)
+        val ringRadius = TipOverlayMetrics.TapRingRadius.toPx() * (0.25f + 0.75f * p)
+        drawCircle(LeakOutColors.LiquidGlow.copy(alpha = ringAlpha), ringRadius, hint.cell.center, style = Stroke(TipOverlayMetrics.TapRingWidth.toPx()))
+        drawCircle(LeakOutColors.LiquidGlow.copy(alpha = TipOverlayMetrics.TAP_DOT_ALPHA), TipOverlayMetrics.TapDotRadius.toPx(), hint.cell.center)
+    }
+}
+
+/** The "valid target" look of design-system.md 6.2 on the hint cell, [size] pixels from the origin. */
+private fun DrawScope.drawValidTarget(size: Size = this.size) {
     val radius = androidx.compose.ui.geometry.CornerRadius(10.dp.toPx())
-    drawRoundRect(LeakOutColors.Liquid500.copy(alpha = 0.14f), cornerRadius = radius)
-    drawRoundRect(Color.White.copy(alpha = 0.16f), cornerRadius = radius, style = androidx.compose.ui.graphics.drawscope.Stroke(1.dp.toPx()))
+    drawRoundRect(LeakOutColors.Liquid500.copy(alpha = 0.14f), size = size, cornerRadius = radius)
+    drawRoundRect(Color.White.copy(alpha = 0.16f), size = size, cornerRadius = radius, style = Stroke(1.dp.toPx()))
 }

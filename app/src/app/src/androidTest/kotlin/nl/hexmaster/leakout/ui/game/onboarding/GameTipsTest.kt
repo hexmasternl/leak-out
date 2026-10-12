@@ -11,6 +11,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
@@ -97,7 +98,7 @@ class GameTipsTest {
         compose.waitForIdle()
     }
 
-    private fun stepShown(step: Int) = compose.onNode(hasText("$step / 5"), useUnmergedTree = true).assertIsDisplayed()
+    private fun stepShown(step: Int) = compose.onNode(hasText("$step / 6"), useUnmergedTree = true).assertIsDisplayed()
 
     // A Samsung Galaxy S21 in landscape: 2400 × 1080 pixels at 420 dpi.
     private val s21Width = 914.dp
@@ -189,7 +190,7 @@ class GameTipsTest {
         compose.mainClock.advanceTimeBy(3_000)
         assertEquals(10_000L, session.remainingMs)
         compose.onNodeWithTag(PauseTags.DIALOG).assertDoesNotExist()
-        compose.onNode(hasText("1 / 5"), useUnmergedTree = true).assertIsDisplayed()
+        compose.onNode(hasText("1 / 6"), useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
@@ -197,6 +198,26 @@ class GameTipsTest {
         show()
         val start = compose.cellRect(Position(0, 0))
         assertEquals(listOf(start), spotlights())
+    }
+
+    @Test
+    fun theTapToPlaceStepHighlightsTheHintCellWithATapHintAndNoDragHint() {
+        val session = show()
+        val hintCell = TipScheduler.hintCell(session.state.level, session.state.board)!!
+        repeat(3) { tap(TipOverlayTags.NEXT) }
+        stepShown(4)
+        compose.onNodeWithTag(TipOverlayTags.HINT_GHOST, useUnmergedTree = true).assertIsDisplayed()
+        tap(TipOverlayTags.NEXT)
+        stepShown(5)
+        compose.onNode(hasText("Pro Tip: Tap to Place"), useUnmergedTree = true).assertIsDisplayed()
+        assertEquals(listOf(compose.cellRect(hintCell)), spotlights())
+        compose.onNodeWithTag(TipOverlayTags.HINT_TAP, useUnmergedTree = true).assertIsDisplayed()
+        compose.onAllNodesWithTag(TipOverlayTags.HINT_GHOST, useUnmergedTree = true).assertCountEquals(0)
+        compose.onNodeWithTag(TipOverlayTags.NEXT, useUnmergedTree = true).assertIsDisplayed()
+        compose.onNodeWithTag(TipOverlayTags.SKIP, useUnmergedTree = true).assertIsDisplayed()
+        tap(TipOverlayTags.NEXT)
+        stepShown(6)
+        compose.onNodeWithTag(TipOverlayTags.DONE, useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
@@ -211,8 +232,8 @@ class GameTipsTest {
     fun finishingTheTourStoresItAndStartsTheCountdown() {
         val tips = InMemorySettingsRepository()
         val session = show(tips = tips)
-        repeat(4) { tap(TipOverlayTags.NEXT) }
-        compose.onNode(hasText("5 / 5"), useUnmergedTree = true).assertIsDisplayed()
+        repeat(5) { tap(TipOverlayTags.NEXT) }
+        compose.onNode(hasText("6 / 6"), useUnmergedTree = true).assertIsDisplayed()
         tap(TipOverlayTags.DONE)
         assertEquals(null, shownTip())
         assertFalse(session.state.paused)
@@ -315,7 +336,7 @@ class GameTipsTest {
     @Test
     fun aScreenReaderReadsTheStepAndTheHighlightedElement() {
         show()
-        compose.onNode(hasContentDescription("Step 1 of 5"), useUnmergedTree = true).assertIsDisplayed()
+        compose.onNode(hasContentDescription("Step 1 of 6"), useUnmergedTree = true).assertIsDisplayed()
         compose.onNode(hasContentDescription("Highlighted: start valve", substring = true), useUnmergedTree = true).assertIsDisplayed()
         val card = compose.onNodeWithTag(TipOverlayTags.CARD).fetchSemanticsNode()
         assertEquals("The Start", card.config.getOrNull(SemanticsProperties.PaneTitle))

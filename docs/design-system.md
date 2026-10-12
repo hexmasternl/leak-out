@@ -510,18 +510,18 @@ The one-time guided tips on the game screen (spec `game-play-onboarding`): the i
 
 | Element | Style | Notes |
 |---------|-------|-------|
-| Step counter | `display.xs` `liquid.300` | "1 / 5"; intro tour only. Single tips show an eyebrow instead: "TIP" in `display.xs` `brass.300` |
+| Step counter | `display.xs` `liquid.300` | "1 / 6"; intro tour only. Single tips show an eyebrow instead: "TIP" in `display.xs` `brass.300` |
 | Title | `display.md` `text.primary` | At most about four words (3.2) |
 | Text | `body.md` `text.secondary` | Two or three lines at 296 dp; `body.md` rather than `body.lg` so the card fits a 360 dp tall screen at 130 % font |
 | Buttons | stacked, 16 dp below the text, right-aligned, `space.3` (12 dp) apart | See below |
 
 | Tip | Buttons (top → bottom) |
 |-----|------------------------|
-| Intro steps 1–4 | primary small "Next" at full card width, tertiary "Skip tour" at full card width below it |
-| Intro step 5 | primary small "Let's go" |
+| Intro steps 1–5 | primary small "Next" at full card width, tertiary "Skip tour" at full card width below it |
+| Intro step 6 | primary small "Let's go" |
 | Cross, reservoir, mandatory | primary small "Got it" |
 
-The bright brass "Next" sits on its own line so it is never squeezed by "Skip tour" and clearly reads as the way to the next tip. Primary small is 40 dp face + 4 dp lip = 48 dp and the tertiary is 48 dp. Card height at 100 % font on intro steps 1–4: 32 padding + 17 counter + 4 + 25 title + 8 + 72 text (three lines) + 16 + 48 + 12 + 48 buttons ≈ 282 dp, which fits in 360 − 2 × 16 dp.
+The bright brass "Next" sits on its own line so it is never squeezed by "Skip tour" and clearly reads as the way to the next tip. Primary small is 40 dp face + 4 dp lip = 48 dp and the tertiary is 48 dp. Card height at 100 % font on intro steps 1–5: 32 padding + 17 counter + 4 + 25 title + 8 + 72 text (three lines) + 16 + 48 + 12 + 48 buttons ≈ 282 dp, which fits in 360 − 2 × 16 dp.
 
 **Placement** (pure, JVM-tested): given the window size, the 16 dp screen gutter and the spotlight rect,
 
@@ -534,22 +534,25 @@ The stack column sits on the left of the screen, so stack tips open to the right
 
 **Drag hint** (intro step 4): a ghost of the next section at 50 % opacity, the size of a field cell, travels from the centre of the next stack slot to the centre of the hint cell (the nearest empty, non-blocked cell to the start's exit). While the ghost is on the cell, the cell shows the "valid target" look of 6.2 (`liquid.tint` fill, `line.strong` border). Both the next slot and the hint cell are spotlighted.
 
+**Tap hint** (intro step 5): the pro tip that a tap places the next section too. Only the hint cell of the drag hint is spotlighted, so the spotlight visibly moves from the stack to the field, and the cell keeps its "valid target" look. On the cell's centre a 5 dp `liquid.glow` dot marks the touch point, and a 2 dp `liquid.glow` ring grows from a quarter of its size to a fingertip's width (22 dp radius) while it fades from 90 % to 0, once per `motion.pulse`. With reduced motion the ring stands still at full size and alpha. No drag ghost on this step.
+
 **Off-screen targets**: when a field target (the finish on a large level, a mandatory cell) is outside the visible field, the field pans just far enough to show it, within the existing pan limits, before the spotlight moves there. When the tour ends, the field returns to the view the level starts with.
 
 **Texts** (English strings resource; the reservoir percentage is the level's `flow.reservoirSpeedFactor` × 100, rounded half up, shown here for 0.3):
 
 | Tip | Target | Title | Text |
 |-----|--------|-------|------|
-| Intro 1 / 5 | start tile | The Start | The liquid comes out of this valve when the countdown runs out. |
-| Intro 2 / 5 | finish tile | The Finish | Lead the liquid into this drain to complete the level. |
-| Intro 3 / 5 | stack column | Your Stack | These are the sections you get, in order. The next one to place is at the bottom. |
-| Intro 4 / 5 | next slot + hint cell | Placing Sections | Drag the next section from the stack onto an empty cell. Build a pipe from the start to the finish. |
-| Intro 5 / 5 | the field | Zoom and Pan | Pinch to zoom in or out, and drag the field to move around a larger level. |
+| Intro 1 / 6 | start tile | The Start | The liquid comes out of this valve when the countdown runs out. |
+| Intro 2 / 6 | finish tile | The Finish | Lead the liquid into this drain to complete the level. |
+| Intro 3 / 6 | stack column | Your Stack | These are the sections you get, in order. The next one to place is at the bottom. |
+| Intro 4 / 6 | next slot + hint cell | Placing Sections | Drag the next section from the stack onto an empty cell. Build a pipe from the start to the finish. |
+| Intro 5 / 6 | hint cell | Pro Tip: Tap to Place | You can also tap an empty cell to place the next section there. It is much faster than dragging. |
+| Intro 6 / 6 | the field | Zoom and Pan | Pinch to zoom in or out, and drag the field to move around a larger level. |
 | Cross | the `X` slot in the stack | Cross Section | A cross has two separate channels and the liquid goes straight through. The first pass scores 10 points, a second pass through the other channel 50. Each channel can be used only once. |
 | Reservoir | the `RES` slot in the stack | Reservoir | A reservoir only connects left and right. While it fills, the liquid flows at 30 % speed, which buys you time. It scores 25 points. |
 | Mandatory | every mandatory cell | Mandatory Sections | These sections are already placed and can't be removed or replaced. The liquid must pass through every channel of each of them before it reaches the finish, or the level is lost. |
 
-**Screen reader**: when a tip appears it is announced as a polite live region: the title, the text, the target ("Highlighted: start valve") and, in the tour, "Step 1 of 5". The card is one pane (`paneTitle` = the title) and its buttons follow the text in reading order. The scrim and the game under it are hidden from accessibility while the tip is shown.
+**Screen reader**: when a tip appears it is announced as a polite live region: the title, the text, the target ("Highlighted: start valve") and, in the tour, "Step 1 of 6". The card is one pane (`paneTitle` = the title) and its buttons follow the text in reading order. The scrim and the game under it are hidden from accessibility while the tip is shown.
 
 ---
 
@@ -685,6 +688,7 @@ Both portals of a pair look the same, and every pair of a level differs from the
 - **Tip entry** (5.9): the scrim with its spotlight fades from 0 to 72 % over `motion.quick` while the callout card scales 0.92 → 1 with `motion.pop`, as a dialog does. The glow ring fades in with the scrim, then pulses on `motion.pulse`. Closing the last tip fades the scrim and card out over `motion.quick`.
 - **Tip step change** (5.9): the spotlight cut-out and glow ring move and resize from the old target to the new one with `motion.settle`; the card moves to its new place with `motion.settle` while its content cross-fades over `motion.quick`. When the field has to pan to show the target, the pan runs first with `motion.settle`, then the spotlight moves.
 - **Drag hint** (5.9, intro step 4): one loop takes `motion.pulse` (2 000 ms): the ghost fades in on the next slot over `motion.quick`, travels to the hint cell over 1 200 ms ease-in-out, rests there 400 ms with the cell in its valid target look, fades out over `motion.quick`, and the loop restarts. It runs while the step is shown.
+- **Tap hint** (5.9, intro step 5): one loop takes `motion.pulse` (2 000 ms): the ring grows from a quarter of its size to full over the first 1 000 ms ease-out while its alpha falls from 90 % to 0, then rests unseen for 1 000 ms, and the loop restarts. The dot stays. With reduced motion nothing moves: the ring is drawn at full size.
 
 ### 7.3 Liquid progress
 

@@ -80,7 +80,7 @@ class GameSessionTipsTest {
     }
 
     @Test
-    fun `the tour moves through its five steps and stops at the last`() {
+    fun `the tour moves through its six steps and stops at the last`() {
         val session = session()
         session.offerTips(listOf(TipId.Intro), atLevelStart = true)
         repeat(10) { session.nextTourStep() }

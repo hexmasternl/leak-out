@@ -99,6 +99,9 @@ object LeakOutTextStyles {
     /** Deep Flow `label.md`: uppercase captions such as the score row labels (callers uppercase). */
     val LabelMd = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Medium, fontSize = 13.sp, lineHeight = 1.3.em, letterSpacing = 0.4.sp)
 
+    /** Deep Flow `caption`: hints and footers. */
+    val Caption = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Medium, fontSize = 12.sp, lineHeight = 1.35.em, letterSpacing = 0.2.sp)
+
     /** Deep Flow `body.sm`: secondary copy. */
     val BodySm = TextStyle(fontFamily = Fredoka, fontWeight = FontWeight.Medium, fontSize = 14.sp, lineHeight = 1.45.em)
 

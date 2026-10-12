@@ -194,7 +194,7 @@ Lifetime achievements SHALL be decided from player stats that last across attemp
 ### Requirement: Hidden achievements
 Hidden achievements SHALL unlock as follows:
 - Instant Flood: a level is lost before the liquid has left any placed section.
-- Wall to Wall: a level is won while every free cell (not blocked, not the start, not the finish) holds a placed section.
+- Wall to Wall: a level is won while every free cell (not blocked, not the start, not the finish, not a portal) holds a placed section.
 - Photo Finish: a level is won and the placement that completed the route was made while the liquid was flowing, on the tile the liquid head's current channel exits into.
 
 #### Scenario: Leak at the start
@@ -208,6 +208,10 @@ Hidden achievements SHALL unlock as follows:
 #### Scenario: Last-second completion
 - **WHEN** the liquid head is in a corner section whose exit points at an empty tile, the player places the section that completes the route on that tile, and the level is then won
 - **THEN** Photo Finish is unlocked
+
+#### Scenario: Full board with portals
+- **WHEN** a level with one portal pair is won and every cell except the blocked cells, the start, the finish and the two portals holds a section
+- **THEN** Wall to Wall is unlocked
 
 ### Requirement: Achievements are evaluated by a pure function
 The system SHALL decide achievements in `core` with a pure function that takes an optional attempt summary, the player stats after the attempt, the level history and the achievements already unlocked. It SHALL return the achievements newly unlocked by that call and the progress of every incremental achievement. Progress SHALL be limited to the number of steps and SHALL never be lower than the progress already stored. An achievement that is already unlocked SHALL never be returned as newly unlocked again. Without an attempt summary, only progress and lifetime achievements SHALL be evaluated.

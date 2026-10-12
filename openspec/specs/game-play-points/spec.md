@@ -61,7 +61,7 @@ The system SHALL count the passes through each cross section separately per tile
 - **THEN** each exit adds 10
 
 ### Requirement: Start and finish tiles give no points
-The start tile and the finish tile SHALL NOT give points. The liquid leaving the start tile and entering the finish tile SHALL NOT change the score.
+The start tile, the finish tile and portals SHALL NOT give points. The liquid leaving the start tile, entering the finish tile or passing a portal pair SHALL NOT change the score.
 
 #### Scenario: Liquid leaves the start tile
 - **WHEN** the flow starts and the liquid leaves the start tile into the first placed section
@@ -70,6 +70,10 @@ The start tile and the finish tile SHALL NOT give points. The liquid leaving the
 #### Scenario: Liquid reaches the finish
 - **WHEN** the liquid exits the last placed section and enters the finish tile
 - **THEN** the score goes up only by the points for that last section
+
+#### Scenario: Liquid passes a portal pair
+- **WHEN** the liquid exits a straight section into a portal, passes the pair and exits a corner section after the other portal
+- **THEN** the score goes up by 10 and 15 only, and the portal pair adds nothing
 
 ### Requirement: The last section before a leak still scores
 When the liquid exits a placed section and the next tile does not accept it (an empty tile, a blocked tile, a closed side of a section, the edge of the grid, the wrong side of the finish or a used cross channel), the system SHALL still award the points for the section the liquid exited.

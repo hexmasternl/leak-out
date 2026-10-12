@@ -4,7 +4,7 @@
 TBD - created by archiving change app-game-level-model. Update Purpose after archive.
 ## Requirements
 ### Requirement: Level is described by a JSON document
-The system SHALL read a level from a JSON document. The fields `id`, `name`, `grid`, `start`, `finish`, `blocked`, `flow.initialDelayMs`, `flow.cellsPerSecond` and `stars` SHALL be required. The fields `flow.reservoirSpeedFactor`, `flow.speedRampPerCell`, `stack`, `rules` and `mandatory`, and every field inside `stack` and `rules`, SHALL be optional.
+The system SHALL read a level from a JSON document. The fields `id`, `name`, `grid`, `start`, `finish`, `blocked`, `flow.initialDelayMs`, `flow.cellsPerSecond` and `stars` SHALL be required. The fields `flow.reservoirSpeedFactor`, `flow.speedRampPerCell`, `stack`, `rules`, `mandatory` and `portals`, and every field inside `stack` and `rules`, SHALL be optional.
 
 #### Scenario: Complete level is parsed
 - **WHEN** a JSON document containing every field with valid values is parsed
@@ -21,6 +21,10 @@ The system SHALL read a level from a JSON document. The fields `id`, `name`, `gr
 #### Scenario: Malformed JSON is rejected
 - **WHEN** the input is not valid JSON
 - **THEN** parsing fails with an error and no level is produced
+
+#### Scenario: Level with portals is parsed
+- **WHEN** a JSON document with a `portals` array holding one valid pair is parsed
+- **THEN** the system produces a level with that portal pair
 
 ### Requirement: Engine settings have defaults that a level can override
 The system SHALL keep one central set of defaults: `flow.reservoirSpeedFactor` 0.3, `flow.speedRampPerCell` 0.0, `stack.visibleSize` 5, stack weights `H` 7, `V` 7, `LT` 7, `LB` 7, `RT` 7, `RB` 7, `X` 0 and `RES` 0, `rules.allowReplace` true and `rules.replacePenaltyMs` 1500. When a level leaves out an optional field, the parsed level SHALL hold the default value for it. When a level provides an optional field, the parsed level SHALL hold the provided value, and all other optional fields SHALL keep their defaults.
@@ -98,7 +102,7 @@ The system SHALL define the start and the finish each with an `x` column, a `y` 
 - **THEN** parsing fails with an error that names the invalid value
 
 ### Requirement: Start and finish are placed so that they can be connected
-The system SHALL accept a start and a finish only when all of the following hold. Each lies inside the grid. They are different cells. Neither lies on a blocked cell. Each facing cell lies inside the grid and is not blocked. The start's facing cell is not the finish, and the finish's facing cell is not the start. The start and the finish MAY share a facing cell.
+The system SHALL accept a start and a finish only when all of the following hold. Each lies inside the grid. They are different cells. Neither lies on a blocked cell or a portal. Each facing cell lies inside the grid, is not blocked and is not a portal. The start's facing cell is not the finish, and the finish's facing cell is not the start. The start and the finish MAY share a facing cell.
 
 #### Scenario: Position outside the grid
 - **WHEN** the start or the finish has an `x` that is negative or at least the column count, or a `y` that is negative or at least the row count
@@ -131,6 +135,10 @@ The system SHALL accept a start and a finish only when all of the following hold
 #### Scenario: Shared facing cell
 - **WHEN** the start is at x 1, y 1 with open side `RIGHT` and the finish is at x 2, y 2 with open side `TOP`, so that both face x 2, y 1
 - **THEN** the level is accepted
+
+#### Scenario: Start faces a portal
+- **WHEN** the start's facing cell holds a portal
+- **THEN** validation fails with an error stating that the start's facing cell must not be a portal
 
 ### Requirement: Level has flow settings
 The system SHALL define `flow` with an `initialDelayMs`, a `cellsPerSecond`, a `reservoirSpeedFactor` and a `speedRampPerCell`. `initialDelayMs` is the integer number of milliseconds between the start of the level and the moment liquid begins to flow, and SHALL be zero or greater. `cellsPerSecond` is the number of cell lengths the liquid front advances per second at base speed, and SHALL be greater than 0 and at most 10. `reservoirSpeedFactor` multiplies the speed while liquid passes a reservoir, and SHALL be greater than 0 and at most 1. `speedRampPerCell` is the speed increase per filled cell, and SHALL be zero or greater.
@@ -214,7 +222,7 @@ The system SHALL define `rules` with a boolean `allowReplace`, which says whethe
 - **THEN** parsing fails with an error that names `rules.allowReplace`
 
 ### Requirement: Level lists blocked cells
-The system SHALL define `blocked` as an array of cells, each with an `x` and a `y`, on which no pipe section can be placed. An empty array SHALL mean the level has no blocked cells. Every blocked cell SHALL lie inside the grid, SHALL NOT coincide with the start or the finish, and SHALL NOT appear more than once.
+The system SHALL define `blocked` as an array of cells, each with an `x` and a `y`, on which no pipe section can be placed. An empty array SHALL mean the level has no blocked cells. Every blocked cell SHALL lie inside the grid, SHALL NOT coincide with the start, the finish or a portal, and SHALL NOT appear more than once.
 
 #### Scenario: Level without blocked cells
 - **WHEN** a level has an empty `blocked` array
@@ -235,6 +243,10 @@ The system SHALL define `blocked` as an array of cells, each with an `x` and a `
 #### Scenario: Duplicate blocked cell
 - **WHEN** the same cell appears twice in `blocked`
 - **THEN** validation fails with an error that names the duplicated cell
+
+#### Scenario: Blocked cell on a portal
+- **WHEN** a blocked cell has the same coordinates as a portal
+- **THEN** validation fails with an error that names the portal and states that the cell is blocked
 
 ### Requirement: Level defines star benchmarks
 The system SHALL define `stars` with three point thresholds, `one`, `two` and `three`, that are the minimum points needed to earn one, two and three stars when the level is won. Each threshold SHALL be a positive integer, and the thresholds SHALL be strictly increasing. The system SHALL NOT check whether a threshold can be reached.
@@ -312,7 +324,7 @@ The system SHALL accept a mandatory entry only when its `section` is `X` or `RES
 - **THEN** the entry is accepted
 
 ### Requirement: Mandatory sections lie on free cells
-Every mandatory section SHALL lie inside the grid, SHALL NOT lie on a blocked cell, the start or the finish, and SHALL NOT share its cell with another mandatory section.
+Every mandatory section SHALL lie inside the grid, SHALL NOT lie on a blocked cell, the start, the finish or a portal, and SHALL NOT share its cell with another mandatory section.
 
 #### Scenario: Mandatory section outside the grid
 - **WHEN** a mandatory section has an `x` that is at least the column count
@@ -329,3 +341,7 @@ Every mandatory section SHALL lie inside the grid, SHALL NOT lie on a blocked ce
 #### Scenario: Two mandatory sections on one cell
 - **WHEN** two mandatory entries have the same coordinates
 - **THEN** validation fails with an error that names the duplicated cell
+
+#### Scenario: Mandatory section on a portal
+- **WHEN** a mandatory section has the same coordinates as a portal
+- **THEN** validation fails with an error that names the portal and states that the cell holds a mandatory section

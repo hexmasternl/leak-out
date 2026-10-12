@@ -53,6 +53,7 @@ Work is specified and tracked with [OpenSpec](https://github.com/Fission-AI/Open
 
 - `main` is production: never commit, push, rebase or reset it.
 - `development` is the integration branch, branched from `main`.
+- `main` and `development` always live in the main worktree (the repository folder itself). Never create a separate worktree for either; switch between them there.
 - Each OpenSpec change is implemented on `feature/<change-name>`, branched from `development`, in its own worktree under `../leak-out-worktrees/<change-name>`. The `openspec-work-on-change` skill sets this up and owns committing and pushing.
 
 ## Releases

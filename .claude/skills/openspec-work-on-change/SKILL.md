@@ -21,6 +21,7 @@ Work on an OpenSpec change inside a dedicated git worktree, on a feature branch 
 | `feature/<change-name>`   | One per OpenSpec change, named after the change. Branched from `development`.              |
 
 Rules:
+- `main` and `development` **always live in the main worktree** (the repository folder itself, e.g. `leak-out\`). Never create a separate worktree for either of them; switching between the two happens with a plain `git switch` in the main worktree. Only `feature/*` branches get their own worktree.
 - If `development` does not exist locally or on the remote, create it from `main` and push it.
 - A feature branch is always created from `development`, never from `main` and never from another feature branch.
 - All implementation commits go on the feature branch only.
@@ -31,11 +32,13 @@ Worktrees live in a sibling folder of the repository, named `<repo-folder>-workt
 
 ```
 D:\projects\github.com\hexmasternl\
-├── leak-out\                       ← main repository (stays on main, untouched)
+├── leak-out\                       ← main worktree: home of main AND development (never a worktree for either)
 └── leak-out-worktrees\
     ├── app-welcome-screen\         ← worktree for change "app-welcome-screen"
     └── app-game-level-model\       ← worktree for change "app-game-level-model"
 ```
+
+Only feature branches appear under `leak-out-worktrees\`. Never run `git worktree add` for `main` or `development`, and never create a folder such as `leak-out-worktrees\development`. If a worktree for `main` or `development` already exists, stop and tell the user so it can be removed; do not use it.
 
 The worktree folder name is exactly the OpenSpec change name. Derive the paths from git, do not hardcode them:
 
@@ -74,7 +77,7 @@ branch="feature/$change"
    ```bash
    git fetch origin --prune
    ```
-   Do not check out anything in the main repository. It stays on `main`.
+   Do not switch branches in the main worktree as part of this skill. It keeps whichever of `main` or `development` the user has checked out there.
 
 3. **Ensure `development` exists**
 
@@ -121,7 +124,7 @@ branch="feature/$change"
    ```bash
    git -C "<worktree-path>" rev-parse --abbrev-ref HEAD   # must print feature/<change-name>
    ```
-   If it prints `main` or `development`, stop. Something is wrong and the user must decide.
+   If it prints `main` or `development`, stop. Something is wrong and the user must decide: those branches belong only to the main worktree.
 
    Note for this repository: the app's Gradle root is `app/src/` inside the worktree, so Gradle commands run from `<worktree-path>/app/src`; the server's .NET solution is in `<worktree-path>/server/src`.
 
@@ -219,6 +222,7 @@ Next steps (your call):
 
 - `main` is read-only. Never `git checkout main` in a worktree, never commit, push, merge, rebase, or reset it.
 - `development` is only ever created by this skill, never modified from a feature worktree.
+- `main` and `development` live only in the main worktree. Never create, attach or reuse a separate worktree for either branch.
 - One change, one worktree, one feature branch. Never work on two changes in the same worktree.
 - Never run implementation commands in the main repository folder; if the current directory is the main repository, move to the worktree first.
 - If the worktree path already exists on disk but is not a registered worktree, stop and ask. Do not delete it.

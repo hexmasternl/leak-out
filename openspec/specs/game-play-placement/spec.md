@@ -6,7 +6,7 @@ TBD - created by syncing change app-game-play-playing-field. Update Purpose afte
 ### Requirement: Placement rule per tile
 The system SHALL decide for every tile whether a dragged section can be dropped on it, using one rule:
 - an empty tile SHALL accept a section;
-- a blocked tile, the start tile, the finish tile and a tile with a mandatory section SHALL never accept a section;
+- a blocked tile, the start tile, the finish tile, a portal tile and a tile with a mandatory section SHALL never accept a section;
 - a tile with a placed section SHALL accept a section only when the liquid has not entered that placed section and the level's `rules.allowReplace` is true;
 - no tile SHALL accept a section while a replacement sequence runs or while the game is paused.
 
@@ -17,6 +17,10 @@ The system SHALL decide for every tile whether a dragged section can be dropped 
 #### Scenario: Blocked, start and finish tiles refuse
 - **WHEN** a section is dragged to a blocked tile, the start tile or the finish tile
 - **THEN** the tile does not accept the section
+
+#### Scenario: Portal refuses
+- **WHEN** a section is dragged to a portal tile, in a level that allows replacing
+- **THEN** the tile does not accept the section and is not highlighted
 
 #### Scenario: Mandatory section refuses
 - **WHEN** a section is dragged to a tile with a mandatory section that the liquid has not entered, in a level that allows replacing

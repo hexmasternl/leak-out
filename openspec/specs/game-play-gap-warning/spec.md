@@ -6,7 +6,7 @@ TBD - created by archiving change app-game-play-gap-warning. Update Purpose afte
 ## Requirements
 
 ### Requirement: Gap distance
-While the liquid is flowing and the attempt is being played, the system SHALL measure the **gap distance**: how far, in sections, the liquid head is from the point where it would leak if nothing changes. The distance SHALL be the part of the head's current tile it still has to run through (1 minus its progress), plus 1 for every placed section it would enter after that tile before it leaks. The walk ahead SHALL follow the same rules as the flow: an empty, blocked or start tile, the grid edge, a section without a matching opening, a cross channel the liquid already used, and a finish entered from the wrong side or with a mandatory section unused are all gaps. A tile whose replacement section has not yet landed SHALL count as empty. When the walk ahead reaches the finish and the liquid would win there, there SHALL be no gap. There SHALL be no gap while the flow waits to start and after the attempt is won or lost. The distance SHALL be measured again on every frame and after every placement.
+While the liquid is flowing and the attempt is being played, the system SHALL measure the **gap distance**: how far, in sections, the liquid head is from the point where it would leak if nothing changes. The distance SHALL be the part of the head's current tile it still has to run through (1 minus its progress), plus 1 for every placed section or portal pair it would enter after that tile before it leaks. The walk ahead SHALL follow the same rules as the flow: an empty, blocked or start tile, the grid edge, a section without a matching opening, a cross channel the liquid already used, a portal entered through a closed side or a pair already passed, and a finish entered from the wrong side or with a mandatory section unused are all gaps. A tile whose replacement section has not yet landed SHALL count as empty. When the walk ahead reaches the finish and the liquid would win there, there SHALL be no gap. There SHALL be no gap while the flow waits to start and after the attempt is won or lost. The distance SHALL be measured again on every frame and after every placement.
 
 #### Scenario: Gap right after the head's tile
 - **WHEN** the liquid head is halfway through a straight whose exit faces an empty tile
@@ -35,6 +35,14 @@ While the liquid is flowing and the attempt is being played, the system SHALL me
 #### Scenario: Countdown
 - **WHEN** the flow is still counting down
 - **THEN** there is no gap and no warning, however the field looks
+
+#### Scenario: Gap behind a portal pair
+- **WHEN** the liquid head is halfway through a straight whose exit leads into a portal, and the cell the other portal faces is empty
+- **THEN** the gap distance is 1.5: half the straight plus one for the portal pair
+
+#### Scenario: Head inside a portal pair
+- **WHEN** the head is at progress 0.25 in a portal pair and the cell the exit portal faces is empty
+- **THEN** the gap distance is 0.75
 
 ### Requirement: Score bar colour warns of the gap
 While the gap distance is 5 or less, the score bar's fill SHALL be drawn in a colour between its normal brass and red (`leak.500`): brass at 5 sections, red at 3 sections and closer, and in between in proportion to the distance. While the gap distance is more than 5, or there is no gap, the score bar SHALL look as it does without a warning. The colour SHALL follow the distance on every frame, so it changes smoothly as the liquid flows. It SHALL go back at once when a placement moves the gap further away.

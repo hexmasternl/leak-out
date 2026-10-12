@@ -73,20 +73,24 @@ The container app SHALL receive its connection strings and application secrets a
 - **WHEN** the repository is searched for the registry password, the database password and the application secrets
 - **THEN** none of their values are found
 
-### Requirement: The API scales with HTTP traffic and down to zero
-The container app SHALL scale its replica count on concurrent HTTP requests, with a minimum of 0 replicas and a configurable maximum, and SHALL accept external HTTPS traffic only.
+### Requirement: The API scales with HTTP traffic and keeps a warm replica
+The container app SHALL scale its replica count on concurrent HTTP requests between a configurable minimum and a configurable maximum, and SHALL accept external HTTPS traffic only. The minimum SHALL default to 1 replica and the maximum to 3, so a request does not wait for a cold start.
 
-#### Scenario: Idle app scales to zero
+#### Scenario: Idle app keeps one replica
 - **WHEN** the API receives no requests for the scale-down period
-- **THEN** the number of running replicas drops to 0
+- **THEN** 1 replica keeps running
 
-#### Scenario: Traffic wakes the app
-- **WHEN** a request arrives while 0 replicas run
-- **THEN** a replica starts and the request is answered
+#### Scenario: First request after a quiet period
+- **WHEN** a request arrives after a period without traffic
+- **THEN** a running replica answers it without a cold start
 
 #### Scenario: Load scales out
 - **WHEN** concurrent requests per replica exceed the configured threshold
 - **THEN** replicas are added up to the configured maximum
+
+#### Scenario: Minimum set back to zero
+- **WHEN** the deployment sets the minimum to 0
+- **THEN** the app scales to 0 replicas when idle, and a request arriving while 0 replicas run starts a replica and is answered
 
 ### Requirement: Health probes use the service default endpoints
 The container app SHALL use `/alive` as its liveness probe and `/health` as its readiness probe.

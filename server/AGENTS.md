@@ -36,7 +36,7 @@ The AppHost needs three parameters in its user secrets: `Parameters:google-clien
 
 ## Git workflow and CI
 
-The repository-wide flow applies (root `CLAUDE.md`): `main` is production, `development` the integration branch, and every OpenSpec change is implemented on `feature/<change-name>` in a worktree under `../leak-out-worktrees/` (the `openspec-work-on-change` skill). Server specs live in the root `openspec/specs/server-*`; name server changes `server-<name>`. Pull requests that change `server/` must keep the 80% coverage gate. The server's workflows are `.github/workflows/server-build-test.yml`, `server-pull-request.yml` and `server-deploy.yml`; they only build or deploy when `server/` or a server workflow changes, and the server is versioned from `server-v<x.y.z>` tags (`GitVersion.yml`).
+The repository-wide flow applies (root `CLAUDE.md`): `main` is production, `development` the integration branch, and every OpenSpec change is implemented on `feature/<change-name>` in a worktree under `../leak-out-worktrees/` (the `openspec-work-on-change` skill); `main` and `development` themselves always stay in the main worktree and never get a worktree of their own. Server specs live in the root `openspec/specs/server-*`; name server changes `server-<name>`. Pull requests that change `server/` must keep the 80% coverage gate. The server's workflows are `.github/workflows/server-build-test.yml`, `server-pull-request.yml` and `server-deploy.yml`; they only build or deploy when `server/` or a server workflow changes, and the server is versioned from `server-v<x.y.z>` tags (`GitVersion.yml`).
 
 ## Conventions
 

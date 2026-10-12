@@ -21,7 +21,7 @@ The app SHALL have a Level Designer screen, reachable only from the welcome scre
 - **THEN** a dialog asks to discard the design; confirming returns to the welcome screen and cancelling stays in the designer
 
 ### Requirement: New level and copy of a bundled level
-A new design SHALL start as a valid, solvable level: id one higher than the number of bundled levels, name "New level", a 7 by 5 grid, start at x 0, y 2 open `RIGHT`, finish at x 6, y 2 open `LEFT`, no blocked cells, no mandatory sections, flow initial delay 20000 ms and 0.4 cells per second, the calculated star thresholds 200, 250 and 330, and every optional field at its default. The designer SHALL also offer to start from a copy of any bundled level, which loads all of that level's fields except the star thresholds, which are calculated.
+A new design SHALL start as a valid, solvable level: id one higher than the number of bundled levels, name "New level", a 7 by 5 grid, start at x 0, y 2 open `RIGHT`, finish at x 6, y 2 open `LEFT`, no blocked cells, no mandatory sections, no portals, flow initial delay 20000 ms and 0.4 cells per second, the calculated star thresholds 200, 250 and 330, and every optional field at its default. The designer SHALL also offer to start from a copy of any bundled level, which loads all of that level's fields except the star thresholds, which are calculated.
 
 #### Scenario: Blank level
 - **WHEN** the designer opens and 4 levels are bundled
@@ -29,10 +29,10 @@ A new design SHALL start as a valid, solvable level: id one higher than the numb
 
 #### Scenario: Copy a bundled level
 - **WHEN** the developer chooses to start from bundled level 2
-- **THEN** the design holds every field of level 2, including its blocked cells and mandatory sections, with the star thresholds calculated from its free cells
+- **THEN** the design holds every field of level 2, including its blocked cells, mandatory sections and portal pairs, with the star thresholds calculated from its free cells
 
 ### Requirement: Grid size
-The designer SHALL let the developer set the number of columns and rows, each between 4 and 50, with controls that cannot go outside that range. When the grid shrinks, blocked cells outside the new grid SHALL be removed, and a start or finish outside the new grid SHALL be moved to the nearest cell inside it, keeping its open side.
+The designer SHALL let the developer set the number of columns and rows, each between 4 and 50, with controls that cannot go outside that range. When the grid shrinks, blocked cells outside the new grid SHALL be removed, a start or finish outside the new grid SHALL be moved to the nearest cell inside it, keeping its open side, and a portal pair with a portal outside the new grid SHALL be removed.
 
 #### Scenario: Grow the grid
 - **WHEN** the developer raises the columns from 7 to 10
@@ -50,8 +50,12 @@ The designer SHALL let the developer set the number of columns and rows, each be
 - **WHEN** the columns are 4
 - **THEN** the control to lower the columns is disabled, and at 50 the control to raise them is disabled
 
+#### Scenario: Shrink removes a portal pair
+- **WHEN** a portal is at x 9, y 1, its partner is at x 2, y 3, and the developer lowers the columns from 10 to 8
+- **THEN** both portals of that pair are removed and the other pairs are kept
+
 ### Requirement: Placing the start and the finish
-The designer SHALL have a Start tool and a Finish tool. With one of them selected, tapping a cell SHALL move that endpoint to the cell, keeping its open side; if the cell was blocked it SHALL be unblocked. Tapping the cell of the other endpoint or a cell holding a mandatory section SHALL do nothing. The designer SHALL show an open side control for the start and for the finish with the choices `LEFT`, `RIGHT`, `TOP` and `BOTTOM`. The grid SHALL draw the start and the finish with their open sides as in the game.
+The designer SHALL have a Start tool and a Finish tool. With one of them selected, tapping a cell SHALL move that endpoint to the cell, keeping its open side; if the cell was blocked it SHALL be unblocked. Tapping the cell of the other endpoint, a cell holding a mandatory section or a portal SHALL do nothing. The designer SHALL show an open side control for the start and for the finish with the choices `LEFT`, `RIGHT`, `TOP` and `BOTTOM`. The grid SHALL draw the start and the finish with their open sides as in the game.
 
 #### Scenario: Move the start
 - **WHEN** the Start tool is selected and the developer taps x 2, y 3
@@ -73,8 +77,12 @@ The designer SHALL have a Start tool and a Finish tool. With one of them selecte
 - **WHEN** the developer sets the finish's open side to `TOP`
 - **THEN** the grid shows the finish opening upwards and the design's finish open side is `TOP`
 
+#### Scenario: Endpoint onto a portal
+- **WHEN** the Finish tool is selected and the developer taps a portal
+- **THEN** the finish and the portal do not change
+
 ### Requirement: Blocked cells
-The designer SHALL have a Block tool. With it selected, tapping a cell SHALL toggle whether it is blocked. Dragging across cells SHALL apply the same change to every cell passed: block them when the first cell was free, unblock them when it was blocked. The start and finish cells and cells holding a mandatory section SHALL never be blocked by the tool. A Clear blocked action SHALL remove all blocked cells.
+The designer SHALL have a Block tool. With it selected, tapping a cell SHALL toggle whether it is blocked. Dragging across cells SHALL apply the same change to every cell passed: block them when the first cell was free, unblock them when it was blocked. The start and finish cells, cells holding a mandatory section and portals SHALL never be blocked by the tool. A Clear blocked action SHALL remove all blocked cells.
 
 #### Scenario: Toggle a cell
 - **WHEN** the Block tool is selected and the developer taps a free cell, then taps it again
@@ -96,6 +104,10 @@ The designer SHALL have a Block tool. With it selected, tapping a cell SHALL tog
 - **WHEN** the design has blocked cells and the developer taps Clear blocked
 - **THEN** the design has no blocked cells
 
+#### Scenario: Portals are skipped
+- **WHEN** the developer drags the Block tool across a portal
+- **THEN** the portal stays and the cells before and after it are blocked
+
 ### Requirement: Other level fields
 The designer SHALL let the developer edit the level's id, name, flow settings (initial delay, cells per second, reservoir speed factor, speed ramp per cell), stack settings (visible size and the weight of each of the eight sections) and placement rules (allow replace, replace penalty). A numeric input that is not a number SHALL be marked as invalid and SHALL NOT change the design.
 
@@ -112,7 +124,7 @@ The designer SHALL let the developer edit the level's id, name, flow settings (i
 - **THEN** the field is marked invalid and the design keeps its previous initial delay
 
 ### Requirement: Live validation and solvability
-After every change the designer SHALL validate the design with `LevelValidator` and, when it is valid, check it with `LevelSolver`. It SHALL show the status (valid and solvable, invalid, or unsolvable), list every validation error with its field and message, and show the solver's reason for an unsolvable level. Errors about a cell (start, finish or a blocked cell) SHALL also be highlighted on the grid.
+After every change the designer SHALL validate the design with `LevelValidator` and, when it is valid, check it with `LevelSolver`. It SHALL show the status (valid and solvable, invalid, or unsolvable), list every validation error with its field and message, and show the solver's reason for an unsolvable level. Errors about a cell (start, finish, a blocked cell or a portal) SHALL also be highlighted on the grid.
 
 #### Scenario: Valid and solvable
 - **WHEN** the design is valid and the solver finds a route
@@ -125,6 +137,14 @@ After every change the designer SHALL validate the design with `LevelValidator` 
 #### Scenario: Unsolvable
 - **WHEN** blocked cells wall off the finish
 - **THEN** the status shows the level as unsolvable with the solver's reason
+
+#### Scenario: Walled-off portal highlighted
+- **WHEN** a portal's open side faces a blocked cell
+- **THEN** the error for that portal is listed with its field, such as `portals[0].b`, and the portal is highlighted
+
+#### Scenario: Solvable only through a portal
+- **WHEN** blocked cells wall off the finish and a portal pair crosses the wall
+- **THEN** the status shows the level as valid and solvable
 
 ### Requirement: Test play
 The designer SHALL have a Test play action, enabled only when the design is valid and solvable, that plays the design in the normal game screen. A test play SHALL NOT record anything in the level history and SHALL NOT offer a next level. Leaving the game screen SHALL return to the designer with the design unchanged.
@@ -183,7 +203,7 @@ The designer SHALL have a Mandatory cross tool and a Mandatory reservoir tool. W
 - **THEN** only the cell the drag started on holds a mandatory `X`
 
 ### Requirement: Where mandatory sections can be placed
-The mandatory section tools SHALL do nothing on a blocked cell, on the start or the finish, or when the design already has 6 mandatory sections and the tapped cell holds none.
+The mandatory section tools SHALL do nothing on a blocked cell, on the start or the finish, on a portal, or when the design already has 6 mandatory sections and the tapped cell holds none.
 
 #### Scenario: Blocked cell refused
 - **WHEN** the Mandatory cross tool is selected and the developer taps a blocked cell
@@ -196,6 +216,10 @@ The mandatory section tools SHALL do nothing on a blocked cell, on the start or 
 #### Scenario: At most six
 - **WHEN** the design has 6 mandatory sections and the developer taps a free cell with a mandatory section tool
 - **THEN** no section is added, and tapping one of the 6 still removes or changes it
+
+#### Scenario: Portal refused
+- **WHEN** the Mandatory cross tool is selected and the developer taps a portal
+- **THEN** the design is unchanged
 
 ### Requirement: Mandatory sections leave the designer with the design
 Mandatory sections SHALL be part of the exported JSON, SHALL be on the board when a test play starts, and SHALL be kept when the design survives a configuration change or process death.
@@ -213,7 +237,7 @@ Mandatory sections SHALL be part of the exported JSON, SHALL be on the board whe
 - **THEN** the designer shows the same mandatory sections
 
 ### Requirement: Calculated star thresholds
-The designer SHALL calculate the star thresholds from the free cells: every cell of the grid except blocked cells, the start and the finish; cells holding a mandatory section count as free. Three stars SHALL be free cells times 10. Two stars and one star SHALL be 75% and 60% of the three-star value, each rounded to the nearest 10, with halves rounded up. The thresholds SHALL be recalculated after every edit and SHALL NOT be editable.
+The designer SHALL calculate the star thresholds from the free cells: every cell of the grid except blocked cells, the start, the finish and portals; cells holding a mandatory section count as free. Three stars SHALL be free cells times 10. Two stars and one star SHALL be 75% and 60% of the three-star value, each rounded to the nearest 10, with halves rounded up. The thresholds SHALL be recalculated after every edit and SHALL NOT be editable.
 
 #### Scenario: Example grid
 - **WHEN** the design is a 7 by 9 grid with 1 blocked cell
@@ -238,3 +262,63 @@ The designer SHALL calculate the star thresholds from the free cells: every cell
 #### Scenario: Too few free cells
 - **WHEN** the design has 3 free cells
 - **THEN** the star thresholds are 20, 20 and 30 and the design is reported invalid because they are not strictly increasing
+
+#### Scenario: Portals are not free cells
+- **WHEN** the developer places a portal pair in a design with 60 free cells
+- **THEN** the design has 58 free cells and the star thresholds become 350, 440 and 580
+
+### Requirement: Portal tool
+The designer SHALL have a Portal tool. With it selected and no portal selected, tapping a free cell SHALL place a portal: as the second portal of a pair that has only one, otherwise as the first portal of a new pair. Tapping a portal SHALL select it; tapping it again SHALL deselect it. With a portal selected, tapping a free cell SHALL move it there, keeping its open side. A drag SHALL only act on the cell it starts on.
+
+#### Scenario: Place a pair
+- **WHEN** the Portal tool is selected and the developer taps the free cells x 1, y 1 and x 6, y 3
+- **THEN** the design has one portal pair with portals at those two cells, drawn in the first pair colour and symbol
+
+#### Scenario: Unfinished pair
+- **WHEN** the developer has placed only the first portal of a pair
+- **THEN** the design is reported invalid with an error saying that the pair needs a second portal, and that portal is highlighted
+
+#### Scenario: Move a portal
+- **WHEN** the developer taps the portal at x 6, y 3 and then taps the free cell x 7, y 4
+- **THEN** that portal is at x 7, y 4 with its previous open side and the other portal of the pair has not moved
+
+### Requirement: Portal open side and removal
+When a portal is selected, the designer SHALL show an open side control for it with the choices `LEFT`, `RIGHT`, `TOP` and `BOTTOM`, and a Remove pair action. A new portal SHALL get the first of `RIGHT`, `LEFT`, `BOTTOM` and `TOP` whose facing cell lies inside the grid. Remove pair SHALL remove both portals of the selected portal's pair; the pairs after it SHALL move up one place, taking that pair's number, colour and symbol.
+
+#### Scenario: Change a portal's open side
+- **WHEN** a portal is selected and the developer sets its open side to `TOP`
+- **THEN** the grid shows the portal opening upwards and the design's portal has open side `TOP`
+
+#### Scenario: Remove a pair
+- **WHEN** the design has two pairs, a portal of pair 1 is selected and the developer taps Remove pair
+- **THEN** the design has one pair, which is the former pair 2, now drawn as pair 1
+
+#### Scenario: New portal at the right edge
+- **WHEN** the developer places a portal in the last column
+- **THEN** the new portal opens to the left
+
+### Requirement: Where portals can be placed
+The Portal tool SHALL do nothing on a blocked cell, the start, the finish or a cell holding a mandatory section, and SHALL NOT start a new pair when the design already has 3 pairs.
+
+#### Scenario: Blocked cell refused
+- **WHEN** the Portal tool is selected and the developer taps a blocked cell
+- **THEN** the design is unchanged
+
+#### Scenario: At most three pairs
+- **WHEN** the design has 3 complete pairs and the developer taps a free cell with the Portal tool and no portal selected
+- **THEN** no portal is added
+
+### Requirement: Portals leave the designer with the design
+Portal pairs SHALL be part of the exported JSON, SHALL be on the board when a test play starts, and SHALL be kept when the design survives a configuration change or process death. Export and test play SHALL stay disabled while a pair is unfinished, as for any invalid design.
+
+#### Scenario: Exported
+- **WHEN** a valid, solvable design with one portal pair is exported
+- **THEN** the JSON's `portals` list holds that pair and parsing it gives back the design
+
+#### Scenario: Test played
+- **WHEN** the developer test plays a design with a portal pair
+- **THEN** the game screen starts with both portals on the board and the liquid can pass them
+
+#### Scenario: Process recreated
+- **WHEN** the system kills and recreates the app while a design with portals, one of them selected, is open
+- **THEN** the designer shows the same portals and the same selected portal

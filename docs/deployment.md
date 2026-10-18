@@ -34,7 +34,7 @@ On each run it:
 5. writes the **release notes** from the commits since the previous release (see [Release notes](#release-notes));
 6. decodes the upload keystore and builds `app-release.aab` signed with the **upload key**;
 7. checks that the bundle really is signed;
-8. keeps the bundle as a workflow artifact for 14 days;
+8. keeps the bundle as a workflow artifact for 7 days;
 9. uploads it with the release notes and the in-app update priority to the Play Console track in `PLAY_TRACK` (default: internal testing), then tags the commit `v<x.y.z>` and creates its GitHub release, marked *latest*, with the same release notes ([`scripts/publish-release.sh`](../scripts/publish-release.sh); see [repository-layout.md](repository-layout.md#versions-and-tags));
 10. deletes the decoded keystore, whether the run succeeded or not.
 
@@ -266,7 +266,7 @@ A successful run:
 
 - shows every step green, including *Verify bundle signature*, *Upload to Google Play* and *Remove upload keystore*;
 - has a **summary** with the in-app update (required or optional, its priority and what decided it), the version, the version code, the track, the release status and the commit;
-- has an artifact `leak-out-<version>-<version code>` with the uploaded `.aab`, kept for 14 days.
+- has an artifact `leak-out-<version>-<version code>` with the uploaded `.aab`, kept for 7 days.
 
 In the Play Console, the release appears under **Test and release → Testing → Internal testing → Releases**, named after its version (for example `1001 (0.1.1)`). With the default `PLAY_RELEASE_STATUS` it is a draft: review its translations and roll it out (see [Translations](#translations)). Testers who opted in then get the update through the Play Store, usually within minutes.
 

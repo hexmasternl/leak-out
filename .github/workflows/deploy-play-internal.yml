@@ -231,7 +231,7 @@ jobs:
         with:
           name: leak-out-${{ env.VERSION_NAME }}-${{ env.VERSION_CODE }}
           path: ${{ env.BUNDLE_PATH }}
-          retention-days: 14
+          retention-days: 7
           if-no-files-found: error
 
       - name: Upload to Google Play

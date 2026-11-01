@@ -6,11 +6,11 @@ TBD - created by archiving change app-game-level-designer. Update Purpose after 
 ## Requirements
 
 ### Requirement: Level is written as level-format JSON
-The system SHALL provide a `LevelWriter` in `core` that turns a `Level` into a JSON document in the level file format. The document SHALL contain every required field. It SHALL contain an optional field only when its value differs from the default in `LevelDefaults`, and SHALL leave out the `flow` optional fields, the `stack` object, `stack.weights` entries and the `rules` object when they hold only defaults. Blocked cells SHALL be written in the level's order. Portal pairs SHALL be written as a `portals` array in the level's order, and the `portals` key SHALL be left out when the level has none. The output SHALL be pretty-printed with two-space indentation and end with a newline.
+The system SHALL provide a `LevelWriter` in `core` that turns a `Level` into a JSON document in the level file format. The document SHALL contain every required field. It SHALL contain an optional field only when its value differs from the default in `LevelDefaults`, and SHALL leave out the `flow` optional fields, the `stack` object, `stack.weights` entries and the `rules` object when they hold only defaults. The `leaky` array SHALL be written only when the level has leaky tiles. Blocked cells and leaky tiles SHALL be written in the level's order. Portal pairs SHALL be written as a `portals` array in the level's order, and the `portals` key SHALL be left out when the level has none. The output SHALL be pretty-printed with two-space indentation and end with a newline.
 
 #### Scenario: Minimal level
 - **WHEN** a level whose optional fields all hold their defaults is written
-- **THEN** the JSON contains `id`, `name`, `grid`, `start`, `finish`, `blocked`, `flow` with only `initialDelayMs` and `cellsPerSecond`, and `stars`, and no `stack`, `rules` or `portals` key
+- **THEN** the JSON contains `id`, `name`, `grid`, `start`, `finish`, `blocked`, `flow` with only `initialDelayMs` and `cellsPerSecond`, and `stars`, and no `stack`, `rules` or `leaky` key
 
 #### Scenario: Only changed weights are written
 - **WHEN** a level has the default stack except a cross weight of 1
@@ -19,6 +19,10 @@ The system SHALL provide a `LevelWriter` in `core` that turns a `Level` into a J
 #### Scenario: Empty blocked list
 - **WHEN** a level has no blocked cells
 - **THEN** the JSON has `"blocked": []`
+
+#### Scenario: Leaky tiles are written
+- **WHEN** a level with leaky tiles at x 2, y 1 and x 4, y 3 is written
+- **THEN** the JSON has a `leaky` array with those two cells in that order
 
 #### Scenario: Portal pairs are written
 - **WHEN** a level with two portal pairs is written
@@ -32,5 +36,5 @@ For every valid level, parsing the output of `LevelWriter` with `LevelParser` SH
 - **THEN** the second parse succeeds and equals the first
 
 #### Scenario: Round trip with every optional field set
-- **WHEN** a level with non-default flow, stack, rules, blocked cells, mandatory sections and portal pairs is written and parsed
+- **WHEN** a level with non-default flow, stack, rules, blocked cells, mandatory sections and leaky tiles is written and parsed
 - **THEN** the parsed level equals the written level

@@ -1,5 +1,9 @@
 using HexMaster.LeakOut.Api.Authentication;
 using HexMaster.LeakOut.Core;
+using HexMaster.LeakOut.DailyPipes.Abstractions.DataTransferObjects;
+using HexMaster.LeakOut.DailyPipes.Features.GetDailyTopScores;
+using HexMaster.LeakOut.DailyPipes.Features.GetTodaysDailyPipe;
+using HexMaster.LeakOut.DailyPipes.Features.SubmitDailyScore;
 using HexMaster.LeakOut.Players.Abstractions.DataTransferObjects;
 using HexMaster.LeakOut.Players.Abstractions.Services;
 using HexMaster.LeakOut.Players.Features.SignInPlayer;
@@ -41,6 +45,12 @@ public sealed class LeakOutApiFactory : WebApplicationFactory<Program>
 
     public Mock<IQueryHandler<GetPublicLevelTopScoresQuery, PublicLevelLeaderboardDto>> GetPublicLevelTopScoresHandler { get; } = new();
 
+    public Mock<IQueryHandler<GetTodaysDailyPipeQuery, DailyPipeDto?>> GetTodaysDailyPipeHandler { get; } = new();
+
+    public Mock<ICommandHandler<SubmitDailyScoreCommand, SubmitDailyScoreOutcome>> SubmitDailyScoreHandler { get; } = new();
+
+    public Mock<IQueryHandler<GetDailyTopScoresQuery, DailyTopScoresDto?>> GetDailyTopScoresHandler { get; } = new();
+
     public Mock<IUserResolver> UserResolver { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -67,6 +77,12 @@ public sealed class LeakOutApiFactory : WebApplicationFactory<Program>
             services.AddSingleton(GetLevelScoresAroundPlayerHandler.Object);
             services.RemoveAll<IQueryHandler<GetPublicLevelTopScoresQuery, PublicLevelLeaderboardDto>>();
             services.AddSingleton(GetPublicLevelTopScoresHandler.Object);
+            services.RemoveAll<IQueryHandler<GetTodaysDailyPipeQuery, DailyPipeDto?>>();
+            services.AddSingleton(GetTodaysDailyPipeHandler.Object);
+            services.RemoveAll<ICommandHandler<SubmitDailyScoreCommand, SubmitDailyScoreOutcome>>();
+            services.AddSingleton(SubmitDailyScoreHandler.Object);
+            services.RemoveAll<IQueryHandler<GetDailyTopScoresQuery, DailyTopScoresDto?>>();
+            services.AddSingleton(GetDailyTopScoresHandler.Object);
             services.RemoveAll<IUserResolver>();
             services.AddSingleton(UserResolver.Object);
             services.AddSingleton<IStartupFilter, ProtectedTestEndpointStartupFilter>();

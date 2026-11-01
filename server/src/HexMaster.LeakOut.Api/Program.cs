@@ -63,6 +63,7 @@ app.MapPlayerEndpoints();
 app.MapScoreEndpoints();
 app.MapLevelScoreEndpoints();
 app.MapPublicLevelScoreEndpoints();
+app.MapDailyPipeEndpoints();
 
 app.Run();
 

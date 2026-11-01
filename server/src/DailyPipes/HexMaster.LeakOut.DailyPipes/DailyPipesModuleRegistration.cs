@@ -1,5 +1,9 @@
 using HexMaster.LeakOut.Core;
+using HexMaster.LeakOut.DailyPipes.Abstractions.DataTransferObjects;
 using HexMaster.LeakOut.DailyPipes.Features.GenerateDailyPipe;
+using HexMaster.LeakOut.DailyPipes.Features.GetDailyTopScores;
+using HexMaster.LeakOut.DailyPipes.Features.GetTodaysDailyPipe;
+using HexMaster.LeakOut.DailyPipes.Features.SubmitDailyScore;
 using HexMaster.LeakOut.DailyPipes.Generation;
 using HexMaster.LeakOut.DailyPipes.Observability;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +27,9 @@ public static class DailyPipesModuleRegistration
         services.TryAddSingleton<IDailyLevelGenerator, DailyLevelGenerator>();
 
         services.AddScoped<ICommandHandler<GenerateDailyPipeCommand, GenerateDailyPipeResult>, GenerateDailyPipeCommandHandler>();
+        services.AddScoped<IQueryHandler<GetTodaysDailyPipeQuery, DailyPipeDto?>, GetTodaysDailyPipeQueryHandler>();
+        services.AddScoped<ICommandHandler<SubmitDailyScoreCommand, SubmitDailyScoreOutcome>, SubmitDailyScoreCommandHandler>();
+        services.AddScoped<IQueryHandler<GetDailyTopScoresQuery, DailyTopScoresDto?>, GetDailyTopScoresQueryHandler>();
 
         return services;
     }

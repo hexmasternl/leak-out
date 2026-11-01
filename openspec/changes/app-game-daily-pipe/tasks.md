@@ -22,11 +22,11 @@
 
 ## 4. Server: API
 
-- [ ] 4.1 `GET /api/daily-pipes/today` (`GetTodaysDailyPipe` query): date, level, stack seed, streak (current, best, won today) and the caller's best score; `404` when today has no pipe
-- [ ] 4.2 `POST /api/daily-pipes/{date}/scores` (`SubmitDailyScore` command): validation (score 0 to the level's maximum, stars 0 to 3), `409` for any date other than the current pipe, keep only the best score, update the streak on a win, return best score, rank and streak
-- [ ] 4.3 `GET /api/daily-pipes/{date}/scores/top` (`GetDailyTopScores` query): top 10 with display names, ranked by score then earliest achievement, plus the caller's rank; `404` for an unknown date
-- [ ] 4.4 Implement the streak rules (consecutive UTC days, same-day wins ignored, 0 stars is not a win, missed day reported as 0 and restarted at 1) with unit tests for every scenario in `server-daily-pipe-streaks`
-- [ ] 4.5 Endpoint tests in `HexMaster.LeakOut.Api.Tests` for authentication (`401`), `404`, `409`, `400` and the happy paths; add sample requests to `HexMaster.LeakOut.Api.http`
+- [x] 4.1 `GET /api/daily-pipes/today` (`GetTodaysDailyPipe` query): date, level, stack seed, streak (current, best, won today) and the caller's best score; `404` when today has no pipe
+- [x] 4.2 `POST /api/daily-pipes/{date}/scores` (`SubmitDailyScore` command): validation (score 0 to the level's maximum, stars 0 to 3), `409` for any date other than the current pipe, keep only the best score, update the streak on a win, return best score, rank and streak
+- [x] 4.3 `GET /api/daily-pipes/{date}/scores/top` (`GetDailyTopScores` query): top 10 with display names, ranked by score then earliest achievement, plus the caller's rank; `404` for an unknown date
+- [x] 4.4 Implement the streak rules (consecutive UTC days, same-day wins ignored, 0 stars is not a win, missed day reported as 0 and restarted at 1) with unit tests for every scenario in `server-daily-pipe-streaks`
+- [x] 4.5 Endpoint tests in `HexMaster.LeakOut.Api.Tests` for authentication (`401`), `404`, `409`, `400` and the happy paths; add sample requests to `HexMaster.LeakOut.Api.http`
 - [ ] 4.6 Add tracing and metrics for generation runs, downloads and submissions; keep the 80 % coverage gate
 
 ## 5. Server: infrastructure and deployment

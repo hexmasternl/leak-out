@@ -25,8 +25,8 @@ sealed class ScoreServerException(message: String, cause: Throwable? = null) : E
     /** 401: the token (or the server auth code) was not accepted. */
     class Unauthorized(message: String) : ScoreServerException(message)
 
-    /** Another 4xx: the server will never accept this request, so sending it again is pointless. */
-    class Rejected(message: String) : ScoreServerException(message)
+    /** Another 4xx ([status]): the server will never accept this request, so sending it again is pointless. */
+    class Rejected(message: String, val status: Int? = null) : ScoreServerException(message)
 
     /** Offline, a timeout, a 5xx or anything else that may work later. */
     class Unavailable(message: String, cause: Throwable? = null) : ScoreServerException(message, cause)

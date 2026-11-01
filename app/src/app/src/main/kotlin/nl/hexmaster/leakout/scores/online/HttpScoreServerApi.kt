@@ -3,6 +3,7 @@ package nl.hexmaster.leakout.scores.online
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.LocalDate
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -22,7 +23,7 @@ class HttpScoreServerApi(
     private val connectTimeoutMs: Int = CONNECT_TIMEOUT_MS,
     private val readTimeoutMs: Int = READ_TIMEOUT_MS,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
-) : ScoreServerApi {
+) : ScoreServerApi, DailyPipeServerApi {
     private val base = baseUrl.trim().trimEnd('/')
 
     override suspend fun createSession(serverAuthCode: String): Session =
@@ -34,6 +35,15 @@ class HttpScoreServerApi(
 
     override suspend fun topScores(accessToken: String, level: Int): LevelLeaderboard =
         ScoreServerJson.leaderboard(call("GET", "/api/levels/$level/scores/top", body = null, accessToken))
+
+    override suspend fun todaysDailyPipe(accessToken: String): DailyPipe =
+        DailyPipeJson.dailyPipe(call("GET", "/api/daily-pipes/today", body = null, accessToken))
+
+    override suspend fun submitDailyScore(accessToken: String, date: LocalDate, score: Int, stars: Int): DailyScoreResult =
+        DailyPipeJson.scoreResult(call("POST", "/api/daily-pipes/$date/scores", DailyPipeJson.scoreRequest(score, stars), accessToken))
+
+    override suspend fun dailyTopScores(accessToken: String, date: LocalDate): DailyTopScores =
+        DailyPipeJson.topScores(call("GET", "/api/daily-pipes/$date/scores/top", body = null, accessToken))
 
     private suspend fun call(method: String, path: String, body: String?, accessToken: String?): String = try {
         withTimeout(timeoutMs) { runInterruptible(dispatcher) { exchange(method, path, body, accessToken) } }
@@ -61,7 +71,7 @@ class HttpScoreServerApi(
             return when (status) {
                 in 200..299 -> connection.inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
                 401 -> throw ScoreServerException.Unauthorized("$path answered 401")
-                in 400..499 -> throw ScoreServerException.Rejected("$path answered $status")
+                in 400..499 -> throw ScoreServerException.Rejected("$path answered $status", status)
                 else -> throw ScoreServerException.Unavailable("$path answered $status")
             }
         } catch (error: IOException) {

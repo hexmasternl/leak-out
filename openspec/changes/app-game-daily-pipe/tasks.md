@@ -43,7 +43,7 @@
 
 ## 7. App: client and welcome screen
 
-- [ ] 7.1 Add a `DailyPipeApi` client on top of `ScoreServerSession` for today's pipe, score submission and top scores, with JVM unit tests for parsing and the `404`, `409` and error cases
+- [x] 7.1 Add a `DailyPipeApi` client on top of `ScoreServerSession` for today's pipe, score submission and top scores, with JVM unit tests for parsing and the `404`, `409` and error cases
 - [ ] 7.2 Add the Daily Pipe button to the welcome screen below Play, shown only when signed in with Play Games and disabled with a hint while `NetworkMonitor` reports no connection
 - [ ] 7.3 Tapping the button downloads today's pipe with a loading state, parses and validates the level, and opens the game screen; show an error and stay on the welcome screen when there is no pipe yet, the download fails or the level is rejected
 

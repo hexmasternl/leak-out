@@ -260,6 +260,7 @@
     <string name="designer_status_solvable" translatable="false">Valid and solvable</string>
     <string name="designer_status_invalid" translatable="false">Invalid: %1$d problems</string>
     <string name="designer_status_unsolvable" translatable="false">Unsolvable</string>
+    <string name="designer_status_every_route_leaky" translatable="false">Note: every route crosses a leaky tile</string>
     <string name="designer_test_play" translatable="false">Test play</string>
     <string name="designer_export" translatable="false">Export</string>
     <string name="designer_start_from" translatable="false">Start from…</string>
@@ -274,7 +275,9 @@
     <string name="designer_tool_mandatory_cross" translatable="false">Mandatory cross</string>
     <string name="designer_tool_mandatory_reservoir" translatable="false">Mandatory reservoir</string>
     <string name="designer_tool_portal" translatable="false">Portal</string>
+    <string name="designer_tool_leaky" translatable="false">Leaky tile</string>
     <string name="designer_clear_blocked" translatable="false">Clear blocked</string>
+    <string name="designer_clear_leaky" translatable="false">Clear leaky</string>
     <string name="designer_section_grid" translatable="false">Grid</string>
     <string name="designer_columns" translatable="false">Columns</string>
     <string name="designer_rows" translatable="false">Rows</string>

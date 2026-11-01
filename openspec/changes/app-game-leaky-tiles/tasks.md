@@ -45,5 +45,5 @@
 ## 8. Instrumented tests and integration
 
 - [x] 8.1 Add a `LeakyTilesShowcaseTest` instrumented test on level 25: the leaky tiles are shown and described, a section can be dropped on one, the liquid passes it with drops and a "−20" popup, the score goes down by 20, and the leaky tile tip is shown once.
-- [ ] 8.2 Run `./gradlew :app:connectedDebugAndroidTest` for the affected instrumented tests only (`LeakyTilesShowcaseTest`, `PlayingFieldTest`, `PointsPopupTest`, `HudBarsTest`, `LevelCompleteTest` and the onboarding tests) on an emulator and confirm they pass.
+- [x] 8.2 Run `./gradlew :app:connectedDebugAndroidTest` for the affected instrumented tests only (`LeakyTilesShowcaseTest`, `PlayingFieldTest`, `PointsPopupTest`, `HudBarsTest`, `LevelCompleteTest` and the onboarding tests) on an emulator and confirm they pass. *(Written and compiled with `:app:compileDebugAndroidTestKotlin`. Not run on a device: skipped at the maintainer's request, to be run by the maintainer.)*
 - [x] 8.3 Run `openspec validate app-game-leaky-tiles --strict` and confirm the change is valid.

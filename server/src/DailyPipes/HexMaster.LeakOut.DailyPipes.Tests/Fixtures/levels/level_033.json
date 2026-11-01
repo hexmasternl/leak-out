@@ -1,0 +1,27 @@
+{
+  "id": 33,
+  "name": "Pressure Rising",
+  "grid": { "columns": 12, "rows": 9 },
+  "start": { "x": 1, "y": 1, "openSide": "BOTTOM" },
+  "finish": { "x": 8, "y": 8, "openSide": "TOP" },
+  "blocked": [
+    { "x": 0, "y": 0 },
+    { "x": 5, "y": 0 },
+    { "x": 2, "y": 1 },
+    { "x": 5, "y": 1 },
+    { "x": 11, "y": 2 },
+    { "x": 1, "y": 5 },
+    { "x": 10, "y": 6 },
+    { "x": 3, "y": 7 },
+    { "x": 6, "y": 7 },
+    { "x": 3, "y": 8 },
+    { "x": 5, "y": 8 },
+    { "x": 10, "y": 8 }
+  ],
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.235 },
+  "stack": { "weights": { "X": 6, "RES": 2 } },
+  "stars": { "one": 470, "two": 700, "three": 930 },
+  "leaky": [
+    { "x": 8, "y": 5 }
+  ]
+}

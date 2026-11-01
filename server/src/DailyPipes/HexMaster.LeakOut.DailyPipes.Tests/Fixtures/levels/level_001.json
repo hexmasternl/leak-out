@@ -1,0 +1,11 @@
+{
+  "id": 1,
+  "name": "First Leak",
+  "grid": { "columns": 8, "rows": 6 },
+  "start": { "x": 0, "y": 0, "openSide": "RIGHT" },
+  "finish": { "x": 7, "y": 1, "openSide": "LEFT" },
+  "blocked": [],
+  "flow": { "initialDelayMs": 30000, "cellsPerSecond": 0.1 },
+  "stack": { "weights": { "X": 0, "RES": 0 } },
+  "stars": { "one": 230, "two": 350, "three": 460 }
+}

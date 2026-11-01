@@ -1,0 +1,11 @@
+{
+  "id": 3,
+  "name": "Drip Feed",
+  "grid": { "columns": 9, "rows": 7 },
+  "start": { "x": 1, "y": 1, "openSide": "BOTTOM" },
+  "finish": { "x": 7, "y": 5, "openSide": "TOP" },
+  "blocked": [],
+  "flow": { "initialDelayMs": 30000, "cellsPerSecond": 0.109 },
+  "stack": { "weights": { "X": 0, "RES": 0 } },
+  "stars": { "one": 310, "two": 460, "three": 610 }
+}

@@ -7,9 +7,9 @@
 
 ## 2. Server: level rules and solvability
 
-- [ ] 2.1 Port the level model and `LevelValidator` rules to C# (`Generation/LevelRules`), reading and writing the level-format JSON
-- [ ] 2.2 Port `LevelSolver` to C# (`Generation/LevelSolver`), including mandatory sections and portal pairs and the search work limit
-- [ ] 2.3 Add conformance fixtures: copy the bundled levels and a set of unsolvable levels with their expected verdicts into `HexMaster.LeakOut.DailyPipes.Tests/Fixtures/` and test that the C# validator and solver agree with them
+- [x] 2.1 Port the level model and `LevelValidator` rules to C# (`Generation/LevelRules`), reading and writing the level-format JSON
+- [x] 2.2 Port `LevelSolver` to C# (`Generation/LevelSolver`), including mandatory sections and portal pairs and the search work limit
+- [x] 2.3 Add conformance fixtures: copy the bundled levels and a set of unsolvable levels with their expected verdicts into `HexMaster.LeakOut.DailyPipes.Tests/Fixtures/` and test that the C# validator and solver agree with them
 - [ ] 2.4 Add an app `core` test that runs the same fixtures through the Kotlin `LevelValidator` and `LevelSolver`, so both sides are checked against one set of expected verdicts
 
 ## 3. Server: generation and publication

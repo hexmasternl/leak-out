@@ -1,0 +1,11 @@
+{
+  "id": 1004,
+  "name": "Portals on one side of the wall",
+  "grid": { "columns": 7, "rows": 5 },
+  "start": { "x": 0, "y": 0, "openSide": "RIGHT" },
+  "finish": { "x": 6, "y": 4, "openSide": "LEFT" },
+  "blocked": [ { "x": 3, "y": 0 }, { "x": 3, "y": 1 }, { "x": 3, "y": 2 }, { "x": 3, "y": 3 }, { "x": 3, "y": 4 } ],
+  "flow": { "initialDelayMs": 20000, "cellsPerSecond": 0.3 },
+  "stars": { "one": 100, "two": 200, "three": 300 },
+  "portals": [ { "a": { "x": 1, "y": 2, "openSide": "RIGHT" }, "b": { "x": 0, "y": 4, "openSide": "TOP" } } ]
+}

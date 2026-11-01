@@ -1,0 +1,10 @@
+{
+  "id": 1008,
+  "name": "Stars out of order",
+  "grid": { "columns": 6, "rows": 5 },
+  "start": { "x": 0, "y": 0, "openSide": "RIGHT" },
+  "finish": { "x": 5, "y": 4, "openSide": "LEFT" },
+  "blocked": [],
+  "flow": { "initialDelayMs": 20000, "cellsPerSecond": 0.3 },
+  "stars": { "one": 300, "two": 200, "three": 400 }
+}

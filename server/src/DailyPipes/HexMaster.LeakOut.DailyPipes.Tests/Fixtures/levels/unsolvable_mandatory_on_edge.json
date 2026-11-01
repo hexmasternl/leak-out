@@ -1,0 +1,11 @@
+{
+  "id": 1002,
+  "name": "Reservoir against the edge",
+  "grid": { "columns": 6, "rows": 5 },
+  "start": { "x": 0, "y": 0, "openSide": "BOTTOM" },
+  "finish": { "x": 5, "y": 4, "openSide": "LEFT" },
+  "blocked": [],
+  "flow": { "initialDelayMs": 20000, "cellsPerSecond": 0.3 },
+  "stars": { "one": 100, "two": 200, "three": 300 },
+  "mandatory": [ { "x": 0, "y": 3, "section": "RES" } ]
+}

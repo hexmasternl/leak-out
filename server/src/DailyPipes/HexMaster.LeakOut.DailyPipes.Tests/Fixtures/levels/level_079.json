@@ -1,0 +1,34 @@
+{
+  "id": 79,
+  "name": "Crack in the Dam",
+  "grid": { "columns": 25, "rows": 15 },
+  "start": { "x": 0, "y": 12, "openSide": "RIGHT" },
+  "finish": { "x": 24, "y": 4, "openSide": "LEFT" },
+  "blocked": [
+    { "x": 9, "y": 0 },
+    { "x": 9, "y": 1 },
+    { "x": 9, "y": 2 },
+    { "x": 9, "y": 3 },
+    { "x": 9, "y": 4 },
+    { "x": 9, "y": 5 },
+    { "x": 9, "y": 6 },
+    { "x": 9, "y": 7 },
+    { "x": 9, "y": 9 },
+    { "x": 9, "y": 10 },
+    { "x": 9, "y": 11 },
+    { "x": 9, "y": 12 },
+    { "x": 9, "y": 13 },
+    { "x": 9, "y": 14 }
+  ],
+  "flow": { "initialDelayMs": 23700, "cellsPerSecond": 0.364 },
+  "stack": { "weights": { "X": 6, "RES": 3 } },
+  "stars": { "one": 2140, "two": 2680, "three": 3570 },
+  "mandatory": [
+    { "x": 6, "y": 7, "section": "X" },
+    { "x": 21, "y": 10, "section": "X" }
+  ],
+  "leaky": [
+    { "x": 8, "y": 9 },
+    { "x": 17, "y": 8 }
+  ]
+}

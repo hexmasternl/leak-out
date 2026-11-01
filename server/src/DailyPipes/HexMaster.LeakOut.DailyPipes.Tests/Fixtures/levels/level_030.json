@@ -1,0 +1,21 @@
+{
+  "id": 30,
+  "name": "Overflow Basin",
+  "grid": { "columns": 11, "rows": 8 },
+  "start": { "x": 0, "y": 6, "openSide": "RIGHT" },
+  "finish": { "x": 10, "y": 1, "openSide": "LEFT" },
+  "blocked": [
+    { "x": 1, "y": 0 },
+    { "x": 2, "y": 2 },
+    { "x": 8, "y": 2 },
+    { "x": 4, "y": 3 },
+    { "x": 10, "y": 3 },
+    { "x": 5, "y": 5 },
+    { "x": 2, "y": 6 },
+    { "x": 7, "y": 6 },
+    { "x": 10, "y": 7 }
+  ],
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.222 },
+  "stack": { "weights": { "X": 6, "RES": 1 } },
+  "stars": { "one": 390, "two": 580, "three": 770 }
+}

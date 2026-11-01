@@ -68,10 +68,14 @@
   ],
   "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.347 },
   "stack": { "weights": { "X": 6, "RES": 3 } },
-  "stars": { "one": 1790, "two": 2240, "three": 2980 },
+  "stars": { "one": 1780, "two": 2220, "three": 2960 },
   "mandatory": [
     { "x": 9, "y": 10, "section": "X" },
     { "x": 12, "y": 5, "section": "X" },
     { "x": 3, "y": 8, "section": "RES" }
+  ],
+  "leaky": [
+    { "x": 6, "y": 6 },
+    { "x": 14, "y": 7 }
   ]
 }

@@ -18,7 +18,7 @@ The first time the player starts a level with leaky tiles, the game SHALL freeze
 ## MODIFIED Requirements
 
 ### Requirement: Single tips are dismissed with "Got it"
-The cross, reservoir, mandatory section and leaky tile tips SHALL each offer one "Got it" button. Tapping it SHALL close the tip, store it as seen and continue the game from where it froze.
+The cross, reservoir, mandatory section, portal and leaky tile tips SHALL each offer one "Got it" button. Tapping it SHALL close the tip, store it as seen and continue the game from where it froze.
 
 #### Scenario: Continue after a tip
 - **WHEN** the cross tip is shown while the liquid is halfway through a tile and the player taps "Got it"
@@ -28,8 +28,12 @@ The cross, reservoir, mandatory section and leaky tile tips SHALL each offer one
 - **WHEN** the leaky tile tip is shown before the countdown and the player taps "Got it"
 - **THEN** the tip closes, the leaky tile tip is stored as seen and the countdown starts running
 
+#### Scenario: Continue after the portal tip
+- **WHEN** the portal tip is shown before the countdown and the player taps "Got it"
+- **THEN** the tip closes, the portal tip is stored as seen and the countdown starts running
+
 ### Requirement: One tip at a time in a fixed order
-When more than one tip is due at the same moment, the game SHALL show them one after the other in this order: intro tour, mandatory section tip, leaky tile tip, cross tip, reservoir tip. The game SHALL stay frozen until the last of them is closed.
+When more than one tip is due at the same moment, the game SHALL show them one after the other in this order: intro tour, mandatory section tip, portal tip, leaky tile tip, cross tip, reservoir tip. The game SHALL stay frozen until the last of them is closed.
 
 #### Scenario: Everything due on the first level
 - **WHEN** no tip has been seen and the first level played has a mandatory section and an `X` and a `RES` in fully visible slots of its starting stack
@@ -38,3 +42,7 @@ When more than one tip is due at the same moment, the game SHALL show them one a
 #### Scenario: Leaky tile tip after the mandatory section tip
 - **WHEN** no tip but the intro tour has been seen and a level with a mandatory section, a leaky tile and an `X` in a fully visible slot of its starting stack starts
 - **THEN** the mandatory section tip, the leaky tile tip and the cross tip are shown in that order, and the countdown only starts after the cross tip is closed
+
+#### Scenario: Portal tip after the intro tour
+- **WHEN** no tip has been seen and the first level played has a portal pair and an `X` in a fully visible slot of its starting stack
+- **THEN** the intro tour, the portal tip and the cross tip are shown in that order

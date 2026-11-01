@@ -52,11 +52,11 @@
 - [x] 8.1 Run the daily pipe on the game screen with the seeded stack, without writing level history, unlocking levels or pages, or evaluating achievements
 - [x] 8.2 Submit a win to the server and show the score, streak and the day's top scores in the level-complete dialog; show "the daily pipe has ended" on `409`
 - [x] 8.3 Add all new strings in every supported language
-- [ ] 8.4 Instrumented tests: button hidden when signed out, disabled when offline, opening and winning the daily pipe against a fake server
-- [ ] 8.5 Update `docs/level-format.md` (levels from the server, stack seed)
+- [x] 8.4 Instrumented tests: button hidden when signed out, disabled when offline, opening and winning the daily pipe against a fake server
+- [x] 8.5 Update `docs/level-format.md` (levels from the server, stack seed)
 
 ## 9. Verification
 
-- [ ] 9.1 Run `dotnet test --solution leak-out-server.slnx` from `server/src` and confirm it passes with at least 80 % coverage
-- [ ] 9.2 Run `./gradlew :core:test` and `./gradlew :app:testDebugUnitTest` from `app/src` and confirm they pass
-- [ ] 9.3 Run the affected instrumented tests on an emulator
+- [x] 9.1 Run `dotnet test --solution leak-out-server.slnx` from `server/src` and confirm it passes with at least 80 % coverage
+- [x] 9.2 Run `./gradlew :core:test` and `./gradlew :app:testDebugUnitTest` from `app/src` and confirm they pass
+- [x] 9.3 Run the affected instrumented tests on an emulator

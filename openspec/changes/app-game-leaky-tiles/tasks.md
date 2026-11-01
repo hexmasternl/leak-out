@@ -9,9 +9,9 @@
 
 ## 2. Scoring and flow in core
 
-- [ ] 2.1 Add `Points.LEAKY_TILE_PENALTY = 20` and a `leaky` parameter to `ScoreSheet.award` that still counts the pass and returns `-20` instead of the section's points. Cover in `ScoreSheetTest`: a straight, a corner and a reservoir on a leaky tile, a cross on a leaky tile passed twice (−20 twice, no 10 or 50), and a total that goes below 0.
-- [ ] 2.2 Pass `level.isLeaky(position)` from `FlowSimulation.leaveTile` and record the negative `Award`. Cover in `FlowSimulationTest` and `GameEngineTest`: the penalty before a leak, an unchanged speed on a leaky tile, a won route over two leaky tiles with two penalties, a replaced section on a leaky tile that is still leaky, and a restart. Add leaky boards to `FlowStepRouteAgreementTest` and confirm the flow and the route check still agree.
-- [ ] 2.3 Add a `FinalScoreTest` case with negative earned points (total 0, 0 stars) and an achievement-rules test with a negative award, and check every use of `Award.points` and `ScoreSheet.total` in core and app for a positive-only assumption. Add a `HeadlessPlayTest` case that plays a level with leaky tiles end to end. Run `./gradlew :core:test` and confirm it passes.
+- [x] 2.1 Add `Points.LEAKY_TILE_PENALTY = 20` and a `leaky` parameter to `ScoreSheet.award` that still counts the pass and returns `-20` instead of the section's points. Cover in `ScoreSheetTest`: a straight, a corner and a reservoir on a leaky tile, a cross on a leaky tile passed twice (−20 twice, no 10 or 50), and a total that goes below 0.
+- [x] 2.2 Pass `level.isLeaky(position)` from `FlowSimulation.leaveTile` and record the negative `Award`. Cover in `FlowSimulationTest` and `GameEngineTest`: the penalty before a leak, an unchanged speed on a leaky tile, a won route over two leaky tiles with two penalties, a replaced section on a leaky tile that is still leaky, and a restart. Add leaky boards to `FlowStepRouteAgreementTest` and confirm the flow and the route check still agree.
+- [x] 2.3 Add a `FinalScoreTest` case with negative earned points (total 0, 0 stars) and an achievement-rules test with a negative award, and check every use of `Award.points` and `ScoreSheet.total` in core and app for a positive-only assumption. Add a `HeadlessPlayTest` case that plays a level with leaky tiles end to end. Run `./gradlew :core:test` and confirm it passes.
 
 ## 3. Solver
 

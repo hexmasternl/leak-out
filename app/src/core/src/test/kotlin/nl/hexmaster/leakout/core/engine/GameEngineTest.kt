@@ -275,6 +275,28 @@ class GameEngineTest {
     }
 
     @Test
+    fun `a section placed on a leaky tile that replaces another still takes the penalty`() {
+        val level = engineLevel(section = null, rules = PlacementRules(allowReplace = true, replacePenaltyMs = 500), leaky = listOf(p(1, 1)))
+        val placed = engine.handle(engine.start(level), Place(p(1, 1)))
+        val replaced = engine.send(placed, Place(p(1, 1)), Tick(500))
+        assertIs<Cell.Pipe>(replaced.board[p(1, 1)])
+        assertTrue(replaced.level.isLeaky(p(1, 1)))
+        val filled = replaced.withPipes(ROUTE).headAt(p(1, 1), Side.LEFT, 0.5)
+        assertEquals(-20, engine.handle(filled, Tick(600)).score)
+    }
+
+    @Test
+    fun `restart leaves the leaky tiles empty and leaky`() {
+        val level = engineLevel(leaky = listOf(p(1, 1), p(2, 2)))
+        val lost = engine.runToEnd(engine.send(engine.start(level), Place(p(1, 1))), dtMs = 100)
+        assertEquals(-20, lost.score)
+        val restarted = engine.handle(lost, Restart)
+        assertEquals(Cell.Empty, restarted.board[p(1, 1)])
+        assertEquals(listOf(p(1, 1), p(2, 2)), restarted.level.leaky)
+        assertEquals(0, restarted.score)
+    }
+
+    @Test
     fun `the replacement lands exactly when the penalty has passed on the game clock`() {
         val level = engineLevel(section = null, rules = PlacementRules(allowReplace = true, replacePenaltyMs = 3_000))
         val placed = engine.handle(engine.start(level), Place(p(1, 1)))

@@ -36,9 +36,11 @@ internal fun engineLevel(
     visibleSize: Int = 5,
     mandatory: List<MandatorySection> = emptyList(),
     portals: List<PortalPair> = emptyList(),
+    leaky: List<Position> = emptyList(),
 ): Level = TestLevels.valid(
     grid = GridSize(5, 5),
     portals = portals,
+    leaky = leaky,
     start = start,
     finish = finish,
     blocked = blocked,

@@ -174,6 +174,54 @@ class FlowSimulationTest {
         assertTrue(ChannelUse(p(2, 2), Channel.VERTICAL) in won.flow.used)
     }
 
+    // --- Leaky tiles ---
+
+    @Test
+    fun `leaving a section on a leaky tile takes the penalty and moves on`() {
+        val state = engine.start(engineLevel(leaky = listOf(p(2, 1)))).withPipes(ROUTE)
+            .copy(sheet = ScoreSheet(total = 40)).headAt(p(2, 1), Side.LEFT, 0.5)
+        val after = engine.handle(state, Tick(600))
+        assertEquals(20, after.score)
+        assertEquals(listOf(Award(p(2, 1), -20, 600)), after.awards)
+        assertEquals(p(2, 2), flowing(after).position)
+    }
+
+    @Test
+    fun `the leak penalty is taken before a leak`() {
+        val state = engine.start(engineLevel(leaky = listOf(p(2, 1)))).withPipes(ROUTE.take(2))
+            .copy(sheet = ScoreSheet(total = 40)).headAt(p(2, 1), Side.LEFT, 0.5)
+        val after = engine.handle(state, Tick(1_000))
+        assertEquals(20, after.score)
+        assertEquals(Outcome.Lost(p(2, 1), Side.BOTTOM, atMs = 1_000), after.outcome)
+        assertEquals(listOf(Award(p(2, 1), -20, 1_000)), after.awards)
+    }
+
+    @Test
+    fun `a leaky tile does not change the speed`() {
+        val state = engine.start(engineLevel(leaky = listOf(p(1, 1)))).withPipes(ROUTE).headAt(p(1, 1), Side.LEFT, 0.0)
+        val after = engine.handle(state, Tick(500))
+        assertEquals(0.5, flowing(after).progress, tolerance)
+        assertEquals(1.0, after.flowSpeed)
+    }
+
+    @Test
+    fun `a route over two leaky tiles is won with two penalties`() {
+        val level = engineLevel(leaky = listOf(p(1, 1), p(2, 2)))
+        val won = engine.runToEnd(engine.start(level).withPipes(ROUTE), dtMs = 50)
+        assertIs<Outcome.Won>(won.outcome)
+        assertEquals(-20 + 15 - 20, won.score)
+    }
+
+    @Test
+    fun `a cross on a leaky tile costs the penalty on both passes`() {
+        val level = engineLevel(start = Endpoint(p(0, 2), Side.RIGHT), finish = Endpoint(p(2, 4), Side.TOP), leaky = listOf(p(2, 2)))
+        val route = listOf(p(1, 2) to H, p(2, 2) to X, p(3, 2) to LT, p(3, 1) to LB, p(2, 1) to RB, p(2, 3) to V)
+        val won = engine.runToEnd(engine.start(level).withPipes(route), dtMs = 50)
+        assertIs<Outcome.Won>(won.outcome)
+        assertEquals(10 - 20 + 15 + 15 + 15 - 20 + 10, won.score)
+        assertEquals(2, won.sheet.passes[p(2, 2)])
+    }
+
     @Test
     fun `reaching a cross on a channel it already used leaks`() {
         // The liquid passed the cross at (1, 1) from left to right and now leaves the H at (2, 1) to the left.

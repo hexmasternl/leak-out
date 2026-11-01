@@ -34,6 +34,12 @@
     <string name="cell_placed">Placed %1$s</string>
     <!-- A placed pipe section the liquid has entered. %1$s: its name, one of the game_section_* strings. -->
     <string name="cell_placed_filled">Placed %1$s, filled</string>
+    <!-- An empty leaky tile: any section can go on it, but liquid passing it drains away and costs points. -->
+    <string name="cell_leaky_empty">Leaky tile, empty</string>
+    <!-- A pipe section the player placed on a leaky tile. %1$s: its name, one of the game_section_* strings. -->
+    <string name="cell_placed_leaky">Placed %1$s on a leaky tile</string>
+    <!-- A placed pipe section on a leaky tile that the liquid has entered. %1$s: its name, one of the game_section_* strings. -->
+    <string name="cell_placed_leaky_filled">Placed %1$s on a leaky tile, filled</string>
     <!-- A mandatory section the liquid has passed through. %1$s: its name, one of the game_section_* strings. -->
     <string name="cell_mandatory_used">Mandatory %1$s, used</string>
     <!-- A mandatory section the liquid still has to pass through. %1$s: its name, one of the game_section_* strings. -->

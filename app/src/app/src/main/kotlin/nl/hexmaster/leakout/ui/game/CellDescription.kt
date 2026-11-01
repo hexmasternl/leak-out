@@ -30,10 +30,10 @@ object CellDescription {
 
     /**
      * The description of [cell] at [position]; a mandatory section says whether [filled] uses it,
-     * and a portal whether the liquid has passed its pair.
+     * a portal whether the liquid has passed its pair, and a cell on a [leaky] tile that it is leaky.
      */
-    fun of(cell: Cell, position: Position, filled: Set<ChannelUse>): Spoken = when (cell) {
-        Cell.Empty -> Spoken(R.string.cell_empty)
+    fun of(cell: Cell, position: Position, filled: Set<ChannelUse>, leaky: Boolean = false): Spoken = when (cell) {
+        Cell.Empty -> Spoken(if (leaky) R.string.cell_leaky_empty else R.string.cell_empty)
         Cell.Blocked -> Spoken(R.string.cell_blocked)
         is Cell.Start -> Spoken(R.string.cell_start)
         is Cell.Finish -> Spoken(R.string.cell_finish)
@@ -42,8 +42,8 @@ object CellDescription {
                 val used = MandatoryProgress.isUsed(MandatorySection(position, cell.section), filled)
                 Spoken(if (used) R.string.cell_mandatory_used else R.string.cell_mandatory_unused, cell.section)
             }
-            cell.liquidEntered -> Spoken(R.string.cell_placed_filled, cell.section)
-            else -> Spoken(R.string.cell_placed, cell.section)
+            cell.liquidEntered -> Spoken(if (leaky) R.string.cell_placed_leaky_filled else R.string.cell_placed_filled, cell.section)
+            else -> Spoken(if (leaky) R.string.cell_placed_leaky else R.string.cell_placed, cell.section)
         }
         is Cell.Portal -> Spoken(
             if (ChannelUse(position, Channel.PORTAL) in filled) R.string.cell_portal_passed else R.string.cell_portal,

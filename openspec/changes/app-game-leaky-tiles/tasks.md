@@ -19,11 +19,11 @@
 
 ## 4. Rendering, popup, HUD and accessibility
 
-- [ ] 4.1 Draw leaky tiles in `PlayingField.drawCell`: cracks, damp blob and drip badge under and around the pipe art, following pan and zoom. Add the "Leaky tile" row to `docs/design-system.md` 6.2 and the drip badge to 6.4. Cover in `PlayingFieldTest` that an empty and a placed leaky tile are drawn, and that a tap and a drop on a leaky tile place the next section.
-- [ ] 4.2 Add the drip effect on the game clock while the head is in a section on a leaky tile, and the wet stain afterwards; with reduced motion only the stain. Document it in `docs/design-system.md` 6.5 and 7.4. Cover the timing and reduced-motion branches in a JVM unit test of the drip model.
-- [ ] 4.3 Show a negative award as "−20" with `leak.500` stroke and glow in the points popup, and let the HUD show a signed score with the bar fill clamped at 0. Document the penalty popup in `docs/design-system.md`. Cover in `PointsPopupTest` and `HudBarsTest` the "−20" popup and a score of −20, and show signed earned points in the level complete dialog with a `LevelCompleteTest` case.
-- [ ] 4.4 Add the leaky texts ("Leaky tile, empty", "… on a leaky tile") to the default string resources and to `CellSemantics`. Cover in `PlayingFieldTest` both descriptions, and run the app module's lint check to confirm no hard-coded text.
-- [ ] 4.5 Run `./gradlew :app:testDebugUnitTest` and confirm it passes.
+- [x] 4.1 Draw leaky tiles in `PlayingField.drawCell`: cracks, damp blob and drip badge under and around the pipe art, following pan and zoom. Add the "Leaky tile" row to `docs/design-system.md` 6.2 and the drip badge to 6.4. Cover in `PlayingFieldTest` that an empty and a placed leaky tile are drawn, and that a tap and a drop on a leaky tile place the next section.
+- [x] 4.2 Add the drip effect on the game clock while the head is in a section on a leaky tile, and the wet stain afterwards; with reduced motion only the stain. Document it in `docs/design-system.md` 6.5 and 7.4. Cover the timing and reduced-motion branches in a JVM unit test of the drip model.
+- [x] 4.3 Show a negative award as "−20" with `leak.500` stroke and glow in the points popup, and let the HUD show a signed score with the bar fill clamped at 0. Document the penalty popup in `docs/design-system.md`. Cover in `PointsPopupTest` and `HudBarsTest` the "−20" popup and a score of −20, and show signed earned points in the level complete dialog with a `LevelCompleteTest` case.
+- [x] 4.4 Add the leaky texts ("Leaky tile, empty", "… on a leaky tile") to the default string resources and to `CellSemantics`. Cover in `PlayingFieldTest` both descriptions, and run the app module's lint check to confirm no hard-coded text.
+- [x] 4.5 Run `./gradlew :app:testDebugUnitTest` and confirm it passes.
 
 ## 5. First-time tip
 

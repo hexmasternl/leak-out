@@ -75,7 +75,7 @@ class LevelCompleteTest {
 
     // The route is worth 60; four unused sections cost 12, so the total is 48: two stars.
     private val stars = StarBenchmarks(20, 40, 200)
-    private val level = FieldTest.level(id = 99, stars = stars)
+    private var level = FieldTest.level(id = 99, stars = stars)
     private val nextLevel = FieldTest.level(id = 100, stars = stars)
 
     /** Off the route; row-major they are removed in this order. */
@@ -88,6 +88,26 @@ class LevelCompleteTest {
     private val finish = Position(3, 3)
 
     private lateinit var session: GameSession
+
+    // app-game-leaky-tiles 4.3: four of the route's five sections on leaky tiles, 15 − 4 × 20 = −65.
+    @Test
+    fun negativeEarnedPointsAreShownSignedWithATotalOf0AndNoStars() {
+        level = FieldTest.level(id = 99, stars = stars, leaky = FieldTest.ROUTE.take(4).map { it.first })
+        show()
+        compose.runOnIdle {
+            for ((at, section) in FieldTest.ROUTE) assertTrue(session.placeSection(section, at))
+            session.flowToEnd()
+            assertTrue(session.state.outcome is Outcome.Won)
+            assertEquals(-65, session.state.score)
+        }
+        compose.waitForIdle()
+        val end = compose.runOnIdle { WinTally.totalDurationMs(session.state.finalScore!!, session.state.finalStars) }
+        tickToDialogAge(end)
+
+        compose.onNodeWithTag(LevelCompleteTags.EARNED).assert(hasText("−65")).assertContentDescriptionEquals("Points −65")
+        compose.onNodeWithTag(LevelCompleteTags.TOTAL).assert(hasText("0")).assertContentDescriptionEquals("Score 0")
+        compose.runOnIdle { assertEquals(0, session.state.finalStars) }
+    }
 
     // 7.1
     @Test

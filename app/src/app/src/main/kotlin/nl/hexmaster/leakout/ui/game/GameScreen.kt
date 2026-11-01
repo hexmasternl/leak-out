@@ -238,6 +238,7 @@ fun GameScreen(
                         derivedStateOf { dragState.dropPoint?.let(target::hoverCell) }
                     }
                     val lost = outcome as? Outcome.Lost
+                    val leakyTiles = session.select { state.level.leaky }
                     // Pan and zoom stay on after a win or a loss, so the player can look at the field.
                     PlayingField(
                         board = session.select { state.board },
@@ -245,6 +246,7 @@ fun GameScreen(
                         highlighted = highlighted,
                         enabled = !paused && !dragState.isBusy,
                         modifier = Modifier.padding(start = 12.dp).weight(1f).fillMaxHeight(),
+                        leaky = remember(leakyTiles) { leakyTiles.toSet() },
                         awards = session.select { state.awards },
                         nowMs = { session.state.clockMs },
                         leakAt = lost?.at,

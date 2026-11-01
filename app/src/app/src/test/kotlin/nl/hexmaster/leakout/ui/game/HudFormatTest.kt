@@ -30,4 +30,11 @@ class HudFormatTest {
         assertEquals("1.250", HudFormat.score(1250, dutch))
         assertEquals("12.500", HudFormat.score(12500, Locale.GERMANY))
     }
+
+    @Test
+    fun `a score below 0 has a real minus sign`() {
+        assertEquals("−20", HudFormat.score(-20, english))
+        assertEquals("−1,250", HudFormat.score(-1250, english))
+        assertEquals("−1.250", HudFormat.score(-1250, dutch))
+    }
 }

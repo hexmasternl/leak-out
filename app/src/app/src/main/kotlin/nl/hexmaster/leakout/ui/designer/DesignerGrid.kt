@@ -64,8 +64,8 @@ data class DesignerGridLayout(val grid: GridSize, val cellPx: Float, val origin:
 }
 
 /**
- * The design on the real playing field's look: cells, blocked cells, mandatory sections, portals
- * and the endpoints with their open sides, drawn by the game's own cell drawing. The [unpaired]
+ * The design on the real playing field's look: cells, blocked cells, leaky tiles, mandatory
+ * sections, portals and the endpoints with their open sides, drawn by the game's own cell drawing. The [unpaired]
  * portal, still waiting for its partner, is drawn as the next pair. [highlighted] cells, the
  * cells validation errors are about, get a `leak.500` frame and the [selected] portal a `brass.300`
  * one; a solvable design's [path] is drawn faintly through the cells as a hint.
@@ -135,7 +135,7 @@ fun DesignerGrid(
         for (y in 0 until grid.rows) {
             for (x in 0 until grid.columns) {
                 val position = Position(x, y)
-                drawStillCell(board[position], layout.cellRect(position), pipes, scratch)
+                drawStillCell(board[position], layout.cellRect(position), pipes, scratch, leaky = level.isLeaky(position))
             }
         }
         if (path.size > 1) {

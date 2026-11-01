@@ -29,5 +29,8 @@
   "mandatory": [
     { "x": 2, "y": 6, "section": "X" }
   ],
-  "stars": { "one": 490, "two": 730, "three": 970 }
+  "stars": { "one": 490, "two": 720, "three": 960 },
+  "leaky": [
+    { "x": 10, "y": 3 }
+  ]
 }

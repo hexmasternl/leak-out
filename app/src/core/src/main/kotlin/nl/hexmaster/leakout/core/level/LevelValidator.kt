@@ -33,6 +33,7 @@ object LevelValidator {
         errors.checkBlocked(level)
         errors.checkMandatory(level)
         errors.checkPortals(level)
+        errors.checkLeaky(level)
         errors.checkFlow(level.flow)
         errors.checkStack(level.stack)
         errors.checkRules(level.rules)
@@ -175,6 +176,24 @@ object LevelValidator {
                     error(field, "Mandatory section at $cell is on the start or finish; the start and finish cannot hold a section")
             }
             firstIndex.putIfAbsent(cell, index)?.let { error(field, "Mandatory section at $cell duplicates mandatory[$it]") }
+        }
+    }
+
+    // A leaky tile is an ordinary free cell that drains the liquid, so it must be one a pipe can go on.
+    private fun MutableList<ValidationError>.checkLeaky(level: Level) {
+        val firstIndex = mutableMapOf<Position, Int>()
+        level.leaky.forEachIndexed { index, cell ->
+            val field = "leaky[$index]"
+            when {
+                cell !in level.grid -> error(field, "Leaky tile $cell lies outside the ${level.grid} grid")
+                level.isBlocked(cell) -> error(field, "Leaky tile $cell is on a blocked cell")
+                cell == level.start.position || cell == level.finish.position ->
+                    error(field, "Leaky tile $cell is on the start or finish; the start and finish cannot be leaky")
+                level.mandatoryAt(cell) != null ->
+                    error(field, "Leaky tile $cell holds a mandatory section; a mandatory section cannot lie on a leaky tile")
+                level.portalAt(cell) != null -> error(field, "Leaky tile $cell holds a portal; a portal cannot lie on a leaky tile")
+            }
+            firstIndex.putIfAbsent(cell, index)?.let { error(field, "Leaky tile $cell duplicates leaky[$it]") }
         }
     }
 

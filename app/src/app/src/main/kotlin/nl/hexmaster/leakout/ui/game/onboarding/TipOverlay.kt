@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import nl.hexmaster.leakout.R
 import nl.hexmaster.leakout.core.level.PipeSection
+import nl.hexmaster.leakout.core.score.Points
 import nl.hexmaster.leakout.settings.TipId
 import nl.hexmaster.leakout.ui.components.FlowButton
 import nl.hexmaster.leakout.ui.components.FlowButtonSize
@@ -120,6 +121,10 @@ fun tipContent(tip: TipId, step: Int, reservoirPercent: Int): TipContent = when 
     }
     TipId.Mandatory -> TipContent(tip, null, stringResource(R.string.tip_mandatory_title), stringResource(R.string.tip_mandatory_text), stringResource(R.string.tip_mandatory_target))
     TipId.Portal -> TipContent(tip, null, stringResource(R.string.tip_portal_title), stringResource(R.string.tip_portal_text), stringResource(R.string.tip_portal_target))
+    TipId.LeakyTile -> TipContent(
+        tip, null, stringResource(R.string.tip_leaky_title), stringResource(R.string.tip_leaky_text, Points.LEAKY_TILE_PENALTY),
+        stringResource(R.string.tip_leaky_target),
+    )
     TipId.Cross -> TipContent(tip, null, stringResource(R.string.tip_cross_title), stringResource(R.string.tip_cross_text), stringResource(R.string.tip_cross_target))
     TipId.Reservoir -> TipContent(
         tip, null, stringResource(R.string.tip_reservoir_title), stringResource(R.string.tip_reservoir_text, reservoirPercent),

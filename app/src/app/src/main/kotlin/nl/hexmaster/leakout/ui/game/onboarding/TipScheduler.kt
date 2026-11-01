@@ -19,12 +19,12 @@ import kotlin.math.abs
  */
 object TipScheduler {
     /**
-     * The tips due now, in the order they are shown: intro, mandatory, portal, cross, reservoir.
-     * Nothing is due once the attempt has ended. The intro tour, the mandatory tip and the portal tip
-     * only come [atLevelStart]; the cross and reservoir tips come whenever an `X` / `RES` sits in a
-     * stack slot whose index is in [fullyVisibleSlots], so a section on a cut-off top of the stack
-     * waits until it moves into view. [mandatory] are the level's mandatory section cells, and
-     * [portalPairs] the number of portal pairs the level has.
+     * The tips due now, in the order they are shown: intro, mandatory, portal, leaky tile, cross,
+     * reservoir. Nothing is due once the attempt has ended. The intro tour and the mandatory, portal
+     * and leaky tile tips only come [atLevelStart]; the cross and reservoir tips come whenever an
+     * `X` / `RES` sits in a stack slot whose index is in [fullyVisibleSlots], so a section on a
+     * cut-off top of the stack waits until it moves into view. [mandatory] are the level's mandatory
+     * section cells, [portalPairs] the number of portal pairs and [leaky] the level's leaky tiles.
      */
     fun dueTips(
         stack: PipeStack,
@@ -34,12 +34,14 @@ object TipScheduler {
         fullyVisibleSlots: Set<Int>,
         mandatory: Collection<Position> = emptyList(),
         portalPairs: Int = 0,
+        leaky: Collection<Position> = emptyList(),
     ): List<TipId> {
         if (outcome != Outcome.Playing) return emptyList()
         return buildList {
             if (atLevelStart && TipId.Intro !in seen) add(TipId.Intro)
             if (atLevelStart && mandatory.isNotEmpty() && TipId.Mandatory !in seen) add(TipId.Mandatory)
             if (atLevelStart && portalPairs > 0 && TipId.Portal !in seen) add(TipId.Portal)
+            if (atLevelStart && leaky.isNotEmpty() && TipId.LeakyTile !in seen) add(TipId.LeakyTile)
             if (TipId.Cross !in seen && tipSlot(stack, PipeSection.X, fullyVisibleSlots) != null) add(TipId.Cross)
             if (TipId.Reservoir !in seen && tipSlot(stack, PipeSection.RES, fullyVisibleSlots) != null) add(TipId.Reservoir)
         }

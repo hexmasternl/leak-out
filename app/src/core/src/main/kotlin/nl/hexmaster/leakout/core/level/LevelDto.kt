@@ -20,6 +20,7 @@ internal data class LevelDto(
     val stars: StarsDto,
     val mandatory: List<MandatoryDto> = emptyList(),
     val portals: List<PortalPairDto> = emptyList(),
+    val leaky: List<CellDto> = emptyList(),
 ) {
     fun toLevel(): Level = Level(
         id = id,
@@ -34,6 +35,7 @@ internal data class LevelDto(
         stars = StarBenchmarks(stars.one, stars.two, stars.three),
         mandatory = mandatory.map { MandatorySection(Position(it.x, it.y), it.section) },
         portals = portals.map { PortalPair(it.a.toEndpoint(), it.b.toEndpoint()) },
+        leaky = leaky.map { Position(it.x, it.y) },
     )
 }
 

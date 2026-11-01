@@ -177,6 +177,20 @@ class HudBarsTest {
         assertEquals(emptyList<Threshold>(), sparkled())
     }
 
+    // app-game-leaky-tiles 4.3
+    @Test
+    fun aScoreBelowZeroIsShownWithAMinusSignOverAnEmptyBar() {
+        var score by mutableIntStateOf(0)
+        showScoreBar { score }
+
+        score = -20
+        compose.mainClock.advanceTimeBy(SCORE_FILL_MS + 100L)
+        compose.onNodeWithTag(HudTags.SCORE)
+            .assert(SemanticsMatcher.expectValue(ScoreFill, 0f))
+            .assertContentDescriptionEquals("Score −20, 0 of 3 stars")
+        assertEquals(emptyList<Threshold>(), sparkled())
+    }
+
     // 3.5
     @Test
     fun eachThresholdSparklesOncePerAttempt() {

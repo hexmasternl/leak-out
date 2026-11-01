@@ -351,6 +351,59 @@ class LevelValidatorTest {
         assertEquals(listOf("mandatory[0]", "mandatory[1]", "mandatory[1].section", "mandatory[3]"), fields.sorted())
     }
 
+    // Leaky tiles (valid(): 7 by 9 grid, start at 0,1 RIGHT, finish at 6,7 LEFT, blocked 3,4)
+
+    @Test
+    fun `leaky tiles on free cells are accepted`() =
+        assertValid(valid(leaky = listOf(Position(3, 2), Position(5, 2)), mandatory = listOf(mandatory(2, 6))))
+
+    @Test
+    fun `leaky tile outside the grid is rejected`() {
+        val error = assertOnlyError("leaky[0]", valid(leaky = listOf(Position(2, 9))))
+        assertTrue("(2, 9)" in error.message)
+    }
+
+    @Test
+    fun `leaky tile on a blocked cell is rejected`() {
+        val error = assertOnlyError("leaky[0]", valid(leaky = listOf(Position(3, 4))))
+        assertTrue("blocked" in error.message)
+    }
+
+    @Test
+    fun `leaky tile on the start or finish is rejected`() {
+        for (cell in listOf(Position(0, 1), Position(6, 7))) {
+            val error = assertOnlyError("leaky[0]", valid(leaky = listOf(cell)))
+            assertTrue("start and finish cannot be leaky" in error.message)
+        }
+    }
+
+    @Test
+    fun `leaky tile under a mandatory section is rejected`() {
+        val error = assertOnlyError("leaky[0]", valid(leaky = listOf(Position(2, 2)), mandatory = listOf(mandatory(2, 2))))
+        assertTrue("mandatory section cannot lie on a leaky tile" in error.message)
+    }
+
+    @Test
+    fun `leaky tile on a portal is rejected`() {
+        val level = valid(leaky = listOf(Position(2, 1)), portals = listOf(pair(2, 1, Side.LEFT, 6, 5, Side.LEFT)))
+        val error = assertOnlyError("leaky[0]", level)
+        assertTrue("portal cannot lie on a leaky tile" in error.message)
+    }
+
+    @Test
+    fun `duplicate leaky tile is rejected`() {
+        val error = assertOnlyError("leaky[2]", valid(leaky = listOf(Position(2, 2), Position(4, 4), Position(2, 2))))
+        assertTrue("(2, 2)" in error.message)
+        assertTrue("leaky[0]" in error.message)
+    }
+
+    @Test
+    fun `every leaky problem is reported together`() {
+        val level = valid(leaky = listOf(Position(9, 9), Position(3, 4), Position(1, 1), Position(1, 1), Position(0, 1)))
+        val fields = errors(level).map { it.field }
+        assertEquals(listOf("leaky[0]", "leaky[1]", "leaky[3]", "leaky[4]"), fields.sorted())
+    }
+
     // Portals (valid(): 7 by 9 grid, start at 0,1 RIGHT, finish at 6,7 LEFT, blocked 3,4)
 
     private fun pair(ax: Int, ay: Int, aSide: Side, bx: Int, by: Int, bSide: Side) =

@@ -454,4 +454,68 @@ class LevelDesignerViewModelTest {
         assertEquals(DesignerTool.PORTAL, restored.tool)
         assertEquals(first.state.draft, restored.draft)
     }
+
+    // Leaky tiles
+
+    @Test
+    fun `the leaky tile tool toggles a cell and a drag paints the cells it passes`() {
+        val vm = viewModel()
+        vm.selectTool(DesignerTool.LEAKY)
+        vm.onCellTap(Position(3, 1))
+        assertEquals(listOf(Position(3, 1)), vm.state.level.leaky)
+        assertTrue(vm.state.dirty)
+        vm.onCellTap(Position(3, 1))
+        assertEquals(emptyList<Position>(), vm.state.level.leaky)
+
+        vm.onDragStart(Position(1, 3))
+        vm.onDrag(Position(2, 3))
+        vm.onDrag(Position(3, 3))
+        vm.onDragEnd()
+        assertEquals(listOf(Position(1, 3), Position(2, 3), Position(3, 3)), vm.state.level.leaky)
+
+        vm.clearLeaky()
+        assertEquals(emptyList<Position>(), vm.state.level.leaky)
+    }
+
+    @Test
+    fun `leaky tiles are copied, exported and test played`() {
+        val vm = viewModel()
+        vm.selectTool(DesignerTool.LEAKY)
+        vm.onCellTap(Position(3, 2))
+        assertTrue(vm.export())
+        val parsed = (LevelParser.parse(exporter.exports.single().second) as ParseResult.Success).level
+        assertEquals(listOf(Position(3, 2)), parsed.leaky)
+        assertEquals(vm.state.level, parsed)
+        assertEquals(listOf(Position(3, 2)), vm.testPlayLevel()?.leaky)
+
+        val copied = LevelDesignerViewModel(FakeLevels(listOf(parsed.copy(id = 1))), exporter, SavedStateHandle())
+        copied.copyFrom(1)
+        assertEquals(listOf(Position(3, 2)), copied.state.level.leaky)
+    }
+
+    @Test
+    fun `every route over a leaky tile keeps export and test play enabled`() {
+        val vm = viewModel()
+        vm.selectTool(DesignerTool.BLOCK)
+        vm.onDragStart(Position(3, 0))
+        (1..4).forEach { vm.onDrag(Position(3, it)) }
+        vm.onDragEnd()
+        vm.selectTool(DesignerTool.LEAKY)
+        vm.onCellTap(Position(3, 2))
+        assertEquals(false, (vm.state.status as DesignStatus.Solvable).leakFree)
+        assertTrue(vm.state.canPlay)
+    }
+
+    @Test
+    fun `leaky tiles and the leaky tile tool are restored`() {
+        val saved = SavedStateHandle()
+        val first = viewModel(saved)
+        first.selectTool(DesignerTool.LEAKY)
+        first.onCellTap(Position(2, 1))
+        first.onCellTap(Position(4, 3))
+        val restored = viewModel(saved).state
+        assertEquals(listOf(Position(2, 1), Position(4, 3)), restored.level.leaky)
+        assertEquals(DesignerTool.LEAKY, restored.tool)
+        assertEquals(first.state.draft, restored.draft)
+    }
 }

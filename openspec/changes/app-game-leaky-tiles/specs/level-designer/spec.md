@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Leaky tile tool
-The designer SHALL have a Leaky tile tool. With it selected, tapping a free cell SHALL make it leaky and tapping a leaky tile SHALL make it free again. Dragging across cells SHALL apply the same change to every cell passed, chosen by the first cell. A blocked cell passed SHALL become leaky and no longer blocked. The start and finish cells and cells holding a mandatory section SHALL never be made leaky. The grid SHALL draw leaky tiles as in the game.
+The designer SHALL have a Leaky tile tool. With it selected, tapping a free cell SHALL make it leaky and tapping a leaky tile SHALL make it free again. Dragging across cells SHALL apply the same change to every cell passed, chosen by the first cell. A blocked cell passed SHALL become leaky and no longer blocked. The start and finish cells, portals and cells holding a mandatory section SHALL never be made leaky. The grid SHALL draw leaky tiles as in the game.
 
 #### Scenario: Toggle a leaky tile
 - **WHEN** the Leaky tile tool is selected and the developer taps a free cell, then taps it again
@@ -16,11 +16,11 @@ The designer SHALL have a Leaky tile tool. With it selected, tapping a free cell
 - **THEN** the cell is leaky and no longer blocked
 
 #### Scenario: Endpoints and mandatory sections are skipped
-- **WHEN** the developer drags the Leaky tile tool across the start's cell and a cell holding a mandatory section
-- **THEN** neither cell becomes leaky and the cells around them do
+- **WHEN** the developer drags the Leaky tile tool across the start's cell, a portal and a cell holding a mandatory section
+- **THEN** none of those cells becomes leaky and the cells around them do
 
 ### Requirement: Other tools on a leaky tile
-The Block tool SHALL turn a leaky tile into a blocked cell that is no longer leaky. The Start and Finish tools SHALL move an endpoint onto a leaky tile and make that cell no longer leaky. A Clear leaky action SHALL remove all leaky tiles.
+The Block tool SHALL turn a leaky tile into a blocked cell that is no longer leaky. The Start and Finish tools SHALL move an endpoint onto a leaky tile, and the Portal tool SHALL place a portal on one, each making that cell no longer leaky. A Clear leaky action SHALL remove all leaky tiles.
 
 #### Scenario: Block a leaky tile
 - **WHEN** the Block tool is selected and the developer taps a leaky tile
@@ -56,7 +56,7 @@ Leaky tiles SHALL be loaded when the designer starts from a copy of a bundled le
 ## MODIFIED Requirements
 
 ### Requirement: Grid size
-The designer SHALL let the developer set the number of columns and rows, each between 4 and 50, with controls that cannot go outside that range. When the grid shrinks, blocked cells and leaky tiles outside the new grid SHALL be removed, and a start or finish outside the new grid SHALL be moved to the nearest cell inside it, keeping its open side.
+The designer SHALL let the developer set the number of columns and rows, each between 4 and 50, with controls that cannot go outside that range. When the grid shrinks, blocked cells and leaky tiles outside the new grid SHALL be removed, a start or finish outside the new grid SHALL be moved to the nearest cell inside it, keeping its open side, and a portal pair with a portal outside the new grid SHALL be removed.
 
 #### Scenario: Grow the grid
 - **WHEN** the developer raises the columns from 7 to 10
@@ -78,8 +78,12 @@ The designer SHALL let the developer set the number of columns and rows, each be
 - **WHEN** a leaky tile is at x 2, y 6 and the developer lowers the rows from 8 to 5
 - **THEN** that leaky tile is removed and the leaky tiles inside the grid are kept
 
+#### Scenario: Shrink removes a portal pair
+- **WHEN** a portal is at x 9, y 1, its partner is at x 2, y 3, and the developer lowers the columns from 10 to 8
+- **THEN** both portals of that pair are removed and the other pairs are kept
+
 ### Requirement: Live validation and solvability
-After every change the designer SHALL validate the design with `LevelValidator` and, when it is valid, check it with `LevelSolver`. It SHALL show the status (valid and solvable, invalid, or unsolvable), list every validation error with its field and message, and show the solver's reason for an unsolvable level. Errors about a cell (start, finish, a blocked cell or a leaky tile) SHALL also be highlighted on the grid. When a solvable design has no leak-free route, the status SHALL add a note that every route crosses a leaky tile; the note SHALL NOT disable test play or export.
+After every change the designer SHALL validate the design with `LevelValidator` and, when it is valid, check it with `LevelSolver`. It SHALL show the status (valid and solvable, invalid, or unsolvable), list every validation error with its field and message, and show the solver's reason for an unsolvable level. Errors about a cell (start, finish, a blocked cell, a portal or a leaky tile) SHALL also be highlighted on the grid. When a solvable design has no leak-free route, the status SHALL add a note that every route crosses a leaky tile; the note SHALL NOT disable test play or export.
 
 #### Scenario: Valid and solvable
 - **WHEN** the design is valid and the solver finds a route
@@ -97,8 +101,16 @@ After every change the designer SHALL validate the design with `LevelValidator` 
 - **WHEN** the design is valid and solvable and every route passes a leaky tile
 - **THEN** the status shows the level as valid and solvable with a note that every route crosses a leaky tile, and Test play and Export stay enabled
 
+#### Scenario: Walled-off portal highlighted
+- **WHEN** a portal's open side faces a blocked cell
+- **THEN** the error for that portal is listed with its field, such as `portals[0].b`, and the portal is highlighted
+
+#### Scenario: Solvable only through a portal
+- **WHEN** blocked cells wall off the finish and a portal pair crosses the wall
+- **THEN** the status shows the level as valid and solvable
+
 ### Requirement: Where mandatory sections can be placed
-The mandatory section tools SHALL do nothing on a blocked cell, on a leaky tile, on the start or the finish, or when the design already has 6 mandatory sections and the tapped cell holds none.
+The mandatory section tools SHALL do nothing on a blocked cell, on a leaky tile, on the start or the finish, on a portal, or when the design already has 6 mandatory sections and the tapped cell holds none.
 
 #### Scenario: Blocked cell refused
 - **WHEN** the Mandatory cross tool is selected and the developer taps a blocked cell
@@ -116,8 +128,12 @@ The mandatory section tools SHALL do nothing on a blocked cell, on a leaky tile,
 - **WHEN** the Mandatory cross tool is selected and the developer taps a leaky tile
 - **THEN** the design is unchanged
 
+#### Scenario: Portal refused
+- **WHEN** the Mandatory cross tool is selected and the developer taps a portal
+- **THEN** the design is unchanged
+
 ### Requirement: Calculated star thresholds
-The designer SHALL calculate the star thresholds from the free cells: every cell of the grid except blocked cells, leaky tiles, the start and the finish; cells holding a mandatory section count as free. Three stars SHALL be free cells times 10. Two stars and one star SHALL be 75% and 60% of the three-star value, each rounded to the nearest 10, with halves rounded up. The thresholds SHALL be recalculated after every edit and SHALL NOT be editable.
+The designer SHALL calculate the star thresholds from the free cells: every cell of the grid except blocked cells, leaky tiles, the start, the finish and portals; cells holding a mandatory section count as free. Three stars SHALL be free cells times 10. Two stars and one star SHALL be 75% and 60% of the three-star value, each rounded to the nearest 10, with halves rounded up. The thresholds SHALL be recalculated after every edit and SHALL NOT be editable.
 
 #### Scenario: Example grid
 - **WHEN** the design is a 7 by 9 grid with 1 blocked cell
@@ -146,3 +162,7 @@ The designer SHALL calculate the star thresholds from the free cells: every cell
 #### Scenario: Leaky tiles do not count
 - **WHEN** the developer makes one free cell leaky in a design with 60 free cells
 - **THEN** the star thresholds become 350, 440 and 590
+
+#### Scenario: Portals are not free cells
+- **WHEN** the developer places a portal pair in a design with 60 free cells
+- **THEN** the design has 58 free cells and the star thresholds become 350, 440 and 580

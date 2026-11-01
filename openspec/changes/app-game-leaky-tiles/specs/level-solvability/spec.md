@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Level solver determines start-to-finish reachability
-The system SHALL provide a `LevelSolver` that, given a parsed `Level`, determines whether at least one route of pipe sections can connect the start's facing cell to the finish's facing cell, using only cells that lie inside the grid and are not blocked. Leaky tiles SHALL count as usable cells. When the level has mandatory sections, the route SHALL run through every channel of every mandatory section, entering each one through an open side, and SHALL NOT pass a cell other than a mandatory cross more than once.
+The system SHALL provide a `LevelSolver` that, given a parsed `Level`, determines whether at least one route of pipe sections can connect the start's facing cell to the finish's facing cell, using only cells that lie inside the grid and are not blocked. Leaky tiles SHALL count as usable cells. A route MAY pass a portal pair once: from the facing cell of one portal it continues at the facing cell of the other portal of that pair. When the level has mandatory sections, the route SHALL run through every channel of every mandatory section, entering each one through an open side, and SHALL NOT pass a cell other than a mandatory cross more than once.
 
 #### Scenario: Open path exists
 - **WHEN** the solver is run on a level whose start's facing cell and finish's facing cell are connected by at least one sequence of adjacent, in-grid, non-blocked cells
@@ -34,6 +34,18 @@ The system SHALL provide a `LevelSolver` that, given a parsed `Level`, determine
 #### Scenario: Only route runs over a leaky tile
 - **WHEN** the only free cells between the start's facing cell and the finish's facing cell form a corridor with one leaky tile in it
 - **THEN** the solver reports the level as solvable
+
+#### Scenario: Only solvable through a portal pair
+- **WHEN** a wall of blocked cells separates the start's side of the grid from the finish's side, and a portal pair has one portal facing a cell on each side
+- **THEN** the solver reports the level as solvable, and its route runs into one portal of the pair and out of the other
+
+#### Scenario: Portal pair that leads nowhere useful
+- **WHEN** the same wall separates the start from the finish, and both portals of the only pair face cells on the start's side
+- **THEN** the solver reports the level as unsolvable
+
+#### Scenario: Portal pair together with a mandatory section
+- **WHEN** a mandatory reservoir can only be reached through a portal pair
+- **THEN** the solver reports the level as solvable and its route passes the pair before the reservoir
 
 ## ADDED Requirements
 

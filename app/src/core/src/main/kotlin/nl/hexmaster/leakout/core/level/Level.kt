@@ -80,8 +80,8 @@ data class PortalPair(val a: Endpoint, val b: Endpoint) {
 
 /**
  * One playable level. Instances hold concrete values only: defaults are resolved while parsing.
- * [blocked], [mandatory] and [portals] keep their entries in authored order so that validation can
- * report duplicates; the first portal pair is pair 1.
+ * [blocked], [mandatory], [portals] and [leaky] keep their entries in authored order so that
+ * validation can report duplicates; the first portal pair is pair 1.
  */
 data class Level(
     val id: Int,
@@ -96,8 +96,12 @@ data class Level(
     val stars: StarBenchmarks,
     val mandatory: List<MandatorySection> = emptyList(),
     val portals: List<PortalPair> = emptyList(),
+    val leaky: List<Position> = emptyList(),
 ) {
     fun isBlocked(position: Position): Boolean = position in blocked
+
+    /** Whether [position] is a leaky tile: a pipe can go on it, but liquid passing it costs points. */
+    fun isLeaky(position: Position): Boolean = position in leaky
 
     /** The mandatory section on [position], or `null` when there is none. */
     fun mandatoryAt(position: Position): MandatorySection? = mandatory.firstOrNull { it.position == position }
@@ -119,6 +123,16 @@ data class Level(
         get() {
             val taken = (blocked + start.position + finish.position + portalCells).filter { it in grid }.toSet()
             return grid.columns * grid.rows - taken.size
+        }
+
+    /**
+     * The free cells on which the liquid can earn points: [freeCells] without the leaky tiles. The
+     * designer's star thresholds come from it, so a leaky tile never adds points that cannot be won.
+     */
+    val scoringCells: Int
+        get() {
+            val taken = (blocked + start.position + finish.position + portalCells).toSet()
+            return freeCells - leaky.filter { it in grid && it !in taken }.toSet().size
         }
 
     /** A section is allowed on the stack when it has a positive weight. */

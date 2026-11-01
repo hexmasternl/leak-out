@@ -84,17 +84,36 @@ A screen reader SHALL name a leaky tile as leaky: an empty one as "Leaky tile, e
 - **WHEN** a screen reader reaches a filled corner on a leaky tile
 - **THEN** it reads "Placed Corner section on a leaky tile, filled"
 
-### Requirement: A chapter of levels introduces leaky tiles
-The app SHALL ship one chapter of 24 new levels, one full level library page, that introduces leaky tiles. Every level of the chapter SHALL have at least one leaky tile, the first level SHALL show the mechanic on a small board, and every level SHALL pass the solver check. The chapter SHALL unlock with the existing page star rule. Levels 1 to 96 SHALL NOT change.
+### Requirement: Leaky tiles appear occasionally from level 25 onwards
+The bundled levels 1 to 24 SHALL have no leaky tiles. Level 25 SHALL be the first bundled level with a leaky tile. From level 25 to 96, leaky tiles SHALL appear occasionally: some levels SHALL have leaky tiles and most SHALL have none. From level 49 onwards, some of the levels with leaky tiles SHALL offer a shortcut: their shortest route SHALL cross a leaky tile while a longer route crosses none, so the player chooses between losing points on the short route and placing more sections on the long one. Every bundled level with leaky tiles SHALL pass the solver check. No level SHALL be added, removed or renumbered by this change.
 
-#### Scenario: Chapter fills one page
-- **WHEN** the level library shows the chapter's page
-- **THEN** the page holds 24 levels, each with at least one leaky tile
+#### Scenario: No leaky tiles before level 25
+- **WHEN** the bundled levels 1 to 24 are loaded
+- **THEN** none of them has a leaky tile
 
-#### Scenario: Chapter levels are solvable
-- **WHEN** the bundled level solver test runs
-- **THEN** every level of the chapter is reported solvable
+#### Scenario: Level 25 introduces leaky tiles
+- **WHEN** level 25 is loaded
+- **THEN** it has at least one leaky tile and a route that avoids every leaky tile
 
-#### Scenario: Existing levels unchanged
-- **WHEN** levels 1 to 96 are loaded after this change
-- **THEN** they are the same levels as before, with no leaky tiles, and their history records and stars are kept
+#### Scenario: Leaky tiles are occasional
+- **WHEN** the bundled levels 25 to 96 are loaded
+- **THEN** some of them have leaky tiles and fewer than half of them do
+
+#### Scenario: Shortcut over a leaky tile from level 49
+- **WHEN** the bundled levels 49 to 96 without mandatory sections are solved once as they are and once with their leaky tiles treated as blocked
+- **THEN** for at least four of them both solves succeed and the first route is shorter than the second and crosses a leaky tile
+
+#### Scenario: Levels with leaky tiles pass the solver check
+- **WHEN** the headless solvability suite runs over the bundled levels
+- **THEN** every level with leaky tiles is reported solvable
+
+### Requirement: Levels without leaky tiles and saved progress are unaffected
+Adding leaky tiles SHALL NOT change levels 1 to 24, nor any later level that gets no leaky tile: their files, ids, star thresholds and play SHALL stay as before. Updating a level with leaky tiles SHALL keep its id. Saved level history, stars, achievements and settings SHALL be kept; stars already earned on an updated level SHALL NOT be taken away. An updated level's star thresholds SHALL still allow three stars on a route that avoids the leaky tiles.
+
+#### Scenario: Unchanged level files
+- **WHEN** the change is applied
+- **THEN** the files for levels 1 to 24, and for every later level without leaky tiles, are byte-identical to before, and each parses to the same level as before
+
+#### Scenario: Saved progress kept
+- **WHEN** a player who has finished levels 1 to 60 with stars updates the app
+- **THEN** the level history still holds those 60 results with their stars, including those of updated levels, and the library opens the same pages as before

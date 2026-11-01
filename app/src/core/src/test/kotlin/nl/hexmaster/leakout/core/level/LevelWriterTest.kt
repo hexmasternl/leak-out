@@ -77,8 +77,26 @@ class LevelWriterTest {
             blocked = listOf(Position(3, 4), Position(2, 2)),
             mandatory = listOf(MandatorySection(Position(3, 2), PipeSection.X)),
             portals = listOf(TestLevels.pair(1, 6, Side.TOP, 5, 1, Side.BOTTOM)),
+            leaky = listOf(Position(4, 3), Position(1, 2)),
         )
         assertEquals(level, reparse(level))
+    }
+
+    @Test
+    fun `leaky tiles are written last and in order`() {
+        val leaky = listOf(Position(2, 1), Position(4, 3))
+        val json = tree(minimal.copy(leaky = leaky))
+        assertEquals("leaky", json.keys.last())
+        val written = json.getValue("leaky").jsonArray.map {
+            assertEquals(listOf("x", "y"), it.jsonObject.keys.toList())
+            Position(it.jsonObject.getValue("x").jsonPrimitive.content.toInt(), it.jsonObject.getValue("y").jsonPrimitive.content.toInt())
+        }
+        assertEquals(leaky, written)
+    }
+
+    @Test
+    fun `a level without leaky tiles has no leaky key`() {
+        assertTrue("leaky" !in tree(minimal).keys)
     }
 
     @Test

@@ -59,7 +59,7 @@ object FlowSimulation {
 
     /**
      * The head leaves its tile: the channel is filled, the section's points are awarded (the start
-     * gives none), then [FlowStep] decides between the next tile, the finish and a leak. The finish
+     * gives none; a section on a leaky tile takes the leak penalty instead), then [FlowStep] decides between the next tile, the finish and a leak. The finish
      * only wins when every mandatory section is used; otherwise it refuses the liquid and the
      * attempt is lost at the finish's open side.
      *
@@ -78,7 +78,7 @@ object FlowSimulation {
         val exit: Side = pipe?.section?.exitFor(flow.entry) ?: state.level.start.openSide
         var next = state
         if (pipe != null) {
-            val award = state.sheet.award(flow.position, pipe.section)
+            val award = state.sheet.award(flow.position, pipe.section, leaky = state.level.isLeaky(flow.position))
             next = next.copy(
                 sheet = award.sheet,
                 awards = next.awards + Award(flow.position, award.points, state.clockMs),

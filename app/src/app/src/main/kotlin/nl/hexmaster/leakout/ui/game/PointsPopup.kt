@@ -50,15 +50,15 @@ fun popupFrame(ageMs: Long): PopupFrame? {
     }
 }
 
-/** The text of a points popup. */
+/** The text of a points popup: "+15" for points, "−20" with a real minus sign for a leak penalty. */
 object PointsFormat {
-    fun text(points: Int): String = "+$points"
+    fun text(points: Int): String = if (points < 0) "−${-points}" else "+$points"
 }
 
 /**
  * How a points popup is drawn (design system 7.2): a soft [glow] halo under an opaque, light
  * [fill]. There is no outline or dark edge. The board is always Deep, so these are the Deep tokens
- * in both themes.
+ * in both themes. A leak penalty glows in [penaltyGlow] instead.
  */
 object PopupStyle {
     /** The text size, relative to the cell size. */
@@ -66,9 +66,13 @@ object PopupStyle {
 
     val fill: Color = LeakOutColors.TextPrimary
     val glow: Color = LeakOutColors.LiquidGlow
+    val penaltyGlow: Color = LeakOutColors.Leak500
     val glowRadius = 6.dp
     const val GLOW_ALPHA = 0.7f
 
-    /** The glow colour for a popup at [alpha], so the halo fades with the popup. */
-    fun glowColor(alpha: Float): Color = glow.copy(alpha = GLOW_ALPHA * alpha.coerceIn(0f, 1f))
+    /** The glow of a popup for [points]: `leak.500` for a leak penalty, `liquid.glow` otherwise. */
+    fun glowFor(points: Int): Color = if (points < 0) penaltyGlow else glow
+
+    /** The glow colour for a popup of [points] at [alpha], so the halo fades with the popup. */
+    fun glowColor(alpha: Float, points: Int = 1): Color = glowFor(points).copy(alpha = GLOW_ALPHA * alpha.coerceIn(0f, 1f))
 }

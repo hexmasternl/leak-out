@@ -76,6 +76,8 @@ object DesignerTags {
     const val START_FROM_DIALOG = "designer_start_from_dialog"
     const val START_FROM_BLANK = "designer_start_from_blank"
     const val CLEAR_BLOCKED = "designer_clear_blocked"
+    const val CLEAR_LEAKY = "designer_clear_leaky"
+    const val LEAKY_NOTE = "designer_leaky_note"
     const val COLUMNS_DOWN = "designer_columns_down"
     const val COLUMNS_UP = "designer_columns_up"
     const val COLUMNS_VALUE = "designer_columns_value"
@@ -237,7 +239,7 @@ private fun DesignerPanel(
         )
 
         Section(stringResource(R.string.designer_section_tools)) {
-            // Start, Finish and Block on the first row, the two mandatory section tools and Portal on the second.
+            // Start, Finish and Block on the first row, the two mandatory section tools and Portal on the second, Leaky tile on the third.
             DesignerTool.entries.chunked(3).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     row.forEach { tool ->
@@ -255,6 +257,12 @@ private fun DesignerPanel(
                 selected = false,
                 onClick = viewModel::clearBlocked,
                 modifier = Modifier.fillMaxWidth().testTag(DesignerTags.CLEAR_BLOCKED),
+            )
+            Chip(
+                label = stringResource(R.string.designer_clear_leaky),
+                selected = false,
+                onClick = viewModel::clearLeaky,
+                modifier = Modifier.fillMaxWidth().testTag(DesignerTags.CLEAR_LEAKY),
             )
         }
 
@@ -356,6 +364,7 @@ private fun toolLabel(tool: DesignerTool): Int = when (tool) {
     DesignerTool.MANDATORY_CROSS -> R.string.designer_tool_mandatory_cross
     DesignerTool.MANDATORY_RESERVOIR -> R.string.designer_tool_mandatory_reservoir
     DesignerTool.PORTAL -> R.string.designer_tool_portal
+    DesignerTool.LEAKY -> R.string.designer_tool_leaky
 }
 
 /** A calculated star threshold: its label over its value, which cannot be edited. */
@@ -375,7 +384,10 @@ private fun StarValue(label: String, value: Int, tag: String, modifier: Modifier
     }
 }
 
-/** The status line, and below it every validation error by field, or the solver's reason. */
+/**
+ * The status line, and below it every validation error by field, the solver's reason, or for a
+ * solvable design without a leak-free route a note that every route crosses a leaky tile.
+ */
 @Composable
 private fun StatusSection(status: DesignStatus) {
     val (text, color) = when (status) {
@@ -400,7 +412,14 @@ private fun StatusSection(status: DesignStatus) {
                 color = LeakOutColors.TextSecondary,
                 modifier = Modifier.testTag(DesignerTags.ERROR),
             )
-            is DesignStatus.Solvable -> Unit
+            is DesignStatus.Solvable -> if (!status.leakFree) {
+                Text(
+                    text = stringResource(R.string.designer_status_every_route_leaky),
+                    style = LeakOutTextStyles.BodySm,
+                    color = LeakOutColors.Brass300,
+                    modifier = Modifier.testTag(DesignerTags.LEAKY_NOTE),
+                )
+            }
         }
     }
 }

@@ -65,6 +65,34 @@ class AttemptSummaryTest {
     }
 
     @Test
+    fun `a win with negative earned points has a total and stars of 0 and unlocks no score achievement`() {
+        // 5 by 5, start (0, 1) open right, finish (2, 3) open at the top: H, LB, V, all on leaky tiles.
+        val route = listOf(Position(1, 1) to PipeSection.H, Position(2, 1) to PipeSection.LB, Position(2, 2) to PipeSection.V)
+        val level = TestLevels.valid(
+            grid = GridSize(5, 5),
+            start = Endpoint(Position(0, 1), Side.RIGHT),
+            finish = Endpoint(Position(2, 3), Side.TOP),
+            blocked = emptyList(),
+            flow = FlowSettings(initialDelayMs = 2_000, cellsPerSecond = 2.0),
+            leaky = route.map { it.first },
+        )
+        val won = engine.start(level).placeAll(route).runToEnd()
+        assertIs<Outcome.Won>(won.outcome)
+        assertEquals(-60, won.finalScore?.earned)
+        assertEquals(0, won.finalScore?.total)
+        assertEquals(0, won.finalStars)
+
+        val summary = AttemptSummary.from(won, RecordOutcome.FIRST_COMPLETION)
+        assertEquals(0, summary.finalTotal)
+        assertEquals(0, summary.finalStars)
+        assertEquals(3, summary.sectionsLeft)
+        assertEquals(25 - 2, summary.freeCells, "leaky tiles count as free cells")
+        val unlocked = evaluateAttempt(summary).newlyUnlocked
+        assertFalse(Achievement.BIG_SPENDER in unlocked)
+        assertFalse(Achievement.BIG_SPENDER_2 in unlocked)
+    }
+
+    @Test
     fun `a won attempt through a cross passed twice`() {
         val built = engine.start(crossLevel).placeAll(crossRoute).place(Position(4, 4), PipeSection.H)
         val won = built.runToEnd()

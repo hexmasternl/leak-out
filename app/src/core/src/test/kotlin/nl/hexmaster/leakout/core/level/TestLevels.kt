@@ -15,7 +15,8 @@ object TestLevels {
         stars: StarBenchmarks = StarBenchmarks(100, 200, 350),
         mandatory: List<MandatorySection> = emptyList(),
         portals: List<PortalPair> = emptyList(),
-    ): Level = Level(id, name, grid, start, finish, blocked, flow, stack, rules, stars, mandatory, portals)
+        leaky: List<Position> = emptyList(),
+    ): Level = Level(id, name, grid, start, finish, blocked, flow, stack, rules, stars, mandatory, portals, leaky)
 
     /** A portal pair with portal `a` at [ax], [ay] and portal `b` at [bx], [by]. */
     fun pair(ax: Int, ay: Int, aSide: Side, bx: Int, by: Int, bSide: Side): PortalPair =

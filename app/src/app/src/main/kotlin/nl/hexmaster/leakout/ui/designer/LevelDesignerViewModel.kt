@@ -21,7 +21,7 @@ import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.ui.levels.LevelCatalog
 
 /** What a tap or drag on the designer grid does. */
-enum class DesignerTool { START, FINISH, BLOCK, MANDATORY_CROSS, MANDATORY_RESERVOIR, PORTAL }
+enum class DesignerTool { START, FINISH, BLOCK, MANDATORY_CROSS, MANDATORY_RESERVOIR, PORTAL, LEAKY }
 
 /** The bundled levels as the designer uses them: how many there are, and a copy of one to start from. */
 interface DesignerLevels : LevelCatalog {
@@ -115,6 +115,8 @@ class LevelDesignerViewModel(
 
     fun clearBlocked() = edit { it.clearBlocked() }
 
+    fun clearLeaky() = edit { it.clearLeaky() }
+
     /** Sets the open side of the portal the Portal tool has selected. */
     fun setPortalOpenSide(side: Side) = edit { it.setPortalOpenSide(side) }
 
@@ -130,17 +132,26 @@ class LevelDesignerViewModel(
             DesignerTool.MANDATORY_CROSS -> edit { it.toggleMandatory(cell, PipeSection.X) }
             DesignerTool.MANDATORY_RESERVOIR -> edit { it.toggleMandatory(cell, PipeSection.RES) }
             DesignerTool.PORTAL -> edit { it.tapPortal(cell) }
+            DesignerTool.LEAKY -> edit { it.toggleLeaky(cell) }
         }
     }
 
-    /** A drag starts on [cell]. With the Block tool every cell passed is set to the opposite of this one. */
+    /**
+     * A drag starts on [cell]. With the Block and Leaky tile tools every cell passed is set to the
+     * opposite of this one.
+     */
     fun onDragStart(cell: Position) {
         val state = _uiState.value
-        if (state.tool == DesignerTool.BLOCK) {
-            paintTarget = !state.level.isBlocked(cell)
-            onDrag(cell)
-        } else {
-            onCellTap(cell)
+        when (state.tool) {
+            DesignerTool.BLOCK -> {
+                paintTarget = !state.level.isBlocked(cell)
+                onDrag(cell)
+            }
+            DesignerTool.LEAKY -> {
+                paintTarget = !state.level.isLeaky(cell)
+                onDrag(cell)
+            }
+            else -> onCellTap(cell)
         }
     }
 
@@ -151,6 +162,7 @@ class LevelDesignerViewModel(
     fun onDrag(cell: Position) {
         when (_uiState.value.tool) {
             DesignerTool.BLOCK -> paintTarget?.let { target -> edit { it.paintBlocked(listOf(cell), target) } }
+            DesignerTool.LEAKY -> paintTarget?.let { target -> edit { it.paintLeaky(listOf(cell), target) } }
             DesignerTool.MANDATORY_CROSS, DesignerTool.MANDATORY_RESERVOIR, DesignerTool.PORTAL -> Unit
             else -> onCellTap(cell)
         }

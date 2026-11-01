@@ -13,6 +13,9 @@ object Points {
     /** Taken off the final score of a won attempt for every placed section the liquid never entered. */
     const val UNUSED_SECTION_PENALTY = 3
 
+    /** Taken off the score, in place of the section's points, each time the liquid exits a section on a leaky tile. */
+    const val LEAKY_TILE_PENALTY = 20
+
     /**
      * The points for the liquid leaving [section] for the [pass]-th time on its tile, starting at 1.
      * Only the cross looks at [pass]: its second exit, through the other channel, is worth more.

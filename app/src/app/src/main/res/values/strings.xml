@@ -460,4 +460,30 @@
     <string name="update_install_body">The new version has downloaded. Restart Leak Out to install it.</string>
     <string name="update_install_restart">Restart</string>
     <string name="update_install_later">Later</string>
+    <!-- Daily Pipe (spec daily-pipe): one level a day from the score server, only for players signed in with Play Games -->
+    <string name="welcome_daily_pipe">Daily Pipe</string>
+    <string name="daily_pipe_offline_hint">The Daily Pipe needs an internet connection</string>
+    <string name="daily_pipe_loading">Loading today\'s Daily Pipe…</string>
+    <string name="daily_pipe_not_published">No Daily Pipe yet, try again later</string>
+    <string name="daily_pipe_download_failed">The Daily Pipe could not be loaded. Check your connection and try again.</string>
+    <string name="daily_pipe_unsupported">This Daily Pipe needs a newer version of Leak Out</string>
+    <!-- In the game HUD and above the result dialogs, in place of "Level 12" -->
+    <string name="daily_pipe_label">Daily Pipe</string>
+    <!-- Under the score in the level complete dialog of the Daily Pipe -->
+    <string name="daily_result_sending">Sending your result…</string>
+    <!-- %1$d: the player's current streak, the consecutive days with a Daily Pipe win (0 after a missed day) -->
+    <plurals name="daily_result_streak">
+        <item quantity="one">%1$d day streak</item>
+        <item quantity="other">%1$d day streak</item>
+    </plurals>
+    <!-- %1$d: the best streak the player ever reached -->
+    <string name="daily_result_best_streak">Best %1$d</string>
+    <!-- %1$d: the player's position in today's ranking -->
+    <string name="daily_result_rank">You are #%1$d today</string>
+    <string name="daily_result_top_title">Today\'s top scores</string>
+    <!-- %1$d: rank. %2$s: the player's name. %3$s: the score, already formatted -->
+    <string name="daily_result_top_row">%1$d. %2$s · %3$s</string>
+    <string name="daily_result_ended">The Daily Pipe has ended. A new one is waiting.</string>
+    <string name="daily_result_failed">Your result could not be sent.</string>
+    <string name="daily_result_retry">Try again</string>
 </resources>

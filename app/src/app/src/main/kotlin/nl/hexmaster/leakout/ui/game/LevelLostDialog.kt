@@ -60,6 +60,7 @@ fun LevelLostDialog(
     reason: LossReason = LossReason.LEAK,
     unlocked: List<Achievement> = emptyList(),
     onTopScores: (() -> Unit)? = null,
+    eyebrow: String? = null,
 ) {
     val paneName = stringResource(R.string.lost_pane_title)
     ResultDialogWindow(
@@ -67,11 +68,11 @@ fun LevelLostDialog(
         dismissOnBackPress = true,
         panelModifier = Modifier.testTag(LevelLostTags.DIALOG).semantics { paneTitle = paneName },
         layoutTagPrefix = LevelLostTags.LAYOUT_PREFIX,
-        measureRegular = { LevelLostContent(ResultDialogLayout.Regular, level, score, reason, unlocked, {}, {}, measuring = true) },
+        measureRegular = { LevelLostContent(ResultDialogLayout.Regular, level, score, reason, unlocked, {}, {}, measuring = true, eyebrow = eyebrow) },
         // The tracker can answer after the dialog opened; the row's height then counts too.
         measureKey = unlocked.isNotEmpty(),
     ) { layout ->
-        LevelLostContent(layout, level, score, reason, unlocked, onRestart, onExit, onTopScores = onTopScores)
+        LevelLostContent(layout, level, score, reason, unlocked, onRestart, onExit, onTopScores = onTopScores, eyebrow = eyebrow)
     }
 }
 
@@ -86,12 +87,13 @@ private fun LevelLostContent(
     onExit: () -> Unit,
     measuring: Boolean = false,
     onTopScores: (() -> Unit)? = null,
+    eyebrow: String? = null,
 ) {
     // Tags only on the shown content, never on the copy that is only measured.
     val tag: Modifier.(String) -> Modifier = { if (measuring) this else testTag(it) }
     when (layout) {
         ResultDialogLayout.Regular -> RegularColumn {
-            LostEyebrow(level)
+            LostEyebrow(level, eyebrow)
             Spacer(Modifier.height(8.dp))
             LeakSplash(Modifier.size(72.dp).tag(LevelLostTags.SPLASH))
             Spacer(Modifier.height(12.dp))
@@ -109,7 +111,7 @@ private fun LevelLostContent(
         }
         ResultDialogLayout.Compact -> CompactColumns(
             info = {
-                LostEyebrow(level)
+                LostEyebrow(level, eyebrow)
                 Spacer(Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     LeakSplash(Modifier.size(48.dp).tag(LevelLostTags.SPLASH))
@@ -130,9 +132,9 @@ private fun LevelLostContent(
 }
 
 @Composable
-private fun LostEyebrow(level: Int) {
+private fun LostEyebrow(level: Int, eyebrow: String?) {
     Text(
-        text = stringResource(R.string.result_eyebrow, level).displayUppercase(),
+        text = (eyebrow ?: stringResource(R.string.result_eyebrow, level)).displayUppercase(),
         style = LeakOutTextStyles.DisplayXs,
         color = LeakOutColors.Leak500,
     )

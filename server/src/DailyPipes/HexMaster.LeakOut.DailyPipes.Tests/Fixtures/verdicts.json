@@ -1,0 +1,630 @@
+{
+  "invalid_grid_too_wide.json": {
+    "valid": false,
+    "errorFields": [
+      "grid.columns"
+    ]
+  },
+  "invalid_mandatory_straight.json": {
+    "valid": false,
+    "errorFields": [
+      "mandatory[0].section"
+    ]
+  },
+  "invalid_stars.json": {
+    "valid": false,
+    "errorFields": [
+      "stars"
+    ]
+  },
+  "invalid_walled_finish.json": {
+    "valid": false,
+    "errorFields": [
+      "finish.openSide"
+    ]
+  },
+  "level_001.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 7
+  },
+  "level_002.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 6
+  },
+  "level_003.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 9
+  },
+  "level_004.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 12
+  },
+  "level_005.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 10
+  },
+  "level_006.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 8
+  },
+  "level_007.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 11
+  },
+  "level_008.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 13
+  },
+  "level_009.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 11
+  },
+  "level_010.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 8
+  },
+  "level_011.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 13
+  },
+  "level_012.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 17
+  },
+  "level_013.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 13
+  },
+  "level_014.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 9
+  },
+  "level_015.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 16
+  },
+  "level_016.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 17
+  },
+  "level_017.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 13
+  },
+  "level_018.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 17
+  },
+  "level_019.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 18
+  },
+  "level_020.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 23
+  },
+  "level_021.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 15
+  },
+  "level_022.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 21
+  },
+  "level_023.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 21
+  },
+  "level_024.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 22
+  },
+  "level_025.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 11
+  },
+  "level_026.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 11
+  },
+  "level_027.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 13
+  },
+  "level_028.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 13
+  },
+  "level_029.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 13
+  },
+  "level_030.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 14
+  },
+  "level_031.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 12
+  },
+  "level_032.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 13
+  },
+  "level_033.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 13
+  },
+  "level_034.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 13
+  },
+  "level_035.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 16
+  },
+  "level_036.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 21
+  },
+  "level_037.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 24
+  },
+  "level_038.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 26
+  },
+  "level_039.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 34
+  },
+  "level_040.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 25
+  },
+  "level_041.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 37
+  },
+  "level_042.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 35
+  },
+  "level_043.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 27
+  },
+  "level_044.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 45
+  },
+  "level_045.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 45
+  },
+  "level_046.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 39
+  },
+  "level_047.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 42
+  },
+  "level_048.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 50
+  },
+  "level_049.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 14
+  },
+  "level_050.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 25
+  },
+  "level_051.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 21
+  },
+  "level_052.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 23
+  },
+  "level_053.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 17
+  },
+  "level_054.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 26
+  },
+  "level_055.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 23
+  },
+  "level_056.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 29
+  },
+  "level_057.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 15
+  },
+  "level_058.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 26
+  },
+  "level_059.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 26
+  },
+  "level_060.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 55
+  },
+  "level_061.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 22
+  },
+  "level_062.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 34
+  },
+  "level_063.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 54
+  },
+  "level_064.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 54
+  },
+  "level_065.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 26
+  },
+  "level_066.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 48
+  },
+  "level_067.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 52
+  },
+  "level_068.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 55
+  },
+  "level_069.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 45
+  },
+  "level_070.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 66
+  },
+  "level_071.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 50
+  },
+  "level_072.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 74
+  },
+  "level_073.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 33
+  },
+  "level_074.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 54
+  },
+  "level_075.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": false,
+    "routeLength": 49
+  },
+  "level_076.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 47
+  },
+  "level_077.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 36
+  },
+  "level_078.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 38
+  },
+  "level_079.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 47
+  },
+  "level_080.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 62
+  },
+  "level_081.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 42
+  },
+  "level_082.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 44
+  },
+  "level_083.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 45
+  },
+  "level_084.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 38
+  },
+  "level_085.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 32
+  },
+  "level_086.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 53
+  },
+  "level_087.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 48
+  },
+  "level_088.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 64
+  },
+  "level_089.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 45
+  },
+  "level_090.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 41
+  },
+  "level_091.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": false,
+    "routeLength": 50
+  },
+  "level_092.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 35
+  },
+  "level_093.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 35
+  },
+  "level_094.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 52
+  },
+  "level_095.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 46
+  },
+  "level_096.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 43
+  },
+  "solvable_only_over_a_leak.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": false,
+    "routeLength": 4
+  },
+  "solvable_through_portals.json": {
+    "valid": true,
+    "solvable": true,
+    "leakFree": true,
+    "routeLength": 11
+  },
+  "unsolvable_cross_on_top_row.json": {
+    "valid": true,
+    "solvable": false
+  },
+  "unsolvable_mandatory_on_edge.json": {
+    "valid": true,
+    "solvable": false
+  },
+  "unsolvable_portals_on_one_side.json": {
+    "valid": true,
+    "solvable": false
+  },
+  "unsolvable_sealed.json": {
+    "valid": true,
+    "solvable": false
+  }
+}

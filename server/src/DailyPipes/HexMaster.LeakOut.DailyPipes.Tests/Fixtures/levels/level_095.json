@@ -1,0 +1,32 @@
+{
+  "id": 95,
+  "name": "The Great Divide",
+  "grid": { "columns": 25, "rows": 15 },
+  "start": { "x": 0, "y": 13, "openSide": "RIGHT" },
+  "finish": { "x": 24, "y": 2, "openSide": "LEFT" },
+  "blocked": [
+    { "x": 14, "y": 0 },
+    { "x": 14, "y": 2 },
+    { "x": 14, "y": 3 },
+    { "x": 14, "y": 4 },
+    { "x": 14, "y": 6 },
+    { "x": 14, "y": 7 },
+    { "x": 14, "y": 8 },
+    { "x": 14, "y": 9 },
+    { "x": 14, "y": 10 },
+    { "x": 14, "y": 11 },
+    { "x": 14, "y": 12 },
+    { "x": 14, "y": 13 },
+    { "x": 14, "y": 14 }
+  ],
+  "flow": { "initialDelayMs": 20200, "cellsPerSecond": 0.398 },
+  "stack": { "weights": { "X": 6, "RES": 3 } },
+  "stars": { "one": 2150, "two": 2690, "three": 3590 },
+  "mandatory": [
+    { "x": 10, "y": 12, "section": "X" },
+    { "x": 19, "y": 7, "section": "X" }
+  ],
+  "leaky": [
+    { "x": 14, "y": 5 }
+  ]
+}

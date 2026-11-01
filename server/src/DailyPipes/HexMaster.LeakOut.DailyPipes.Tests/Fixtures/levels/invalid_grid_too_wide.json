@@ -1,0 +1,10 @@
+{
+  "id": 1009,
+  "name": "Too wide",
+  "grid": { "columns": 30, "rows": 5 },
+  "start": { "x": 0, "y": 0, "openSide": "RIGHT" },
+  "finish": { "x": 29, "y": 4, "openSide": "LEFT" },
+  "blocked": [],
+  "flow": { "initialDelayMs": 20000, "cellsPerSecond": 0.3 },
+  "stars": { "one": 100, "two": 200, "three": 300 }
+}

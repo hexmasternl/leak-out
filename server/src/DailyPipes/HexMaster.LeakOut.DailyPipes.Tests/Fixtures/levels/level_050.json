@@ -1,0 +1,28 @@
+{
+  "id": 50,
+  "name": "Wide Open",
+  "grid": { "columns": 17, "rows": 13 },
+  "start": { "x": 1, "y": 0, "openSide": "BOTTOM" },
+  "finish": { "x": 16, "y": 11, "openSide": "LEFT" },
+  "blocked": [
+    { "x": 13, "y": 0 },
+    { "x": 15, "y": 0 },
+    { "x": 3, "y": 1 },
+    { "x": 4, "y": 2 },
+    { "x": 7, "y": 2 },
+    { "x": 8, "y": 3 },
+    { "x": 12, "y": 3 },
+    { "x": 16, "y": 5 },
+    { "x": 11, "y": 7 },
+    { "x": 16, "y": 7 },
+    { "x": 1, "y": 9 },
+    { "x": 3, "y": 9 },
+    { "x": 8, "y": 10 },
+    { "x": 11, "y": 10 },
+    { "x": 10, "y": 11 },
+    { "x": 12, "y": 12 }
+  ],
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.302 },
+  "stack": { "weights": { "X": 6, "RES": 1 } },
+  "stars": { "one": 1020, "two": 1520, "three": 2030 }
+}

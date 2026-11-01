@@ -7,12 +7,15 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
@@ -25,7 +28,9 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
+import nl.hexmaster.leakout.achievements.playgames.SignInState
 import nl.hexmaster.leakout.achievements.playgames.showPlayGamesAchievements
 import nl.hexmaster.leakout.audio.AudioManagerAudioFocus
 import nl.hexmaster.leakout.audio.BundledMusic
@@ -36,6 +41,7 @@ import nl.hexmaster.leakout.audio.MusicViewModel
 import nl.hexmaster.leakout.audio.SoundCatalog
 import nl.hexmaster.leakout.audio.SoundEffectsViewModel
 import nl.hexmaster.leakout.audio.SoundPoolSoundEffectPlayer
+import nl.hexmaster.leakout.core.engine.GameEngine
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.library.NextLevel
 import nl.hexmaster.leakout.core.library.NextLevelResolver
@@ -46,11 +52,15 @@ import nl.hexmaster.leakout.settings.DataStoreSettingsRepository
 import nl.hexmaster.leakout.settings.SettingsRepository
 import nl.hexmaster.leakout.ui.achievements.AchievementsScreen
 import nl.hexmaster.leakout.ui.achievements.AchievementsViewModel
+import nl.hexmaster.leakout.ui.daily.DailyPipeGame
+import nl.hexmaster.leakout.ui.daily.DailyPipeViewModel
+import nl.hexmaster.leakout.ui.daily.DailyResults
 import nl.hexmaster.leakout.ui.designer.AndroidLevelExporter
 import nl.hexmaster.leakout.ui.designer.LevelDesignerScreen
 import nl.hexmaster.leakout.ui.designer.LevelDesignerViewModel
 import nl.hexmaster.leakout.ui.designer.TestPlayScreen
 import nl.hexmaster.leakout.ui.game.GameScreen
+import nl.hexmaster.leakout.ui.game.GameSession
 import nl.hexmaster.leakout.ui.game.TopScoresAccess
 import nl.hexmaster.leakout.ui.levels.LevelLibraryScreen
 import nl.hexmaster.leakout.ui.levels.LevelLibraryViewModel
@@ -81,6 +91,12 @@ private sealed interface Screen {
 
     /** A test play of a design: nothing is recorded, and leaving returns to the designer. */
     data class TestPlay(val level: Level) : Screen
+
+    /**
+     * Today's daily pipe, with the stack dealt from the server's seed. Nothing goes to the level
+     * history or the achievements, and no bundled level or page unlocks; the result goes to the server.
+     */
+    data class DailyPipe(val game: DailyPipeGame) : Screen
 }
 
 /**
@@ -140,6 +156,20 @@ class MainActivity : ComponentActivity() {
                     playlist = musicPlaylist,
                     engine = MediaPlayerMusicEngine(assets),
                     focus = AudioManagerAudioFocus(this@MainActivity),
+                )
+            }
+        }
+    }
+
+    // The Daily Pipe button: only for Play Games players, and only in a build with a score server.
+    private val dailyPipeViewModel: DailyPipeViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val container = appContainer
+                DailyPipeViewModel(
+                    dailyPipes = container.dailyPipes,
+                    signIn = if (container.scoreServerConfig.enabled) container.playGames.auth.state else flowOf(SignInState.SignedOut),
+                    online = container.network.online(),
                 )
             }
         }
@@ -233,7 +263,7 @@ class MainActivity : ComponentActivity() {
                     // A required update replaces every screen but a level; the level is finished first.
                     UpdateGateHost(
                         viewModel = updateViewModel,
-                        inLevel = screen is Screen.Game || screen is Screen.TestPlay,
+                        inLevel = screen is Screen.Game || screen is Screen.TestPlay || screen is Screen.DailyPipe,
                         onWelcome = screen == Screen.Welcome,
                         onCloseApp = { finishAffinity() },
                     ) { mayStartLevel ->
@@ -252,6 +282,24 @@ class MainActivity : ComponentActivity() {
                                     scores = appContainer.scores,
                                     topScores = topScores,
                                     mayStartLevel = mayStartLevel,
+                                )
+                            }
+                            is Screen.DailyPipe -> {
+                                val game = current.game
+                                // Every attempt, restarts included, deals the same sections from the server's seed.
+                                val session = remember(game) { GameSession(game.level, GameEngine.seeded(game.stackSeed)) }
+                                val dailyPipes = appContainer.dailyPipes
+                                val results = remember(game) { DailyResults { score, stars -> dailyPipes.submit(game.date, score, stars) } }
+                                GameScreen(
+                                    level = game.level,
+                                    onExit = { screen = Screen.Welcome },
+                                    session = session,
+                                    soundEffects = soundEffectsViewModel.soundEffects,
+                                    haptics = hapticsViewModel.haptics,
+                                    tips = settings,
+                                    mayStartLevel = mayStartLevel,
+                                    levelLabel = stringResource(R.string.daily_pipe_label),
+                                    daily = results,
                                 )
                             }
                             is Screen.TestPlay -> TestPlayScreen(
@@ -284,18 +332,30 @@ class MainActivity : ComponentActivity() {
                                 onBack = { screen = Screen.Settings },
                                 onOpenPlayGames = { showPlayGamesAchievements(this@MainActivity) },
                             )
-                            Screen.Welcome -> WelcomeScreen(
-                                resolveNextLevel = ::resolveNextLevel,
-                                onStartLevel = { id -> levels.load(id)?.let { screen = Screen.Game(it) } },
-                                onOpenLevelLibrary = openLibrary,
-                                onSettings = { screen = Screen.Settings },
-                                onExit = { finishAffinity() },
-                                onOpenLevelDesigner = if (FeatureFlags.levelDesigner) openDesigner else null,
-                                shouldConfirmExit = exitConfirmation::shouldAsk,
-                                onExitAnswered = exitConfirmation::answered,
-                                versionLabel = if (versionLabelShown) null else StartupVersion.format(appInfo),
-                                onVersionLabelShown = { versionLabelShown = true },
-                            )
+                            Screen.Welcome -> {
+                                val dailyPipe by dailyPipeViewModel.state.collectAsState()
+                                val openedDailyPipe by dailyPipeViewModel.opened.collectAsState()
+                                // A downloaded pipe opens the game once; the gate is asked like any other level start.
+                                LaunchedEffect(openedDailyPipe) {
+                                    val game = openedDailyPipe ?: return@LaunchedEffect
+                                    dailyPipeViewModel.consumeOpened()
+                                    if (mayStartLevel()) screen = Screen.DailyPipe(game)
+                                }
+                                WelcomeScreen(
+                                    resolveNextLevel = ::resolveNextLevel,
+                                    onStartLevel = { id -> levels.load(id)?.let { screen = Screen.Game(it) } },
+                                    onOpenLevelLibrary = openLibrary,
+                                    onSettings = { screen = Screen.Settings },
+                                    onExit = { finishAffinity() },
+                                    onOpenLevelDesigner = if (FeatureFlags.levelDesigner) openDesigner else null,
+                                    shouldConfirmExit = exitConfirmation::shouldAsk,
+                                    onExitAnswered = exitConfirmation::answered,
+                                    versionLabel = if (versionLabelShown) null else StartupVersion.format(appInfo),
+                                    onVersionLabelShown = { versionLabelShown = true },
+                                    dailyPipe = dailyPipe,
+                                    onDailyPipe = dailyPipeViewModel::open,
+                                )
+                            }
                         }
                     }
                 }

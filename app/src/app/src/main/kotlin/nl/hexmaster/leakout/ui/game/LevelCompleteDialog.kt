@@ -27,6 +27,8 @@ import nl.hexmaster.leakout.ui.components.FlowButton
 import nl.hexmaster.leakout.ui.components.FlowButtonSize
 import nl.hexmaster.leakout.ui.components.FlowButtonVariant
 import nl.hexmaster.leakout.ui.components.displayUppercase
+import nl.hexmaster.leakout.ui.daily.DailyResultPanel
+import nl.hexmaster.leakout.ui.daily.DailyResultState
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
@@ -62,6 +64,8 @@ private typealias Tagger = Modifier.(String) -> Modifier
  * Regular layout when it fits the window height and the Compact one otherwise. While the score is
  * sent to the score server ([scorePost]), the status dot shows in the top-left corner. With
  * [onTopScores], a Top 10 button shares Exit's row and is enabled together with the other buttons.
+ * A daily pipe win passes its [eyebrow] and the [daily] result panel, with [onRetryDaily] behind its
+ * Try again button.
  */
 @Composable
 fun LevelCompleteDialog(
@@ -76,27 +80,37 @@ fun LevelCompleteDialog(
     unlocked: List<Achievement> = emptyList(),
     scorePost: StateFlow<ScorePostStatus>? = null,
     onTopScores: (() -> Unit)? = null,
+    eyebrow: String? = null,
+    daily: DailyResultState? = null,
+    onRetryDaily: () -> Unit = {},
 ) {
     val paneName = stringResource(R.string.win_pane_title)
+    val details = WinDetails(eyebrow, daily, onRetryDaily)
     ResultDialogWindow(
         onDismissRequest = onExit,
         dismissOnBackPress = frame.buttonsEnabled,
         panelModifier = Modifier.testTag(LevelCompleteTags.DIALOG).semantics { paneTitle = paneName },
         layoutTagPrefix = LevelCompleteTags.LAYOUT_PREFIX,
-        measureRegular = { LevelCompleteMeasured(level, score, frame, newBest, unlocked) },
-        // The tracker can answer after the dialog opened; the row's height then counts too.
-        measureKey = unlocked.isNotEmpty(),
+        measureRegular = { LevelCompleteMeasured(level, score, frame, newBest, unlocked, details) },
+        // The tracker and the daily pipe server can answer after the dialog opened; their rows then count too.
+        measureKey = unlocked.isNotEmpty() to daily,
         cornerOverlay = { scorePost?.let { ScorePostIndicator(it) } },
     ) { layout ->
-        LevelCompleteContent(layout, level, score, frame, hasNextLevel, onNextLevel, onRestart, onExit, newBest, unlocked, onTopScores = onTopScores)
+        LevelCompleteContent(layout, level, score, frame, hasNextLevel, onNextLevel, onRestart, onExit, newBest, unlocked, onTopScores = onTopScores, details = details)
     }
 }
 
+/**
+ * What a daily pipe win adds to the dialog: its own [eyebrow] in place of "Level 12", and the
+ * [daily] result panel under the score row (spec `daily-pipe`). Both are absent for a bundled level.
+ */
+private data class WinDetails(val eyebrow: String? = null, val daily: DailyResultState? = null, val onRetryDaily: () -> Unit = {})
+
 /** The Regular content with the final values, so the chosen layout does not change during the tally. */
 @Composable
-private fun LevelCompleteMeasured(level: Int, score: FinalScore, frame: WinFrame, newBest: Boolean, unlocked: List<Achievement>) {
+private fun LevelCompleteMeasured(level: Int, score: FinalScore, frame: WinFrame, newBest: Boolean, unlocked: List<Achievement>, details: WinDetails) {
     val finalFrame = frame.copy(penaltyShown = score.penalty, totalShown = score.total, buttonsEnabled = true)
-    LevelCompleteContent(ResultDialogLayout.Regular, level, score, finalFrame, true, {}, {}, {}, newBest, unlocked, measuring = true)
+    LevelCompleteContent(ResultDialogLayout.Regular, level, score, finalFrame, true, {}, {}, {}, newBest, unlocked, measuring = true, details = details)
 }
 
 @Composable
@@ -113,14 +127,21 @@ private fun LevelCompleteContent(
     unlocked: List<Achievement>,
     measuring: Boolean = false,
     onTopScores: (() -> Unit)? = null,
+    details: WinDetails = WinDetails(),
 ) {
     val tag: Tagger = { if (measuring) this else testTag(it) }
+    val daily: @Composable () -> Unit = {
+        details.daily?.let { state ->
+            Spacer(Modifier.height(8.dp))
+            DailyResultPanel(state, details.onRetryDaily, Modifier.fillMaxWidth(), measuring = measuring)
+        }
+    }
     val showNewBest = newBest && frame.buttonsEnabled
     // Once the tally is done, so it never competes with the counting.
     val showUnlocked = unlocked.isNotEmpty() && frame.buttonsEnabled
     when (layout) {
         ResultDialogLayout.Regular -> RegularColumn {
-            WinEyebrow(level)
+            WinEyebrow(level, details.eyebrow)
             Spacer(Modifier.height(8.dp))
             WinHeadline(LeakOutTextStyles.DisplayXl)
             Spacer(Modifier.height(8.dp))
@@ -130,6 +151,7 @@ private fun LevelCompleteContent(
             WinStars(lit = frame.starsLit, scales = frame.starScales, modifier = Modifier.tag(LevelCompleteTags.STARS), tagStars = !measuring)
             Spacer(Modifier.height(16.dp))
             WinScoreRow(score, frame, tag)
+            daily()
             if (showUnlocked) {
                 Spacer(Modifier.height(12.dp))
                 AchievementUnlockedRow(unlocked, Modifier.tag(LevelCompleteTags.ACHIEVEMENTS), animate = !measuring)
@@ -139,7 +161,7 @@ private fun LevelCompleteContent(
         }
         ResultDialogLayout.Compact -> CompactColumns(
             info = {
-                WinEyebrow(level)
+                WinEyebrow(level, details.eyebrow)
                 Spacer(Modifier.height(4.dp))
                 WinHeadline(LeakOutTextStyles.DisplayLg)
                 Spacer(Modifier.height(8.dp))
@@ -149,6 +171,7 @@ private fun LevelCompleteContent(
                 WinStars(lit = frame.starsLit, scales = frame.starScales, modifier = Modifier.tag(LevelCompleteTags.STARS), size = 32.dp, tagStars = !measuring)
                 Spacer(Modifier.height(12.dp))
                 WinScoreRow(score, frame, tag)
+                daily()
                 if (showUnlocked) {
                     Spacer(Modifier.height(8.dp))
                     AchievementUnlockedRow(unlocked, Modifier.tag(LevelCompleteTags.ACHIEVEMENTS), animate = !measuring)
@@ -160,9 +183,9 @@ private fun LevelCompleteContent(
 }
 
 @Composable
-private fun WinEyebrow(level: Int) {
+private fun WinEyebrow(level: Int, eyebrow: String?) {
     Text(
-        text = stringResource(R.string.result_eyebrow, level).displayUppercase(),
+        text = (eyebrow ?: stringResource(R.string.result_eyebrow, level)).displayUppercase(),
         style = LeakOutTextStyles.DisplayXs,
         color = LeakOutColors.Success500,
     )
@@ -270,7 +293,7 @@ private val PreviewScore = FinalScore(earned = 120, unusedSections = List(4) { P
 @Composable
 private fun LevelCompletePreview(frame: WinFrame, newBest: Boolean = false, unlocked: List<Achievement> = emptyList()) {
     LeakOutTheme {
-        ResultDialogFrame(measureRegular = { LevelCompleteMeasured(7, PreviewScore, frame, newBest, unlocked) }, measureKey = unlocked.isNotEmpty()) { layout ->
+        ResultDialogFrame(measureRegular = { LevelCompleteMeasured(7, PreviewScore, frame, newBest, unlocked, WinDetails()) }, measureKey = unlocked.isNotEmpty()) { layout ->
             ResultDialogPanel(layout) { LevelCompleteContent(layout, 7, PreviewScore, frame, true, {}, {}, {}, newBest, unlocked, onTopScores = {}) }
         }
     }

@@ -1,0 +1,11 @@
+{
+  "id": 1003,
+  "name": "Cross on the top row",
+  "grid": { "columns": 6, "rows": 5 },
+  "start": { "x": 0, "y": 2, "openSide": "RIGHT" },
+  "finish": { "x": 5, "y": 2, "openSide": "LEFT" },
+  "blocked": [],
+  "flow": { "initialDelayMs": 20000, "cellsPerSecond": 0.3 },
+  "stars": { "one": 100, "two": 200, "three": 300 },
+  "mandatory": [ { "x": 2, "y": 0, "section": "X" } ]
+}

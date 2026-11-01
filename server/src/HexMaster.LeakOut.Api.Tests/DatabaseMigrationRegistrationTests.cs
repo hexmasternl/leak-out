@@ -1,3 +1,4 @@
+using HexMaster.LeakOut.DailyPipes.Data.PostgreSQL;
 using HexMaster.LeakOut.Players.Data.PostgreSQL;
 using HexMaster.LeakOut.Scores.Data.PostgreSQL;
 using Microsoft.AspNetCore.Hosting;
@@ -14,7 +15,7 @@ public sealed class DatabaseMigrationRegistrationTests
     [Theory]
     [InlineData("Development")]
     [InlineData("Production")]
-    public void Program_RegistersBothDatabaseMigrators(string environment)
+    public void Program_RegistersEveryDatabaseMigrator(string environment)
     {
         using var factory = new HostedServiceCapturingFactory(environment);
 
@@ -22,6 +23,7 @@ public sealed class DatabaseMigrationRegistrationTests
 
         Assert.Contains(typeof(PlayersDatabaseMigrator), factory.HostedServiceTypes);
         Assert.Contains(typeof(ScoresDatabaseMigrator), factory.HostedServiceTypes);
+        Assert.Contains(typeof(DailyPipesDatabaseMigrator), factory.HostedServiceTypes);
     }
 
     /// <summary>
@@ -37,6 +39,7 @@ public sealed class DatabaseMigrationRegistrationTests
             builder.UseEnvironment(environment);
             builder.UseSetting("ConnectionStrings:playersdb", "Host=localhost;Database=playersdb");
             builder.UseSetting("ConnectionStrings:scoresdb", "Host=localhost;Database=scoresdb");
+            builder.UseSetting("ConnectionStrings:dailypipesdb", "Host=localhost;Database=dailypipesdb");
             builder.UseSetting("Aspire:Npgsql:EntityFrameworkCore:PostgreSQL:DisableHealthChecks", "true");
             builder.UseSetting("GooglePlayGames:ClientId", "web-client-id");
             builder.UseSetting("GooglePlayGames:ClientSecret", "web-client-secret");

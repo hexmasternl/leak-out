@@ -1,5 +1,6 @@
 package nl.hexmaster.leakout.scores.online
 
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -37,5 +38,33 @@ class CallbackNetworkMonitorTest {
         job.cancel()
         job.join()
         assertEquals(1, unregistered)
+    }
+
+    @Test
+    fun `online state is the registration's answers without repeats, and stops listening at the end`() = runTest {
+        var onChange: ((Boolean) -> Unit)? = null
+        var stopped = 0
+        val withOnline = CallbackNetworkMonitor(register = { { } }, registerOnline = { callback ->
+            onChange = callback
+            callback(false)
+            ({ stopped++ })
+        })
+        val states = mutableListOf<Boolean>()
+        val job = launch { withOnline.online().take(3).toList(states) }
+        testScheduler.runCurrent()
+        onChange!!(false)
+        onChange!!(true)
+        testScheduler.runCurrent()
+        onChange!!(true)
+        onChange!!(false)
+        job.join()
+        assertEquals(listOf(false, true, false), states)
+        assertEquals(1, stopped)
+    }
+
+    @Test
+    fun `a monitor that cannot tell says online`() = runTest {
+        assertEquals(listOf(true), monitor.online().toList())
+        assertEquals(listOf(true), NetworkMonitor { emptyFlow() }.online().toList())
     }
 }

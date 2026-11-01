@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,8 +34,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlin.coroutines.cancellation.CancellationException
@@ -45,6 +49,8 @@ import nl.hexmaster.leakout.core.library.NextLevel
 import nl.hexmaster.leakout.core.library.NextLevelResolver
 import nl.hexmaster.leakout.ui.components.CartoonButton
 import nl.hexmaster.leakout.ui.components.CartoonButtonVariant
+import nl.hexmaster.leakout.ui.daily.DailyPipeEntryState
+import nl.hexmaster.leakout.ui.daily.DailyPipeProblem
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 import nl.hexmaster.leakout.ui.theme.LeakOutTextStyles
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
@@ -58,6 +64,8 @@ object WelcomeScreenTags {
     const val EXIT = "welcome_exit"
     const val LEVEL_DESIGNER = "welcome_level_designer"
     const val VERSION = "welcome_version"
+    const val DAILY_PIPE = "welcome_daily_pipe"
+    const val DAILY_PIPE_STATUS = "welcome_daily_pipe_status"
 }
 
 /**
@@ -65,6 +73,10 @@ object WelcomeScreenTags {
  * Play opens the [PlayMenuDialog]; a choice there reads [resolveNextLevel] once, closes the dialog
  * and then starts a level through [onStartLevel] or opens the library on a page through
  * [onOpenLevelLibrary]. The host decides what Settings does.
+ *
+ * While [dailyPipe] is visible (the player is signed in with Play Games) a Daily Pipe button sits
+ * right after Play and calls [onDailyPipe]. It is disabled while offline or loading; one line under
+ * the row then says why, or what went wrong with the last tap (spec `daily-pipe`).
  *
  * Exit asks [shouldConfirmExit] at tap time: when it says so the [ExitConfirmationDialog] opens,
  * otherwise [onExit] is called straight away. Yes and Cancel hand the "Never show this again" box to
@@ -97,6 +109,8 @@ fun WelcomeScreen(
     onExitAnswered: suspend (neverShowAgain: Boolean) -> Unit = {},
     versionLabel: String? = null,
     onVersionLabelShown: () -> Unit = {},
+    dailyPipe: DailyPipeEntryState = DailyPipeEntryState(),
+    onDailyPipe: () -> Unit = {},
 ) {
     // Fixed at the first composition: the host clearing it once shown must not cut the fade short.
     val startupVersion = remember { versionLabel }
@@ -197,8 +211,9 @@ fun WelcomeScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             contentAlignment = Alignment.Center,
         ) {
-            val layout = remember(maxWidth, maxHeight) {
-                WelcomeLayout.compute(maxWidth.value, maxHeight.value)
+            val buttonCount = if (dailyPipe.visible) WelcomeLayout.BUTTON_COUNT + 1 else WelcomeLayout.BUTTON_COUNT
+            val layout = remember(maxWidth, maxHeight, buttonCount) {
+                WelcomeLayout.compute(maxWidth.value, maxHeight.value, buttonCount)
             }
             // Fixed like the logo: the button row is sized to fit, so font scaling must not break it.
             val buttonTextSize = with(LocalDensity.current) { BUTTON_TEXT_DP.dp.toSp() }
@@ -221,6 +236,17 @@ fun WelcomeScreen(
                         textStyle = buttonTextStyle,
                         modifier = buttonModifier.testTag(WelcomeScreenTags.PLAY),
                     )
+                    if (dailyPipe.visible) {
+                        CartoonButton(
+                            text = stringResource(R.string.welcome_daily_pipe),
+                            onClick = onDailyPipe,
+                            variant = CartoonButtonVariant.Success,
+                            faceHeight = layout.buttonFaceHeightDp.dp,
+                            textStyle = buttonTextStyle,
+                            enabled = dailyPipe.enabled,
+                            modifier = buttonModifier.testTag(WelcomeScreenTags.DAILY_PIPE),
+                        )
+                    }
                     CartoonButton(
                         text = stringResource(R.string.welcome_settings),
                         onClick = onSettings,
@@ -238,6 +264,7 @@ fun WelcomeScreen(
                         modifier = buttonModifier.testTag(WelcomeScreenTags.EXIT),
                     )
                 }
+                if (dailyPipe.visible) DailyPipeStatus(dailyPipe)
             }
         }
         // A developer tool, out of the way of the Play / Settings / Exit layout.
@@ -261,6 +288,34 @@ fun WelcomeScreen(
             )
         }
     }
+}
+
+/**
+ * One line under the button row about the Daily Pipe: why the button is disabled (offline, loading)
+ * or why the last tap did not open it. Nothing while there is nothing to say.
+ */
+@Composable
+private fun DailyPipeStatus(state: DailyPipeEntryState) {
+    val text = when {
+        state.loading -> stringResource(R.string.daily_pipe_loading)
+        !state.online -> stringResource(R.string.daily_pipe_offline_hint)
+        state.problem == DailyPipeProblem.NotPublished -> stringResource(R.string.daily_pipe_not_published)
+        state.problem == DailyPipeProblem.DownloadFailed -> stringResource(R.string.daily_pipe_download_failed)
+        state.problem == DailyPipeProblem.Unsupported -> stringResource(R.string.daily_pipe_unsupported)
+        else -> return
+    }
+    val color = if (state.problem != null && state.online && !state.loading) LeakOutColors.Leak500 else LeakOutColors.TextSecondary
+    Text(
+        text = text,
+        style = LeakOutTextStyles.BodyMd,
+        color = color,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .padding(top = 8.dp)
+            .testTag(WelcomeScreenTags.DAILY_PIPE_STATUS)
+            // Read out when it changes, so a screen reader hears why nothing opened.
+            .semantics { liveRegion = LiveRegionMode.Polite },
+    )
 }
 
 /** The 48 dp round glass button that opens the level designer (design system 5.1). */

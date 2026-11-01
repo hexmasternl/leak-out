@@ -48,6 +48,7 @@ public sealed class LeakOutApiFactory : WebApplicationFactory<Program>
         builder.UseEnvironment("Development");
         builder.UseSetting("ConnectionStrings:playersdb", "Host=localhost;Database=playersdb");
         builder.UseSetting("ConnectionStrings:scoresdb", "Host=localhost;Database=scoresdb");
+        builder.UseSetting("ConnectionStrings:dailypipesdb", "Host=localhost;Database=dailypipesdb");
         builder.UseSetting("Aspire:Npgsql:EntityFrameworkCore:PostgreSQL:DisableHealthChecks", "true");
         builder.UseSetting("GooglePlayGames:ClientId", "web-client-id");
         builder.UseSetting("GooglePlayGames:ClientSecret", "web-client-secret");

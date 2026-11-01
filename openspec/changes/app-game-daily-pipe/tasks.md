@@ -1,9 +1,9 @@
 ## 1. Server: DailyPipes module skeleton
 
-- [ ] 1.1 Create `server/src/DailyPipes/` with `HexMaster.LeakOut.DailyPipes`, `.Abstractions`, `.Data.PostgreSQL` and `.Tests`, add them to `leak-out-server.slnx`, and add `AddDailyPipesModule()` / `AddDailyPipesPostgreSqlData()` registration
-- [ ] 1.2 Add the domain models `DailyPipe` (date, level JSON, stack seed, published at), `DailyScore` (date, player id, score, stars, achieved at) and `DailyStreak` (player id, current, best, last win date) with unit tests for their invariants
-- [ ] 1.3 Add `DailyPipesDbContext` with the `daily_pipes`, `daily_scores` (unique on date + player) and `daily_streaks` tables, the initial migration, and apply migrations at startup like the other modules
-- [ ] 1.4 Register the database in the Aspire AppHost and reference it from the API
+- [x] 1.1 Create `server/src/DailyPipes/` with `HexMaster.LeakOut.DailyPipes`, `.Abstractions`, `.Data.PostgreSQL` and `.Tests`, add them to `leak-out-server.slnx`, and add `AddDailyPipesModule()` / `AddDailyPipesPostgreSqlData()` registration
+- [x] 1.2 Add the domain models `DailyPipe` (date, level JSON, stack seed, published at), `DailyScore` (date, player id, score, stars, achieved at) and `DailyStreak` (player id, current, best, last win date) with unit tests for their invariants
+- [x] 1.3 Add `DailyPipesDbContext` with the `daily_pipes`, `daily_scores` (unique on date + player) and `daily_streaks` tables, the initial migration, and apply migrations at startup like the other modules
+- [x] 1.4 Register the database in the Aspire AppHost and reference it from the API
 
 ## 2. Server: level rules and solvability
 

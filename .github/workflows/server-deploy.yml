@@ -76,12 +76,16 @@ jobs:
             -getProperty:ContainerRegistry -getProperty:ContainerRepository)
           registry=$(jq -r '.Properties.ContainerRegistry' <<< "$properties")
           repository=$(jq -r '.Properties.ContainerRepository' <<< "$properties")
+          generator_repository=$(dotnet msbuild src/DailyPipes/HexMaster.LeakOut.DailyPipes.Generator \
+            -getProperty:ContainerRepository)
           tag="$VERSION-${GITHUB_SHA::7}"
           echo "registry=$registry" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "image=$registry/$repository:$tag" >> "$GITHUB_OUTPUT"
-          echo "### Image" >> "$GITHUB_STEP_SUMMARY"
+          echo "generator_image=$registry/$generator_repository:$tag" >> "$GITHUB_OUTPUT"
+          echo "### Images" >> "$GITHUB_STEP_SUMMARY"
           echo "\`$registry/$repository:$tag\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`$registry/$generator_repository:$tag\`" >> "$GITHUB_STEP_SUMMARY"
 
       - uses: docker/login-action@v4
         with:
@@ -89,29 +93,34 @@ jobs:
           username: ${{ secrets.ACR_LOGIN_USERNAME }}
           password: ${{ secrets.ACR_LOGIN_PASSWORD }}
 
-      - name: Publish container image
-        # The informational version is what the API returns in its X-API-Version header.
+      - name: Publish container images
+        # The informational version is what the API returns in its X-API-Version header. The daily
+        # pipe generator, run as a Container Apps job, gets the same tag.
         env:
           VERSION: ${{ steps.gitversion.outputs.semVer }}
           TAG: ${{ steps.container.outputs.tag }}
         run: |
-          dotnet publish src/HexMaster.LeakOut.Api -c Release -t:PublishContainer \
-            -p:ContainerImageTags="$TAG" \
-            -p:Version="$VERSION" \
-            -p:InformationalVersion="$VERSION+${GITHUB_SHA::7}"
+          for project in src/HexMaster.LeakOut.Api src/DailyPipes/HexMaster.LeakOut.DailyPipes.Generator; do
+            dotnet publish "$project" -c Release -t:PublishContainer \
+              -p:ContainerImageTags="$TAG" \
+              -p:Version="$VERSION" \
+              -p:InformationalVersion="$VERSION+${GITHUB_SHA::7}"
+          done
 
-      # The API must never run as root (ContainerUser in the API project).
-      - name: Verify the image runs as non-root
+      # Neither image may run as root (ContainerUser in the API and generator projects).
+      - name: Verify the images run as non-root
         env:
-          IMAGE: ${{ steps.container.outputs.image }}
+          IMAGES: ${{ steps.container.outputs.image }} ${{ steps.container.outputs.generator_image }}
         run: |
-          docker pull --quiet "$IMAGE"
-          user=$(docker image inspect "$IMAGE" --format '{{.Config.User}}')
-          if [[ -z "$user" || "$user" == "root" || "$user" == 0 || "$user" == 0:* ]]; then
-            echo "::error::Image $IMAGE runs as root (user '${user}'); set ContainerUser in the API project"
-            exit 1
-          fi
-          echo "Image $IMAGE runs as user '$user'"
+          for image in $IMAGES; do
+            docker pull --quiet "$image"
+            user=$(docker image inspect "$image" --format '{{.Config.User}}')
+            if [[ -z "$user" || "$user" == "root" || "$user" == 0 || "$user" == 0:* ]]; then
+              echo "::error::Image $image runs as root (user '${user}'); set ContainerUser in its project"
+              exit 1
+            fi
+            echo "Image $image runs as user '$user'"
+          done
 
   deploy:
     needs: publish
@@ -140,12 +149,15 @@ jobs:
             -getProperty:ContainerRegistry -getProperty:ContainerRepository)
           registry=$(jq -r '.Properties.ContainerRegistry' <<< "$properties")
           repository=$(jq -r '.Properties.ContainerRepository' <<< "$properties")
-          if [[ -z "$registry" || -z "$repository" || -z "$TAG" ]]; then
+          generator_repository=$(dotnet msbuild src/DailyPipes/HexMaster.LeakOut.DailyPipes.Generator \
+            -getProperty:ContainerRepository)
+          if [[ -z "$registry" || -z "$repository" || -z "$generator_repository" || -z "$TAG" ]]; then
             echo "::error::Container registry, repository or image tag is empty"
             exit 1
           fi
           echo "registry=$registry" >> "$GITHUB_OUTPUT"
           echo "image=$registry/$repository:$TAG" >> "$GITHUB_OUTPUT"
+          echo "generator_image=$registry/$generator_repository:$TAG" >> "$GITHUB_OUTPUT"
 
       # The API refuses to start without the Google settings, and an empty registry or database
       # credential would only fail inside Azure. Fail here, before anything changes.
@@ -176,10 +188,13 @@ jobs:
 
       # main.bicepparam reads every value below with readEnvironmentVariable(), so no value
       # appears on the command line.
-      - name: Deploy infrastructure and API
+      - name: Deploy infrastructure, API and daily pipe job
         id: deployment
         env:
           API_IMAGE: ${{ steps.container.outputs.image }}
+          GENERATOR_IMAGE: ${{ steps.container.outputs.generator_image }}
+          # Optional repository variable: who gets the generator's failure alert by e-mail.
+          ALERT_EMAIL: ${{ vars.ALERT_EMAIL }}
           SERVICE_VERSION: ${{ needs.publish.outputs.version }}
           ACR_LOGIN_SERVER: ${{ steps.container.outputs.registry }}
           ACR_LOGIN_USERNAME: ${{ secrets.ACR_LOGIN_USERNAME }}
@@ -199,6 +214,7 @@ jobs:
           echo "fqdn=$fqdn" >> "$GITHUB_OUTPUT"
           echo "### Deployed" >> "$GITHUB_STEP_SUMMARY"
           echo "\`$API_IMAGE\` to https://$fqdn" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`$GENERATOR_IMAGE\` as the daily pipe job (00:00 UTC)" >> "$GITHUB_STEP_SUMMARY"
 
       # The container app scales to zero, so the first request may wait for a cold start. Healthy is
       # not enough: the X-API-Version header must name this build, or the old image is still serving.

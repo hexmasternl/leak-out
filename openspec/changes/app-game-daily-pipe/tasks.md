@@ -31,10 +31,10 @@
 
 ## 5. Server: infrastructure and deployment
 
-- [ ] 5.1 Add a Container Apps job module in `server/infrastructure/` with a schedule trigger `0 0 * * *`, retry limit, timeout, database connection, secrets and Application Insights settings
-- [ ] 5.2 Build and push the generator image and deploy the job from `server-deploy.yml`
-- [ ] 5.3 Add an Application Insights alert on a failed generator run
-- [ ] 5.4 Update the server README and `docs/` with the module, the endpoints and how to run the generator by hand
+- [x] 5.1 Add a Container Apps job module in `server/infrastructure/` with a schedule trigger `0 0 * * *`, retry limit, timeout, database connection, secrets and Application Insights settings
+- [x] 5.2 Build and push the generator image and deploy the job from `server-deploy.yml`
+- [x] 5.3 Add an Application Insights alert on a failed generator run
+- [x] 5.4 Update the server README and `docs/` with the module, the endpoints and how to run the generator by hand
 
 ## 6. App: core
 

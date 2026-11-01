@@ -51,6 +51,43 @@ A few read-only endpoints need no token, for the public website ([website/README
 - **Caching.** Each level's result is kept in the API's memory cache for **30 minutes** (`GetPublicLevelTopScoresQueryHandler.CacheDuration`), so a new score can take up to 30 minutes to appear, and each replica reads the database at most once per level in that time. A failed read is not cached. Responses also carry `Cache-Control: public, max-age=60`.
 - **CORS.** Only the origins in `Website:AllowedOrigins` may call them from a browser, with GET and no credentials. `appsettings.json` allows `https://leakout.hexmaster.nl`; another origin, for example the Static Web App's own `*.azurestaticapps.net` address, can be added there or as the app setting `Website__AllowedOrigins__1`. The authenticated endpoints send no CORS headers.
 
+## Daily pipe
+
+One new level a day that every player gets in exactly the same form: the `DailyPipes` module (`src/DailyPipes/`, database `dailypipesdb`). The day is always the server's **UTC date**; the device clock is never used.
+
+**Generation.** The console project `HexMaster.LeakOut.DailyPipes.Generator` runs the `GenerateDailyPipe` command once and exits: 0 when today's pipe is published (or already was), 1 when the run failed. In Azure it is the Container Apps job `<resource group>-dailypipe` with the schedule `0 0 * * *` (UTC, 3 retries, 10 minutes timeout); locally the Aspire AppHost runs it once at startup as the resource `daily-pipe-generator`, so a developer always has a pipe. A run:
+
+1. does nothing when today already has a pipe, so a rerun or retry is harmless;
+2. generates random candidates (`Generation/DailyLevelGenerator.cs`, with a `DifficultyPreset` per weekday, easiest on Monday) until one passes `LevelRules` and `LevelSolver`, C# ports of the app's `LevelValidator` and `LevelSolver`, at most 200 attempts;
+3. derives the head start and the star thresholds (0.6, 0.9 and 1.2 times the points of the solver's route) and the highest score a submission may claim from that route (`DailyPipeBuilder`);
+4. publishes the level with a 53-bit stack seed and, in the same transaction, deletes the scores of every earlier day and the pipes older than 7 days. Streaks are never deleted.
+
+**Keeping the port in step with the app.** `src/DailyPipes/HexMaster.LeakOut.DailyPipes.Tests/Fixtures/` holds the bundled levels, hand-made invalid and unsolvable levels and their expected verdicts (`verdicts.json`), and one generated level per weekday (`generated/`). The server tests and the app's `core` test `DailyPipeConformanceTest` both check them, so a difference between the C# and Kotlin rules fails one of the two test suites. When the generator changes, `GeneratedFixturesTests` fails until the generated levels are written again: run it with `LEAKOUT_WRITE_FIXTURES=1`, then run `./gradlew :core:test` in `app/src`. When a bundled level or the app's rules change, copy the level into `Fixtures/levels/` and update its verdict.
+
+**Running the generator by hand.** Locally, restart the `daily-pipe-generator` resource in the Aspire dashboard, or from `src/`:
+
+```bash
+ConnectionStrings__dailypipesdb="Host=localhost;Port=<port>;Database=dailypipesdb;Username=postgres;Password=<password>" \
+  dotnet run --project DailyPipes/HexMaster.LeakOut.DailyPipes.Generator
+```
+
+In Azure, after a failed night or to publish the first pipe after the first deployment:
+
+```bash
+az containerapp job start --name rg-leakout-prod-neu-dailypipe --resource-group rg-leakout-prod-neu
+az containerapp job execution list --name rg-leakout-prod-neu-dailypipe --resource-group rg-leakout-prod-neu --output table
+```
+
+**Endpoints** (all for a signed-in player; `src/HexMaster.LeakOut.Api/Endpoints/DailyPipeEndpoints.cs`, samples in the `.http` file):
+
+| Endpoint | Returns |
+| --- | --- |
+| `GET /api/daily-pipes/today` | `{ "date": "2026-11-02", "level": { …level-format JSON… }, "stackSeed": 123, "streak": { "current": 3, "best": 7, "wonToday": false }, "bestScore": null }`, or `{ "score": 380, "stars": 2 }` as `bestScore`. 404 until today's pipe is published; an older pipe is never returned. |
+| `POST /api/daily-pipes/{date}/scores` | Body `{ "score": 380, "stars": 2 }`. Keeps the higher of this and the player's stored score; a result with at least one star is a win for the streak. Returns `{ "date", "bestScore": { "score", "stars" }, "isNewBest", "rank", "streak" }`. 409 when `{date}` is not today's pipe (the day has ended), 400 naming `score` (below 0 or above the pipe's maximum) or `stars` (not 0 to 3). |
+| `GET /api/daily-pipes/{date}/scores/top` | `{ "date", "entries": [{ "position", "displayName", "score", "stars", "isCurrentPlayer" }], "player": { "position", "score", "stars" } \| null }`: the 10 best results, by score and then the earliest achievement. 404 for a date without a pipe. |
+
+**Streaks.** The current streak counts consecutive UTC days with a win. A second win on the same day changes nothing; a win the day after the last one adds 1; any later win restarts it at 1. A streak whose last win is before yesterday is reported as 0 (the stored row is only corrected on the next win), and the best streak is kept.
+
 ## Observability
 
 The API emits OpenTelemetry traces, metrics and logs (`HexMaster.LeakOut.Aspire.ServiceDefaults`). ASP.NET Core requests, outgoing HTTP calls (Google) and EF Core / Npgsql database calls are instrumented automatically. Every operation adds its own span, metrics and logs on top.
@@ -58,7 +95,7 @@ The API emits OpenTelemetry traces, metrics and logs (`HexMaster.LeakOut.Aspire.
 **Locally**, open the Aspire dashboard (its URL is printed when the AppHost starts) and select the `hexmaster-leakout-api` resource:
 
 - **Traces**: a leaderboard request shows the HTTP span, `players.resolve_user`, the handler span (for example `scores.get_level_top_scores`), `players.get_display_names` and the database spans nested under them.
-- **Metrics**: the `HexMaster.LeakOut.Players` and `HexMaster.LeakOut.Scores` meters, next to the ASP.NET Core, HttpClient and runtime meters.
+- **Metrics**: the `HexMaster.LeakOut.Players`, `HexMaster.LeakOut.Scores` and `HexMaster.LeakOut.DailyPipes` meters, next to the ASP.NET Core, HttpClient and runtime meters. The `daily-pipe-generator` resource shows the generation runs.
 - **Structured logs**: filter by trace to see the logs of one request.
 
 **In Azure**, everything goes to the Application Insights component `<resource group>-appi`, under cloud role `hexmaster-leakout-api`. The deployed version (`service.version`, the image tag) appears as `application_Version`. Requests and dependencies show in **Transaction search** and **Application map**. Custom spans are in the `dependencies` table, custom metrics in `customMetrics` and logs in `traces`:
@@ -78,6 +115,10 @@ requests | summarize count() by application_Version, bin(timestamp, 1h)
 | `scores.get_level_top_scores` | Top 10 of a level |
 | `scores.get_level_scores_around_player` | The scores around the player's own score |
 | `scores.get_public_level_top_scores` | Public top 25 of a level for the website; `leaderboard.cache_hit` tells whether it came from the 30-minute memory cache |
+| `daily_pipes.generate` | A generator run (cloud role `daily-pipe-generator`); `daily_pipe.attempts` and `daily_pipe.published` |
+| `daily_pipes.get_today` | Downloading today's daily pipe; `daily_pipe.found` |
+| `daily_pipes.submit_score` | Submitting a daily pipe result; `daily_pipe.outcome` |
+| `daily_pipes.get_top_scores` | Top 10 of a daily pipe |
 
 | Metric | Type | Attributes |
 | --- | --- | --- |
@@ -88,8 +129,15 @@ requests | summarize count() by application_Version, bin(timestamp, 1h)
 | `leakout.scores.submission.duration` | histogram (s) | `outcome` |
 | `leakout.scores.leaderboard.requests` | counter | `leaderboard.kind` (`top`, `around_player`, `public_top`), `outcome` (`success`, `error`) |
 | `leakout.scores.leaderboard.duration` | histogram (s) | `leaderboard.kind`, `outcome` |
+| `leakout.daily_pipes.generation.runs` | counter | `outcome` (`published`, `already_published`, `failed`) |
+| `leakout.daily_pipes.generation.attempts` | histogram | `outcome`: candidates generated per run |
+| `leakout.daily_pipes.generation.duration` | histogram (s) | `outcome` |
+| `leakout.daily_pipes.downloads` | counter | `outcome` (`served`, `not_found`, `error`) |
+| `leakout.daily_pipes.submissions` | counter | `outcome` (`new_best`, `not_improved`, `ended`, `rejected`, `error`) |
+| `leakout.daily_pipes.submission.duration` | histogram (s) | `outcome` |
+| `leakout.daily_pipes.leaderboard.requests` | counter | `outcome` (`served`, `not_found`, `error`) |
 
-Logs record a new player, a rejected sign-in, a new best score and unexpected failures, and carry the trace id of their request.
+Logs record a new player, a rejected sign-in, a new best score, a published or failed daily pipe and unexpected failures, and carry the trace id of their request. A failed generator run logs an error, which fires the alert `<resource group>-dailypipe-failed` ([infrastructure/README.md](infrastructure/README.md)).
 
 **Privacy**: no span attribute, metric attribute or log contains the Google Play Games player id, a server auth code, an access token or a display name. Spans and logs identify a player by the internal player id only. Metric attributes never contain player ids, levels or scores. `/alive` and `/health` are not traced, so platform probes don't count against the 1 GB daily ingestion cap.
 
@@ -99,7 +147,7 @@ Every pull request into `development` runs [`.github/workflows/server-pull-reque
 
 | Check | What it does |
 | --- | --- |
-| `server / build-test` | Restores and builds the solution, runs every test project with code coverage (the Scores tests start PostgreSQL with Testcontainers), merges the reports and fails when total line coverage is below 80%. The coverage appears in the run summary; the merged report and the `.trx` test results are attached as artifacts. |
+| `server / build-test` | Restores and builds the solution, runs every test project with code coverage (the Scores and DailyPipes tests start PostgreSQL with Testcontainers), merges the reports and fails when total line coverage is below 80%. The coverage appears in the run summary; the merged report and the `.trx` test results are attached as artifacts. |
 | `server / bicep` | Compiles `infrastructure/main.bicep` and its modules. |
 
 Both are defined in [`.github/workflows/server-build-test.yml`](../.github/workflows/server-build-test.yml) (shared with the deploy workflow; its `enabled` input skips the job while keeping the check name) and `server-pull-request.yml`. Do not rename those jobs (`server` calling `build-test`, and `server / bicep`): the check names are what branch protection refers to.
@@ -111,8 +159,8 @@ To make them mandatory (once, by a repository admin): **Settings → Branches �
 Every push to `main` that changes `server/`, a server workflow or the coverage gate script (and a manual run of **Actions → server-deploy → Run workflow**) runs [`.github/workflows/server-deploy.yml`](../.github/workflows/server-deploy.yml). Pushes that only change the app do not deploy the server, and server pushes do not release the app.
 
 1. **server / build-test**: the same build, tests and 80% gate as the pull request check. A failure stops the run; nothing is published or deployed.
-2. **publish**: calculates the version with [GitVersion](GitVersion.yml) (`configFilePath: server/GitVersion.yml`), publishes the API container image with `dotnet publish /t:PublishContainer` (no Dockerfile) and pushes it as `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>`, then fails if the image would run as root.
-3. **deploy** (environment `production`): logs in to Azure with OpenID Connect and runs the subscription-scope deployment of [`infrastructure/main.bicep`](infrastructure/README.md) with the new image, then calls `https://<api-host>/alive` until it answers with this build's `X-API-Version` header.
+2. **publish**: calculates the version with [GitVersion](GitVersion.yml) (`configFilePath: server/GitVersion.yml`), publishes the API and daily pipe generator container images with `dotnet publish /t:PublishContainer` (no Dockerfile) and pushes them as `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>` and `…/leak-out/daily-pipe-generator:<version>`, then fails if either image would run as root.
+3. **deploy** (environment `production`): logs in to Azure with OpenID Connect and runs the subscription-scope deployment of [`infrastructure/main.bicep`](infrastructure/README.md) with the new images (the API container app and the daily pipe job), then calls `https://<api-host>/alive` until it answers with this build's `X-API-Version` header.
 4. **release**: only after a healthy deploy, tags the commit `server-v<version>` and creates its GitHub release, with the commits since the previous `server-v*` tag that change `server/` as notes ([`scripts/publish-release.sh`](../scripts/publish-release.sh), see [docs/repository-layout.md](../docs/repository-layout.md#versions-and-tags)).
 
 ### Versions and image tags
@@ -138,6 +186,8 @@ Secrets of the `hexmasternl/leak-out` repository (**Settings → Secrets and var
 | `GOOGLE_CLIENT_ID` | deploy | Client id of the **web** OAuth client (the game's `serverClientId`), becomes `GooglePlayGames:ClientId` |
 | `GOOGLE_CLIENT_SECRET` | deploy | Secret of that web OAuth client, becomes `GooglePlayGames:ClientSecret` |
 | `GOOGLE_SIGNING_KEY` | deploy | The API's own JWT signing key (at least 32 characters), becomes `Authentication:SigningKey`. Not a Google credential; rotating it signs every player out. |
+
+The repository **variable** `ALERT_EMAIL` (optional, **Settings → Secrets and variables → Actions → Variables**) is the e-mail address that gets the daily pipe generator's failure alert; without it the alert only shows in Azure Monitor.
 
 The deploy job fails before logging in to Azure when one of the registry, PostgreSQL or Google secrets is empty, and names it. `ACR_LOGIN_SERVER` exists but is no longer read: the registry comes from the API project.
 

@@ -39,8 +39,10 @@ The app and the server do not share code. Each side's own sources sit in `<side>
 | --- | --- | --- |
 | Run from | `app/src/` | `server/` (or `server/src/`) |
 | Build | `./gradlew :app:assembleDebug` | `dotnet build src/leak-out-server.slnx` |
-| Tests | `./gradlew :core:test :app:testDebugUnitTest` | `dotnet test --solution src/leak-out-server.slnx` (Docker needed for the Scores tests) |
+| Tests | `./gradlew :core:test :app:testDebugUnitTest` | `dotnet test --solution src/leak-out-server.slnx` (Docker needed for the Scores and DailyPipes tests) |
 | Toolchain pinned in | `app/src/gradle/libs.versions.toml` | `server/global.json` |
+
+One test crosses the line: the app's `core` test `DailyPipeConformanceTest` reads the level fixtures in `server/src/DailyPipes/HexMaster.LeakOut.DailyPipes.Tests/Fixtures/`, which the server tests check too, so the server's C# port of the level rules and solver and the app's Kotlin originals agree (server README, "Daily pipe"). Nothing from `server/` is part of the app build.
 
 ## Workflows
 

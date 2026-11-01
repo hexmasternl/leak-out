@@ -38,8 +38,8 @@
 
 ## 6. App: core
 
-- [ ] 6.1 Let a game be started with a given stack seed so the `Dealer` draws from `Random(seed)` for the initial stack and every later deal, and a restart reuses the seed
-- [ ] 6.2 Unit test: a known seed deals a pinned sequence of sections, and two games with the same seed deal identical sequences
+- [x] 6.1 Let a game be started with a given stack seed so the `Dealer` draws from `Random(seed)` for the initial stack and every later deal, and a restart reuses the seed
+- [x] 6.2 Unit test: a known seed deals a pinned sequence of sections, and two games with the same seed deal identical sequences
 
 ## 7. App: client and welcome screen
 

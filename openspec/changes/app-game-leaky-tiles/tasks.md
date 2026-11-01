@@ -32,7 +32,7 @@
 
 ## 6. Level designer
 
-- [ ] 6.1 Add leaky tiles to `LevelDraft`: the toggle and drag rules, a blocked cell becoming leaky, Block, Start, Finish and Portal clearing the leaky flag, mandatory tools refusing a leaky tile, the Leaky tile tool skipping portals, grid shrink removing leaky tiles outside the grid, Clear leaky, and `Level.scoringCells` for the star thresholds. Cover each `level-designer` leaky scenario in `LevelDraftTest`, including the thresholds 350, 440 and 590.
+- [x] 6.1 Add leaky tiles to `LevelDraft`: the toggle and drag rules, a blocked cell becoming leaky, Block, Start, Finish and Portal clearing the leaky flag, mandatory tools refusing a leaky tile, the Leaky tile tool skipping portals, grid shrink removing leaky tiles outside the grid, Clear leaky, and `Level.scoringCells` for the star thresholds. Cover each `level-designer` leaky scenario in `LevelDraftTest`, including the thresholds 350, 440 and 590.
 - [ ] 6.2 Add the Leaky tile tool and the Clear leaky action to the designer panel, draw leaky tiles on the designer grid, highlight leaky validation errors, show the "every route crosses a leaky tile" note from `leakFree`, and keep leaky tiles in copy, export, test play and saved state. Cover in the designer's unit tests export round trip and saved-state restore. Run `./gradlew :app:testDebugUnitTest` and confirm it passes.
 
 ## 7. Leaky tiles in levels 25 to 96

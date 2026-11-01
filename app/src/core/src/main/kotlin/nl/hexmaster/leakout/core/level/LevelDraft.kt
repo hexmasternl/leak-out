@@ -20,11 +20,15 @@ enum class EndpointKind { START, FINISH }
  * until it gets a partner. [level] only holds complete pairs. [selectedPortal] is the cell of the
  * portal the Portal tool has selected, if any.
  *
- * The star thresholds are not edited: every draft calculates them from the free cells with
- * [StarBenchmarks.forFreeCells], so [level] has them whatever level the draft was built from.
+ * Leaky tiles are painted with [paintLeaky] on cells a pipe can go on. Block, Start, Finish and
+ * Portal take a cell's leakiness away; a mandatory section never goes on a leaky tile.
+ *
+ * The star thresholds are not edited: every draft calculates them from the cells the liquid can
+ * score on ([Level.scoringCells]: free cells without leaky tiles) with [StarBenchmarks.forFreeCells],
+ * so [level] has them whatever level the draft was built from.
  */
 class LevelDraft(source: Level, val unpaired: Endpoint? = null, selectedPortal: Position? = null) {
-    val level: Level = source.copy(stars = StarBenchmarks.forFreeCells(source.freeCells - unpairedCells(source, unpaired)))
+    val level: Level = source.copy(stars = StarBenchmarks.forFreeCells(source.scoringCells - unpairedCells(source, unpaired)))
 
     /** The selected portal's cell; `null` when nothing is selected or no portal lies there. */
     val selectedPortal: Position? = selectedPortal?.takeIf { portalAt(it) != null }
@@ -34,9 +38,9 @@ class LevelDraft(source: Level, val unpaired: Endpoint? = null, selectedPortal: 
 
     /**
      * Sets the grid size, clamped to [MIN_GRID_SIZE]..[MAX_GRID_COLUMNS] columns and
-     * [MIN_GRID_SIZE]..[MAX_GRID_ROWS] rows. Blocked cells, mandatory sections and portal pairs with
-     * a portal outside the new grid are dropped; an endpoint outside it moves to the nearest cell
-     * inside, keeping its open side, and drops what lies there.
+     * [MIN_GRID_SIZE]..[MAX_GRID_ROWS] rows. Blocked cells, leaky tiles, mandatory sections and
+     * portal pairs with a portal outside the new grid are dropped; an endpoint outside it moves to
+     * the nearest cell inside, keeping its open side, and drops what lies there.
      */
     fun resize(columns: Int, rows: Int): LevelDraft {
         val grid = GridSize(columns.coerceIn(MIN_GRID_SIZE, MAX_GRID_COLUMNS), rows.coerceIn(MIN_GRID_SIZE, MAX_GRID_ROWS))
@@ -53,6 +57,7 @@ class LevelDraft(source: Level, val unpaired: Endpoint? = null, selectedPortal: 
                 blocked = level.blocked.filter { it in grid && it !in endpoints },
                 mandatory = level.mandatory.filter { it.position in grid && it.position !in endpoints },
                 portals = level.portals.filter { keeps(it.a) && keeps(it.b) },
+                leaky = level.leaky.filter { it in grid && it !in endpoints },
             ),
             unpaired?.takeIf(::keeps),
             selectedPortal,
@@ -66,18 +71,18 @@ class LevelDraft(source: Level, val unpaired: Endpoint? = null, selectedPortal: 
     fun placeFinish(cell: Position): LevelDraft = placeEndpoint(EndpointKind.FINISH, cell)
 
     /**
-     * Moves an endpoint to [cell] and unblocks that cell. Does nothing for a cell outside the grid,
-     * the other endpoint's cell, a mandatory section's cell or a portal.
+     * Moves an endpoint to [cell] and unblocks that cell, which is no longer leaky either. Does
+     * nothing for a cell outside the grid, the other endpoint's cell, a mandatory section's cell or a portal.
      */
     fun placeEndpoint(kind: EndpointKind, cell: Position): LevelDraft {
         val other = endpoint(kind.other()).position
         if (cell !in level.grid || cell == other || level.mandatoryAt(cell) != null || portalAt(cell) != null) return this
         val moved = endpoint(kind).copy(position = cell)
-        val unblocked = level.blocked.filter { it != cell }
+        val cleared = level.copy(blocked = level.blocked.filter { it != cell }, leaky = level.leaky.filter { it != cell })
         return edited(
             when (kind) {
-                EndpointKind.START -> level.copy(start = moved, blocked = unblocked)
-                EndpointKind.FINISH -> level.copy(finish = moved, blocked = unblocked)
+                EndpointKind.START -> cleared.copy(start = moved)
+                EndpointKind.FINISH -> cleared.copy(finish = moved)
             },
         )
     }
@@ -100,7 +105,7 @@ class LevelDraft(source: Level, val unpaired: Endpoint? = null, selectedPortal: 
     /**
      * Blocks ([blocked] true) or frees every cell in [cells], as a drag across the grid does. The
      * start, the finish, mandatory cells and cells outside the grid are skipped, and a cell is never
-     * listed twice.
+     * listed twice. A leaky tile that is blocked is no longer leaky.
      */
     fun paintBlocked(cells: Iterable<Position>, blocked: Boolean): LevelDraft {
         val targets = cells.filter(::canBlock).toSet()
@@ -109,17 +114,42 @@ class LevelDraft(source: Level, val unpaired: Endpoint? = null, selectedPortal: 
         } else {
             level.blocked.filter { it !in targets }
         }
-        return if (result == level.blocked) this else edited(level.copy(blocked = result))
+        val leaky = if (blocked) level.leaky.filter { it !in targets } else level.leaky
+        return if (result == level.blocked && leaky == level.leaky) this else edited(level.copy(blocked = result, leaky = leaky))
     }
 
     fun clearBlocked(): LevelDraft = edited(level.copy(blocked = emptyList()))
 
+    /** Makes a free or blocked cell leaky, or a leaky tile free again. Cells that cannot be leaky are left alone. */
+    fun toggleLeaky(cell: Position): LevelDraft = paintLeaky(listOf(cell), leaky = !level.isLeaky(cell))
+
+    /**
+     * Makes every cell in [cells] leaky ([leaky] true) or not, as a drag with the Leaky tile tool
+     * does. A blocked cell made leaky is no longer blocked. The start, the finish, portals, mandatory
+     * cells and cells outside the grid are skipped, and a cell is never listed twice.
+     */
+    fun paintLeaky(cells: Iterable<Position>, leaky: Boolean): LevelDraft {
+        val targets = cells.filter(::canBeLeaky).toSet()
+        val result = if (leaky) {
+            level.leaky + targets.filter { it !in level.leaky }
+        } else {
+            level.leaky.filter { it !in targets }
+        }
+        val blocked = if (leaky) level.blocked.filter { it !in targets } else level.blocked
+        return if (result == level.leaky && blocked == level.blocked) this else edited(level.copy(leaky = result, blocked = blocked))
+    }
+
+    fun clearLeaky(): LevelDraft = edited(level.copy(leaky = emptyList()))
+
+    /** Whether the Leaky tile tool may change [cell]: any cell of the grid but the endpoints, portals and mandatory sections. */
+    fun canBeLeaky(cell: Position): Boolean = canBlock(cell)
+
     /**
      * What a tap with a mandatory section tool does on [cell]: removes a mandatory [section] there,
      * turns a mandatory section of the other kind into [section] (keeping its place in the list), or
-     * places a new one on a free cell. A cell outside the grid, a blocked cell, the start, the finish
-     * and a new section beyond [LevelValidator.MAX_MANDATORY_SECTIONS] are left alone. Only a cross
-     * or a reservoir can be mandatory.
+     * places a new one on a free cell. A cell outside the grid, a blocked cell, a leaky tile, the
+     * start, the finish and a new section beyond [LevelValidator.MAX_MANDATORY_SECTIONS] are left
+     * alone. Only a cross or a reservoir can be mandatory.
      */
     fun toggleMandatory(cell: Position, section: PipeSection): LevelDraft {
         require(section in LevelValidator.MANDATORY_KINDS) { "Only a cross or a reservoir can be mandatory, not $section" }
@@ -135,8 +165,8 @@ class LevelDraft(source: Level, val unpaired: Endpoint? = null, selectedPortal: 
 
     /** Whether a new mandatory section may go on [cell]. */
     private fun canPlaceMandatory(cell: Position): Boolean =
-        cell in level.grid && !level.isBlocked(cell) && cell != level.start.position && cell != level.finish.position &&
-            portalAt(cell) == null && level.mandatory.size < LevelValidator.MAX_MANDATORY_SECTIONS
+        cell in level.grid && !level.isBlocked(cell) && !level.isLeaky(cell) && cell != level.start.position &&
+            cell != level.finish.position && portalAt(cell) == null && level.mandatory.size < LevelValidator.MAX_MANDATORY_SECTIONS
 
     /** Whether the Block tool may change [cell]. */
     fun canBlock(cell: Position): Boolean =
@@ -161,7 +191,10 @@ class LevelDraft(source: Level, val unpaired: Endpoint? = null, selectedPortal: 
     /** The selected portal, or `null` when none is selected. */
     val selectedPortalEndpoint: Endpoint? get() = selectedPortal?.let(::portalAt)
 
-    /** Whether the Portal tool may put a portal on [cell]: a free cell without a mandatory section or a portal. */
+    /**
+     * Whether the Portal tool may put a portal on [cell]: a free cell without a mandatory section or
+     * a portal. A leaky tile may get one, and is then no longer leaky.
+     */
     fun canPlacePortal(cell: Position): Boolean =
         cell in level.grid && !level.isBlocked(cell) && cell != level.start.position && cell != level.finish.position &&
             level.mandatoryAt(cell) == null && portalAt(cell) == null
@@ -181,17 +214,18 @@ class LevelDraft(source: Level, val unpaired: Endpoint? = null, selectedPortal: 
         if (selected != null) return movePortal(selected, cell)
         val portal = Endpoint(cell, defaultOpenSide(cell))
         val first = unpaired
+        val dry = level.copy(leaky = level.leaky.filter { it != cell })
         return when {
-            first != null -> LevelDraft(level.copy(portals = level.portals + PortalPair(first, portal)))
+            first != null -> LevelDraft(dry.copy(portals = level.portals + PortalPair(first, portal)))
             level.portals.size >= LevelValidator.MAX_PORTAL_PAIRS -> this
-            else -> LevelDraft(level, portal)
+            else -> LevelDraft(dry, portal)
         }
     }
 
     private fun movePortal(from: Position, to: Position): LevelDraft {
         fun moved(portal: Endpoint) = if (portal.position == from) portal.copy(position = to) else portal
         return LevelDraft(
-            level.copy(portals = level.portals.map { PortalPair(moved(it.a), moved(it.b)) }),
+            level.copy(portals = level.portals.map { PortalPair(moved(it.a), moved(it.b)) }, leaky = level.leaky.filter { it != to }),
             unpaired?.let(::moved),
             to,
         )
@@ -294,11 +328,14 @@ sealed interface DesignStatus {
     /** Valid, but [LevelSolver] found no route. */
     data class Unsolvable(val reason: String) : DesignStatus
 
-    /** Valid and winnable along [path], which the designer draws as a hint. */
-    data class Solvable(val path: List<Position>) : DesignStatus
+    /**
+     * Valid and winnable along [path], which the designer draws as a hint. Without a [leakFree]
+     * route every way to the finish crosses a leaky tile, which the designer notes but allows.
+     */
+    data class Solvable(val path: List<Position>, val leakFree: Boolean = true) : DesignStatus
 
     companion object {
-        private val indexed = Regex("""^(blocked|mandatory)\[(\d+)]""")
+        private val indexed = Regex("""^(blocked|mandatory|leaky)\[(\d+)]""")
         private val portal = Regex("""^portals\[(\d+)]\.([ab])""")
 
         /**
@@ -315,14 +352,14 @@ sealed interface DesignStatus {
             }
             if (errors.isNotEmpty()) return Invalid(errors, cells)
             return when (val result = LevelSolver.solve(level)) {
-                is SolverResult.Solvable -> Solvable(result.path)
+                is SolverResult.Solvable -> Solvable(result.path, result.leakFree)
                 is SolverResult.Unsolvable -> Unsolvable(result.reason)
             }
         }
 
         /**
-         * The cell an error [field] is about: `start.*`, `finish.*`, `blocked[i]`, `mandatory[i]` or
-         * `portals[i].a` / `.b`; otherwise `null`.
+         * The cell an error [field] is about: `start.*`, `finish.*`, `blocked[i]`, `mandatory[i]`,
+         * `leaky[i]` or `portals[i].a` / `.b`; otherwise `null`.
          */
         fun cellOf(field: String, level: Level): Position? {
             val root = field.substringBefore('.')
@@ -336,6 +373,7 @@ sealed interface DesignStatus {
             val index = match.groupValues[2].toInt()
             return when (match.groupValues[1]) {
                 "blocked" -> level.blocked.getOrNull(index)
+                "leaky" -> level.leaky.getOrNull(index)
                 else -> level.mandatory.getOrNull(index)?.position
             }
         }

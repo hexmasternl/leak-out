@@ -468,6 +468,99 @@ class LevelDraftTest {
         assertEquals(listOf(wide.level.portals[1]), shrunk.level.portals)
     }
 
+    // Leaky tiles. The blank draft is 7 by 5 with the start at (0, 2) and the finish at (6, 2).
+
+    @Test
+    fun `a tap makes a free cell leaky and a second tap makes it free again`() {
+        val leaky = blank.toggleLeaky(Position(3, 1))
+        assertEquals(listOf(Position(3, 1)), leaky.level.leaky)
+        assertEquals(emptyList(), leaky.toggleLeaky(Position(3, 1)).level.leaky)
+    }
+
+    @Test
+    fun `a drag makes every cell it passes leaky`() {
+        val painted = blank.paintLeaky(row(1, 2..4), leaky = true)
+        assertEquals(row(1, 2..4), painted.level.leaky)
+        assertEquals(listOf(Position(2, 1)), painted.paintLeaky(row(1, 3..4), leaky = false).level.leaky)
+    }
+
+    @Test
+    fun `a blocked cell made leaky is no longer blocked`() {
+        val draft = blank.toggleBlocked(Position(3, 1)).toggleLeaky(Position(3, 1))
+        assertEquals(listOf(Position(3, 1)), draft.level.leaky)
+        assertEquals(emptyList(), draft.level.blocked)
+    }
+
+    @Test
+    fun `the leaky tile tool skips the endpoints, portals and mandatory sections`() {
+        val draft = blank.toggleMandatory(Position(2, 2), PipeSection.X).tapPortal(Position(3, 0)).tapPortal(Position(3, 4))
+        val painted = draft.paintLeaky(row(2, 0..3) + Position(3, 0), leaky = true)
+        assertEquals(listOf(Position(1, 2), Position(3, 2)), painted.level.leaky)
+        assertSame(draft, draft.toggleLeaky(Position(6, 2)))
+    }
+
+    @Test
+    fun `block, start, finish and portal take a cell's leakiness away`() {
+        val leaky = blank.paintLeaky(row(1, 1..5), leaky = true)
+        val blocked = leaky.toggleBlocked(Position(1, 1))
+        assertEquals(listOf(Position(1, 1)), blocked.level.blocked)
+        assertEquals(row(1, 2..5), blocked.level.leaky)
+        assertEquals(row(1, 1..5) - Position(2, 1), leaky.placeStart(Position(2, 1)).level.leaky)
+        assertEquals(row(1, 1..5) - Position(3, 1), leaky.placeFinish(Position(3, 1)).level.leaky)
+        val portal = leaky.tapPortal(Position(4, 1))
+        assertEquals(Position(4, 1), portal.unpaired?.position)
+        assertEquals(row(1, 1..5) - Position(4, 1), portal.level.leaky)
+        assertEquals(row(1, 1..5) - listOf(Position(4, 1), Position(5, 1)), portal.tapPortal(Position(5, 1)).level.leaky)
+    }
+
+    @Test
+    fun `a mandatory section tool refuses a leaky tile`() {
+        val leaky = blank.toggleLeaky(Position(3, 1))
+        assertSame(leaky, leaky.toggleMandatory(Position(3, 1), PipeSection.X))
+        assertSame(leaky, leaky.toggleMandatory(Position(3, 1), PipeSection.RES))
+    }
+
+    @Test
+    fun `shrinking removes leaky tiles outside the grid`() {
+        val tall = blank.resize(7, 8).paintLeaky(listOf(Position(2, 6), Position(3, 1)), leaky = true)
+        assertEquals(listOf(Position(3, 1)), tall.resize(7, 5).level.leaky)
+    }
+
+    @Test
+    fun `clear leaky removes every leaky tile and keeps the blocked cells`() {
+        val draft = blank.toggleBlocked(Position(1, 1)).paintLeaky(row(3, 1..4), leaky = true)
+        val cleared = draft.clearLeaky()
+        assertEquals(emptyList(), cleared.level.leaky)
+        assertEquals(listOf(Position(1, 1)), cleared.level.blocked)
+    }
+
+    @Test
+    fun `leaky tiles do not count for the star thresholds`() {
+        val sixty = blank.resize(7, 9).toggleBlocked(Position(3, 4))
+        assertEquals(StarBenchmarks(360, 450, 600), sixty.level.stars)
+        val leaky = sixty.toggleLeaky(Position(2, 2))
+        assertEquals(60, leaky.level.freeCells)
+        assertEquals(59, leaky.level.scoringCells)
+        assertEquals(StarBenchmarks(350, 440, 590), leaky.level.stars)
+    }
+
+    @Test
+    fun `the status notes when every route crosses a leaky tile and stays playable`() {
+        assertEquals(true, assertIs<DesignStatus.Solvable>(blank.toggleLeaky(Position(3, 1)).status).leakFree)
+        val wall = (0 until 5).map { Position(3, it) }
+        val gap = blank.paintBlocked(wall, blocked = true).toggleLeaky(Position(3, 2))
+        val status = assertIs<DesignStatus.Solvable>(gap.status)
+        assertEquals(false, status.leakFree)
+        assertTrue(status.isPlayable)
+    }
+
+    @Test
+    fun `a leaky tile error highlights its cell`() {
+        val level = blank.level.copy(leaky = listOf(Position(3, 1), Position(9, 9)))
+        val status = assertIs<DesignStatus.Invalid>(DesignStatus.of(level))
+        assertEquals(setOf(Position(9, 9)), status.highlightedCells)
+    }
+
     @Test
     fun `portals are not free cells for the star thresholds`() {
         val sixty = blank.resize(7, 9).toggleBlocked(Position(3, 4))

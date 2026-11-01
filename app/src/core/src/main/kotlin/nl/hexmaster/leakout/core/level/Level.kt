@@ -125,6 +125,16 @@ data class Level(
             return grid.columns * grid.rows - taken.size
         }
 
+    /**
+     * The free cells on which the liquid can earn points: [freeCells] without the leaky tiles. The
+     * designer's star thresholds come from it, so a leaky tile never adds points that cannot be won.
+     */
+    val scoringCells: Int
+        get() {
+            val taken = (blocked + start.position + finish.position + portalCells).toSet()
+            return freeCells - leaky.filter { it in grid && it !in taken }.toSet().size
+        }
+
     /** A section is allowed on the stack when it has a positive weight. */
     fun isAllowed(section: PipeSection): Boolean = stack.weightOf(section) > 0
 }

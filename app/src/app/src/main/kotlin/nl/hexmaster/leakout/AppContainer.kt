@@ -13,8 +13,10 @@ import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.history.data.LeakOutDatabase
 import nl.hexmaster.leakout.history.data.RoomLevelHistoryRepository
 import nl.hexmaster.leakout.scores.online.CallbackNetworkMonitor
+import nl.hexmaster.leakout.scores.online.DailyPipeApi
 import nl.hexmaster.leakout.scores.online.DataStorePendingScoreQueue
 import nl.hexmaster.leakout.scores.online.HttpScoreServerApi
+import nl.hexmaster.leakout.scores.online.NetworkMonitor
 import nl.hexmaster.leakout.scores.online.ScoreServerConfig
 import nl.hexmaster.leakout.scores.online.ScoreServerSession
 import nl.hexmaster.leakout.scores.online.ScoreSubmitter
@@ -65,10 +67,18 @@ class AppContainer(context: Context, val scope: CoroutineScope, playGamesAppId: 
             queue = DataStorePendingScoreQueue(appContext.scoreQueueDataStore),
             signIn = playGames.auth.state,
             serverAuthCodes = playGames.serverAuthCodes,
-            network = CallbackNetworkMonitor.android(appContext),
+            network = network,
             scope = scope,
             session = scoreServerSession,
         )
+    }
+
+    /** Whether the device is online, and when it gets a connection. */
+    val network: NetworkMonitor by lazy { CallbackNetworkMonitor.android(appContext) }
+
+    /** Today's daily pipe and its results, on the same score server sign-in. */
+    val dailyPipes: DailyPipeApi by lazy {
+        DailyPipeApi(scoreServerApi, scoreServerSession, playGames.auth.state, playGames.serverAuthCodes)
     }
 
     /** Loads the global top 10 of a level from the score server. */

@@ -80,9 +80,10 @@ fun GameHud(
     gapDistance: () -> Double? = { null },
     clockMs: () -> Long = { 0L },
     onWarningShown: () -> Unit = {},
+    levelLabel: String? = null,
 ) {
     val locale = LocalConfiguration.current.locales[0]
-    val levelText = stringResource(R.string.hud_level, HudFormat.level(levelId))
+    val levelText = levelLabel ?: stringResource(R.string.hud_level, HudFormat.level(levelId))
     val speed = HudFormat.speed(flowSpeed, locale)
     val speedDescription = stringResource(R.string.hud_speed_description, speed)
 

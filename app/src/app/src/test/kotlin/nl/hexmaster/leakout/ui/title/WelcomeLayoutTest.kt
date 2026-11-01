@@ -89,3 +89,23 @@ class WelcomeLayoutScalingTest {
         assertEquals(28f, WelcomeLayout.compute(100f, 60f).titleSizeDp, 0.001f)
     }
 }
+
+/** With the Daily Pipe button the row holds four buttons, which must still fit with 48 dp targets. */
+class WelcomeLayoutFourButtonsTest {
+    @Test
+    fun `four buttons fit the width of every landscape size and keep their touch target`() {
+        for ((width, height) in WelcomeLayoutFitTest.sizes().map { it[0] to it[1] }) {
+            val layout = WelcomeLayout.compute(width, height, buttonCount = 4)
+            assertEquals(4, layout.buttonCount)
+            assertTrue("row ${layout.buttonRowWidthDp} on $width", layout.buttonRowWidthDp <= width * 0.9f + 0.01f)
+            assertTrue(layout.buttonFaceHeightDp + WelcomeLayout.BUTTON_SHADOW_DP >= WelcomeLayout.MIN_TOUCH_TARGET_DP)
+            assertTrue(layout.buttonWidthDp >= WelcomeLayout.MIN_TOUCH_TARGET_DP)
+        }
+    }
+
+    @Test
+    fun `three buttons stay the default`() {
+        assertEquals(WelcomeLayout.compute(800f, 360f), WelcomeLayout.compute(800f, 360f, WelcomeLayout.BUTTON_COUNT))
+        assertEquals(3, WelcomeLayout.compute(800f, 360f).buttonCount)
+    }
+}

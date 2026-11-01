@@ -44,14 +44,14 @@
 ## 7. App: client and welcome screen
 
 - [x] 7.1 Add a `DailyPipeApi` client on top of `ScoreServerSession` for today's pipe, score submission and top scores, with JVM unit tests for parsing and the `404`, `409` and error cases
-- [ ] 7.2 Add the Daily Pipe button to the welcome screen below Play, shown only when signed in with Play Games and disabled with a hint while `NetworkMonitor` reports no connection
-- [ ] 7.3 Tapping the button downloads today's pipe with a loading state, parses and validates the level, and opens the game screen; show an error and stay on the welcome screen when there is no pipe yet, the download fails or the level is rejected
+- [x] 7.2 Add the Daily Pipe button to the welcome screen below Play, shown only when signed in with Play Games and disabled with a hint while `NetworkMonitor` reports no connection
+- [x] 7.3 Tapping the button downloads today's pipe with a loading state, parses and validates the level, and opens the game screen; show an error and stay on the welcome screen when there is no pipe yet, the download fails or the level is rejected
 
 ## 8. App: playing and results
 
-- [ ] 8.1 Run the daily pipe on the game screen with the seeded stack, without writing level history, unlocking levels or pages, or evaluating achievements
-- [ ] 8.2 Submit a win to the server and show the score, streak and the day's top scores in the level-complete dialog; show "the daily pipe has ended" on `409`
-- [ ] 8.3 Add all new strings in every supported language
+- [x] 8.1 Run the daily pipe on the game screen with the seeded stack, without writing level history, unlocking levels or pages, or evaluating achievements
+- [x] 8.2 Submit a win to the server and show the score, streak and the day's top scores in the level-complete dialog; show "the daily pipe has ended" on `409`
+- [x] 8.3 Add all new strings in every supported language
 - [ ] 8.4 Instrumented tests: button hidden when signed out, disabled when offline, opening and winning the daily pipe against a fake server
 - [ ] 8.5 Update `docs/level-format.md` (levels from the server, stack seed)
 

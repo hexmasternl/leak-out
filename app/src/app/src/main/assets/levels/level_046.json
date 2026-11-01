@@ -39,5 +39,9 @@
     { "x": 2, "y": 7, "section": "RES" },
     { "x": 6, "y": 8, "section": "RES" }
   ],
-  "stars": { "one": 740, "two": 1110, "three": 1480 }
+  "stars": { "one": 730, "two": 1100, "three": 1460 },
+  "leaky": [
+    { "x": 8, "y": 4 },
+    { "x": 9, "y": 6 }
+  ]
 }

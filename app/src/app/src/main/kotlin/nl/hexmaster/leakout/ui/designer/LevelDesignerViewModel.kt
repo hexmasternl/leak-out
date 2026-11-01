@@ -59,9 +59,9 @@ data class LevelDesignerUiState(
     val canPlay: Boolean get() = status.isPlayable
 
     val canShrinkColumns: Boolean get() = level.grid.columns > LevelDraft.MIN_GRID_SIZE
-    val canGrowColumns: Boolean get() = level.grid.columns < LevelDraft.MAX_GRID_SIZE
+    val canGrowColumns: Boolean get() = level.grid.columns < LevelDraft.MAX_GRID_COLUMNS
     val canShrinkRows: Boolean get() = level.grid.rows > LevelDraft.MIN_GRID_SIZE
-    val canGrowRows: Boolean get() = level.grid.rows < LevelDraft.MAX_GRID_SIZE
+    val canGrowRows: Boolean get() = level.grid.rows < LevelDraft.MAX_GRID_ROWS
 
     /** The text a numeric field shows: what was typed, or the draft's value. */
     fun text(field: NumberField): String = fieldText[field] ?: valueText(field, level)
@@ -244,8 +244,10 @@ class LevelDesignerViewModel(
             val y = parts.getOrNull(1)?.toIntOrNull()
             if (x != null && y != null) Position(x, y) else null
         }
+        // A design kept from before the grid limits shrank may be too large: shrink it to fit.
+        val draft = LevelDraft(level, unpaired, selected).let { it.resize(it.level.grid.columns, it.level.grid.rows) }
         return LevelDesignerUiState(
-            LevelDraft(level, unpaired, selected),
+            draft,
             tool ?: DesignerTool.START,
             savedState.get<Boolean>(KEY_DIRTY) ?: false,
         )

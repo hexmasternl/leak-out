@@ -1,9 +1,9 @@
 {
   "id": 93,
   "name": "Hairline Crack",
-  "grid": { "columns": 24, "rows": 24 },
-  "start": { "x": 0, "y": 5, "openSide": "RIGHT" },
-  "finish": { "x": 23, "y": 20, "openSide": "LEFT" },
+  "grid": { "columns": 25, "rows": 15 },
+  "start": { "x": 0, "y": 3, "openSide": "RIGHT" },
+  "finish": { "x": 24, "y": 12, "openSide": "LEFT" },
   "blocked": [
     { "x": 9, "y": 0 },
     { "x": 9, "y": 1 },
@@ -18,27 +18,18 @@
     { "x": 9, "y": 10 },
     { "x": 9, "y": 11 },
     { "x": 9, "y": 12 },
-    { "x": 9, "y": 13 },
-    { "x": 9, "y": 14 },
-    { "x": 9, "y": 15 },
-    { "x": 9, "y": 16 },
-    { "x": 9, "y": 17 },
-    { "x": 9, "y": 18 },
-    { "x": 9, "y": 19 },
-    { "x": 9, "y": 20 },
-    { "x": 9, "y": 22 },
-    { "x": 9, "y": 23 }
+    { "x": 9, "y": 14 }
   ],
   "flow": { "initialDelayMs": 20700, "cellsPerSecond": 0.394 },
   "stack": { "weights": { "X": 6, "RES": 3 } },
+  "stars": { "one": 2120, "two": 2650, "three": 3530 },
   "mandatory": [
-    { "x": 5, "y": 16, "section": "X" },
-    { "x": 18, "y": 13, "section": "RES" }
+    { "x": 5, "y": 10, "section": "X" },
+    { "x": 19, "y": 8, "section": "RES" }
   ],
   "portals": [
-    { "a": { "x": 21, "y": 18, "openSide": "RIGHT" }, "b": { "x": 8, "y": 9, "openSide": "BOTTOM" } },
-    { "a": { "x": 8, "y": 17, "openSide": "TOP" }, "b": { "x": 19, "y": 8, "openSide": "RIGHT" } },
-    { "a": { "x": 17, "y": 12, "openSide": "RIGHT" }, "b": { "x": 6, "y": 15, "openSide": "TOP" } }
-  ],
-  "stars": { "one": 2760, "two": 4130, "three": 5450 }
+    { "a": { "x": 22, "y": 11, "openSide": "RIGHT" }, "b": { "x": 8, "y": 5, "openSide": "BOTTOM" } },
+    { "a": { "x": 8, "y": 10, "openSide": "TOP" }, "b": { "x": 20, "y": 5, "openSide": "RIGHT" } },
+    { "a": { "x": 18, "y": 7, "openSide": "RIGHT" }, "b": { "x": 6, "y": 9, "openSide": "TOP" } }
+  ]
 }

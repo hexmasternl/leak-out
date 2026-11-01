@@ -1,9 +1,9 @@
 {
   "id": 79,
   "name": "Crack in the Dam",
-  "grid": { "columns": 24, "rows": 24 },
-  "start": { "x": 0, "y": 19, "openSide": "RIGHT" },
-  "finish": { "x": 23, "y": 6, "openSide": "LEFT" },
+  "grid": { "columns": 25, "rows": 15 },
+  "start": { "x": 0, "y": 12, "openSide": "RIGHT" },
+  "finish": { "x": 24, "y": 4, "openSide": "LEFT" },
   "blocked": [
     { "x": 9, "y": 0 },
     { "x": 9, "y": 1 },
@@ -13,25 +13,18 @@
     { "x": 9, "y": 5 },
     { "x": 9, "y": 6 },
     { "x": 9, "y": 7 },
-    { "x": 9, "y": 8 },
     { "x": 9, "y": 9 },
     { "x": 9, "y": 10 },
     { "x": 9, "y": 11 },
-    { "x": 9, "y": 15 },
-    { "x": 9, "y": 16 },
-    { "x": 9, "y": 17 },
-    { "x": 9, "y": 18 },
-    { "x": 9, "y": 19 },
-    { "x": 9, "y": 20 },
-    { "x": 9, "y": 21 },
-    { "x": 9, "y": 22 },
-    { "x": 9, "y": 23 }
+    { "x": 9, "y": 12 },
+    { "x": 9, "y": 13 },
+    { "x": 9, "y": 14 }
   ],
   "flow": { "initialDelayMs": 23700, "cellsPerSecond": 0.364 },
   "stack": { "weights": { "X": 6, "RES": 3 } },
+  "stars": { "one": 2150, "two": 2690, "three": 3590 },
   "mandatory": [
-    { "x": 6, "y": 11, "section": "X" },
-    { "x": 20, "y": 16, "section": "X" }
-  ],
-  "stars": { "one": 2770, "two": 4150, "three": 5530 }
+    { "x": 6, "y": 7, "section": "X" },
+    { "x": 21, "y": 10, "section": "X" }
+  ]
 }

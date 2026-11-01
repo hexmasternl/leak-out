@@ -21,8 +21,8 @@ Work on an OpenSpec change inside a dedicated git worktree, on a feature branch 
 | `feature/<change-name>`   | One per OpenSpec change, named after the change. Branched from `development`.              |
 
 Rules:
-- `main` and `development` **always live in the main worktree** (the repository folder itself, e.g. `leak-out\`). Never create a separate worktree for either of them; switching between the two happens with a plain `git switch` in the main worktree. Only `feature/*` branches get their own worktree.
-- If `development` does not exist locally or on the remote, create it from `main` and push it.
+- `main` and `development` **are always created in, and always live in, the same worktree: the main worktree** (the repository folder itself, e.g. `leak-out\`). `main` is there because it is the clone's original branch; `development` is created there too, with `git branch` in the main worktree, never with `git worktree add`. Never create a separate worktree for either of them, not even a temporary one; switching between the two happens with a plain `git switch` in the main worktree. Only `feature/*` branches get their own worktree.
+- If `development` does not exist locally or on the remote, create it from `main` in the main worktree and push it.
 - A feature branch is always created from `development`, never from `main` and never from another feature branch.
 - All implementation commits go on the feature branch only.
 
@@ -79,8 +79,9 @@ branch="feature/$change"
    ```
    Do not switch branches in the main worktree as part of this skill. It keeps whichever of `main` or `development` the user has checked out there.
 
-3. **Ensure `development` exists**
+3. **Ensure `development` exists, in the main worktree**
 
+   Run these in the main worktree (the repository folder), the same worktree that holds `main`. They only create a branch ref; none of them adds a worktree or switches the checked-out branch.
    ```bash
    git show-ref --verify --quiet refs/heads/development          # local?
    git show-ref --verify --quiet refs/remotes/origin/development # remote?
@@ -93,7 +94,7 @@ branch="feature/$change"
      git branch development origin/main
      git push -u origin development
      ```
-   Never fast-forward or reset `development` from inside a feature worktree; only the branch creation above touches it.
+   After this, `main` and `development` both belong to the main worktree. Never fast-forward or reset `development` from inside a feature worktree; only the branch creation above touches it.
 
 4. **Create or reuse the worktree**
 
@@ -221,8 +222,8 @@ Next steps (your call):
 ## Guardrails
 
 - `main` is read-only. Never `git checkout main` in a worktree, never commit, push, merge, rebase, or reset it.
-- `development` is only ever created by this skill, never modified from a feature worktree.
-- `main` and `development` live only in the main worktree. Never create, attach or reuse a separate worktree for either branch.
+- `development` is only ever created by this skill, in the main worktree with `git branch`, and never modified from a feature worktree.
+- `main` and `development` are created in and live only in the same worktree, the main worktree. Never create, attach or reuse a separate worktree for either branch, temporary or not.
 - One change, one worktree, one feature branch. Never work on two changes in the same worktree.
 - Never run implementation commands in the main repository folder; if the current directory is the main repository, move to the worktree first.
 - If the worktree path already exists on disk but is not a registered worktree, stop and ask. Do not delete it.

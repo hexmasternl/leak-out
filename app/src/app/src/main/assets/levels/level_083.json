@@ -1,9 +1,9 @@
 {
   "id": 83,
   "name": "Divide",
-  "grid": { "columns": 24, "rows": 24 },
-  "start": { "x": 0, "y": 16, "openSide": "RIGHT" },
-  "finish": { "x": 23, "y": 4, "openSide": "LEFT" },
+  "grid": { "columns": 25, "rows": 15 },
+  "start": { "x": 0, "y": 10, "openSide": "RIGHT" },
+  "finish": { "x": 24, "y": 2, "openSide": "LEFT" },
   "blocked": [
     { "x": 10, "y": 0 },
     { "x": 10, "y": 1 },
@@ -14,25 +14,16 @@
     { "x": 10, "y": 6 },
     { "x": 10, "y": 7 },
     { "x": 10, "y": 8 },
-    { "x": 10, "y": 9 },
-    { "x": 10, "y": 10 },
     { "x": 10, "y": 11 },
     { "x": 10, "y": 12 },
     { "x": 10, "y": 13 },
-    { "x": 10, "y": 14 },
-    { "x": 10, "y": 17 },
-    { "x": 10, "y": 18 },
-    { "x": 10, "y": 19 },
-    { "x": 10, "y": 20 },
-    { "x": 10, "y": 21 },
-    { "x": 10, "y": 22 },
-    { "x": 10, "y": 23 }
+    { "x": 10, "y": 14 }
   ],
   "flow": { "initialDelayMs": 22800, "cellsPerSecond": 0.372 },
   "stack": { "weights": { "X": 6, "RES": 3 } },
+  "stars": { "one": 2160, "two": 2700, "three": 3600 },
   "mandatory": [
-    { "x": 7, "y": 12, "section": "X" },
-    { "x": 17, "y": 15, "section": "X" }
-  ],
-  "stars": { "one": 2760, "two": 4140, "three": 5520 }
+    { "x": 7, "y": 7, "section": "X" },
+    { "x": 18, "y": 9, "section": "X" }
+  ]
 }

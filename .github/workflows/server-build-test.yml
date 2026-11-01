@@ -82,6 +82,7 @@ jobs:
         with:
           name: server-coverage
           path: server/coverage/merged.cobertura.xml
+          retention-days: 7
           if-no-files-found: warn
 
       - name: Upload test results
@@ -90,4 +91,5 @@ jobs:
         with:
           name: server-test-results
           path: server/src/**/TestResults/**/*.trx
+          retention-days: 7
           if-no-files-found: warn

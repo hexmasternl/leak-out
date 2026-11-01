@@ -25,5 +25,5 @@
 
 ## 5. Verification
 
-- [ ] 5.1 Run `:core:test` and `:app:testDebugUnitTest`
+- [x] 5.1 Run `:core:test` and `:app:testDebugUnitTest`
 - [ ] 5.2 Play a sample of the redesigned levels on a device or emulator and check the cells are comfortably large in landscape

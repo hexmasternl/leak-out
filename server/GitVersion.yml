@@ -1,10 +1,11 @@
 # Semantic versioning of the API image (see .github/workflows/server-deploy.yml).
+# Every deployment from main is tagged server-v<major>.<minor>.<patch>; the next commit on main bumps the patch.
 # Two merges to main can get the same version: the deploy workflow adds the short commit sha
 # to the image tag so every deployment is unique. "+semver: minor" or "+semver: major" in a commit message bumps
-# the minor or major version; a tag server-vX.Y.Z on main sets the base.
-workflow: TrunkBased/preview1
+# the minor or major version.
+# GitHub Flow, like the app and website: it starts from the newest tag instead of walking every merge.
+# Mainline (TrunkBased/preview1) crashed on 397063f, a merge of origin/main into main.
+workflow: GitHubFlow/v1
 # Only server-v<x.y.z> tags count: the app's v<x.y.z> release tags on main never move the
-# server's version (docs/repository-layout.md). Mainline versioning walks the history and cannot
-# cross the merge that imported this server into the repository (it has no merge base), so that
-# merge carries the tag server-v0.3.2, the last version deployed from leak-out-server.
+# server's version (docs/repository-layout.md).
 tag-prefix: 'server-v'

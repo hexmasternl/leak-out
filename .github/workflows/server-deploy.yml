@@ -45,7 +45,7 @@ jobs:
     # Only the version crosses jobs: the registry name equals the ACR admin user name (a secret),
     # so GitHub drops any job output that contains it. The deploy job reads it again.
     outputs:
-      version: ${{ steps.gitversion.outputs.semVer }}
+      version: ${{ steps.gitversion.outputs.majorMinorPatch }}
       tag: ${{ steps.container.outputs.tag }}
     steps:
       # GitVersion needs the full history to calculate the version.
@@ -61,7 +61,8 @@ jobs:
         with:
           versionSpec: '6.3.x'
 
-      # Only server-v<x.y.z> tags count, never the app's v<x.y.z> release tags.
+      # Only server-v<x.y.z> tags count, never the app's v<x.y.z> release tags. The version is
+      # MajorMinorPatch, not SemVer: on main GitHub Flow adds a commit count label to SemVer.
       - id: gitversion
         uses: gittools/actions/gitversion/execute@v4
         with:
@@ -70,7 +71,7 @@ jobs:
       - name: Read container settings from the API project
         id: container
         env:
-          VERSION: ${{ steps.gitversion.outputs.semVer }}
+          VERSION: ${{ steps.gitversion.outputs.majorMinorPatch }}
         run: |
           properties=$(dotnet msbuild src/HexMaster.LeakOut.Api \
             -getProperty:ContainerRegistry -getProperty:ContainerRepository)
@@ -97,7 +98,7 @@ jobs:
         # The informational version is what the API returns in its X-API-Version header. The daily
         # pipe generator, run as a Container Apps job, gets the same tag.
         env:
-          VERSION: ${{ steps.gitversion.outputs.semVer }}
+          VERSION: ${{ steps.gitversion.outputs.majorMinorPatch }}
           TAG: ${{ steps.container.outputs.tag }}
         run: |
           for project in src/HexMaster.LeakOut.Api src/DailyPipes/HexMaster.LeakOut.DailyPipes.Generator; do

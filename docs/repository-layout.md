@@ -66,7 +66,7 @@ A pull request into `development` that changes both sides gets both treatments; 
 
 | | App | Server | Website |
 | --- | --- | --- | --- |
-| Config | [`app/GitVersion.yml`](../app/GitVersion.yml), GitHub Flow | [`server/GitVersion.yml`](../server/GitVersion.yml), mainline (TrunkBased) | [`website/GitVersion.yml`](../website/GitVersion.yml), GitHub Flow |
+| Config | [`app/GitVersion.yml`](../app/GitVersion.yml), GitHub Flow | [`server/GitVersion.yml`](../server/GitVersion.yml), GitHub Flow | [`website/GitVersion.yml`](../website/GitVersion.yml), GitHub Flow |
 | Tags | `v<x.y.z>`, pushed by every app release | `server-v<x.y.z>`, pushed by every server deployment | `website-v<x.y.z>`, pushed by every website deployment |
 | `tag-prefix` | `'[vV]?'` | `'server-v'` | `'website-v'` |
 | GitHub release | yes, marked *latest* | yes | yes |
@@ -82,7 +82,7 @@ The three deploy workflows can run at the same time, which is safe because:
 
 A GitVersion tag prefix must match at the start of a tag, so `server-v1.0.0` and `website-v1.0.0` are never app versions and `v0.9.0` never a server or website version. The app's prefix keeps the `v` optional because GitVersion also parses `next-version` with it. The app's release notes and version code only look at `v*` tags too (`scripts/generate-release-notes.sh`, `scripts/compute-release-version.sh`), and the notes only take commits that change `app/`.
 
-The commit that merged the server's history into this repository has no merge base with the app's history. Mainline versioning cannot walk past it, so it carries the tag `server-v0.3.2` (the last version deployed from the old repository); without a `server-v*` tag on or after it the server's GitVersion fails.
+All three products use GitHub Flow, which starts from the newest tag of the product and reads `MajorMinorPatch` (on `main` its `SemVer` carries a commit count label). The server used mainline (TrunkBased) versioning until GitVersion crashed with a `NotImplementedException` on `397063f`, a merge of `origin/main` into `main`: mainline cannot handle a main branch merged into a main branch. The commit that merged the server's history into this repository carries the tag `server-v0.3.2` (the last version deployed from the old repository).
 
 ## Secrets
 

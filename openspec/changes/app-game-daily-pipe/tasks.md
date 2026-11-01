@@ -27,7 +27,7 @@
 - [x] 4.3 `GET /api/daily-pipes/{date}/scores/top` (`GetDailyTopScores` query): top 10 with display names, ranked by score then earliest achievement, plus the caller's rank; `404` for an unknown date
 - [x] 4.4 Implement the streak rules (consecutive UTC days, same-day wins ignored, 0 stars is not a win, missed day reported as 0 and restarted at 1) with unit tests for every scenario in `server-daily-pipe-streaks`
 - [x] 4.5 Endpoint tests in `HexMaster.LeakOut.Api.Tests` for authentication (`401`), `404`, `409`, `400` and the happy paths; add sample requests to `HexMaster.LeakOut.Api.http`
-- [ ] 4.6 Add tracing and metrics for generation runs, downloads and submissions; keep the 80 % coverage gate
+- [x] 4.6 Add tracing and metrics for generation runs, downloads and submissions; keep the 80 % coverage gate
 
 ## 5. Server: infrastructure and deployment
 

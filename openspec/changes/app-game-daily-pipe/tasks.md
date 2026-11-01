@@ -10,14 +10,14 @@
 - [x] 2.1 Port the level model and `LevelValidator` rules to C# (`Generation/LevelRules`), reading and writing the level-format JSON
 - [x] 2.2 Port `LevelSolver` to C# (`Generation/LevelSolver`), including mandatory sections and portal pairs and the search work limit
 - [x] 2.3 Add conformance fixtures: copy the bundled levels and a set of unsolvable levels with their expected verdicts into `HexMaster.LeakOut.DailyPipes.Tests/Fixtures/` and test that the C# validator and solver agree with them
-- [ ] 2.4 Add an app `core` test that runs the same fixtures through the Kotlin `LevelValidator` and `LevelSolver`, so both sides are checked against one set of expected verdicts
+- [x] 2.4 Add an app `core` test that runs the same fixtures through the Kotlin `LevelValidator` and `LevelSolver`, so both sides are checked against one set of expected verdicts
 
 ## 3. Server: generation and publication
 
-- [ ] 3.1 Implement the random level generator (grid, start and finish, blocked cells, optional mandatory sections and portals, weekday difficulty preset, star thresholds from the solver's route, stack seed) with a seedable random source
-- [ ] 3.2 Implement the `GenerateDailyPipe` command: generate candidates until one passes validation and solvability or the attempt limit is reached, then publish for today's UTC date (from `IClock`) and delete older daily scores and pipes older than 7 days in one transaction; do nothing when today already has a pipe
-- [ ] 3.3 Unit tests: unsolvable candidates are discarded, the attempt limit fails the run without publishing, a rerun leaves the pipe unchanged, older scores are deleted and streaks are kept, a year of generator seeds always yields valid and solvable levels
-- [ ] 3.4 Write a sample of generated levels to the conformance fixtures and check in the app `core` test that `LevelParser`, `LevelValidator` and `LevelSolver` accept them
+- [x] 3.1 Implement the random level generator (grid, start and finish, blocked cells, optional mandatory sections and portals, weekday difficulty preset, star thresholds from the solver's route, stack seed) with a seedable random source
+- [x] 3.2 Implement the `GenerateDailyPipe` command: generate candidates until one passes validation and solvability or the attempt limit is reached, then publish for today's UTC date (from `IClock`) and delete older daily scores and pipes older than 7 days in one transaction; do nothing when today already has a pipe
+- [x] 3.3 Unit tests: unsolvable candidates are discarded, the attempt limit fails the run without publishing, a rerun leaves the pipe unchanged, older scores are deleted and streaks are kept, a year of generator seeds always yields valid and solvable levels
+- [x] 3.4 Write a sample of generated levels to the conformance fixtures and check in the app `core` test that `LevelParser`, `LevelValidator` and `LevelSolver` accept them
 - [ ] 3.5 Create the console project `HexMaster.LeakOut.DailyPipes.Generator` that runs `GenerateDailyPipe` once with ServiceDefaults telemetry and exits non-zero on failure; register it in the AppHost so it runs once at local startup
 
 ## 4. Server: API

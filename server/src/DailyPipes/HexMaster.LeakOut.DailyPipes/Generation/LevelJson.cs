@@ -15,7 +15,7 @@ public sealed class LevelFormatException(string message) : Exception(message);
 /// </summary>
 public static class LevelJson
 {
-    private static readonly JsonSerializerOptions WriteOptions = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions WriteOptions = new() { WriteIndented = true, NewLine = "\n" };
 
     public static Level Parse(string json)
     {

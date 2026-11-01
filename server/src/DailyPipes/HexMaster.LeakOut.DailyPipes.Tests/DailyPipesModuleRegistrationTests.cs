@@ -1,4 +1,6 @@
 using HexMaster.LeakOut.Core;
+using HexMaster.LeakOut.DailyPipes.Features.GenerateDailyPipe;
+using HexMaster.LeakOut.DailyPipes.Generation;
 using HexMaster.LeakOut.DailyPipes.Observability;
 using HexMaster.LeakOut.Players.Abstractions.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +22,9 @@ public sealed class DailyPipesModuleRegistrationTests
 
         Assert.IsType<SystemClock>(scope.ServiceProvider.GetRequiredService<IClock>());
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<DailyPipesMetrics>());
+        Assert.IsType<DailyLevelGenerator>(scope.ServiceProvider.GetRequiredService<IDailyLevelGenerator>());
+        Assert.IsType<GenerateDailyPipeCommandHandler>(
+            scope.ServiceProvider.GetRequiredService<ICommandHandler<GenerateDailyPipeCommand, GenerateDailyPipeResult>>());
     }
 
     [Fact]

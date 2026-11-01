@@ -7,7 +7,7 @@ enum class EndpointKind { START, FINISH }
 
 /**
  * A level being edited in the level designer. Every operation returns a new draft and keeps the
- * editing rules: the grid stays 4 to 50 cells each way, nothing lies outside the grid after a
+ * editing rules: the grid stays 4 to 25 columns by 4 to 15 rows, nothing lies outside the grid after a
  * resize, the start and finish never share a cell and are never blocked. It does not repeat
  * [LevelValidator]: a draft may be invalid, for example with a start that opens onto the edge, and
  * [status] reports that instead of preventing it.
@@ -33,12 +33,13 @@ class LevelDraft(source: Level, val unpaired: Endpoint? = null, selectedPortal: 
     val status: DesignStatus by lazy { DesignStatus.of(level, unpaired) }
 
     /**
-     * Sets the grid size, clamped to [MIN_GRID_SIZE]..[MAX_GRID_SIZE]. Blocked cells, mandatory
-     * sections and portal pairs with a portal outside the new grid are dropped; an endpoint outside
-     * it moves to the nearest cell inside, keeping its open side, and drops what lies there.
+     * Sets the grid size, clamped to [MIN_GRID_SIZE]..[MAX_GRID_COLUMNS] columns and
+     * [MIN_GRID_SIZE]..[MAX_GRID_ROWS] rows. Blocked cells, mandatory sections and portal pairs with
+     * a portal outside the new grid are dropped; an endpoint outside it moves to the nearest cell
+     * inside, keeping its open side, and drops what lies there.
      */
     fun resize(columns: Int, rows: Int): LevelDraft {
-        val grid = GridSize(columns.coerceIn(MIN_GRID_SIZE, MAX_GRID_SIZE), rows.coerceIn(MIN_GRID_SIZE, MAX_GRID_SIZE))
+        val grid = GridSize(columns.coerceIn(MIN_GRID_SIZE, MAX_GRID_COLUMNS), rows.coerceIn(MIN_GRID_SIZE, MAX_GRID_ROWS))
         val start = level.start.copy(position = clampInto(level.start.position, grid))
         var finish = level.finish.copy(position = clampInto(level.finish.position, grid))
         if (finish.position == start.position) finish = finish.copy(position = nearestFree(finish.position, grid, start.position))
@@ -247,7 +248,8 @@ class LevelDraft(source: Level, val unpaired: Endpoint? = null, selectedPortal: 
 
     companion object {
         const val MIN_GRID_SIZE: Int = LevelValidator.MIN_GRID_SIZE
-        const val MAX_GRID_SIZE: Int = LevelValidator.MAX_GRID_SIZE
+        const val MAX_GRID_COLUMNS: Int = LevelValidator.MAX_GRID_COLUMNS
+        const val MAX_GRID_ROWS: Int = LevelValidator.MAX_GRID_ROWS
         const val NEW_LEVEL_NAME: String = "New level"
 
         /** A blank, valid and solvable level: a 7 by 5 grid with the start and finish facing each other across it. */

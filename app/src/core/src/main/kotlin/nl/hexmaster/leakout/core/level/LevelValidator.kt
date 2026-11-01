@@ -14,7 +14,8 @@ data class ValidationResult(val errors: List<ValidationError>) {
  */
 object LevelValidator {
     const val MIN_GRID_SIZE: Int = 4
-    const val MAX_GRID_SIZE: Int = 50
+    const val MAX_GRID_COLUMNS: Int = 25
+    const val MAX_GRID_ROWS: Int = 15
     const val MAX_CELLS_PER_SECOND: Double = 10.0
     const val MIN_VISIBLE_STACK_SIZE: Int = 1
     const val MAX_VISIBLE_STACK_SIZE: Int = 10
@@ -58,9 +59,12 @@ object LevelValidator {
     }
 
     private fun MutableList<ValidationError>.checkGrid(grid: GridSize) {
-        val range = MIN_GRID_SIZE..MAX_GRID_SIZE
-        if (grid.columns !in range) error("grid.columns", "grid.columns must be between $MIN_GRID_SIZE and $MAX_GRID_SIZE, but had ${grid.columns}")
-        if (grid.rows !in range) error("grid.rows", "grid.rows must be between $MIN_GRID_SIZE and $MAX_GRID_SIZE, but had ${grid.rows}")
+        if (grid.columns !in MIN_GRID_SIZE..MAX_GRID_COLUMNS) {
+            error("grid.columns", "grid.columns must be between $MIN_GRID_SIZE and $MAX_GRID_COLUMNS, but had ${grid.columns}")
+        }
+        if (grid.rows !in MIN_GRID_SIZE..MAX_GRID_ROWS) {
+            error("grid.rows", "grid.rows must be between $MIN_GRID_SIZE and $MAX_GRID_ROWS, but had ${grid.rows}")
+        }
     }
 
     private fun MutableList<ValidationError>.checkEndpoints(level: Level) {

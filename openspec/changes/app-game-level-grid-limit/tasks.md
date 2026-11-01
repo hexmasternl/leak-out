@@ -1,14 +1,14 @@
 ## 1. Grid limits in core
 
-- [ ] 1.1 In `core/level/LevelValidator.kt`, replace `MAX_GRID_SIZE` with `MAX_GRID_COLUMNS = 25` and `MAX_GRID_ROWS = 15` and check each dimension against its own range
-- [ ] 1.2 In `core/level/LevelDraft.kt`, clamp columns to 4..25 and rows to 4..15 and expose both limits
-- [ ] 1.3 Update `LevelValidatorTest` (25 by 15 accepted, 26 columns and 16 rows rejected with the right field) and `LevelDraftTest` (clamping per dimension, shrinking a 24 by 24 draft)
+- [x] 1.1 In `core/level/LevelValidator.kt`, replace `MAX_GRID_SIZE` with `MAX_GRID_COLUMNS = 25` and `MAX_GRID_ROWS = 15` and check each dimension against its own range
+- [x] 1.2 In `core/level/LevelDraft.kt`, clamp columns to 4..25 and rows to 4..15 and expose both limits
+- [x] 1.3 Update `LevelValidatorTest` (25 by 15 accepted, 26 columns and 16 rows rejected with the right field) and `LevelDraftTest` (clamping per dimension, shrinking a 24 by 24 draft)
 
 ## 2. Level designer
 
-- [ ] 2.1 Point `canGrowColumns` and `canGrowRows` in `LevelDesignerViewModel` at the new limits
-- [ ] 2.2 Shrink a design that is larger than 25 by 15 when it is restored, using the existing `LevelDraft` resize
-- [ ] 2.3 Update `LevelDesignerViewModelTest`: steppers stop at 25 columns and 15 rows, an oversized design is shrunk on restore
+- [x] 2.1 Point `canGrowColumns` and `canGrowRows` in `LevelDesignerViewModel` at the new limits
+- [x] 2.2 Shrink a design that is larger than 25 by 15 when it is restored, using the existing `LevelDraft` resize
+- [x] 2.3 Update `LevelDesignerViewModelTest`: steppers stop at 25 columns and 15 rows, an oversized design is shrunk on restore
 
 ## 3. Bundled levels
 

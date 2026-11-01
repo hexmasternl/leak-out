@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import nl.hexmaster.leakout.core.level.DesignStatus
 import nl.hexmaster.leakout.core.level.Endpoint
 import nl.hexmaster.leakout.core.level.EndpointKind
+import nl.hexmaster.leakout.core.level.GridSize
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.LevelDraft
 import nl.hexmaster.leakout.core.level.LevelParser
@@ -131,8 +132,11 @@ class LevelDesignerViewModelTest {
         assertEquals(4, vm.state.level.grid.columns)
         assertFalse(vm.state.canShrinkColumns)
         assertTrue(vm.state.canGrowColumns)
-        repeat(60) { vm.changeRows(+1) }
-        assertEquals(50, vm.state.level.grid.rows)
+        repeat(30) { vm.changeColumns(+1) }
+        assertEquals(25, vm.state.level.grid.columns)
+        assertFalse(vm.state.canGrowColumns)
+        repeat(30) { vm.changeRows(+1) }
+        assertEquals(15, vm.state.level.grid.rows)
         assertFalse(vm.state.canGrowRows)
     }
 
@@ -331,6 +335,15 @@ class LevelDesignerViewModelTest {
         assertEquals(first.state.level, restored.level)
         assertEquals(DesignerTool.BLOCK, restored.tool)
         assertTrue(restored.dirty)
+    }
+
+    @Test
+    fun `an oversized design is shrunk to fit when restored`() {
+        val big = LevelDraft.new(5).level.copy(grid = GridSize(24, 24), finish = Endpoint(Position(6, 23), Side.TOP))
+        val saved = SavedStateHandle(mapOf(LevelDesignerViewModel.KEY_DRAFT to LevelWriter.write(big)))
+        val restored = viewModel(saved).state.level
+        assertEquals(GridSize(24, 15), restored.grid)
+        assertEquals(Endpoint(Position(6, 14), Side.TOP), restored.finish)
     }
 
     @Test

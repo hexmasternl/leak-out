@@ -7,9 +7,10 @@ sealed interface SolverResult {
      * inclusive, and holds a single cell when the two facing cells are the same. It includes the
      * level's mandatory sections; a mandatory cross appears twice, once per channel. A route
      * through a portal pair holds both portals, in flow order, between the two cells facing them:
-     * those are the only consecutive cells of the path that are not neighbours.
+     * those are the only consecutive cells of the path that are not neighbours. The path may run over
+     * leaky tiles; [leakFree] tells whether some route avoids every one of them.
      */
-    data class Solvable(val path: List<Position>) : SolverResult
+    data class Solvable(val path: List<Position>, val leakFree: Boolean = true) : SolverResult
 
     /** No route was found. [reason] names the endpoint or the mandatory section that could not be connected. */
     data class Unsolvable(val reason: String) : SolverResult
@@ -38,6 +39,9 @@ sealed interface SolverResult {
  * other, through the pair. Portals cannot carry a pipe themselves, and because a route never uses a
  * cell twice it passes each pair at most once. A mandatory channel may be entered or left through a
  * portal that faces it.
+ *
+ * Leaky tiles are ordinary free cells for the search. After a level is found solvable, the solver
+ * runs once more with every leaky tile treated as blocked to tell whether a leak-free route exists.
  */
 object LevelSolver {
     /**
@@ -47,6 +51,13 @@ object LevelSolver {
     const val MAX_SEARCH_WORK: Long = 10_000_000
 
     fun solve(level: Level): SolverResult {
+        val result = route(level)
+        if (result !is SolverResult.Solvable || level.leaky.isEmpty()) return result
+        val withoutLeaky = level.copy(blocked = level.blocked + level.leaky, leaky = emptyList())
+        return result.copy(leakFree = route(withoutLeaky) is SolverResult.Solvable)
+    }
+
+    private fun route(level: Level): SolverResult {
         unreachableEndpoint(level, level.start.facingCell, level.finish.facingCell)?.let { return it }
         unpassableMandatory(level)?.let { return it }
         return Search(level).run()

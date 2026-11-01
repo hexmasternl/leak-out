@@ -15,7 +15,7 @@
 
 ## 3. Solver
 
-- [ ] 3.1 Treat leaky tiles as free in `LevelSolver` and add `leakFree: Boolean` to `SolverResult.Solvable`, computed by a second solve with leaky tiles treated as blocked. Cover every `level-solvability` leaky scenario in `LevelSolverTest` (corridor through a leaky tile, detour, every route leaky, no leaky tiles) and confirm the 50 by 50 timing guard still passes with leaky tiles added. Run `./gradlew :core:test` and confirm it passes.
+- [x] 3.1 Treat leaky tiles as free in `LevelSolver` and add `leakFree: Boolean` to `SolverResult.Solvable`, computed by a second solve with leaky tiles treated as blocked. Cover every `level-solvability` leaky scenario in `LevelSolverTest` (corridor through a leaky tile, detour, every route leaky, no leaky tiles) and confirm the 50 by 50 timing guard still passes with leaky tiles added. Run `./gradlew :core:test` and confirm it passes.
 
 ## 4. Rendering, popup, HUD and accessibility
 

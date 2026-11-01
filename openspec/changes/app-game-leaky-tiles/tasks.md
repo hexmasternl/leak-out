@@ -37,13 +37,13 @@
 
 ## 7. Leaky tiles in levels 25 to 96
 
-- [ ] 7.1 Add a `BundledLevelsTest` check: levels 1 to 24 have no leaky tiles, level 25 has a leaky tile and a leak-free route, fewer than half of levels 25 to 96 have leaky tiles, and at least four levels from 49 without mandatory sections have a shortest route over a leaky tile that is shorter than their leak-free route.
-- [ ] 7.2 Update level 25 and about five more levels spread over 26 to 48 with one or two leaky tiles each, keeping a leak-free route on every one. Keep ids, names, endpoints and flow; retune the star thresholds as described in design.md.
-- [ ] 7.3 Update about twelve levels spread over 49 to 96, mostly without portals, with leaky tiles; design at least four of them as a shortcut over a leaky tile next to a longer leak-free way around. List the chosen levels in the PR description.
-- [ ] 7.4 Run `./gradlew :core:test` and confirm `BundledLevelsTest`, `LevelSolvabilityTest`, `HeadlessPlayTest`, `ThreeStarReachabilityTest` and the round-trip test pass, and that `git diff --stat app/src/app/src/main/assets/levels` only lists the updated levels (levels 1 to 24 and every level without leaky tiles byte-identical).
+- [x] 7.1 Add a `BundledLevelsTest` check: levels 1 to 24 have no leaky tiles, level 25 has a leaky tile and a leak-free route, fewer than half of levels 25 to 96 have leaky tiles, and at least four levels from 49 without mandatory sections have a shortest route over a leaky tile that is shorter than their leak-free route.
+- [x] 7.2 Update level 25 and about five more levels spread over 26 to 48 with one or two leaky tiles each, keeping a leak-free route on every one. Keep ids, names, endpoints and flow; retune the star thresholds as described in design.md.
+- [x] 7.3 Update about twelve levels spread over 49 to 96, mostly without portals, with leaky tiles; design at least four of them as a shortcut over a leaky tile next to a longer leak-free way around. List the chosen levels in the PR description.
+- [x] 7.4 Run `./gradlew :core:test` and confirm `BundledLevelsTest`, `LevelSolvabilityTest`, `HeadlessPlayTest`, `ThreeStarReachabilityTest` and the round-trip test pass, and that `git diff --stat app/src/app/src/main/assets/levels` only lists the updated levels (levels 1 to 24 and every level without leaky tiles byte-identical).
 
 ## 8. Instrumented tests and integration
 
-- [ ] 8.1 Add a `LeakyTilesShowcaseTest` instrumented test on level 25: the leaky tiles are shown and described, a section can be dropped on one, the liquid passes it with drops and a "−20" popup, the score goes down by 20, and the leaky tile tip is shown once.
+- [x] 8.1 Add a `LeakyTilesShowcaseTest` instrumented test on level 25: the leaky tiles are shown and described, a section can be dropped on one, the liquid passes it with drops and a "−20" popup, the score goes down by 20, and the leaky tile tip is shown once.
 - [ ] 8.2 Run `./gradlew :app:connectedDebugAndroidTest` for the affected instrumented tests only (`LeakyTilesShowcaseTest`, `PlayingFieldTest`, `PointsPopupTest`, `HudBarsTest`, `LevelCompleteTest` and the onboarding tests) on an emulator and confirm they pass.
 - [ ] 8.3 Run `openspec validate app-game-leaky-tiles --strict` and confirm the change is valid.

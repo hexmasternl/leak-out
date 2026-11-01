@@ -12,12 +12,12 @@
 
 ## 3. Bundled levels
 
-- [ ] 3.1 Redesign levels 55 to 64 to fit 25 by 15, keeping id, name and features; re-tune flow and stack; recalculate stars from free cells
-- [ ] 3.2 Redesign levels 65 to 74 the same way
-- [ ] 3.3 Redesign levels 75 to 85 the same way
-- [ ] 3.4 Redesign levels 86 to 96 the same way
-- [ ] 3.5 Add a `BundledLevelsTest` check that every bundled level is at most 25 by 15, and run `LevelSolvabilityTest` and `BundledLevelsTest` until every level parses, validates and is solvable
-- [ ] 3.6 Keep the existing portal rules in `BundledLevelsTest` passing (portals from level 49, on fewer than half of levels 50 to 96)
+- [x] 3.1 Redesign levels 55 to 64 to fit 25 by 15, keeping id, name and features; keep flow and stack; recalculate stars from free cells
+- [x] 3.2 Redesign levels 65 to 74 the same way
+- [x] 3.3 Redesign levels 75 to 85 the same way
+- [x] 3.4 Redesign levels 86 to 96 the same way
+- [x] 3.5 Add a `BundledLevelsTest` check that every bundled level is at most 25 by 15, and run `LevelSolvabilityTest` and `BundledLevelsTest` until every level parses, validates and is solvable
+- [x] 3.6 Keep the existing portal rules in `BundledLevelsTest` passing (portals from level 49, on fewer than half of levels 50 to 96)
 
 ## 4. Docs
 

@@ -8,7 +8,7 @@ Tracked in [#159](https://github.com/hexmasternl/leak-out/issues/159).
 
 - **BREAKING** The largest allowed grid drops from 50 by 50 to 25 columns by 15 rows. The smallest stays 4 by 4. Levels with more columns or rows fail validation.
 - The level designer's column stepper stops at 25 and its row stepper at 15. A design restored at a larger size (kept from before an update) is shrunk with the existing shrink rules.
-- The 42 bundled levels that are too large (levels 55 to 96; all of them have more than 15 rows, none has more than 25 columns) are redesigned to fit 25 by 15. Each keeps its id, name and features (mandatory sections, portals), its flow and stack are re-tuned for the smaller grid, and its star thresholds are recalculated from its free cells.
+- The 42 bundled levels that are too large (levels 55 to 96; all of them have more than 15 rows, none has more than 25 columns) are redesigned to fit 25 by 15. Each keeps its id, name and features (mandatory sections, portals), its flow and stack stay as they were, and its star thresholds are recalculated from its free cells.
 - Every redesigned level is checked to be solvable by the existing `LevelSolvabilityTest` and `BundledLevelsTest`.
 - `docs/level-format.md` documents the new limits.
 - Online top scores already submitted for the redesigned levels are kept as they are; scores set on the old, larger layouts may be out of line with the new ones. This is accepted.

@@ -313,18 +313,18 @@ class LevelSolverTest {
     }
 
     @Test
-    fun `a 50 by 50 level with 6 mandatory sections solves within the time budget`() {
-        val grid = GridSize(50, 50)
-        val start = at(0, 25, Side.RIGHT)
-        val finish = at(49, 24, Side.LEFT)
+    fun `a 25 by 15 level with 6 mandatory sections solves within the time budget`() {
+        val grid = GridSize(25, 15)
+        val start = at(0, 7, Side.RIGHT)
+        val finish = at(24, 6, Side.LEFT)
         val sections = listOf(
-            mandatory(10, 10, PipeSection.X), mandatory(40, 10, PipeSection.RES), mandatory(25, 25, PipeSection.X),
-            mandatory(10, 40, PipeSection.RES), mandatory(40, 40, PipeSection.X), mandatory(25, 5, PipeSection.RES),
+            mandatory(5, 3, PipeSection.X), mandatory(20, 3, PipeSection.RES), mandatory(12, 7, PipeSection.X),
+            mandatory(5, 11, PipeSection.RES), mandatory(20, 11, PipeSection.X), mandatory(12, 2, PipeSection.RES),
         )
         val protected = sections.flatMap { m -> listOf(m.position) + Side.entries.map(m.position::neighbour) }.toSet() +
             setOf(start.position, finish.position, start.facingCell, finish.facingCell)
         // A scattered pattern of blocked cells, about one in eleven.
-        val blocked = (0 until 50).flatMap { x -> (0 until 50).map { y -> Position(x, y) } }
+        val blocked = (0 until 25).flatMap { x -> (0 until 15).map { y -> Position(x, y) } }
             .filter { (it.x * 7 + it.y * 13) % 11 == 0 && it !in protected }
         val level = valid(grid = grid, start = start, finish = finish, blocked = blocked, mandatory = sections)
         assertEquals(emptyList(), LevelValidator.validate(level).errors)
@@ -337,16 +337,16 @@ class LevelSolverTest {
     }
 
     @Test
-    fun `an unsolvable 50 by 50 level with 6 mandatory sections gives up within the time budget`() {
+    fun `an unsolvable 25 by 15 level with 6 mandatory sections gives up within the time budget`() {
         // As above, but the finish is walled in behind its facing cell's neighbours, so the search runs out.
-        val grid = GridSize(50, 50)
-        val start = at(0, 25, Side.RIGHT)
-        val finish = at(49, 24, Side.LEFT)
+        val grid = GridSize(25, 15)
+        val start = at(0, 7, Side.RIGHT)
+        val finish = at(24, 6, Side.LEFT)
         val sections = listOf(
-            mandatory(10, 10, PipeSection.X), mandatory(40, 10, PipeSection.RES), mandatory(25, 25, PipeSection.X),
-            mandatory(10, 40, PipeSection.RES), mandatory(40, 40, PipeSection.X), mandatory(25, 5, PipeSection.RES),
+            mandatory(5, 3, PipeSection.X), mandatory(20, 3, PipeSection.RES), mandatory(12, 7, PipeSection.X),
+            mandatory(5, 11, PipeSection.RES), mandatory(20, 11, PipeSection.X), mandatory(12, 2, PipeSection.RES),
         )
-        val wall = listOf(Position(48, 23), Position(47, 24), Position(48, 25), Position(49, 23), Position(49, 25))
+        val wall = listOf(Position(23, 5), Position(22, 6), Position(23, 7), Position(24, 5), Position(24, 7))
         val level = valid(grid = grid, start = start, finish = finish, blocked = wall, mandatory = sections)
 
         val started = System.nanoTime()

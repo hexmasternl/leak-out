@@ -8,7 +8,7 @@ Every level is one JSON file in `src/app/src/main/assets/levels/`, named `level_
 {
   "id": 3,                          // required, positive, unique across all levels
   "name": "First Crossing",         // required, not blank; English only, never translated (players do not see it)
-  "grid": { "columns": 7, "rows": 9 },                // required, each 4 to 50
+  "grid": { "columns": 7, "rows": 9 },                // required, columns 4 to 25, rows 4 to 15
   "start":  { "x": 0, "y": 1, "openSide": "RIGHT" },  // required; liquid leaves through openSide
   "finish": { "x": 6, "y": 7, "openSide": "LEFT" },   // required; liquid must enter through openSide
   "blocked": [ { "x": 3, "y": 4 } ],                  // required; [] for none
@@ -200,7 +200,7 @@ With mandatory sections, the route must run through every mandatory channel, ent
 Debug builds have a level designer; release builds do not (it sits behind the `levelDesigner` feature flag, which is `BuildConfig.LEVEL_DESIGNER`: on in debug, off in release). Open it with the small pencil button in the top-right corner of the welcome screen.
 
 1. Start from a blank level (7 by 5, start on the left, finish on the right, id one past the bundled levels) or with **Start from…** from a copy of a bundled level.
-2. Lay out the grid. Set columns and rows (4 to 50) with the steppers; shrinking drops blocked cells outside the grid, moves the start or finish inside it and removes a portal pair with a portal outside it. Pick a tool and tap the grid: **Start** and **Finish** move an endpoint (keeping its open side), **Block** toggles a cell, and a drag paints every cell it passes; **Mandatory cross** and **Mandatory reservoir** place, change or remove a mandatory section. Set each endpoint's open side in the panel. None of these tools touches a portal.
+2. Lay out the grid. Set columns (4 to 25) and rows (4 to 15) with the steppers; shrinking drops blocked cells outside the grid, moves the start or finish inside it and removes a portal pair with a portal outside it. Pick a tool and tap the grid: **Start** and **Finish** move an endpoint (keeping its open side), **Block** toggles a cell, and a drag paints every cell it passes; **Mandatory cross** and **Mandatory reservoir** place, change or remove a mandatory section. Set each endpoint's open side in the panel. None of these tools touches a portal.
 3. Add portal pairs with the **Portal** tool. Tap a free cell to place a portal: the first tap starts a pair, the next completes it, and a new portal opens to the first of right, left, bottom and top that faces a cell inside the grid. Tap a portal to select it (framed in brass) and tap it again to deselect it; with a portal selected, tap a free cell to move it there. The panel then shows the selected portal's open side and **Remove pair**, which removes both portals; the pairs after it move up and take its number, colour and symbol. A drag only acts on the cell it starts on. At most three pairs; a pair with only one portal is reported as an error (`portals[i].b`) and keeps the design from being played or exported. Portals are not free cells, so each pair lowers the calculated star thresholds.
 4. Fill in the other fields: id, name, flow, stack weights and visible size, rules and stars. Text that is not a number is marked and does not change the level.
 5. Watch the status. It runs `LevelValidator` and then `LevelSolver` on every change, lists every error by field and frames the cells they are about. A solvable level shows the solver's route faintly on the grid.

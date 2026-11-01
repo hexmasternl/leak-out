@@ -21,7 +21,7 @@
 
 ## 4. Docs
 
-- [ ] 4.1 Update the grid range in `docs/level-format.md` (field reference and designer steps)
+- [x] 4.1 Update the grid range in `docs/level-format.md` (field reference and designer steps)
 
 ## 5. Verification
 

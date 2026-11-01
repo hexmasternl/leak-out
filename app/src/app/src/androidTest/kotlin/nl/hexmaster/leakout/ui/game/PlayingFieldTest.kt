@@ -563,6 +563,77 @@ class PlayingFieldTest {
         return c.red + c.green + c.blue
     }
 
+    // Leaky tiles (app-game-leaky-tiles). The default route runs down column 2; its first V at
+    // (2, 1) is on a leaky tile, and (0, 2) is a leaky tile off the route.
+
+    private val leakyOnRoute = Position(2, 1)
+    private val leakyOffRoute = Position(0, 2)
+
+    private fun showWithLeakyTiles() = show(FieldTest.level(leaky = listOf(leakyOnRoute, leakyOffRoute)))
+
+    /** The drip badge's drop at the top right of a leaky tile, in `leak.500`. */
+    private fun PixelMap.hasDripBadge(cell: Position): Boolean {
+        val rect = cellRectInField(cell)
+        val c = this[(rect.left + rect.width * 0.82f).toInt(), (rect.top + rect.height * 0.19f).toInt()]
+        return c.red > 0.8f && c.green < 0.5f
+    }
+
+    @Test
+    fun leakyTilesAreDrawnCrackedAndDampAndDescribed() {
+        showWithLeakyTiles()
+        compose.cellNode(leakyOffRoute)
+            .assert(SemanticsMatcher.expectValue(LeakyTile, LeakyWetness.DAMP))
+            .assertContentDescriptionEquals("Leaky tile, empty")
+        val plain = Position(1, 2)
+        compose.cellNode(plain).assert(SemanticsMatcher.keyNotDefined(LeakyTile)).assertContentDescriptionEquals("Empty")
+
+        val pixels = fieldPixels()
+        assertTrue("drip badge on the leaky tile", pixels.hasDripBadge(leakyOffRoute))
+        assertTrue("no drip badge on a plain tile", !pixels.hasDripBadge(plain))
+        // The damp stain low in the cell is bluer than the plain tile there.
+        val stain = { cell: Position -> cellRectInField(cell).let { pixels[(it.left + it.width * 0.5f).toInt(), (it.top + it.height * 0.72f).toInt()] } }
+        assertTrue("stain ${stain(leakyOffRoute)} against ${stain(plain)}", stain(leakyOffRoute).blue > stain(plain).blue + 0.03f)
+    }
+
+    @Test
+    fun aTapAndADropPlaceASectionOnALeakyTileThatStaysLeaky() {
+        showWithLeakyTiles()
+        tapCell(leakyOffRoute)
+        compose.cellNode(leakyOffRoute)
+            .assert(SemanticsMatcher.expectValue(FieldPipeSection, PipeSection.H))
+            .assert(SemanticsMatcher.expectValue(LeakyTile, LeakyWetness.DAMP))
+            .assertContentDescriptionEquals("Placed ${PipeSection.H.spoken} on a leaky tile")
+        assertTrue("badge stays visible on the section", fieldPixels().hasDripBadge(leakyOffRoute))
+
+        compose.dropOnCell(leakyOnRoute)
+        compose.cellNode(leakyOnRoute).assert(SemanticsMatcher.expectValue(FieldPipeSection, PipeSection.H))
+        compose.runOnIdle { assertEquals(2, session.state.board.pipes.size) }
+    }
+
+    @Test
+    fun liquidDripsWhilePassingALeakyTileAndLeavesAWetStainAndAPenalty() {
+        showWithLeakyTiles()
+        compose.runOnIdle {
+            for ((at, section) in FieldTest.ROUTE) assertTrue(session.placeSection(section, at))
+            session.endCountdown()
+            // 1 250 ms a cell: the start, (1, 0) and (2, 0) are behind the head, which is in (2, 1).
+            session.sendTick(4_400)
+        }
+        compose.waitForIdle()
+        compose.cellNode(leakyOnRoute)
+            .assert(SemanticsMatcher.expectValue(LeakyTile, LeakyWetness.DRIPPING))
+            .assert(SemanticsMatcher.expectValue(LiquidHead, true))
+            .assertContentDescriptionEquals("Placed ${PipeSection.V.spoken} on a leaky tile, filled")
+        compose.runOnIdle { assertEquals(10 + 15, session.state.score) }
+
+        compose.runOnIdle { session.sendTick(1_000) }
+        compose.waitForIdle()
+        compose.cellNode(leakyOnRoute)
+            .assert(SemanticsMatcher.expectValue(LeakyTile, LeakyWetness.WET))
+            .assert(SemanticsMatcher.expectValue(PointsPopupText, listOf("−20")))
+        compose.runOnIdle { assertEquals(10 + 15 - 20, session.state.score) }
+    }
+
     // Start valve and checkered finish (app-game-play-start-finish-design). The default test level
     // has its start on (0, 0) opening right and its finish on (3, 3) opening left.
 

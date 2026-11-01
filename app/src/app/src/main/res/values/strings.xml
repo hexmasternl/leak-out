@@ -34,6 +34,12 @@
     <string name="cell_placed">Placed %1$s</string>
     <!-- A placed pipe section the liquid has entered. %1$s: its name, one of the game_section_* strings. -->
     <string name="cell_placed_filled">Placed %1$s, filled</string>
+    <!-- An empty leaky tile: any section can go on it, but liquid passing it drains away and costs points. -->
+    <string name="cell_leaky_empty">Leaky tile, empty</string>
+    <!-- A pipe section the player placed on a leaky tile. %1$s: its name, one of the game_section_* strings. -->
+    <string name="cell_placed_leaky">Placed %1$s on a leaky tile</string>
+    <!-- A placed pipe section on a leaky tile that the liquid has entered. %1$s: its name, one of the game_section_* strings. -->
+    <string name="cell_placed_leaky_filled">Placed %1$s on a leaky tile, filled</string>
     <!-- A mandatory section the liquid has passed through. %1$s: its name, one of the game_section_* strings. -->
     <string name="cell_mandatory_used">Mandatory %1$s, used</string>
     <!-- A mandatory section the liquid still has to pass through. %1$s: its name, one of the game_section_* strings. -->
@@ -240,6 +246,12 @@
     <string name="tip_portal_text">Portals with the same colour belong together. Liquid that flows into either portal through its opening comes out of the other one, so a pair works both ways. Each pair can be used once. Portals are part of the level: they don\'t come from your stack and can\'t be replaced.</string>
     <!-- What the portal tip highlights, read after tip_highlighted: "Highlighted: the two portals of a pair". -->
     <string name="tip_portal_target">the two portals of a pair</string>
+    <!-- Title of the tip about leaky tiles: cracked, damp cells on the field that drain the liquid passing them. -->
+    <string name="tip_leaky_title">Leaky Tiles</string>
+    <!-- Tip about leaky tiles. %1$d: the points lost each time the liquid passes one, 20. A detour around a leaky tile may score more than the short way over it. -->
+    <string name="tip_leaky_text">You can place any section on a leaky tile, but the liquid that passes it drains away. Each time the liquid flows through a section on a leaky tile it scores nothing and costs you %1$d points, so a detour can be worth more.</string>
+    <!-- What the leaky tile tip highlights, read after tip_highlighted: "Highlighted: leaky tiles on the field". -->
+    <string name="tip_leaky_target">leaky tiles on the field</string>
 
     <!-- Level designer (debug builds only, behind FeatureFlags.levelDesigner). Developer-facing copy, so not translated. -->
     <string name="welcome_level_designer" translatable="false">Level designer</string>
@@ -248,6 +260,7 @@
     <string name="designer_status_solvable" translatable="false">Valid and solvable</string>
     <string name="designer_status_invalid" translatable="false">Invalid: %1$d problems</string>
     <string name="designer_status_unsolvable" translatable="false">Unsolvable</string>
+    <string name="designer_status_every_route_leaky" translatable="false">Note: every route crosses a leaky tile</string>
     <string name="designer_test_play" translatable="false">Test play</string>
     <string name="designer_export" translatable="false">Export</string>
     <string name="designer_start_from" translatable="false">Start from…</string>
@@ -262,7 +275,9 @@
     <string name="designer_tool_mandatory_cross" translatable="false">Mandatory cross</string>
     <string name="designer_tool_mandatory_reservoir" translatable="false">Mandatory reservoir</string>
     <string name="designer_tool_portal" translatable="false">Portal</string>
+    <string name="designer_tool_leaky" translatable="false">Leaky tile</string>
     <string name="designer_clear_blocked" translatable="false">Clear blocked</string>
+    <string name="designer_clear_leaky" translatable="false">Clear leaky</string>
     <string name="designer_section_grid" translatable="false">Grid</string>
     <string name="designer_columns" translatable="false">Columns</string>
     <string name="designer_rows" translatable="false">Rows</string>

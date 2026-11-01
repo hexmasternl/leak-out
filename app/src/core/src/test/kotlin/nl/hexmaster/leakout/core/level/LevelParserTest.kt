@@ -205,6 +205,7 @@ class LevelParserTest {
             level.mandatory,
         )
         assertEquals(listOf(TestLevels.pair(1, 6, Side.TOP, 5, 1, Side.BOTTOM)), level.portals)
+        assertEquals(listOf(Position(4, 6)), level.leaky)
     }
 
     @Test
@@ -247,6 +248,34 @@ class LevelParserTest {
         assertEquals("portals[0].a.openSide", error.field)
         assertTrue("'UP'" in error.message)
         assertTrue("BOTTOM" in error.message)
+    }
+
+    @Test
+    fun `level without a leaky field has no leaky tiles`() {
+        val level = parsed(TestLevels.minimalJson())
+        assertEquals(emptyList(), level.leaky)
+        assertEquals(false, level.isLeaky(Position(1, 1)))
+    }
+
+    @Test
+    fun `leaky tiles are parsed in authored order`() {
+        val level = parsed(TestLevels.minimalJson(extra = """, "leaky": [ { "x": 3, "y": 2 }, { "x": 1, "y": 0 } ]"""))
+        assertEquals(listOf(Position(3, 2), Position(1, 0)), level.leaky)
+        assertTrue(level.isLeaky(Position(3, 2)))
+        assertTrue(level.isLeaky(Position(1, 0)))
+        assertEquals(false, level.isLeaky(Position(2, 2)))
+    }
+
+    @Test
+    fun `missing coordinate in a leaky tile is named with its index`() {
+        val error = failed(TestLevels.minimalJson(extra = """, "leaky": [ { "x": 3 } ]"""))
+        assertEquals("leaky[0].y", error.field)
+    }
+
+    @Test
+    fun `unknown key in a leaky tile is named`() {
+        val error = failed(TestLevels.minimalJson(extra = """, "leaky": [ { "x": 3, "y": 2, "wet": true } ]"""))
+        assertEquals("leaky[0].wet", error.field)
     }
 
     @Test

@@ -17,19 +17,19 @@ See proposal.md for the motivation and specs/ for the behaviour. The parts of th
 **Goals:**
 - Leaky tiles as level data and one scoring rule, all in `core`, so every rule is JVM-unit-testable.
 - No change to the flow path, speed or route check, so `FlowStepRouteAgreementTest` keeps holding without new cases beyond leaky boards.
-- A chapter of 24 levels that the existing solver test guards.
+- Leaky tiles in a minority of the existing levels 25 to 96, guarded by the existing solver test and a new bundled-levels check.
 
 **Non-Goals:**
 - A liquid volume or level-wide reservoir that can run dry (out of scope in #138).
 - Leaky tiles that slow or pause the liquid.
 - A per-level penalty value. The penalty is one constant.
 - A new sound effect or haptic for a leak penalty. The existing award sound plays as it does now; see Open Questions.
-- Changing how chapters unlock or how the level library pages work.
+- A separate chapter of levels, or changing how chapters unlock or how the level library pages work.
 
 ## Decisions
 
 ### Level format: a top-level `leaky` array of cells
-`"leaky": [ { "x": 3, "y": 2 } ]`, optional, default `[]`, the same cell shape as `blocked`. It goes into `Level.leaky: List<Position>` with `Level.isLeaky(position)`. The validator checks inside the grid, not blocked, not start or finish, not a mandatory section and no duplicates, each error naming `leaky[i]`. `LevelWriter` writes it only when non-empty, so every bundled level written today stays byte-identical.
+`"leaky": [ { "x": 3, "y": 2 } ]`, optional, default `[]`, the same cell shape as `blocked`. It goes into `Level.leaky: List<Position>` with `Level.isLeaky(position)`. The validator checks inside the grid, not blocked, not start or finish, not a mandatory section, not a portal and no duplicates, each error naming `leaky[i]`. `LevelWriter` writes it only when non-empty, so every bundled level written today stays byte-identical.
 *Alternative:* a `cells` map with a kind per cell (`blocked`, `leaky`). Rejected: it would change the existing `blocked` field and every bundled level.
 *Alternative:* allow a mandatory section on a leaky tile. Rejected for now (see Open Questions): it doubles the cases in the designer and the tip for little puzzle value.
 
@@ -50,7 +50,7 @@ Leaky tiles are free for `LevelSolver`, so a level that is solvable today stays 
 *Alternative:* a weighted shortest-path that minimises leaky tiles. Rejected: more code than the designer note needs.
 
 ### Star thresholds without leaky tiles
-`Level.freeCells` keeps its meaning for the `WALL_TO_WALL` achievement (a leaky tile is still a cell a pipe can go on). A new `Level.scoringCells` (free cells minus leaky tiles) feeds `StarBenchmarks.forFreeCells` in `LevelDraft`. So a leaky tile never inflates the three-star target with points that cannot be earned on it.
+`Level.freeCells` keeps its meaning for the `WALL_TO_WALL` achievement (a leaky tile is still a cell a pipe can go on). A new `Level.scoringCells` (free cells minus leaky tiles; portals are already not free) feeds `StarBenchmarks.forFreeCells` in `LevelDraft`. So a leaky tile never inflates the three-star target with points that cannot be earned on it.
 
 ### Rendering
 - **Tile** (`docs/design-system.md` 6.2): the empty-cell fill and border, plus two or three crack strokes in `line.strong` at 70 %, a damp blob in `liquid.700` at 25 % and, top-right, a drip badge (a drop glyph in `leak.500` on `surface.deep`, the same size and place as the reservoir's "slow" badge). The badge is drawn above the pipe art so it stays visible on a placed section; the cracks and the blob are drawn under it.
@@ -59,27 +59,33 @@ Leaky tiles are free for `LevelSolver`, so a level that is solvable today stays 
 - **Semantics**: `CellSemantics` adds the leaky texts from string resources ("Leaky tile, empty", "… on a leaky tile").
 
 ### Onboarding
-A new `TipId.LEAKY_TILE` with its own seen flag in the settings store, triggered on level start like the mandatory section tip and highlighting every leaky tile. The order becomes intro, mandatory, leaky, cross, reservoir. Its texts go into the default string resources only, which is how every supported language is served.
+A new `TipId.LEAKY_TILE` with its own seen flag in the settings store, triggered on level start like the mandatory section tip and highlighting every leaky tile. The order becomes intro, mandatory, portal, leaky, cross, reservoir: board tips first, then stack tips, as the portal tip did. Its texts go into the default string resources only, which is how every supported language is served.
 
-### Chapter of levels
-24 new `level_NNN.json` files at the next free ids when the change is implemented (97 to 120 if this is the first #102 chapter to land). Difficulty rises over the page: the first levels have one leaky tile and an obvious detour; later levels mix in blocked cells, mandatory sections and finally routes where every path crosses a leaky tile. Star thresholds come from the designer's calculation (`scoringCells`), then are tuned by play-testing. `LevelSolvabilityTest`, `BundledLevelsTest` and the round-trip test cover them automatically.
+### Leaky tiles in levels 25 to 96
+No new chapter and no new level ids, following the portals precedent. The existing bundled levels from 25 onwards are updated, and only some of them:
+- Level 25 is the first level with a leaky tile, on or next to the obvious route with a short detour around it, so the tip and the first choice come together.
+- Up to level 48 leaky tiles appear occasionally (about one level in four), one or two per level, and every one of these levels has a leak-free route.
+- From level 49, leaky tiles also appear about one level in four, mostly on levels without portals so that two mechanics are not introduced at once. Several of these levels are built as a choice: a gap in a wall, or a short corridor, holds a leaky tile, and a longer way around has none. The shortest route then crosses a leaky tile while the solver still finds a leak-free route.
+- A level is updated by adding leaky tiles on free cells, or by turning a few blocked cells into a leaky gap; ids, names, endpoints and flow settings stay.
+Where a leaky tile changes the free cells of a level whose thresholds follow the designer's formula, the thresholds are recalculated from `scoringCells`; hand-tuned thresholds are lowered by the same amount, so three stars stay reachable on a leak-free route. Levels 1 to 24 and the later levels without leaky tiles stay byte-identical. `LevelSolvabilityTest`, `BundledLevelsTest` (with a new leaky-tile check) and the round-trip test cover the updated levels.
 
 ## Risks / Trade-offs
 
 - [A negative `Award.points` breaks code that assumes awards are positive, such as sounds, haptics or achievements that sum awards] → grep every `awards` and `points` use in app and core; add a unit test for the achievement rules with a negative award.
-- [Chapter ids clash with sibling #102 chapters landing in a different order] → the ids are chosen at implementation time from the last bundled level; the design does not fix them.
+- [Updating existing levels makes the change bigger to review than a separate chapter] → only a minority of levels change, each in its own commit, and levels without leaky tiles stay byte-identical.
+- [A leaky tile on a level that already has portals overloads the board] → prefer levels without portals; a level with both is kept to the last part of the range.
 - [The leak-free probe doubles solver time on crowded levels] → it only runs after a successful solve and shares the existing work bound; the 50 by 50 timing guard test covers it.
 - [Players read cracks as blocked] → the drip badge and the tip; the instrumented test checks a drop on a leaky tile works.
 
 ## Migration Plan
 
-No data migration. The `leaky` field is optional, the existing level files and saved history are not touched, and a new seen flag defaults to "not seen". Rollback is removing the chapter files and the field; no saved state depends on it.
+No data migration. The `leaky` field is optional, a level without it parses to the same `Level` as before, level ids do not change so saved history stays attached to the same levels, and a new seen flag defaults to "not seen". Rollback is reverting the change, which restores the old layouts of the updated levels; no saved state depends on it.
 
 ## Open Questions
 
 - **What does a leaky tile drain?** Points, time (the liquid pauses there) or a new liquid volume. *Recommended default:* points, as specified here: no section points and a 20-point penalty per pass. Time would overlap with the pump and reservoir mechanics, and a volume is out of scope.
 - **Can the score of an attempt go below zero?** *Recommended default:* the running score in the HUD may go below 0; the final total of a won attempt is clamped at 0 as it is today, so stars, history and online scores never see a negative value.
-- **Where does this chapter go in the chapter order?** The issue suggests after the valve (#136) and pump chapters. *Recommended default:* use the next free 24 ids when this change is implemented; the order is decided in #102.
+- **Where do leaky tiles appear?** *Decided by the maintainer:* occasionally in the existing levels from 25 onwards, and from 49 some levels offer a leaky shortcut next to a longer leak-free route. No separate chapter.
 - **Is 20 the right penalty?** *Recommended default:* 20, one constant (`Points.LEAKY_TILE_PENALTY`), retuned by play-testing the chapter without a spec change other than the number.
 - **May a mandatory section lie on a leaky tile?** *Recommended default:* no, the validator rejects it. It can be allowed later without changing the scoring rule.
 - **Should a penalty have its own sound or haptic?** *Recommended default:* no new asset; keep the existing award feedback. A dedicated drip sound can follow.

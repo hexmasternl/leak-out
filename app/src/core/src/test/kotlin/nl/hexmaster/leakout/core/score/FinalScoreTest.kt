@@ -35,6 +35,16 @@ class FinalScoreTest {
     }
 
     @Test
+    fun `negative earned points give a total of 0 and 0 stars`() {
+        val board = empty.pipe(1, 1, PipeSection.H, entered = true)
+        val score = FinalScore.of(-15, board)
+        assertEquals(-15, score.earned)
+        assertEquals(0, score.penalty)
+        assertEquals(0, score.total)
+        assertEquals(0, StarBenchmarks(100, 200, 350).starsFor(score.total))
+    }
+
+    @Test
     fun `mandatory sections are never unused`() {
         val board = empty
             .pipe(1, 1, PipeSection.H, entered = true)

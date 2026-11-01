@@ -47,6 +47,7 @@ internal object FieldTest {
         cellsPerSecond: Double = 0.8,
         stars: StarBenchmarks = StarBenchmarks(100, 200, 350),
         mandatory: List<MandatorySection> = emptyList(),
+        leaky: List<Position> = emptyList(),
     ): Level = Level(
         id = id,
         name = "Test",
@@ -59,6 +60,7 @@ internal object FieldTest {
         rules = rules,
         stars = stars,
         mandatory = mandatory,
+        leaky = leaky,
     )
 
     /** The 16 × 12 level used for pan and zoom, with the start on the left edge halfway down. */

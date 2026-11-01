@@ -155,6 +155,10 @@ var SemanticsPropertyReceiver.missedMandatory by MissedMandatory
 val PortalTile = SemanticsPropertyKey<PortalSymbol>("PortalTile")
 var SemanticsPropertyReceiver.portalTile by PortalTile
 
+/** Semantics on a leaky tile: how wet it looks, including whether drops are falling. A test hook only. */
+val LeakyTile = SemanticsPropertyKey<LeakyWetness>("LeakyTile")
+var SemanticsPropertyReceiver.leakyTile by LeakyTile
+
 /**
  * The screen state of the playing field: the viewport and where the field sits on the screen.
  * Created again for every attempt, so a restart goes back to the starting view.
@@ -276,6 +280,11 @@ fun rememberPlayingFieldState(grid: GridSize, start: Position): PlayingFieldStat
  * with a checker. The liquid comes out of the valve into its stub. The valve glow pulses until the
  * liquid flows and the finish glow until the win or loss, timed by [nowMs]; after a loss the finish
  * glow is steady, and with [reducedMotion] both are.
+ *
+ * The [leaky] tiles are drawn cracked and damp with a drip badge (design system 6.2), under and
+ * around any section on them. While the head is in a section on a leaky tile drops fall from it on
+ * the game clock, and once the liquid has passed the tile keeps a wet stain; with [reducedMotion]
+ * there are no drops and the stain shows as soon as the liquid enters ([LeakyTileStyle]).
  */
 @Composable
 fun PlayingField(
@@ -284,6 +293,7 @@ fun PlayingField(
     highlighted: Position?,
     enabled: Boolean,
     modifier: Modifier = Modifier,
+    leaky: Set<Position> = emptySet(),
     awards: List<Award> = emptyList(),
     nowMs: () -> Long = { 0L },
     leakAt: Position? = null,
@@ -352,10 +362,11 @@ fun PlayingField(
                     else -> emptyMap()
                 }
                 val rect = viewport.cellRect(position)
+                val wetness = if (position in leaky) LeakyTileStyle.wetness(cell, position, flowing?.position, reducedMotion) else null
                 if (pop != null && cell is Cell.Pipe && position == landing?.at) {
-                    scale(pop, pivot = rect.center) { drawCell(cell, rect, pipes, scratch, fills, glows) }
+                    scale(pop, pivot = rect.center) { drawCell(cell, rect, pipes, scratch, fills, glows, wetness, now) }
                 } else {
-                    drawCell(cell, rect, pipes, scratch, fills, glows)
+                    drawCell(cell, rect, pipes, scratch, fills, glows, wetness, now)
                 }
             }
             replacement?.let { drawReplacement(it, viewport.cellRect(it.at), replacementFrame(it, now), pipes, scratch) }
@@ -379,6 +390,8 @@ fun PlayingField(
             valveGlow = valveGlow,
             finishGlow = finishGlow,
             flow = { currentFlow() },
+            leaky = leaky,
+            reducedMotion = reducedMotion,
         )
     }
 }
@@ -402,6 +415,8 @@ private fun CellSemantics(
     valveGlow: State<Float>,
     finishGlow: State<Float>,
     flow: () -> FlowState?,
+    leaky: Set<Position>,
+    reducedMotion: Boolean,
 ) {
     val density = LocalDensity.current
     val resources = LocalResources.current
@@ -410,7 +425,8 @@ private fun CellSemantics(
     val filledByCell = filled.groupBy({ it.position }, { it.channel })
     for (position in viewport.visibleCells()) {
         val rect = viewport.cellRect(position)
-        val description = CellDescription.text(CellDescription.of(board[position], position, filled)) { id, args ->
+        val isLeaky = position in leaky
+        val description = CellDescription.text(CellDescription.of(board[position], position, filled, isLeaky)) { id, args ->
             if (args.isEmpty()) resources.getString(id) else resources.getString(id, *args)
         }
         val mandatory = (board[position] as? Cell.Pipe)?.mandatory == true
@@ -438,6 +454,7 @@ private fun CellSemantics(
             position, rect, cellDp, description, isHighlighted, texts, leakSide, isHead, channels, flashing, section, isReplacing,
             glow, startFilled, mandatory, isMissed = position in missed,
             portal = (board[position] as? Cell.Portal)?.let { PortalStyle.symbol(it.pair) },
+            leaky = if (isLeaky) LeakyTileStyle.wetness(board[position], position, head, reducedMotion) else null,
         )
     }
 }
@@ -465,6 +482,7 @@ private fun CellNode(
     mandatory: Boolean,
     isMissed: Boolean,
     portal: PortalSymbol?,
+    leaky: LeakyWetness?,
 ) {
     val glowAlpha = glow?.value
     val filledFraction = startFilled?.value
@@ -488,6 +506,7 @@ private fun CellNode(
                 if (mandatory) mandatoryTile = true
                 if (isMissed) missedMandatory = true
                 if (portal != null) portalTile = portal
+                if (leaky != null) leakyTile = leaky
             },
     )
 }
@@ -546,11 +565,19 @@ private fun DrawScope.drawCell(
     scratch: LiquidScratch,
     fills: Map<String, ChannelFill>,
     glows: EndpointGlows,
+    leaky: LeakyWetness? = null,
+    nowMs: Long = 0L,
 ) {
     val inset = rect.deflate(rect.width * 0.04f)
     val corner = CornerRadius(rect.width * 0.14f)
     when (cell) {
-        Cell.Empty -> drawRoundRect(LeakOutColors.SurfaceCard.copy(alpha = 0.06f), inset.topLeft, inset.size, corner)
+        Cell.Empty -> {
+            drawRoundRect(LeakOutColors.SurfaceCard.copy(alpha = 0.06f), inset.topLeft, inset.size, corner)
+            if (leaky != null) {
+                drawLeakyTile(rect, leaky)
+                drawDripBadge(rect)
+            }
+        }
         Cell.Blocked -> {
             drawRoundRect(LeakOutColors.Steel700, inset.topLeft, inset.size, corner)
             drawRoundRect(LeakOutColors.Steel900, inset.topLeft, inset.size, corner, style = Stroke(rect.width * 0.06f))
@@ -579,10 +606,13 @@ private fun DrawScope.drawCell(
             } else {
                 drawRoundRect(LeakOutColors.SurfaceCard.copy(alpha = 0.06f), inset.topLeft, inset.size, corner)
             }
+            if (leaky != null) drawLeakyTile(rect, leaky)
             // Clipped to the cell so no stroke cap or shadow reaches the neighbour; channels end on the edge.
             clipRect(rect.left, rect.top, rect.right, rect.bottom) {
                 drawPipe(pipes.prepared(cell.section), rect, fills, scratch)
+                if (leaky == LeakyWetness.DRIPPING) drawDrips(rect, nowMs)
             }
+            if (leaky != null) drawDripBadge(rect)
         }
         is Cell.Portal -> {
             drawRoundRect(LeakOutColors.SurfaceCard.copy(alpha = 0.06f), inset.topLeft, inset.size, corner)
@@ -596,8 +626,69 @@ private fun DrawScope.drawCell(
  * [cell] as the field draws it before the liquid starts: no liquid, no endpoint glow and a still
  * portal swirl. The level designer draws its grid with it, so a design looks like the game.
  */
-internal fun DrawScope.drawStillCell(cell: Cell, rect: Rect, pipes: PipeArtLibrary, scratch: LiquidScratch) =
-    drawCell(cell, rect, pipes, scratch, emptyMap(), EndpointGlows(valve = 0f, finish = 0f, reachPx = 0f, portalSwirl = 0f))
+internal fun DrawScope.drawStillCell(cell: Cell, rect: Rect, pipes: PipeArtLibrary, scratch: LiquidScratch, leaky: Boolean = false) =
+    drawCell(
+        cell, rect, pipes, scratch, emptyMap(), EndpointGlows(valve = 0f, finish = 0f, reachPx = 0f, portalSwirl = 0f),
+        leaky = if (leaky) LeakyWetness.DAMP else null,
+    )
+
+/**
+ * The cracks and the stain of a leaky tile (design system 6.2), drawn under any pipe art: three
+ * `line.strong` crack strokes from the corners and edges towards the centre, and a `liquid.700`
+ * blob low in the cell, damp or, once the liquid has passed, wet.
+ */
+private fun DrawScope.drawLeakyTile(rect: Rect, wetness: LeakyWetness) {
+    val c = rect.width
+    fun at(x: Float, y: Float) = Offset(rect.left + x * c, rect.top + y * c)
+    val blob = LeakOutColors.Liquid700.copy(alpha = LeakyTileStyle.stainAlpha(wetness))
+    drawOval(blob, at(0.18f, 0.56f), Size(0.64f * c, 0.30f * c))
+    drawOval(blob, at(0.30f, 0.48f), Size(0.30f * c, 0.20f * c))
+    val crack = LeakOutColors.LineStrong.copy(alpha = LeakOutColors.LineStrong.alpha * 0.7f)
+    val width = 0.025f * c
+    val cracks = listOf(
+        listOf(at(0.10f, 0.14f), at(0.22f, 0.26f), at(0.20f, 0.36f), at(0.31f, 0.44f)),
+        listOf(at(0.90f, 0.82f), at(0.78f, 0.74f), at(0.80f, 0.64f), at(0.68f, 0.58f)),
+        listOf(at(0.12f, 0.88f), at(0.24f, 0.80f), at(0.34f, 0.84f)),
+    )
+    for (line in cracks) for ((from, to) in line.zipWithNext()) drawLine(crack, from, to, width, StrokeCap.Round)
+}
+
+/**
+ * The drip badge of a leaky tile, at the top right like the reservoir's "slow" badge: a
+ * `surface.deep` disc with a `leak.500` drop. Drawn above the pipe art so it stays visible on a section.
+ */
+private fun DrawScope.drawDripBadge(rect: Rect) {
+    val c = rect.width
+    val centre = Offset(rect.left + 0.82f * c, rect.top + 0.18f * c)
+    drawCircle(LeakOutColors.SurfaceDeep, 0.12f * c, centre)
+    drawDrop(centre.copy(y = centre.y + 0.01f * c), 0.075f * c, LeakOutColors.Leak500)
+}
+
+/**
+ * The drops falling from the bore of a section on a leaky tile to the cell's bottom edge
+ * (design system 6.5), timed by the game clock [nowMs].
+ */
+private fun DrawScope.drawDrips(rect: Rect, nowMs: Long) {
+    val c = rect.width
+    val xs = floatArrayOf(0.40f, 0.56f, 0.47f)
+    LeakyTileStyle.drops(nowMs).forEachIndexed { index, fall ->
+        val y = rect.top + (0.56f + fall * 0.40f) * c
+        val alpha = 1f - fall * 0.6f
+        drawDrop(Offset(rect.left + xs[index] * c, y), 0.045f * c, LeakOutColors.Liquid500.copy(alpha = alpha))
+    }
+}
+
+/** A drop of [size] (half its width) with its round bottom centred on [centre] and its tip above. */
+private fun DrawScope.drawDrop(centre: Offset, size: Float, color: Color) {
+    val drop = Path().apply {
+        moveTo(centre.x, centre.y - size * 2f)
+        cubicTo(centre.x + size * 0.4f, centre.y - size, centre.x + size, centre.y - size * 0.4f, centre.x + size, centre.y)
+        arcTo(Rect(centre, size), 0f, 180f, false)
+        cubicTo(centre.x - size, centre.y - size * 0.4f, centre.x - size * 0.4f, centre.y - size, centre.x, centre.y - size * 2f)
+        close()
+    }
+    drawPath(drop, color)
+}
 
 /**
  * The glow alphas of this frame, how far past the wheel or ring the glow reaches, in pixels, and
@@ -887,8 +978,8 @@ private class PopupTextCache(private val textMeasurer: TextMeasurer) {
 }
 
 /**
- * "+N" for every popup whose tile touches the field, as [PopupStyle] describes: Fredoka bold at a
- * third of a tile, a liquid-glow halo under an opaque light fill, centred on the tile and
+ * "+N" (or "−20" for a leak penalty) for every popup whose tile touches the field, as [PopupStyle]
+ * describes: Fredoka bold at a third of a tile, a liquid-glow (or `leak.500`) halo under an opaque light fill, centred on the tile and
  * lifted by its rise. Off-field popups are skipped but keep their timing, since the age comes from
  * [nowMs].
  */
@@ -905,7 +996,8 @@ private fun DrawScope.drawPopups(popups: List<Award>, nowMs: Long, viewport: Fie
         val center = rect.center - Offset(0f, frame.rise * viewport.cellPx)
         val topLeft = center - Offset(layout.size.width / 2f, layout.size.height / 2f)
         scale(frame.scale, pivot = center) {
-            drawText(layout, PopupStyle.glow, topLeft, alpha = frame.alpha, shadow = Shadow(PopupStyle.glowColor(frame.alpha), Offset.Zero, glowRadius))
+            val glow = PopupStyle.glowFor(popup.points)
+            drawText(layout, glow, topLeft, alpha = frame.alpha, shadow = Shadow(PopupStyle.glowColor(frame.alpha, popup.points), Offset.Zero, glowRadius))
             drawText(layout, PopupStyle.fill, topLeft, alpha = frame.alpha)
         }
     }

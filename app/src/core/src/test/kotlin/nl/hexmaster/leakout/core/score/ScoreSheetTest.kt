@@ -54,4 +54,45 @@ class ScoreSheetTest {
         original.award(Position(0, 0), PipeSection.RES)
         assertEquals(ScoreSheet(), original)
     }
+
+    @Test
+    fun `a straight, a corner and a reservoir on a leaky tile each cost 20`() {
+        for (section in listOf(PipeSection.H, PipeSection.RB, PipeSection.RES)) {
+            val award = ScoreSheet(total = 40).award(Position(2, 2), section, leaky = true)
+            assertEquals(-Points.LEAKY_TILE_PENALTY, award.points, "$section")
+            assertEquals(20, award.sheet.total, "$section")
+        }
+    }
+
+    @Test
+    fun `a cross on a leaky tile passed twice costs 20 twice`() {
+        val at = Position(3, 3)
+        val first = ScoreSheet(total = 100).award(at, PipeSection.X, leaky = true)
+        val second = first.sheet.award(at, PipeSection.X, leaky = true)
+        assertEquals(listOf(-20, -20), listOf(first.points, second.points))
+        assertEquals(80, first.sheet.total)
+        assertEquals(60, second.sheet.total)
+        assertEquals(2, second.sheet.passes[at])
+    }
+
+    @Test
+    fun `a route over a leaky corner scores 30`() {
+        val route = listOf(
+            Triple(Position(1, 0), PipeSection.H, false),
+            Triple(Position(2, 0), PipeSection.LB, false),
+            Triple(Position(2, 1), PipeSection.V, false),
+            Triple(Position(2, 2), PipeSection.RT, true),
+            Triple(Position(3, 2), PipeSection.LT, false),
+        )
+        val sheet = route.fold(ScoreSheet()) { sheet, (at, section, leaky) -> sheet.award(at, section, leaky).sheet }
+        assertEquals(30, sheet.total)
+    }
+
+    @Test
+    fun `leak penalties take the total below 0`() {
+        val first = ScoreSheet().award(Position(1, 0), PipeSection.H, leaky = true)
+        val second = first.sheet.award(Position(2, 0), PipeSection.H, leaky = true)
+        assertEquals(-20, first.sheet.total)
+        assertEquals(-40, second.sheet.total)
+    }
 }

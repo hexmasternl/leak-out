@@ -42,6 +42,23 @@ class PointsPopupTest {
 
     private lateinit var session: GameSession
 
+    // app-game-leaky-tiles 4.3
+    @Test
+    fun aStraightOnALeakyTileShowsMinus20AndTakesItOffTheScore() {
+        val straight = Position(1, 0)
+        show(FieldTest.level(cellsPerSecond = 1.0, leaky = listOf(straight)))
+        compose.runOnIdle {
+            assertTrue(session.placeSection(PipeSection.H, straight))
+            assertTrue(session.placeSection(PipeSection.LB, Position(2, 0)))
+        }
+        compose.runOnIdle { session.endCountdown() }
+        tick(1_000) // through the start
+        tick(1_000) // the liquid leaves the straight on the leaky tile
+
+        assertPopups(straight, "−20")
+        compose.onNodeWithTag(HudTags.SCORE).assertScore("−20")
+    }
+
     // 6.1
     @Test
     fun cornerExitShowsPlus15AndTheHudScoreThenThePopupGoes() {

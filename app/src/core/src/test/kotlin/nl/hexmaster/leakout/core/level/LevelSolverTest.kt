@@ -53,6 +53,54 @@ class LevelSolverTest {
         assertTrue("finish" in result.reason, result.reason)
     }
 
+    // Leaky tiles. A 6 by 4 grid, start (0, 1) open right, finish (5, 1) open left.
+
+    private val leakyGrid = GridSize(6, 4)
+    private val leakyStart = at(0, 1, Side.RIGHT)
+    private val leakyFinish = at(5, 1, Side.LEFT)
+
+    private fun leakyLevel(blocked: List<Position>, leaky: List<Position>) =
+        valid(grid = leakyGrid, start = leakyStart, finish = leakyFinish, blocked = blocked, leaky = leaky)
+
+    @Test
+    fun `the only route through a leaky tile is solvable without a leak-free route`() {
+        // Row 1 is the only open corridor, and (2, 1) in it is leaky.
+        val corridor = (1..4).map { Position(it, 1) }.toSet()
+        val level = leakyLevel(wallExcept(leakyGrid, leakyStart, leakyFinish, corridor), listOf(Position(2, 1)))
+        val result = solvable(level)
+        assertEquals(corridor.toList(), result.path)
+        assertEquals(false, result.leakFree)
+    }
+
+    @Test
+    fun `a leaky tile on the shortest route with a detour around it`() {
+        val level = leakyLevel(blocked = emptyList(), leaky = listOf(Position(2, 1)))
+        val result = solvable(level)
+        assertEquals(true, result.leakFree)
+        // The search treats the leaky tile as free, so the shortest route still runs straight over it.
+        assertEquals((1..4).map { Position(it, 1) }, result.path)
+    }
+
+    @Test
+    fun `a leaky facing cell leaves no leak-free route`() {
+        val result = solvable(leakyLevel(blocked = emptyList(), leaky = listOf(Position(1, 1))))
+        assertEquals(false, result.leakFree)
+    }
+
+    @Test
+    fun `every route crossing a leaky tile leaves no leak-free route`() {
+        // A wall in column 3 with a gap at (3, 2), and that gap is leaky.
+        val wall = (0 until 4).map { Position(3, it) } - Position(3, 2)
+        val result = solvable(leakyLevel(blocked = wall, leaky = listOf(Position(3, 2))))
+        assertTrue(Position(3, 2) in result.path)
+        assertEquals(false, result.leakFree)
+    }
+
+    @Test
+    fun `a level without leaky tiles is leak-free`() {
+        assertEquals(true, solvable(leakyLevel(blocked = emptyList(), leaky = emptyList())).leakFree)
+    }
+
     @Test
     fun `shared facing cell is solvable`() {
         val start = at(2, 1, Side.BOTTOM)
@@ -334,6 +382,30 @@ class LevelSolverTest {
         val elapsedMs = (System.nanoTime() - started) / 1_000_000
         assertRoute(level, path)
         assertTrue(elapsedMs < 2_000, "solving took $elapsedMs ms")
+    }
+
+    @Test
+    fun `a 25 by 15 level with 6 mandatory sections and leaky tiles solves both ways within the time budget`() {
+        val grid = GridSize(25, 15)
+        val start = at(0, 7, Side.RIGHT)
+        val finish = at(24, 6, Side.LEFT)
+        val sections = listOf(
+            mandatory(5, 3, PipeSection.X), mandatory(20, 3, PipeSection.RES), mandatory(12, 7, PipeSection.X),
+            mandatory(5, 11, PipeSection.RES), mandatory(20, 11, PipeSection.X), mandatory(12, 2, PipeSection.RES),
+        )
+        val protected = sections.flatMap { m -> listOf(m.position) + Side.entries.map(m.position::neighbour) }.toSet() +
+            setOf(start.position, finish.position, start.facingCell, finish.facingCell)
+        val cells = (0 until 25).flatMap { x -> (0 until 15).map { y -> Position(x, y) } }.filter { it !in protected }
+        val blocked = cells.filter { (it.x * 7 + it.y * 13) % 11 == 0 }
+        val leaky = cells.filter { (it.x * 5 + it.y * 3) % 13 == 0 && it !in blocked }
+        val level = valid(grid = grid, start = start, finish = finish, blocked = blocked, mandatory = sections, leaky = leaky)
+        assertEquals(emptyList(), LevelValidator.validate(level).errors)
+
+        val started = System.nanoTime()
+        val result = solvable(level)
+        val elapsedMs = (System.nanoTime() - started) / 1_000_000
+        assertRoute(level, result.path)
+        assertTrue(elapsedMs < 4_000, "solving took $elapsedMs ms")
     }
 
     @Test

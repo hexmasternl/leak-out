@@ -88,6 +88,18 @@ class PointsPopupTest {
     }
 
     @Test
+    fun `a leak penalty has a real minus sign`() {
+        assertEquals("−20", PointsFormat.text(-20))
+    }
+
+    @Test
+    fun `a leak penalty glows in leak 500`() {
+        assertEquals(LeakOutColors.Leak500, PopupStyle.glowFor(-20))
+        assertEquals(LeakOutColors.LiquidGlow, PopupStyle.glowFor(15))
+        assertEquals(LeakOutColors.Leak500.copy(alpha = 0.7f), PopupStyle.glowColor(1f, points = -20))
+    }
+
+    @Test
     fun `popup style uses the design-system tokens`() {
         assertEquals(0.33f, PopupStyle.TEXT_FRACTION, 1e-6f)
         assertEquals(LeakOutColors.TextPrimary, PopupStyle.fill)

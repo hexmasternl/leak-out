@@ -21,6 +21,10 @@ class CellDescriptionTest {
         R.string.cell_finish to "Finish",
         R.string.cell_placed to "Placed %1\$s",
         R.string.cell_placed_filled to "Placed %1\$s, filled",
+        R.string.cell_leaky_empty to "Leaky tile, empty",
+        R.string.cell_placed_leaky to "Placed %1\$s on a leaky tile",
+        R.string.cell_placed_leaky_filled to "Placed %1\$s on a leaky tile, filled",
+        R.string.game_section_rb to "Right-bottom corner",
         R.string.cell_mandatory_used to "Mandatory %1\$s, used",
         R.string.cell_mandatory_unused to "Mandatory %1\$s, not used yet",
         R.string.game_section_h to "Horizontal straight",
@@ -28,8 +32,18 @@ class CellDescriptionTest {
         R.string.game_section_res to "Reservoir",
     )
 
-    private fun spoken(cell: Cell, filled: Set<ChannelUse> = emptySet()): String =
-        CellDescription.text(CellDescription.of(cell, at, filled)) { id, args -> english.getValue(id).format(*args) }
+    private fun spoken(cell: Cell, filled: Set<ChannelUse> = emptySet(), leaky: Boolean = false): String =
+        CellDescription.text(CellDescription.of(cell, at, filled, leaky)) { id, args -> english.getValue(id).format(*args) }
+
+    @Test
+    fun `a leaky tile says it is leaky, empty or under a section`() {
+        assertEquals("Leaky tile, empty", spoken(Cell.Empty, leaky = true))
+        assertEquals("Placed Right-bottom corner on a leaky tile", spoken(Cell.Pipe(PipeSection.RB), leaky = true))
+        assertEquals(
+            "Placed Right-bottom corner on a leaky tile, filled",
+            spoken(Cell.Pipe(PipeSection.RB, liquidEntered = true), leaky = true),
+        )
+    }
 
     @Test
     fun `cells without a section`() {

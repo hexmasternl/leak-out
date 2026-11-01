@@ -43,8 +43,9 @@ class FlowStepRouteAgreementTest {
         blocked: List<Position> = emptyList(),
         mandatory: List<MandatorySection> = emptyList(),
         portals: List<PortalPair> = emptyList(),
+        leaky: List<Position> = emptyList(),
     ): Level = TestLevels.valid(
-        grid = GridSize(5, 5), start = start, finish = finish, blocked = blocked, mandatory = mandatory, portals = portals,
+        grid = GridSize(5, 5), start = start, finish = finish, blocked = blocked, mandatory = mandatory, portals = portals, leaky = leaky,
     )
 
     /** Portal a at (2, 1) open to the left, next to the start's first tile; portal b at (3, 2) open to the left. */
@@ -73,6 +74,13 @@ class FlowStepRouteAgreementTest {
             listOf(p(1, 1) to H, p(2, 2) to RB),
         ),
         Case("straight and corner", level(), listOf(p(1, 1) to H, p(2, 1) to LB, p(2, 2) to V)),
+        Case("over two leaky tiles", level(leaky = listOf(p(1, 1), p(2, 2))), listOf(p(1, 1) to H, p(2, 1) to LB, p(2, 2) to V)),
+        Case("leaky tile into an empty tile", level(leaky = listOf(p(1, 1), p(2, 1))), listOf(p(1, 1) to H)),
+        Case(
+            "cross on a leaky tile",
+            level(start = Endpoint(p(0, 2), Side.RIGHT), finish = Endpoint(p(2, 4), Side.TOP), leaky = listOf(p(2, 2))),
+            listOf(p(1, 2) to H, p(2, 2) to X, p(3, 2) to LT, p(3, 1) to LB, p(2, 1) to RB, p(2, 3) to V),
+        ),
         Case("empty tile", level(), listOf(p(1, 1) to H)),
         Case("nothing placed", level(), emptyList()),
         Case("blocked tile", level(blocked = listOf(p(2, 1))), listOf(p(1, 1) to H)),

@@ -2,11 +2,11 @@
 
 ## Why
 
-After 96 levels the board only knows free and blocked cells, so the best route is almost always the one that fits the time. A leaky tile is a third kind of cell: a pipe can go on it, but liquid that passes it drains away and costs points. That makes the player weigh a short route over a leaky tile against a longer, safer detour. This change is one of the seven mechanics split out of [#102](https://github.com/hexmasternl/leak-out/issues/102), and it brings its own chapter of 24 levels (one level library page). Tracked in [#138](https://github.com/hexmasternl/leak-out/issues/138).
+After 96 levels the board only knows free and blocked cells, so the best route is almost always the one that fits the time. A leaky tile is a third kind of cell: a pipe can go on it, but liquid that passes it drains away and costs points. That makes the player weigh a short route over a leaky tile against a longer, safer detour. This change is one of the seven mechanics split out of [#102](https://github.com/hexmasternl/leak-out/issues/102). Like portals, and unlike the chapter-per-mechanic plan of #102, leaky tiles do not get a chapter of their own: the maintainer decided that leaky tiles appear occasionally from level 25 onwards, and that from level 49 some levels offer a shortcut over a leaky tile next to a longer, leak-free way around. Tracked in [#138](https://github.com/hexmasternl/leak-out/issues/138).
 
 ## What Changes
 
-- A level can list **leaky tiles** in a new optional `leaky` array of cells. A leaky tile lies inside the grid, is not blocked, not the start or finish and not a mandatory section, and is listed only once.
+- A level can list **leaky tiles** in a new optional `leaky` array of cells. A leaky tile lies inside the grid, is not blocked, not the start or finish, not a mandatory section and not a portal, and is listed only once.
 - Any section can be placed on a leaky tile, by drag or tap, under the normal placement and replace rules.
 - Each time the liquid exits a section on a leaky tile, that pass scores **no section points** and costs a fixed **leak penalty of 20 points** instead. A cross on a leaky tile passed twice costs the penalty twice. The points popup shows "−20" in the leak colour.
 - The running score of an attempt may go below 0. The final total of a won attempt stays at 0 or above, as it does today.
@@ -15,7 +15,7 @@ After 96 levels the board only knows free and blocked cells, so the best route i
 - `LevelSolver` treats leaky tiles as free cells and also reports whether a route exists that avoids every leaky tile. The level designer shows that as a note, not as an error.
 - The level designer gets a Leaky tile tool, writes the `leaky` field on export, and leaves leaky tiles out of the free cells it uses for the star thresholds.
 - A one-time **leaky tile tip** explains the mechanic the first time a level with leaky tiles starts.
-- A new chapter of **24 bundled levels** introduces leaky tiles. Each passes the solver check. Levels 1 to 96, their scores and saved progress do not change.
+- Level 25 becomes the first level with a leaky tile. From there on, leaky tiles are added occasionally to the bundled levels 25 to 96: a minority of them. From level 49 onwards, several of those levels are designed so that the shortest route crosses a leaky tile and a longer route avoids every leaky tile. Every updated level passes the solver check. Levels 1 to 24, and later levels that get no leaky tile, do not change; no level is added or renumbered, and saved progress is kept.
 
 Related changes from #102: fixed pipes (#135) lay the "placed by the level" groundwork that valves (#136) and portals (#140) may reuse. Leaky tiles do not depend on it: a leaky tile is a cell property, not a pre-placed section. The order of the chapters is still open in #102.
 
@@ -41,6 +41,6 @@ Related changes from #102: fixed pipes (#135) lay the "placed by the level" grou
 - `core/level`: `Level`, `LevelDto`, `LevelParser`, `LevelValidator`, `LevelWriter`, `LevelSolver`, `LevelDraft`, `StarBenchmarks`.
 - `core/score` and `core/engine`: `Points`, `ScoreSheet`, `FlowSimulation`, `Award` (negative points).
 - `app`: playing field drawing and cell semantics, points popup, HUD score bar with a negative score, the onboarding tip and its seen flag in settings, the level designer, string resources.
-- `app/src/app/src/main/assets/levels`: 24 new `level_NNN.json` files; the existing files are untouched.
+- `app/src/app/src/main/assets/levels`: level 25 and a selection of `level_026.json` to `level_096.json` gain leaky tiles and, where the free cells change, retuned star thresholds. Levels 1 to 24 and every level without leaky tiles stay byte-identical.
 - `docs/level-format.md` and `docs/design-system.md` document the field, the tile and the drip effect.
-- Existing level files, the level history and the online scores are unaffected: the field is optional and defaults to none, and a final total is never negative.
+- The level history is unaffected: the field is optional and defaults to none, level ids do not change, and a final total is never negative. Online top scores of an updated level were set on its old layout, as with portals.

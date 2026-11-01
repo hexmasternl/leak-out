@@ -9,6 +9,7 @@ enum class TipId(val key: String) {
     Intro("intro"),
     Mandatory("mandatory"),
     Portal("portal"),
+    LeakyTile("leaky"),
     Cross("cross"),
     Reservoir("reservoir"),
     ;

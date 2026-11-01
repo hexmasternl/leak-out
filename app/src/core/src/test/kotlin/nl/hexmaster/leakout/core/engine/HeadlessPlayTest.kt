@@ -175,6 +175,42 @@ class HeadlessPlayTest {
         portals = listOf(PortalPair(Endpoint(Position(0, 4), Side.TOP), Endpoint(Position(3, 0), Side.BOTTOM))),
     )
 
+    /**
+     * A wall in column 2 with one gap at (2, 2), and that gap is a leaky tile, as is (1, 2) before
+     * it. Start (0, 1) open right, finish (4, 4) open at the top. The stack deals standard sections only.
+     */
+    private val leakyLevel = engineLevel(
+        flow = FlowSettings(initialDelayMs = 300_000, cellsPerSecond = 1.0),
+        section = null,
+        blocked = listOf(0, 1, 3, 4).map { Position(2, it) },
+        start = Endpoint(Position(0, 1), Side.RIGHT),
+        finish = Endpoint(Position(4, 4), Side.TOP),
+        leaky = listOf(Position(2, 2), Position(1, 2)),
+    )
+
+    @Test
+    fun `a level whose only route crosses leaky tiles is won with a penalty per leaky tile passed`() {
+        val route = routeFor(leakyLevel)
+        assertTrue(route.any { (at, _) -> at == Position(2, 2) })
+        val built = build(engine.start(leakyLevel), route)
+        assertTrue(built.routeComplete)
+
+        val end = play(built)
+        assertIs<Outcome.Won>(end.outcome)
+        val expected = route.sumOf { (at, section) ->
+            when {
+                leakyLevel.isLeaky(at) -> -20
+                section == PipeSection.H || section == PipeSection.V -> 10
+                else -> 15
+            }
+        }
+        assertEquals(2, route.count { (at, _) -> leakyLevel.isLeaky(at) })
+        assertEquals(expected, end.score)
+        val final = end.finalScore!!
+        assertEquals(expected, final.earned)
+        assertEquals((final.earned - final.penalty).coerceAtLeast(0), final.total)
+    }
+
     @Test
     fun `a level that is only solvable through a portal pair is won by following the solver's path`() {
         val route = routeFor(portalLevel)

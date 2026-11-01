@@ -48,6 +48,28 @@ class BundledLevelsTest {
         assertTrue(levels.values.all { it.portals.size <= LevelValidator.MAX_PORTAL_PAIRS })
     }
 
+    @Test
+    fun `leaky tiles come in at level 25 and only on some levels`() {
+        val levels = levelFiles().map(::parse).associateBy { it.id }
+        assertEquals(emptyList(), (1..24).filter { levels.getValue(it).leaky.isNotEmpty() }, "levels 1 to 24 with leaky tiles")
+        val first = levels.getValue(25)
+        assertTrue(first.leaky.isNotEmpty(), "level 25 has no leaky tile")
+        assertEquals(true, assertIs<SolverResult.Solvable>(LevelSolver.solve(first)).leakFree, "level 25 has no leak-free route")
+        val withLeaky = (25..96).filter { levels.getValue(it).leaky.isNotEmpty() }
+        assertTrue(withLeaky.size * 2 < (25..96).count(), "levels 25 to 96 with leaky tiles: $withLeaky")
+    }
+
+    @Test
+    fun `from level 49 some levels offer a shortcut over a leaky tile next to a longer leak-free route`() {
+        val levels = levelFiles().map(::parse).associateBy { it.id }
+        val shortcuts = (49..96).map(levels::getValue).filter { it.leaky.isNotEmpty() && it.mandatory.isEmpty() }.filter { level ->
+            val shortest = (LevelSolver.solve(level) as? SolverResult.Solvable)?.path ?: return@filter false
+            val leakFree = (LevelSolver.solve(level.copy(blocked = level.blocked + level.leaky, leaky = emptyList())) as? SolverResult.Solvable)?.path
+            leakFree != null && shortest.size < leakFree.size && shortest.any(level::isLeaky)
+        }
+        assertTrue(shortcuts.size >= 4, "levels from 49 with a leaky shortcut: ${shortcuts.map { it.id }}")
+    }
+
     companion object {
         private val levelsDir: File by lazy {
             File(System.getProperty("leakout.levelsDir") ?: fail("System property leakout.levelsDir is not set"))

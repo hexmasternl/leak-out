@@ -63,6 +63,9 @@ object LevelWriter {
                 }
             })
         }
+        if (level.leaky.isNotEmpty()) {
+            put("leaky", buildJsonArray { level.leaky.forEach { add(cell(it)) } })
+        }
     }
 
     private fun endpoint(endpoint: Endpoint): JsonObject = buildJsonObject {

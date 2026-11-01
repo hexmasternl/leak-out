@@ -2,10 +2,10 @@
 
 ## 1. Level format, validation and writing
 
-- [ ] 1.1 Add `Level.leaky: List<Position>` (default empty) with `isLeaky(position)` and an optional `leaky` array of `{x, y}` in `LevelDto`/`LevelParser`. Cover in `LevelParserTest`: absent field, valid entries in authored order, a missing `leaky[0].y` and an unknown key inside an entry. Run `./gradlew :core:test` and confirm it passes.
-- [ ] 1.2 Add the leaky checks to `LevelValidator`: inside the grid, not blocked, not start or finish, not a mandatory section, not a portal, no duplicates, each error naming `leaky[i]`. Cover every `game-level-model` leaky scenario in `LevelValidatorTest`, including several errors reported together. Run `./gradlew :core:test` and confirm it passes.
-- [ ] 1.3 Write `leaky` in `LevelWriter` only when non-empty, in level order. Cover in `LevelWriterTest` the minimal level without a `leaky` key, a level with two leaky tiles, and a round trip with every optional field set; confirm the bundled-levels round-trip test still passes unchanged.
-- [ ] 1.4 Document the field in `docs/level-format.md`: add `leaky` to the full example, a "Leaky tiles" section with the validation rules and the score effect, and the leak-free note under Solvability. Add a `LevelParserTest` case that parses the documented example and confirm it passes.
+- [x] 1.1 Add `Level.leaky: List<Position>` (default empty) with `isLeaky(position)` and an optional `leaky` array of `{x, y}` in `LevelDto`/`LevelParser`. Cover in `LevelParserTest`: absent field, valid entries in authored order, a missing `leaky[0].y` and an unknown key inside an entry. Run `./gradlew :core:test` and confirm it passes.
+- [x] 1.2 Add the leaky checks to `LevelValidator`: inside the grid, not blocked, not start or finish, not a mandatory section, not a portal, no duplicates, each error naming `leaky[i]`. Cover every `game-level-model` leaky scenario in `LevelValidatorTest`, including several errors reported together. Run `./gradlew :core:test` and confirm it passes.
+- [x] 1.3 Write `leaky` in `LevelWriter` only when non-empty, in level order. Cover in `LevelWriterTest` the minimal level without a `leaky` key, a level with two leaky tiles, and a round trip with every optional field set; confirm the bundled-levels round-trip test still passes unchanged.
+- [x] 1.4 Document the field in `docs/level-format.md`: add `leaky` to the full example, a "Leaky tiles" section with the validation rules and the score effect, and the leak-free note under Solvability. Add a `LevelParserTest` case that parses the documented example and confirm it passes.
 
 ## 2. Scoring and flow in core
 

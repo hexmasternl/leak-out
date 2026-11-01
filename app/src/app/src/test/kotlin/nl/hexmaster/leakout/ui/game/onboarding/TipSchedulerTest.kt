@@ -39,7 +39,35 @@ class TipSchedulerTest {
         outcome: Outcome = Outcome.Playing,
         mandatory: List<Position> = emptyList(),
         portalPairs: Int = 0,
-    ) = TipScheduler.dueTips(stack, outcome, seen, atLevelStart, visible, mandatory, portalPairs)
+        leaky: List<Position> = emptyList(),
+    ) = TipScheduler.dueTips(stack, outcome, seen, atLevelStart, visible, mandatory, portalPairs, leaky)
+
+    private val twoLeaky = listOf(Position(3, 1), Position(1, 2))
+
+    @Test
+    fun `the leaky tile tip is due at the start of the first level with leaky tiles`() {
+        assertEquals(listOf(TipId.LeakyTile), due(seen = setOf(TipId.Intro), leaky = twoLeaky))
+    }
+
+    @Test
+    fun `the leaky tile tip is shown once, only at level start and only with leaky tiles`() {
+        assertEquals(emptyList<TipId>(), due(seen = setOf(TipId.Intro, TipId.LeakyTile), leaky = twoLeaky))
+        assertEquals(emptyList<TipId>(), due(seen = setOf(TipId.Intro), atLevelStart = false, leaky = twoLeaky))
+        assertEquals(emptyList<TipId>(), due(seen = setOf(TipId.Intro), leaky = emptyList()))
+        assertEquals(emptyList<TipId>(), due(seen = setOf(TipId.Intro), leaky = twoLeaky, outcome = Outcome.Won(atMs = 0)))
+    }
+
+    @Test
+    fun `the leaky tile tip comes after the mandatory and portal tips and before the cross tip`() {
+        assertEquals(
+            listOf(TipId.Mandatory, TipId.LeakyTile, TipId.Cross),
+            due(stack(H, X, V, H, V), seen = setOf(TipId.Intro), mandatory = listOf(Position(2, 2)), leaky = twoLeaky),
+        )
+        assertEquals(
+            listOf(TipId.Intro, TipId.Mandatory, TipId.Portal, TipId.LeakyTile, TipId.Cross, TipId.Reservoir),
+            due(stack(H, X, RES, H, V), mandatory = listOf(Position(2, 2)), portalPairs = 1, leaky = twoLeaky),
+        )
+    }
 
     @Test
     fun `the portal tip is due at the start of the first level with portals`() {

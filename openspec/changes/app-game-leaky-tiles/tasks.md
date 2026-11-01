@@ -27,8 +27,8 @@
 
 ## 5. First-time tip
 
-- [ ] 5.1 Add `TipId.LEAKY_TILE` with its seen flag, the leaky tile tip that freezes the game on level start and highlights every leaky tile, and its title and text in the default string resources (the source for every supported language). Put it between the portal tip and the cross tip. Cover in the onboarding unit tests the tip on the first level with leaky tiles, not again once seen, not on a level without leaky tiles, "Got it" storing it as seen, and the new tip order.
-- [ ] 5.2 Describe the leaky tile tip in `docs/design-system.md` 5.9 if it needs anything beyond the existing single-tip layout, and run `./gradlew :app:testDebugUnitTest` to confirm it passes.
+- [x] 5.1 Add `TipId.LEAKY_TILE` with its seen flag, the leaky tile tip that freezes the game on level start and highlights every leaky tile, and its title and text in the default string resources (the source for every supported language). Put it between the portal tip and the cross tip. Cover in the onboarding unit tests the tip on the first level with leaky tiles, not again once seen, not on a level without leaky tiles, "Got it" storing it as seen, and the new tip order.
+- [x] 5.2 Describe the leaky tile tip in `docs/design-system.md` 5.9 if it needs anything beyond the existing single-tip layout, and run `./gradlew :app:testDebugUnitTest` to confirm it passes.
 
 ## 6. Level designer
 

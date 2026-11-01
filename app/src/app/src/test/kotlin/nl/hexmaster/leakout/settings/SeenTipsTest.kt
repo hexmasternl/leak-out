@@ -63,6 +63,6 @@ class SeenTipsTest {
     @Test
     fun `the stored keys are the file format`() {
         assertEquals("seen_tips", DataStoreSettingsRepository.Keys.SeenTips.name)
-        assertEquals(listOf("intro", "mandatory", "portal", "cross", "reservoir"), TipId.entries.map { it.key })
+        assertEquals(listOf("intro", "mandatory", "portal", "leaky", "cross", "reservoir"), TipId.entries.map { it.key })
     }
 }

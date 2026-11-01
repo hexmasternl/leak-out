@@ -496,12 +496,12 @@ Bottom-anchored, 48 dp tall, `surface.raised`, `radius.pill`, `body.sm`. Slides 
 
 ### 5.9 Tip overlay
 
-The one-time guided tips on the game screen (spec `game-play-onboarding`): the intro tour on the first level played, and single tips for the cross, the reservoir and mandatory sections. Unlike a dialog (5.6), a tip points at the real element it explains, so it is drawn over the whole game screen instead of centred.
+The one-time guided tips on the game screen (spec `game-play-onboarding`): the intro tour on the first level played, and single tips for the cross, the reservoir, mandatory sections, portals and leaky tiles. Unlike a dialog (5.6), a tip points at the real element it explains, so it is drawn over the whole game screen instead of centred.
 
 **Layers** (bottom to top, all inside the game screen, above the HUD, stack and field, below the pause dialog):
 
 1. **Scrim** – `surface.scrim` (`#07111C` at 72 %) over the whole screen, with a **spotlight** cut out around every target. The overlay consumes all pointer input outside its buttons, so nothing can be dragged, pinched or panned underneath, and taps on the scrim do nothing.
-2. **Spotlight** – a cut-out per target: the target's on-screen bounds grown by `space.2` (8 dp) on every side, corners `radius.md` (16 dp). A stack slot, a field cell and the whole stack column are each one rectangle; the mandatory tip has one cut-out per mandatory cell. Inside the cut-out the game is seen undimmed.
+2. **Spotlight** – a cut-out per target: the target's on-screen bounds grown by `space.2` (8 dp) on every side, corners `radius.md` (16 dp). A stack slot, a field cell and the whole stack column are each one rectangle; the mandatory tip has one cut-out per mandatory cell, and the leaky tile tip one per leaky tile. Inside the cut-out the game is seen undimmed.
 3. **Glow ring** – around each cut-out a 2 dp `liquid.glow` stroke with a `G` glow in `liquid.glow` at 45 % (blur 24 dp). It pulses between 45 % and 70 % on `motion.pulse`.
 4. **Callout card** – a level 3 floating panel (shadow `0 24 64` black 60 %), `surface.base`, `radius.lg`, 1 dp `line.highlight` top edge, 16 dp (`space.4`) padding, max width 296 dp, so it fits beside the stack and a centre cell on a 640 × 360 dp screen.
 5. **Pointer** – a 16 × 8 dp triangle in `surface.base` on the card edge facing the target, centred on the target's centre and kept at least `radius.lg` from the card's corners. No pointer when no side has room (see Placement, last rule).
@@ -519,7 +519,7 @@ The one-time guided tips on the game screen (spec `game-play-onboarding`): the i
 |-----|------------------------|
 | Intro steps 1–5 | primary small "Next" at full card width, tertiary "Skip tour" at full card width below it |
 | Intro step 6 | primary small "Let's go" |
-| Cross, reservoir, mandatory | primary small "Got it" |
+| Cross, reservoir, mandatory, portal, leaky tile | primary small "Got it" |
 
 The bright brass "Next" sits on its own line so it is never squeezed by "Skip tour" and clearly reads as the way to the next tip. Primary small is 40 dp face + 4 dp lip = 48 dp and the tertiary is 48 dp. Card height at 100 % font on intro steps 1–5: 32 padding + 17 counter + 4 + 25 title + 8 + 72 text (three lines) + 16 + 48 + 12 + 48 buttons ≈ 282 dp, which fits in 360 − 2 × 16 dp.
 
@@ -551,6 +551,9 @@ The stack column sits on the left of the screen, so stack tips open to the right
 | Cross | the `X` slot in the stack | Cross Section | A cross has two separate channels and the liquid goes straight through. The first pass scores 10 points, a second pass through the other channel 50. Each channel can be used only once. |
 | Reservoir | the `RES` slot in the stack | Reservoir | A reservoir only connects left and right. While it fills, the liquid flows at 30 % speed, which buys you time. It scores 25 points. |
 | Mandatory | every mandatory cell | Mandatory Sections | These sections are already placed and can't be removed or replaced. The liquid must pass through every channel of each of them before it reaches the finish, or the level is lost. |
+| Leaky tile | every leaky tile | Leaky Tiles | You can place any section on a leaky tile, but the liquid that passes it drains away. Each time the liquid flows through a section on a leaky tile it scores nothing and costs you 20 points, so a detour can be worth more. |
+
+The leaky tile tip uses the single-tip layout as it is; it comes after the portal tip and before the cross tip, and like the mandatory tip it pans the first leaky tile into view on a large level.
 
 **Screen reader**: when a tip appears it is announced as a polite live region: the title, the text, the target ("Highlighted: start valve") and, in the tour, "Step 1 of 6". The card is one pane (`paneTitle` = the title) and its buttons follow the text in reading order. The scrim and the game under it are hidden from accessibility while the tip is shown.
 

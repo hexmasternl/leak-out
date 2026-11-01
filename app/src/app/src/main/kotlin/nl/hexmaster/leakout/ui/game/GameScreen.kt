@@ -381,9 +381,10 @@ private fun GameTips(
 
     val mandatory = session.select { state.level.mandatory.map { it.position } }
     val portalPairs = session.select { state.level.portals.size }
+    val leaky = session.select { state.level.leaky }
 
     fun due(atLevelStart: Boolean): List<TipId> =
-        TipScheduler.dueTips(stack, outcome, seen.orEmpty(), atLevelStart, visibleSlots.orEmpty(), mandatory, portalPairs)
+        TipScheduler.dueTips(stack, outcome, seen.orEmpty(), atLevelStart, visibleSlots.orEmpty(), mandatory, portalPairs, leaky)
 
     LaunchedEffect(session, attempt, seen != null, visibleSlots != null, checked) {
         if (checked != attempt && seen != null && visibleSlots != null) session.offerTips(due(atLevelStart = true), atLevelStart = true)
@@ -407,8 +408,8 @@ private fun GameTips(
         val tip = session.closeTip() ?: return
         guardingTaps = true
         scope.launch { tips.markTipSeen(tip) }
-        // After the tour and the mandatory and portal tips, which may pan, the field goes back to the view the level starts with.
-        if (tip == TipId.Intro || tip == TipId.Mandatory || tip == TipId.Portal) {
+        // After the tour and the mandatory, portal and leaky tile tips, which may pan, the field goes back to the view the level starts with.
+        if (tip == TipId.Intro || tip == TipId.Mandatory || tip == TipId.Portal || tip == TipId.LeakyTile) {
             scope.launch { fieldState.animateTo(fieldState.initialView(), reducedMotion) }
         }
     }
@@ -430,6 +431,7 @@ private fun GameTips(
     val revealed = when {
         tip == TipId.Mandatory -> mandatory.firstOrNull()
         tip == TipId.Portal -> portalCells.firstOrNull()
+        tip == TipId.LeakyTile -> leaky.firstOrNull()
         tip != TipId.Intro -> null
         step == 1 -> level.finish.position
         step == 3 || step == 4 -> hintCell
@@ -460,6 +462,11 @@ private fun GameTips(
         TipId.Portal -> {
             val field = targets.fieldBounds()
             portalCells.mapNotNull(targets::cell).filter { field == null || it.overlaps(field) }
+        }
+        // Every leaky tile that is in the field's view; on a large level the first one is panned into it.
+        TipId.LeakyTile -> {
+            val field = targets.fieldBounds()
+            leaky.mapNotNull(targets::cell).filter { field == null || it.overlaps(field) }
         }
     }
     val hint: TipHint? = when {

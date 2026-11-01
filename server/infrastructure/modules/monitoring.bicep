@@ -1,4 +1,4 @@
-// Log Analytics workspace and workspace-based Application Insights for the API.
+// Log Analytics workspace and workspace-based Application Insights for the API and the daily pipe generator.
 
 @description('Azure region of the resources.')
 param location string
@@ -47,3 +47,6 @@ output workspaceSharedKey string = workspace.listKeys().primarySharedKey
 @description('Connection string of the Application Insights component.')
 @secure()
 output applicationInsightsConnectionString string = applicationInsights.properties.ConnectionString
+
+@description('Resource id of the Application Insights component.')
+output applicationInsightsId string = applicationInsights.id

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>5a0d7c5e-2f4f-4e57-9d64-1b8f0b6b8a21</UserSecretsId>
+    <!-- The deploy workflow sets InformationalVersion to <semver>+<short sha>; keep the SDK from
+         appending the full commit sha to it. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+  <!-- Container image for the Azure Container Apps job: dotnet publish -c Release /t:PublishContainer.
+       The deploy workflow tags it like the API image. ContainerUser pins the non-root 'app' user. -->
+  <PropertyGroup>
+    <ContainerRegistry>nvv54gsk4pteu.azurecr.io</ContainerRegistry>
+    <ContainerRepository>leak-out/daily-pipe-generator</ContainerRepository>
+    <ContainerUser>app</ContainerUser>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\HexMaster.LeakOut.Aspire\HexMaster.LeakOut.Aspire.ServiceDefaults\HexMaster.LeakOut.Aspire.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\HexMaster.LeakOut.DailyPipes\HexMaster.LeakOut.DailyPipes.csproj" />
+    <ProjectReference Include="..\HexMaster.LeakOut.DailyPipes.Data.PostgreSQL\HexMaster.LeakOut.DailyPipes.Data.PostgreSQL.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HexMaster.LeakOut.DailyPipes.Tests" />
+  </ItemGroup>
+
+</Project>

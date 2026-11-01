@@ -17,13 +17,25 @@ import nl.hexmaster.leakout.core.stack.PipeStack
  * The single control system of the game: [handle] turns a state and a command into the next state.
  * A refused command returns the same instance, so "accepted" is `new !== old`. The only impure
  * input is [random], which draws the stack; tests pass a seeded one.
+ *
+ * An engine made with [seeded] deals every attempt from `Random(stackSeed)`, starting over at each
+ * [start]: the same seed deals the same sections in the same order on every device and every
+ * restart, which the daily pipe relies on. `kotlin.random.Random(seed)` is the same algorithm on
+ * every platform.
  */
-class GameEngine(private val random: Random = Random.Default) {
+class GameEngine private constructor(private var random: Random, private val stackSeed: Long?) {
+    constructor(random: Random = Random.Default) : this(random, null)
+
     /**
      * A fresh attempt at [level]: the level's board, a new stack, the countdown at the start delay,
      * score 0, clock 0, playing. This is the only way a state is built, so a restart cannot forget a field.
      */
-    fun start(level: Level, previous: GameState? = null): GameState = GameState(
+    fun start(level: Level, previous: GameState? = null): GameState {
+        stackSeed?.let { random = Random(it) }
+        return newAttempt(level, previous)
+    }
+
+    private fun newAttempt(level: Level, previous: GameState?): GameState = GameState(
         attempt = (previous?.attempt ?: 0) + 1,
         level = level,
         board = Board.from(level),
@@ -191,5 +203,10 @@ class GameEngine(private val random: Random = Random.Default) {
         val board = score.unusedSections.subList(state.sectionsRemoved, target)
             .fold(state.board) { board, at -> board.with(at, Cell.Empty) }
         return state.copy(board = board, sectionsRemoved = target)
+    }
+
+    companion object {
+        /** An engine that deals every attempt, the first and every restart, from `Random(stackSeed)`. */
+        fun seeded(stackSeed: Long): GameEngine = GameEngine(Random(stackSeed), stackSeed)
     }
 }

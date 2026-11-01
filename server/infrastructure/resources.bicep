@@ -1,5 +1,5 @@
-// Everything inside the resource group: monitoring, PostgreSQL, the Container Apps environment
-// and the API container app. Deployed by main.bicep.
+// Everything inside the resource group: monitoring, PostgreSQL, the Container Apps environment,
+// the API container app and the daily pipe generator job. Deployed by main.bicep.
 
 @description('Azure region of the resources.')
 param location string = resourceGroup().location
@@ -9,6 +9,12 @@ param namePrefix string = resourceGroup().name
 
 @description('Full image reference of the API including the tag.')
 param imageName string
+
+@description('Full image reference of the daily pipe generator including the tag.')
+param generatorImageName string
+
+@description('E-mail address that gets the daily pipe generator\'s failure alert; empty sends no e-mail.')
+param alertEmailAddress string = ''
 
 @description('Version of the deployed release (SERVICE_VERSION), reported as the OpenTelemetry service.version.')
 param serviceVersion string
@@ -49,6 +55,7 @@ param minReplicas int = 1
 param maxReplicas int = 3
 
 var postgresAdministratorLogin = 'leakoutadmin'
+var dailyPipesDbConnectionString = 'Host=${postgres.outputs.fullyQualifiedDomainName};Database=dailypipesdb;Username=${postgresAdministratorLogin};Password=${postgresAdminPassword};Ssl Mode=Require'
 
 module monitoring 'modules/monitoring.bicep' = {
   name: 'monitoring'
@@ -92,6 +99,7 @@ module api 'modules/api.bicep' = {
     registryPassword: registryPassword
     playersDbConnectionString: 'Host=${postgres.outputs.fullyQualifiedDomainName};Database=playersdb;Username=${postgresAdministratorLogin};Password=${postgresAdminPassword};Ssl Mode=Require'
     scoresDbConnectionString: 'Host=${postgres.outputs.fullyQualifiedDomainName};Database=scoresdb;Username=${postgresAdministratorLogin};Password=${postgresAdminPassword};Ssl Mode=Require'
+    dailyPipesDbConnectionString: dailyPipesDbConnectionString
     googleClientId: googleClientId
     googleClientSecret: googleClientSecret
     authSigningKey: authSigningKey
@@ -101,5 +109,26 @@ module api 'modules/api.bicep' = {
   }
 }
 
+module dailyPipeJob 'modules/daily-pipe-job.bicep' = {
+  name: 'daily-pipe-job'
+  params: {
+    location: location
+    jobName: '${namePrefix}-dailypipe'
+    environmentId: containerAppsEnvironment.outputs.environmentId
+    imageName: generatorImageName
+    serviceVersion: serviceVersion
+    registryServer: registryServer
+    registryUsername: registryUsername
+    registryPassword: registryPassword
+    dailyPipesDbConnectionString: dailyPipesDbConnectionString
+    applicationInsightsConnectionString: monitoring.outputs.applicationInsightsConnectionString
+    applicationInsightsId: monitoring.outputs.applicationInsightsId
+    alertEmailAddress: alertEmailAddress
+  }
+}
+
 @description('Fully qualified domain name of the API.')
 output apiFullyQualifiedDomainName string = api.outputs.fullyQualifiedDomainName
+
+@description('Name of the daily pipe generator job.')
+output dailyPipeJobName string = dailyPipeJob.outputs.jobName

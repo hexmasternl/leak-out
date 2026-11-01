@@ -8,9 +8,10 @@ Bicep templates that host the Leak Out server in Azure. One subscription-scope d
 | `main.bicepparam` | | Non-secret defaults (resource group, region, min and max replicas) |
 | `resources.bicep` | resource group | Wires the modules and builds the database connection strings |
 | `modules/monitoring.bicep` | resource group | Log Analytics workspace (`PerGB2018`, 30 days retention, 1 GB daily cap) and workspace-based Application Insights |
-| `modules/postgres.bicep` | resource group | PostgreSQL Flexible Server 17, `Standard_B1ms` Burstable, 32 GiB, no HA, no geo backup, TLS required, firewall rule `AllowAllAzureServices`, databases `playersdb` and `scoresdb` |
+| `modules/postgres.bicep` | resource group | PostgreSQL Flexible Server 17, `Standard_B1ms` Burstable, 32 GiB, no HA, no geo backup, TLS required, firewall rule `AllowAllAzureServices`, databases `playersdb`, `scoresdb` and `dailypipesdb` |
 | `modules/containerapps-env.bicep` | resource group | Consumption-only Container Apps environment that sends logs to the workspace |
 | `modules/api.bicep` | resource group | Container app `<resource group>-api` (container and OpenTelemetry service `hexmaster-leakout-api`, like the Aspire resource): external HTTPS ingress on port 8080, `minReplicas` (1, so there is no cold start) to `maxReplicas` replicas on the `http-concurrency` rule (20 concurrent requests), `/alive` startup and liveness probes, `/health` readiness probe |
+| `modules/daily-pipe-job.bicep` | resource group | Container Apps job `<resource group>-dailypipe` (container and OpenTelemetry service `daily-pipe-generator`) in the same environment: schedule trigger `0 0 * * *` (UTC), one replica, 3 retries, 600 seconds timeout. Also the log alert `<resource group>-dailypipe-failed` (severity 1) on errors of that cloud role in Application Insights, checked every 15 minutes, with an e-mail action group when `alertEmailAddress` is set |
 
 Every resource is named `<resource group name>-<kind>`, so with the default resource group `rg-leakout-prod-swe` they are `rg-leakout-prod-swe-log`, `-appi`, `-psql`, `-cae` and `-api`. The names stay the same across redeploys. The PostgreSQL server name is also its host name and must be unique across Azure; the resource group name makes it so. Keep the resource group name at most 28 characters, because Container Apps and their environments allow at most 32.
 
@@ -25,6 +26,8 @@ Every resource is named `<resource group name>-<kind>`, so with the default reso
 | `minReplicas` | | `1`: keeps one warm replica; `0` lets the API scale to zero at the cost of a cold start of about 15 seconds. Must not exceed `maxReplicas` |
 | `maxReplicas` | | `3` |
 | `imageName` | | `API_IMAGE`: full image reference with tag, e.g. `nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>` |
+| `generatorImageName` | | `GENERATOR_IMAGE`: the daily pipe generator image, e.g. `nvv54gsk4pteu.azurecr.io/leak-out/daily-pipe-generator:<version>` |
+| `alertEmailAddress` | | `ALERT_EMAIL` (optional, the repository variable of that name): who gets the generator's failure alert by e-mail; empty sends none |
 | `serviceVersion` | | `SERVICE_VERSION`: version of the release, set by `server-deploy.yml` from the GitVersion `SemVer` (the image tag is `<SemVer>-<short commit sha>`); reported as the OpenTelemetry `service.version` |
 | `registryServer` | | `ACR_LOGIN_SERVER` |
 | `registryUsername` | | `ACR_LOGIN_USERNAME` |
@@ -42,6 +45,7 @@ The container app gets its configuration as container app secrets, exposed as en
 | --- | --- |
 | `playersdb-connection` | `ConnectionStrings__playersdb` |
 | `scoresdb-connection` | `ConnectionStrings__scoresdb` |
+| `dailypipesdb-connection` | `ConnectionStrings__dailypipesdb` |
 | `google-client-id` | `GooglePlayGames__ClientId` |
 | `google-client-secret` | `GooglePlayGames__ClientSecret` |
 | `auth-signing-key` | `Authentication__SigningKey` |
@@ -49,6 +53,8 @@ The container app gets its configuration as container app secrets, exposed as en
 | `registry-password` | (registry credentials) |
 
 Besides these, the container app sets plain environment variables: `ASPNETCORE_ENVIRONMENT=Production`, `OTEL_SERVICE_NAME=hexmaster-leakout-api` and `OTEL_RESOURCE_ATTRIBUTES=service.version=<serviceVersion>`. Application Insights shows the service name as the cloud role and the version as `application_Version`.
+
+The daily pipe job gets only what it needs: the secrets `registry-password`, `dailypipesdb-connection` and `appinsights-connection`, and `DOTNET_ENVIRONMENT=Production`, `OTEL_SERVICE_NAME=daily-pipe-generator` and the same `OTEL_RESOURCE_ATTRIBUTES`.
 
 ## One-time setup
 
@@ -82,6 +88,7 @@ From the repository root, logged in with `az login` to the target subscription. 
 az account set --subscription <subscription-id>
 
 export API_IMAGE="nvv54gsk4pteu.azurecr.io/leak-out/game-server-api:<version>"
+export GENERATOR_IMAGE="nvv54gsk4pteu.azurecr.io/leak-out/daily-pipe-generator:<version>"
 export SERVICE_VERSION="<version>"
 export ACR_LOGIN_SERVER="nvv54gsk4pteu.azurecr.io"
 export ACR_LOGIN_USERNAME="<registry-user>"
@@ -105,11 +112,11 @@ az deployment sub create --location northeurope --name "leakout-$(date +%Y%m%d%H
 
 `--location` is where the subscription deployment's metadata is stored; always use the same value as `location` in `main.bicepparam`, because ARM rejects reusing a deployment name in another location. The outputs contain the resource group name and the API's host name (`apiFullyQualifiedDomainName`); `https://<host>/health` should return `Healthy`.
 
-Redeploying with the same parameters changes nothing. A new image tag creates a new revision of the container app.
+Redeploying with the same parameters changes nothing. A new image tag creates a new revision of the container app and updates the job's image for its next run. The output `dailyPipeJobName` names the job; after the first deployment, start it once by hand so there is a daily pipe before the next midnight (`az containerapp job start`, see [the server README](../README.md#daily-pipe)).
 
 ## Database migrations
 
-The API applies pending EF Core migrations of `playersdb` and `scoresdb` when it starts, in every environment, before it answers `/alive`. A new deployment therefore needs no manual migration step. If a migration fails, the new revision never passes its startup probe and the previous revision keeps serving; the container app's console logs show the error. Migrations must stay backwards-compatible with the previous release, because the old revision briefly runs against the new schema during a rollout.
+The API applies pending EF Core migrations of `playersdb`, `scoresdb` and `dailypipesdb` when it starts (the daily pipe job applies those of `dailypipesdb` too), in every environment, before it answers `/alive`. A new deployment therefore needs no manual migration step. If a migration fails, the new revision never passes its startup probe and the previous revision keeps serving; the container app's console logs show the error. Migrations must stay backwards-compatible with the previous release, because the old revision briefly runs against the new schema during a rollout.
 
 ## Removing everything
 

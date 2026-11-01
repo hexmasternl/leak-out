@@ -38,6 +38,10 @@ param playersDbConnectionString string
 @secure()
 param scoresDbConnectionString string
 
+@description('Npgsql connection string of the dailypipesdb database.')
+@secure()
+param dailyPipesDbConnectionString string
+
 @description('Client id of the web OAuth client of the Google Cloud project linked to the game.')
 @secure()
 param googleClientId string
@@ -99,6 +103,10 @@ resource containerApp 'Microsoft.App/containerApps@2026-07-01' = {
           value: scoresDbConnectionString
         }
         {
+          name: 'dailypipesdb-connection'
+          value: dailyPipesDbConnectionString
+        }
+        {
           name: 'google-client-id'
           value: googleClientId
         }
@@ -149,6 +157,10 @@ resource containerApp 'Microsoft.App/containerApps@2026-07-01' = {
             {
               name: 'ConnectionStrings__scoresdb'
               secretRef: 'scoresdb-connection'
+            }
+            {
+              name: 'ConnectionStrings__dailypipesdb'
+              secretRef: 'dailypipesdb-connection'
             }
             {
               name: 'GooglePlayGames__ClientId'

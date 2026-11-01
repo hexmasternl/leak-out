@@ -1,0 +1,19 @@
+{
+  "id": 28,
+  "name": "Slow Pool",
+  "grid": { "columns": 11, "rows": 8 },
+  "start": { "x": 0, "y": 2, "openSide": "RIGHT" },
+  "finish": { "x": 10, "y": 6, "openSide": "LEFT" },
+  "blocked": [
+    { "x": 2, "y": 0 },
+    { "x": 2, "y": 2 },
+    { "x": 7, "y": 2 },
+    { "x": 10, "y": 3 },
+    { "x": 2, "y": 4 },
+    { "x": 8, "y": 5 },
+    { "x": 2, "y": 7 }
+  ],
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.213 },
+  "stack": { "weights": { "X": 6, "RES": 1 } },
+  "stars": { "one": 400, "two": 590, "three": 790 }
+}

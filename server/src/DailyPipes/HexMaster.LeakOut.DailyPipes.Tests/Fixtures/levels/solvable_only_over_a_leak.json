@@ -1,0 +1,11 @@
+{
+  "id": 1006,
+  "name": "Leaky corridor",
+  "grid": { "columns": 6, "rows": 4 },
+  "start": { "x": 0, "y": 0, "openSide": "RIGHT" },
+  "finish": { "x": 5, "y": 0, "openSide": "LEFT" },
+  "blocked": [ { "x": 0, "y": 1 }, { "x": 1, "y": 1 }, { "x": 2, "y": 1 }, { "x": 3, "y": 1 }, { "x": 4, "y": 1 }, { "x": 5, "y": 1 } ],
+  "flow": { "initialDelayMs": 20000, "cellsPerSecond": 0.3 },
+  "stars": { "one": 100, "two": 200, "three": 300 },
+  "leaky": [ { "x": 2, "y": 0 } ]
+}

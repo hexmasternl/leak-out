@@ -11,6 +11,8 @@ param minReplicas = 1
 param maxReplicas = 3
 
 param imageName = readEnvironmentVariable('API_IMAGE')
+param generatorImageName = readEnvironmentVariable('GENERATOR_IMAGE')
+param alertEmailAddress = readEnvironmentVariable('ALERT_EMAIL', '')
 param serviceVersion = readEnvironmentVariable('SERVICE_VERSION')
 param registryServer = readEnvironmentVariable('ACR_LOGIN_SERVER')
 param registryUsername = readEnvironmentVariable('ACR_LOGIN_USERNAME')

@@ -21,11 +21,11 @@ When the player starts a level and the intro tour has not been seen, the game SH
 - **THEN** no intro tour is shown
 
 ### Requirement: Intro tour steps
-The intro tour SHALL show these steps in this order, one at a time, each highlighting what it explains and dimming the rest of the screen: the start tile (the liquid comes out here when the countdown ends), the finish tile (lead the liquid here to win), the stack (the sections you get, with the next one at the bottom), placing (drag the next section onto an empty cell) and zoom and pan (pinch to zoom, drag the field to move around).
+The intro tour SHALL show these steps in this order, one at a time, each highlighting what it explains and dimming the rest of the screen: the start tile (the liquid comes out here when the countdown ends), the finish tile (lead the liquid here to win), the stack (the sections you get, with the next one at the bottom), placing (drag the next section onto an empty cell), tap to place (a pro tip: tapping an empty cell places the next section there, faster than dragging) and zoom and pan (pinch to zoom, drag the field to move around).
 
 #### Scenario: Step order
-- **WHEN** the intro tour is shown and the player taps "Next" four times
-- **THEN** the steps for the start, the finish, the stack, placing and zoom and pan are shown in that order, each with a step counter such as "2 / 5"
+- **WHEN** the intro tour is shown and the player taps "Next" five times
+- **THEN** the steps for the start, the finish, the stack, placing, tap to place and zoom and pan are shown in that order, each with a step counter such as "2 / 6"
 
 #### Scenario: Start step highlights the start tile
 - **WHEN** the start step is shown
@@ -34,6 +34,10 @@ The intro tour SHALL show these steps in this order, one at a time, each highlig
 #### Scenario: Placing step shows a drag hint
 - **WHEN** the placing step is shown
 - **THEN** the next section in the stack is highlighted and an animated hint moves from it to an empty cell on the field
+
+#### Scenario: Tap to place step shows a tap hint
+- **WHEN** the tap to place step is shown
+- **THEN** the empty cell the placing step's hint ended on is highlighted, an animated tap hint pulses on that cell, no drag hint is shown, and the step says that tapping an empty cell places the next section there without dragging
 
 #### Scenario: Highlighted tile outside the view
 - **WHEN** the finish tile of a large level is outside the visible field and the finish step is shown
@@ -128,22 +132,30 @@ The first time the player starts a level with mandatory sections, the game SHALL
 - **THEN** no mandatory section tip is shown
 
 ### Requirement: Single tips are dismissed with "Got it"
-The cross, reservoir, mandatory section and portal tips SHALL each offer one "Got it" button. Tapping it SHALL close the tip, store it as seen and continue the game from where it froze.
+The cross, reservoir, mandatory section, portal and leaky tile tips SHALL each offer one "Got it" button. Tapping it SHALL close the tip, store it as seen and continue the game from where it froze.
 
 #### Scenario: Continue after a tip
 - **WHEN** the cross tip is shown while the liquid is halfway through a tile and the player taps "Got it"
 - **THEN** the tip closes, the cross tip is stored as seen and the liquid continues from halfway through that tile
+
+#### Scenario: Leaky tile tip dismissed
+- **WHEN** the leaky tile tip is shown before the countdown and the player taps "Got it"
+- **THEN** the tip closes, the leaky tile tip is stored as seen and the countdown starts running
 
 #### Scenario: Continue after the portal tip
 - **WHEN** the portal tip is shown before the countdown and the player taps "Got it"
 - **THEN** the tip closes, the portal tip is stored as seen and the countdown starts running
 
 ### Requirement: One tip at a time in a fixed order
-When more than one tip is due at the same moment, the game SHALL show them one after the other in this order: intro tour, mandatory section tip, portal tip, cross tip, reservoir tip. The game SHALL stay frozen until the last of them is closed.
+When more than one tip is due at the same moment, the game SHALL show them one after the other in this order: intro tour, mandatory section tip, portal tip, leaky tile tip, cross tip, reservoir tip. The game SHALL stay frozen until the last of them is closed.
 
 #### Scenario: Everything due on the first level
 - **WHEN** no tip has been seen and the first level played has a mandatory section and an `X` and a `RES` in fully visible slots of its starting stack
 - **THEN** the intro tour, the mandatory section tip, the cross tip and the reservoir tip are shown in that order, and the countdown only starts after the reservoir tip is closed
+
+#### Scenario: Leaky tile tip after the mandatory section tip
+- **WHEN** no tip but the intro tour has been seen and a level with a mandatory section, a leaky tile and an `X` in a fully visible slot of its starting stack starts
+- **THEN** the mandatory section tip, the leaky tile tip and the cross tip are shown in that order, and the countdown only starts after the cross tip is closed
 
 #### Scenario: Portal tip after the intro tour
 - **WHEN** no tip has been seen and the first level played has a portal pair and an `X` in a fully visible slot of its starting stack
@@ -176,15 +188,19 @@ While a tip is shown, system Back SHALL act as "Skip tour" during the intro tour
 - **THEN** the reservoir tip is still shown and the countdown and flow have not moved
 
 ### Requirement: Tips are accessible
-A shown tip SHALL be announced by a screen reader with its title and explanation, its buttons SHALL be reachable in reading order, and the highlighted element SHALL be named in the announcement. With reduced motion the highlight SHALL appear without animation and the drag hint SHALL be shown as a static arrow.
+A shown tip SHALL be announced by a screen reader with its title and explanation, its buttons SHALL be reachable in reading order, and the highlighted element SHALL be named in the announcement. With reduced motion the highlight SHALL appear without animation, the drag hint SHALL be shown as a static arrow and the tap hint SHALL be shown as a static ring on the cell.
 
 #### Scenario: Screen reader announces a tip
 - **WHEN** the start step of the intro tour is shown while a screen reader is on
-- **THEN** the screen reader announces the step title, its explanation and "Step 1 of 5", and can move to "Next" and "Skip tour"
+- **THEN** the screen reader announces the step title, its explanation and "Step 1 of 6", and can move to "Next" and "Skip tour"
 
 #### Scenario: Reduced motion drag hint
 - **WHEN** animations are turned off on the device and the placing step is shown
 - **THEN** a static arrow from the next section to an empty cell is shown and nothing moves
+
+#### Scenario: Reduced motion tap hint
+- **WHEN** animations are turned off on the device and the tap to place step is shown
+- **THEN** a static ring is shown on the highlighted cell and nothing moves
 
 ### Requirement: Tip buttons respond on every supported device
 A tip's buttons SHALL lie fully inside the screen area the app can safely take touches in, clear of the display cutout and of the system gesture areas, on every supported screen size and density in landscape. A press on a tip button that shows press feedback SHALL run the button's action when the finger lifts on the button, and the button SHALL not move while it is pressed.
@@ -219,3 +235,18 @@ The first time the player sees a portal pair, that is the first time a level wit
 #### Scenario: Portal tip in Dutch
 - **WHEN** the app language is Dutch and the portal tip is shown
 - **THEN** its title, explanation and button are shown in Dutch
+
+### Requirement: Leaky tile tip
+The first time the player starts a level with leaky tiles, the game SHALL freeze before the countdown runs and show the leaky tile tip, highlighting every leaky tile on the board. The tip SHALL explain that any section can be placed on a leaky tile, that liquid passing it drains away, and that each pass scores no points and costs 20 points, so a detour can be worth more.
+
+#### Scenario: First level with leaky tiles
+- **WHEN** the leaky tile tip has not been seen and a level with two leaky tiles starts
+- **THEN** the game is frozen, both leaky tiles are highlighted and the leaky tile tip is shown with its explanation of the 20-point cost
+
+#### Scenario: Leaky tile tip shown once
+- **WHEN** the leaky tile tip has been seen and a level with leaky tiles starts
+- **THEN** no leaky tile tip is shown and the countdown runs
+
+#### Scenario: Level without leaky tiles
+- **WHEN** the leaky tile tip has not been seen and a level without leaky tiles starts
+- **THEN** no leaky tile tip is shown and the tip stays unseen

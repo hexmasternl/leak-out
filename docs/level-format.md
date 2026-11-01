@@ -108,7 +108,9 @@ Sections are dealt one at a time, at random, but steered so that every section s
 
 The dealing state (draws so far, count and drought per section) belongs to the attempt: it carries over between placements and across pause, and starts fresh when the level is started or restarted.
 
-The level has no random seed. Every attempt deals a new stack, so a retry still deals a different, possibly easier sequence; steering only makes each sequence fairer, not the same. Tests pass a seeded random source to get a repeatable sequence.
+A bundled level has no random seed. Every attempt deals a new stack, so a retry still deals a different, possibly easier sequence; steering only makes each sequence fairer, not the same. Tests pass a seeded random source to get a repeatable sequence.
+
+The [Daily Pipe](#levels-from-the-server-the-daily-pipe) is the exception: it comes with a **stack seed**, and `GameEngine.seeded(stackSeed)` deals every attempt, the first and every restart, from `kotlin.random.Random(stackSeed)`. That generator is the same on every device, so every player gets the same sections in the same order; `SeededDealTest` pins the sequence of a known seed, because changing the dealer changes every player's daily stack.
 
 ## Start and finish rules
 
@@ -207,6 +209,25 @@ With mandatory sections, the route must run through every mandatory channel, ent
 ## Stars
 
 `stars.one`, `two` and `three` are the minimum points for one, two and three stars on a won level. A won level that scores below `stars.one` earns 0 stars and still counts as won. Stars reward longer, more elaborate routes, not merely reaching the finish. So the validator does not check that a threshold can be reached: tune thresholds by play-testing.
+
+## Levels from the server: the Daily Pipe
+
+The Daily Pipe is the one level that is not bundled: the game server generates one every day at 00:00 UTC and the app downloads it (`GET /api/daily-pipes/today`, see the server README, "Daily pipe"). The server sends the level in this format inside its answer, next to the stack seed:
+
+```jsonc
+{
+  "date": "2026-11-02",           // the server's UTC date; the device clock is never used
+  "level": { "id": 20261102, "name": "Daily Pipe 2026-11-02", ... },   // a level in this format, every field written out
+  "stackSeed": 4242,              // 0 to 2^53, see How the stack deals
+  "streak": { "current": 3, "best": 7, "wonToday": false },
+  "bestScore": null
+}
+```
+
+- The app reads `level` with the same `LevelParser` and `LevelValidator` as a bundled file. A level that fails either, for example one with a field a newer app version added, is not played; the player sees that the Daily Pipe needs a newer version of the app.
+- The `id` is the date as `yyyymmdd`. A Daily Pipe is never written to the level history, unlocks no level or page and counts for no achievement.
+- The server only publishes a level that its C# port of `LevelValidator` and `LevelSolver` accepts. The port and these originals check the same fixtures and verdicts (`server/src/DailyPipes/HexMaster.LeakOut.DailyPipes.Tests/Fixtures/`), and `DailyPipeConformanceTest` in `core` also parses, validates and solves a generated level of every weekday. A change to this format or to the rules must therefore be made on the server too.
+- The star thresholds come from the solver's route (0.6, 0.9 and 1.2 times its points) and the start delay from its length, not from a designer.
 
 ## Errors
 

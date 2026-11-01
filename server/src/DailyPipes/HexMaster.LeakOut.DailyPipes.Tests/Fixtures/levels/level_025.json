@@ -1,0 +1,20 @@
+{
+  "id": 25,
+  "name": "Second Wave",
+  "grid": { "columns": 10, "rows": 7 },
+  "start": { "x": 0, "y": 0, "openSide": "BOTTOM" },
+  "finish": { "x": 9, "y": 1, "openSide": "LEFT" },
+  "blocked": [
+    { "x": 5, "y": 0 },
+    { "x": 4, "y": 1 },
+    { "x": 5, "y": 3 },
+    { "x": 2, "y": 6 }
+  ],
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.2 },
+  "stack": { "weights": { "X": 6, "RES": 1 } },
+  "stars": { "one": 310, "two": 470, "three": 620 },
+  "leaky": [
+    { "x": 6, "y": 1 },
+    { "x": 6, "y": 2 }
+  ]
+}

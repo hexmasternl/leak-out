@@ -24,10 +24,16 @@ val bundledLevelsDir: File = rootProject.file("app/src/main/assets/levels")
 // The level format doc. A test parses its full example so that the doc cannot drift from the parser.
 val levelFormatDoc: File = rootProject.file("../../docs/level-format.md")
 
+// The level conformance fixtures shared with the game server's C# port of the validator and solver,
+// and levels its daily pipe generator produced. A test checks the same verdicts as the server tests.
+val dailyPipeFixturesDir: File = rootProject.file("../../server/src/DailyPipes/HexMaster.LeakOut.DailyPipes.Tests/Fixtures")
+
 tasks.test {
     useJUnitPlatform()
     systemProperty("leakout.levelsDir", bundledLevelsDir.absolutePath)
     inputs.files(fileTree(bundledLevelsDir)).withPropertyName("bundledLevels")
     systemProperty("leakout.levelFormatDoc", levelFormatDoc.absolutePath)
     inputs.file(levelFormatDoc).withPropertyName("levelFormatDoc")
+    systemProperty("leakout.dailyPipeFixturesDir", dailyPipeFixturesDir.absolutePath)
+    inputs.files(fileTree(dailyPipeFixturesDir)).withPropertyName("dailyPipeFixtures")
 }

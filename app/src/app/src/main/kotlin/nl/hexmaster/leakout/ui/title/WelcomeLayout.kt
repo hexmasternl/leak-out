@@ -13,6 +13,7 @@ data class WelcomeLayout(
     val buttonFaceHeightDp: Float,
     val buttonWidthDp: Float,
     val buttonSpacingDp: Float,
+    val buttonCount: Int = BUTTON_COUNT,
 ) {
     /** Height the title line box takes (line height 1.1). */
     val titleHeightDp: Float get() = titleSizeDp * TITLE_LINE_HEIGHT
@@ -20,8 +21,8 @@ data class WelcomeLayout(
     /** Height of the whole centred column: title, gap, and a button including its shadow. */
     val contentHeightDp: Float get() = titleHeightDp + gapDp + buttonFaceHeightDp + BUTTON_SHADOW_DP
 
-    /** Width of the three-button row. */
-    val buttonRowWidthDp: Float get() = BUTTON_COUNT * buttonWidthDp + (BUTTON_COUNT - 1) * buttonSpacingDp
+    /** Width of the button row. */
+    val buttonRowWidthDp: Float get() = buttonCount * buttonWidthDp + (buttonCount - 1) * buttonSpacingDp
 
     companion object {
         const val TITLE_LINE_HEIGHT = 1.1f
@@ -32,6 +33,7 @@ data class WelcomeLayout(
          */
         const val TITLE_WIDTH_EM = 5.2f
         const val BUTTON_SHADOW_DP = 6f
+        // Play, Settings and Exit; the Daily Pipe button makes four.
         const val BUTTON_COUNT = 3
         const val MIN_TOUCH_TARGET_DP = 48f
 
@@ -45,19 +47,19 @@ data class WelcomeLayout(
         private const val USABLE_FRACTION = 0.9f
 
         /**
-         * Computes the layout for an available area of [widthDp] x [heightDp]. The title grows
+         * Computes the layout of [buttonCount] buttons for an available area of [widthDp] x [heightDp]. The title grows
          * with the screen but is capped by both the width it must fit in and the height left
          * after the buttons, so short landscape phones shrink the title first and never the
          * touch targets.
          */
-        fun compute(widthDp: Float, heightDp: Float): WelcomeLayout {
+        fun compute(widthDp: Float, heightDp: Float, buttonCount: Int = BUTTON_COUNT): WelcomeLayout {
             val usableWidth = widthDp * USABLE_FRACTION
             val usableHeight = heightDp * USABLE_FRACTION
 
             val buttonFace = (heightDp * 0.15f).coerceIn(MIN_BUTTON_FACE_DP, MAX_BUTTON_FACE_DP)
             val gap = (heightDp * 0.08f).coerceIn(8f, 32f)
             val buttonSpacing = (widthDp * 0.025f).coerceIn(12f, 24f)
-            val buttonWidth = ((usableWidth - 2 * buttonSpacing) / BUTTON_COUNT).coerceIn(96f, 200f)
+            val buttonWidth = ((usableWidth - (buttonCount - 1) * buttonSpacing) / buttonCount).coerceIn(96f, 200f)
 
             val titleByWidth = usableWidth / TITLE_WIDTH_EM
             val titleByHeight = (usableHeight - gap - buttonFace - BUTTON_SHADOW_DP) / TITLE_LINE_HEIGHT
@@ -72,6 +74,7 @@ data class WelcomeLayout(
                 buttonFaceHeightDp = buttonFace,
                 buttonWidthDp = buttonWidth,
                 buttonSpacingDp = buttonSpacing,
+                buttonCount = buttonCount,
             )
         }
     }

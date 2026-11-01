@@ -1,0 +1,23 @@
+{
+  "id": 29,
+  "name": "Backwater",
+  "grid": { "columns": 11, "rows": 8 },
+  "start": { "x": 0, "y": 5, "openSide": "RIGHT" },
+  "finish": { "x": 10, "y": 1, "openSide": "LEFT" },
+  "blocked": [
+    { "x": 4, "y": 0 },
+    { "x": 1, "y": 1 },
+    { "x": 6, "y": 1 },
+    { "x": 1, "y": 3 },
+    { "x": 4, "y": 3 },
+    { "x": 6, "y": 5 },
+    { "x": 9, "y": 5 },
+    { "x": 9, "y": 7 }
+  ],
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.217 },
+  "stack": { "weights": { "X": 6, "RES": 1 } },
+  "stars": { "one": 380, "two": 580, "three": 770 },
+  "leaky": [
+    { "x": 9, "y": 2 }
+  ]
+}

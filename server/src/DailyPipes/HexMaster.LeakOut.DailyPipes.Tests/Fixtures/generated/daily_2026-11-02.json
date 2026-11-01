@@ -1,0 +1,47 @@
+{
+  "id": 20261102,
+  "name": "Daily Pipe 2026-11-02",
+  "grid": {
+    "columns": 8,
+    "rows": 7
+  },
+  "start": {
+    "x": 2,
+    "y": 0,
+    "openSide": "BOTTOM"
+  },
+  "finish": {
+    "x": 4,
+    "y": 6,
+    "openSide": "TOP"
+  },
+  "blocked": [],
+  "flow": {
+    "initialDelayMs": 16300,
+    "cellsPerSecond": 0.22,
+    "reservoirSpeedFactor": 0.3,
+    "speedRampPerCell": 0
+  },
+  "stack": {
+    "visibleSize": 5,
+    "weights": {
+      "H": 7,
+      "V": 7,
+      "LT": 7,
+      "LB": 7,
+      "RT": 7,
+      "RB": 7,
+      "X": 0,
+      "RES": 0
+    }
+  },
+  "rules": {
+    "allowReplace": true,
+    "replacePenaltyMs": 1500
+  },
+  "stars": {
+    "one": 50,
+    "two": 70,
+    "three": 100
+  }
+}

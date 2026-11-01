@@ -1,5 +1,5 @@
 // Azure Database for PostgreSQL Flexible Server on the cheapest burstable tier, with the
-// databases of the Players and Scores modules.
+// databases of the Players, Scores and DailyPipes modules.
 
 @description('Azure region of the server.')
 param location string
@@ -18,6 +18,7 @@ param administratorPassword string
 param databaseNames string[] = [
   'playersdb'
   'scoresdb'
+  'dailypipesdb'
 ]
 
 resource server 'Microsoft.DBforPostgreSQL/flexibleServers@2026-04-01-preview' = {

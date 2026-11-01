@@ -1,0 +1,37 @@
+{
+  "id": 41,
+  "name": "Bottleneck",
+  "grid": { "columns": 14, "rows": 10 },
+  "start": { "x": 1, "y": 8, "openSide": "RIGHT" },
+  "finish": { "x": 13, "y": 6, "openSide": "LEFT" },
+  "blocked": [
+    { "x": 10, "y": 0 },
+    { "x": 0, "y": 1 },
+    { "x": 4, "y": 1 },
+    { "x": 8, "y": 3 },
+    { "x": 12, "y": 3 },
+    { "x": 0, "y": 4 },
+    { "x": 6, "y": 4 },
+    { "x": 0, "y": 5 },
+    { "x": 6, "y": 5 },
+    { "x": 8, "y": 5 },
+    { "x": 11, "y": 5 },
+    { "x": 1, "y": 6 },
+    { "x": 6, "y": 6 },
+    { "x": 8, "y": 6 },
+    { "x": 10, "y": 6 },
+    { "x": 7, "y": 7 },
+    { "x": 11, "y": 7 },
+    { "x": 12, "y": 7 },
+    { "x": 4, "y": 8 },
+    { "x": 8, "y": 9 },
+    { "x": 11, "y": 9 }
+  ],
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.27 },
+  "stack": { "weights": { "X": 6, "RES": 3 } },
+  "mandatory": [
+    { "x": 3, "y": 2, "section": "X" },
+    { "x": 7, "y": 8, "section": "RES" }
+  ],
+  "stars": { "one": 590, "two": 880, "three": 1170 }
+}

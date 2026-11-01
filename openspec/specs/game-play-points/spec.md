@@ -19,11 +19,13 @@ The system SHALL award points for a placed pipe section at the moment the liquid
 - **THEN** those sections have added nothing to the score
 
 ### Requirement: Points per section type
-The system SHALL award these points for one pass of the liquid through a section:
+The system SHALL award these points for one pass of the liquid through a section that does not lie on a leaky tile:
 - a straight section (`H` or `V`): 10 points,
 - a corner section (`LT`, `LB`, `RT` or `RB`): 15 points,
 - a reservoir (`RES`): 25 points,
 - a cross (`X`): 10 points for the first pass and 50 points for the second pass.
+
+A pass through a section on a leaky tile SHALL award none of these points and SHALL take the leak penalty of 20 points instead.
 
 #### Scenario: Straight section
 - **WHEN** the liquid exits an `H` or a `V` section
@@ -41,8 +43,12 @@ The system SHALL award these points for one pass of the liquid through a section
 - **WHEN** the liquid runs through two straight sections, three corner sections and one reservoir and reaches the finish
 - **THEN** the score is 2 × 10 + 3 × 15 + 25 = 90
 
+#### Scenario: Route over a leaky tile
+- **WHEN** the liquid runs through two straight sections and three corner sections, one of the corners on a leaky tile, and reaches the finish
+- **THEN** the score is 2 × 10 + 2 × 15 − 20 = 30
+
 ### Requirement: Cross section scores its first and second pass differently
-The system SHALL count the passes through each cross section separately per tile. The first time the liquid exits a cross, through either channel, the system SHALL award 10 points. The second time the liquid exits the same cross, through the other channel, the system SHALL award 50 points. The order of the channels SHALL NOT matter. Each cross tile SHALL be counted on its own.
+The system SHALL count the passes through each cross section separately per tile. The first time the liquid exits a cross, through either channel, the system SHALL award 10 points. The second time the liquid exits the same cross, through the other channel, the system SHALL award 50 points. The order of the channels SHALL NOT matter. Each cross tile SHALL be counted on its own. A cross on a leaky tile SHALL take the leak penalty on each pass instead.
 
 #### Scenario: First pass through a cross
 - **WHEN** the liquid exits a cross through its horizontal channel and the vertical channel has not been used
@@ -59,6 +65,10 @@ The system SHALL count the passes through each cross section separately per tile
 #### Scenario: Two different crosses
 - **WHEN** the liquid passes once through a cross on one tile and then once through a cross on another tile
 - **THEN** each exit adds 10
+
+#### Scenario: Cross on a leaky tile
+- **WHEN** the liquid exits a cross on a leaky tile twice, once through each channel
+- **THEN** each exit takes 20 points off the score
 
 ### Requirement: Start and finish tiles give no points
 The start tile, the finish tile and portals SHALL NOT give points. The liquid leaving the start tile, entering the finish tile or passing a portal pair SHALL NOT change the score.
@@ -83,7 +93,7 @@ When the liquid exits a placed section and the next tile does not accept it (an 
 - **THEN** the score goes up by 15 for the corner
 
 ### Requirement: Score total for the attempt
-The score SHALL be the sum of all points awarded during the current attempt. It SHALL start at 0 when a level starts and SHALL be set back to 0 when the level restarts. The HUD SHALL show the new total at the moment points are awarded. While the game is paused, no points SHALL be awarded.
+The score SHALL be the sum of all points awarded during the current attempt, minus every leak penalty taken, and MAY go below 0. It SHALL start at 0 when a level starts and SHALL be set back to 0 when the level restarts. The HUD SHALL show the new total at the moment points are awarded or taken. While the game is paused, no points SHALL be awarded or taken.
 
 #### Scenario: HUD follows the awards
 - **WHEN** the score is 40 and the liquid exits a corner section
@@ -96,3 +106,7 @@ The score SHALL be the sum of all points awarded during the current attempt. It 
 #### Scenario: No points while paused
 - **WHEN** the game is paused
 - **THEN** the score does not change until the game is resumed
+
+#### Scenario: Score below zero
+- **WHEN** the score is 0 and the liquid exits a straight on a leaky tile
+- **THEN** the score is −20 and the HUD shows −20 with an empty score bar

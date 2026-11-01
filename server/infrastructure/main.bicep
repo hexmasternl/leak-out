@@ -15,6 +15,13 @@ param locationAbbreviation string = 'neu'
 @minLength(1)
 param imageName string
 
+@description('Full image reference of the daily pipe generator including the tag.')
+@minLength(1)
+param generatorImageName string
+
+@description('E-mail address that gets the daily pipe generator\'s failure alert (ALERT_EMAIL); empty sends no e-mail.')
+param alertEmailAddress string = ''
+
 @description('Version of the deployed release (SERVICE_VERSION), reported as the OpenTelemetry service.version.')
 param serviceVersion string
 
@@ -67,6 +74,8 @@ module resources 'resources.bicep' = {
   params: {
     location: location
     imageName: imageName
+    generatorImageName: generatorImageName
+    alertEmailAddress: alertEmailAddress
     serviceVersion: serviceVersion
     registryServer: registryServer
     registryUsername: registryUsername
@@ -85,3 +94,6 @@ output resourceGroupName string = resourceGroup.name
 
 @description('Fully qualified domain name of the API.')
 output apiFullyQualifiedDomainName string = resources.outputs.apiFullyQualifiedDomainName
+
+@description('Name of the daily pipe generator job, for starting a run by hand.')
+output dailyPipeJobName string = resources.outputs.dailyPipeJobName

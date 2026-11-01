@@ -70,6 +70,7 @@ import nl.hexmaster.leakout.scores.online.ScoreSubmissions
 import nl.hexmaster.leakout.settings.SettingsRepository
 import nl.hexmaster.leakout.settings.TipId
 import nl.hexmaster.leakout.ui.components.KeepScreenOn
+import nl.hexmaster.leakout.ui.daily.DailyResults
 import nl.hexmaster.leakout.ui.game.onboarding.DragHint
 import nl.hexmaster.leakout.ui.game.onboarding.TapHint
 import nl.hexmaster.leakout.ui.game.onboarding.TipHint
@@ -123,9 +124,13 @@ fun GameScreen(
     scores: ScoreSubmissions? = null,
     topScores: TopScoresAccess? = null,
     mayStartLevel: () -> Boolean = { true },
+    levelLabel: String? = null,
+    daily: DailyResults? = null,
 ) {
     // The display stays on for the whole game screen, its dialogs included.
     KeepScreenOn()
+    // A daily pipe win goes to the server once the level complete dialog shows; Try again sends it again.
+    val dailyResult = daily?.let { rememberDailyResult(session, it) }
     val dragState = remember(session) { SectionDragState() }
     // Parse every pipe asset once up front, so no frame mid-game pays for a section's first draw.
     val pipes = rememberPipeArtLibrary().let { library -> remember(library) { library.apply { preloadAll() } } }
@@ -205,6 +210,7 @@ fun GameScreen(
         ) {
             GameHud(
                 levelId = currentLevel.id,
+                levelLabel = levelLabel,
                 flowSpeed = session.select { state.flowSpeed },
                 countdownRemainingMs = session.select { (state.flow as? FlowState.Waiting)?.remainingMs },
                 initialDelayMs = currentLevel.flow.initialDelayMs,
@@ -316,6 +322,7 @@ fun GameScreen(
             reason = session.select { (state.outcome as? Outcome.Lost)?.reason ?: LossReason.LEAK },
             unlocked = session.select { unlockedThisAttempt },
             onTopScores = topScores?.let { { topScoresFrom = TopScoresOrigin.Result } },
+            eyebrow = levelLabel,
         )
     }
     if (showWinDialog) {
@@ -334,6 +341,9 @@ fun GameScreen(
                 unlocked = session.select { unlockedThisAttempt },
                 scorePost = session.select { scorePost },
                 onTopScores = topScores?.let { { topScoresFrom = TopScoresOrigin.Result } },
+                eyebrow = levelLabel,
+                daily = dailyResult?.state,
+                onRetryDaily = { dailyResult?.retry() },
             )
         }
     }
@@ -499,7 +509,7 @@ private val RevealMargin = 16.dp
  * state changes every frame (the clock), but most views only care about a part that rarely does.
  */
 @Composable
-private fun <T> GameSession.select(read: GameSession.() -> T): T {
+internal fun <T> GameSession.select(read: GameSession.() -> T): T {
     val value by remember(this) { derivedStateOf { read() } }
     return value
 }

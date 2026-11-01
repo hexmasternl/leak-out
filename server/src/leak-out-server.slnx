@@ -2,6 +2,13 @@
   <Folder Name="/Core/">
     <Project Path="Core/HexMaster.LeakOut.Core/HexMaster.LeakOut.Core.csproj" />
   </Folder>
+  <Folder Name="/DailyPipes/">
+    <Project Path="DailyPipes/HexMaster.LeakOut.DailyPipes.Abstractions/HexMaster.LeakOut.DailyPipes.Abstractions.csproj" />
+    <Project Path="DailyPipes/HexMaster.LeakOut.DailyPipes.Data.PostgreSQL/HexMaster.LeakOut.DailyPipes.Data.PostgreSQL.csproj" />
+    <Project Path="DailyPipes/HexMaster.LeakOut.DailyPipes.Generator/HexMaster.LeakOut.DailyPipes.Generator.csproj" />
+    <Project Path="DailyPipes/HexMaster.LeakOut.DailyPipes.Tests/HexMaster.LeakOut.DailyPipes.Tests.csproj" />
+    <Project Path="DailyPipes/HexMaster.LeakOut.DailyPipes/HexMaster.LeakOut.DailyPipes.csproj" />
+  </Folder>
   <Folder Name="/HexMaster.LeakOut.Aspire/">
     <Project Path="HexMaster.LeakOut.Aspire/HexMaster.LeakOut.Aspire.ServiceDefaults.Tests/HexMaster.LeakOut.Aspire.ServiceDefaults.Tests.csproj" />
   </Folder>

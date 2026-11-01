@@ -42,3 +42,28 @@ Origin: https://leakout.hexmaster.nl
 Accept: application/json
 
 ###
+
+### Get today's daily pipe (the server's UTC date): the level JSON, the stack seed, the streak and the
+# player's best result. 404 until the generator has published today's pipe.
+# @name dailyPipe
+GET {{HexMaster.LeakOut.Api_HostAddress}}/api/daily-pipes/today
+Authorization: Bearer {{signIn.response.body.$.accessToken}}
+Accept: application/json
+
+### Submit a result on today's daily pipe. 409 for any other date; at least one star is a win for the streak.
+POST {{HexMaster.LeakOut.Api_HostAddress}}/api/daily-pipes/{{dailyPipe.response.body.$.date}}/scores
+Authorization: Bearer {{signIn.response.body.$.accessToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "score": 380,
+  "stars": 2
+}
+
+### Get the top 10 of a daily pipe and the signed-in player's own rank. 404 for a date without a pipe.
+GET {{HexMaster.LeakOut.Api_HostAddress}}/api/daily-pipes/{{dailyPipe.response.body.$.date}}/scores/top
+Authorization: Bearer {{signIn.response.body.$.accessToken}}
+Accept: application/json
+
+###

@@ -10,10 +10,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\HexMaster.LeakOut.Api\HexMaster.LeakOut.Api.csproj" />
+    <ProjectReference Include="..\..\DailyPipes\HexMaster.LeakOut.DailyPipes.Generator\HexMaster.LeakOut.DailyPipes.Generator.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.1" />
+    <!-- Aspire.Hosting 13.6.1 pulls in MessagePack 2.5.302 (through StreamJsonRpc), which has a known
+         vulnerability (GHSA-qhrr-8q5h-9q3h) that fails the restore; pin the patched version until
+         Aspire depends on it. -->
+    <PackageReference Include="MessagePack" Version="2.5.307" />
   </ItemGroup>
 
 </Project>

@@ -18,7 +18,7 @@
 - [x] 3.2 Implement the `GenerateDailyPipe` command: generate candidates until one passes validation and solvability or the attempt limit is reached, then publish for today's UTC date (from `IClock`) and delete older daily scores and pipes older than 7 days in one transaction; do nothing when today already has a pipe
 - [x] 3.3 Unit tests: unsolvable candidates are discarded, the attempt limit fails the run without publishing, a rerun leaves the pipe unchanged, older scores are deleted and streaks are kept, a year of generator seeds always yields valid and solvable levels
 - [x] 3.4 Write a sample of generated levels to the conformance fixtures and check in the app `core` test that `LevelParser`, `LevelValidator` and `LevelSolver` accept them
-- [ ] 3.5 Create the console project `HexMaster.LeakOut.DailyPipes.Generator` that runs `GenerateDailyPipe` once with ServiceDefaults telemetry and exits non-zero on failure; register it in the AppHost so it runs once at local startup
+- [x] 3.5 Create the console project `HexMaster.LeakOut.DailyPipes.Generator` that runs `GenerateDailyPipe` once with ServiceDefaults telemetry and exits non-zero on failure; register it in the AppHost so it runs once at local startup
 
 ## 4. Server: API
 

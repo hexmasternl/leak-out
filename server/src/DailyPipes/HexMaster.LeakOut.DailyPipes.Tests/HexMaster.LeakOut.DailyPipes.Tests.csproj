@@ -26,6 +26,7 @@
   <ItemGroup>
     <ProjectReference Include="..\HexMaster.LeakOut.DailyPipes\HexMaster.LeakOut.DailyPipes.csproj" />
     <ProjectReference Include="..\HexMaster.LeakOut.DailyPipes.Data.PostgreSQL\HexMaster.LeakOut.DailyPipes.Data.PostgreSQL.csproj" />
+    <ProjectReference Include="..\HexMaster.LeakOut.DailyPipes.Generator\HexMaster.LeakOut.DailyPipes.Generator.csproj" />
   </ItemGroup>
 
   <!-- The conformance fixtures, shared with the app's core tests, are copied next to the test binary. -->

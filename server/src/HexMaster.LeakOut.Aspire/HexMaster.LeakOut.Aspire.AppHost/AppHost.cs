@@ -21,4 +21,10 @@ builder.AddProject<Projects.HexMaster_LeakOut_Api>("hexmaster-leakout-api")
     .WithEnvironment("GooglePlayGames__ClientSecret", googleClientSecret)
     .WithEnvironment("Authentication__SigningKey", signingKey);
 
+// Runs once at startup and exits, so a developer always has today's daily pipe. In Azure the same
+// project runs as a Container Apps job at 00:00 UTC (server/infrastructure/modules/daily-pipe-job.bicep).
+builder.AddProject<Projects.HexMaster_LeakOut_DailyPipes_Generator>("daily-pipe-generator")
+    .WithReference(dailyPipesDb)
+    .WaitFor(dailyPipesDb);
+
 builder.Build().Run();

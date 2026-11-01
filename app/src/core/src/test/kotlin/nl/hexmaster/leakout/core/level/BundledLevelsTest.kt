@@ -24,6 +24,12 @@ class BundledLevelsTest {
     }
 
     @Test
+    fun `every bundled level fits in 25 columns by 15 rows`() {
+        val oversized = levelFiles().map(::parse).filter { it.grid.columns > 25 || it.grid.rows > 15 }.map { "${it.id}: ${it.grid}" }
+        assertEquals(emptyList(), oversized)
+    }
+
+    @Test
     fun `bundled set has no duplicate ids`() {
         assertEquals(emptyList(), LevelValidator.validateSet(levelFiles().map(::parse)).errors)
     }

@@ -1,9 +1,9 @@
 {
   "id": 73,
   "name": "The Wall",
-  "grid": { "columns": 24, "rows": 24 },
-  "start": { "x": 0, "y": 1, "openSide": "RIGHT" },
-  "finish": { "x": 23, "y": 16, "openSide": "LEFT" },
+  "grid": { "columns": 25, "rows": 15 },
+  "start": { "x": 0, "y": 0, "openSide": "RIGHT" },
+  "finish": { "x": 24, "y": 10, "openSide": "LEFT" },
   "blocked": [
     { "x": 10, "y": 0 },
     { "x": 10, "y": 1 },
@@ -19,25 +19,16 @@
     { "x": 10, "y": 11 },
     { "x": 10, "y": 12 },
     { "x": 10, "y": 13 },
-    { "x": 10, "y": 14 },
-    { "x": 10, "y": 15 },
-    { "x": 10, "y": 16 },
-    { "x": 10, "y": 17 },
-    { "x": 10, "y": 18 },
-    { "x": 10, "y": 19 },
-    { "x": 10, "y": 20 },
-    { "x": 10, "y": 21 },
-    { "x": 10, "y": 22 },
-    { "x": 10, "y": 23 }
+    { "x": 10, "y": 14 }
   ],
   "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.351 },
   "stack": { "weights": { "X": 6, "RES": 3 } },
+  "stars": { "one": 2140, "two": 2670, "three": 3560 },
   "mandatory": [
-    { "x": 6, "y": 9, "section": "X" },
-    { "x": 13, "y": 11, "section": "RES" }
+    { "x": 6, "y": 5, "section": "X" },
+    { "x": 14, "y": 7, "section": "RES" }
   ],
   "portals": [
-    { "a": { "x": 11, "y": 11, "openSide": "RIGHT" }, "b": { "x": 8, "y": 9, "openSide": "LEFT" } }
-  ],
-  "stars": { "one": 2770, "two": 4150, "three": 5480 }
+    { "a": { "x": 11, "y": 7, "openSide": "RIGHT" }, "b": { "x": 8, "y": 5, "openSide": "LEFT" } }
+  ]
 }

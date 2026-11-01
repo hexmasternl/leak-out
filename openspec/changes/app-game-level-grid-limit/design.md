@@ -17,9 +17,9 @@
 ## Decisions
 
 - **Separate column and row limits.** Replace `MAX_GRID_SIZE` with `MAX_GRID_COLUMNS = 25` and `MAX_GRID_ROWS = 15`, and give each dimension its own range in the validator and in `LevelDraft`. One shared limit cannot express 25 by 15.
-- **Redesign, not crop.** Cutting a 24 by 24 level down to 15 rows would usually remove the finish or a mandatory section and break the intended route. Each oversized level is rebuilt at the new size (in the designer or by editing its JSON), keeping its id, name, theme and features, then verified with the solver.
+- **Rescale, not crop.** Cutting a 24 by 24 level down to 15 rows would remove the finish or a mandatory section. Each oversized level is rescaled proportionally instead: start, finish, mandatory sections and portals keep their relative positions (with the cells they need kept free), a target cell is blocked when one of its source cells was blocked unless one of them lay in a wall gap of at most two cells, so walls keep their openings. Each result is checked with the validator and the solver.
 - **Stars from free cells.** Star thresholds of the redesigned levels are recalculated with the designer's rule, so they stay consistent with every other level.
-- **Flow and stack re-tuned.** A smaller grid means shorter routes; the initial delay and cells per second are adjusted so each level still gives roughly the same pressure, and the difficulty still rises from 55 to 96.
+- **Flow and stack kept.** Each level keeps its initial delay, cells per second and stack weights, so the existing difficulty ramp (flow speed rising from 0.313 to 0.4 cells per second, head start falling from 25 to 20 seconds) is unchanged. Shortest routes become 0 to 30 percent shorter, which makes the late levels slightly more forgiving; re-tune individual levels later if play-testing shows they are too easy.
 - **Oversized designs shrink on restore.** A design kept in saved state from before this change that is larger than 25 by 15 goes through the existing shrink rules when it is restored, so the designer never shows a grid outside the range.
 
 ## Risks / Trade-offs

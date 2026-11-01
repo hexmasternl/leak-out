@@ -83,9 +83,19 @@ class LevelDraftTest {
     }
 
     @Test
-    fun `grid size is clamped to 4 to 50`() {
+    fun `grid size is clamped to 4 to 25 columns and 4 to 15 rows`() {
         assertEquals(GridSize(4, 4), blank.resize(1, -3).level.grid)
-        assertEquals(GridSize(50, 50), blank.resize(51, 400).level.grid)
+        assertEquals(GridSize(25, 15), blank.resize(51, 400).level.grid)
+        assertEquals(GridSize(25, 9), blank.resize(26, 9).level.grid)
+        assertEquals(GridSize(7, 15), blank.resize(7, 16).level.grid)
+    }
+
+    @Test
+    fun `resizing an oversized level to its own size shrinks it to fit`() {
+        val big = blank.level.copy(grid = GridSize(24, 24), finish = Endpoint(Position(6, 23), Side.TOP))
+        val draft = LevelDraft(big).resize(big.grid.columns, big.grid.rows)
+        assertEquals(GridSize(24, 15), draft.level.grid)
+        assertEquals(Endpoint(Position(6, 14), Side.TOP), draft.level.finish)
     }
 
     @Test

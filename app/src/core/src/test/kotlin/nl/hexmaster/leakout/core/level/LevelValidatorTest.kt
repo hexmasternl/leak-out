@@ -67,7 +67,7 @@ class LevelValidatorTest {
     @Test
     fun `smallest and largest grids are accepted`() {
         assertValid(valid(grid = GridSize(4, 4), start = at(0, 1, Side.RIGHT), finish = at(3, 2, Side.LEFT), blocked = emptyList()))
-        assertValid(valid(grid = GridSize(50, 50)))
+        assertValid(valid(grid = GridSize(25, 15)))
     }
 
     @Test
@@ -79,8 +79,8 @@ class LevelValidatorTest {
 
     @Test
     fun `grid above the maximum is rejected per dimension`() {
-        assertOnlyError("grid.columns", valid(grid = GridSize(51, 9)))
-        assertOnlyError("grid.rows", valid(grid = GridSize(7, 51)))
+        assertOnlyError("grid.columns", valid(grid = GridSize(26, 15)))
+        assertOnlyError("grid.rows", valid(grid = GridSize(25, 16)))
     }
 
     // Start and finish

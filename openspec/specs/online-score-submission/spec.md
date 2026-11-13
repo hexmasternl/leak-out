@@ -110,7 +110,7 @@ A queued score SHALL be removed when the server accepts it, also when the server
 - **THEN** after the server accepts 90, the queue still holds 120 for level 3
 
 ### Requirement: A failed send changes nothing else
-A send that fails SHALL NOT affect the game, the dialog, the local level history or the achievements. Each request SHALL give up after at most 15 seconds.
+A send that fails SHALL NOT affect the game, the dialog, the local level history or the achievements. Each request SHALL give up after at most 35 seconds. Once connected, a request SHALL wait at least 30 seconds for the server's answer, so a server that is starting up from idle can still answer the first request. Connecting SHALL give up after at most 10 seconds.
 
 #### Scenario: Offline win
 - **WHEN** a signed-in player wins a level while the device is offline
@@ -119,6 +119,14 @@ A send that fails SHALL NOT affect the game, the dialog, the local level history
 #### Scenario: Buttons do not wait for the send
 - **WHEN** the score and star animations are done while the send is still in progress
 - **THEN** Next Level, Restart and Exit are enabled
+
+#### Scenario: Server starting up from idle
+- **WHEN** the server accepts the connection and answers a request after 15 seconds
+- **THEN** the request succeeds and is not counted as a failed send
+
+#### Scenario: Server does not answer
+- **WHEN** the server accepts the connection but has not answered after 35 seconds
+- **THEN** the request gives up and counts as a failed send
 
 ### Requirement: The app authenticates with a Play Games server auth code
 To send, the system SHALL sign in to the score server with a one-time Play Games server auth code requested for the configured client id, and SHALL send the access token it receives with each score. It SHALL reuse that token until shortly before it expires.

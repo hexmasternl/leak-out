@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) and GitHub Copilot (
 
 ## Project state
 
-A .NET 10 ASP.NET Core minimal API orchestrated by .NET Aspire, organised as a modular monolith (`src/Core`, `src/Players`, `src/Scores`, `src/DailyPipes`). Players sign in with Google Play Games (`POST /api/players/sessions`). The DailyPipes module also has a console project, `HexMaster.LeakOut.DailyPipes.Generator`, run as a scheduled Container Apps job (README, "Daily pipe"). The solution file is `src/leak-out-server.slnx` (the new XML `.slnx` format, not `.sln`).
+A .NET 11 ASP.NET Core minimal API orchestrated by .NET Aspire, organised as a modular monolith (`src/Core`, `src/Players`, `src/Scores`, `src/DailyPipes`). Players sign in with Google Play Games (`POST /api/players/sessions`). The DailyPipes module also has a console project, `HexMaster.LeakOut.DailyPipes.Generator`, run as a scheduled Container Apps job (README, "Daily pipe"). The solution file is `src/leak-out-server.slnx` (the new XML `.slnx` format, not `.sln`).
 
 ## Commands
 

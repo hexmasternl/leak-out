@@ -1,10 +1,10 @@
 # Leak Out game server
 
-The score server of the Leak Out game: a .NET 10 minimal API orchestrated by .NET Aspire, with PostgreSQL. It lives in `server/` of the Leak Out repository, next to the Android app in `app/`; until October 2026 it had its own repository, `hexmasternl/leak-out-server` (archived), whose history was imported here. Paths in this file are relative to `server/` unless they start with `.github/`; how the two sides are built and released apart: [docs/repository-layout.md](../docs/repository-layout.md).
+The score server of the Leak Out game: a .NET 11 minimal API orchestrated by .NET Aspire, with PostgreSQL. It lives in `server/` of the Leak Out repository, next to the Android app in `app/`; until October 2026 it had its own repository, `hexmasternl/leak-out-server` (archived), whose history was imported here. Paths in this file are relative to `server/` unless they start with `.github/`; how the two sides are built and released apart: [docs/repository-layout.md](../docs/repository-layout.md).
 
 ## Running locally
 
-Requirements: the .NET 10 SDK and Docker (Aspire runs PostgreSQL in a container).
+Requirements: the .NET 11 SDK and Docker (Aspire runs PostgreSQL in a container).
 
 The server needs three secrets. They are Aspire parameters of the AppHost and are stored in its user secrets, never in `appsettings.json`:
 

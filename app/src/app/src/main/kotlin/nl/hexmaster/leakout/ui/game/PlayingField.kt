@@ -363,7 +363,7 @@ fun PlayingField(
                 }
                 val rect = viewport.cellRect(position)
                 val wetness = if (position in leaky) LeakyTileStyle.wetness(cell, position, flowing?.position, reducedMotion) else null
-                if (pop != null && cell is Cell.Pipe && position == landing?.at) {
+                if (pop != null && cell is Cell.Pipe && position == landing.at) {
                     scale(pop, pivot = rect.center) { drawCell(cell, rect, pipes, scratch, fills, glows, wetness, now) }
                 } else {
                     drawCell(cell, rect, pipes, scratch, fills, glows, wetness, now)

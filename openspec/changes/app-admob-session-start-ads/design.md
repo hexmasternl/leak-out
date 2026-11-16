@@ -18,7 +18,7 @@ All screen changes happen in `MainActivity` (a `Screen` state). Levels start fro
 - **Ad is shown after the tap, the level opens in the callback.** `AdProvider.showIfReady(activity, onFinished)` calls `onFinished` straight away when nothing is loaded, and after dismiss or show failure otherwise. The update gate is asked first, then the ad, then the screen switches.
 - **Wrapper over the SDK.** `AdProvider` (`preload()`, `showIfReady`) has `AdMobAdProvider` for production and a fake for tests and previews. The `Activity` is passed per call, never stored, to avoid leaks.
 - **Consent before init.** `ConsentManager` runs UMP in `MainActivity.onCreate` and calls `MobileAds.initialize` on a background thread only when `canRequestAds()` is true, then preloads. Stored consent from an earlier run lets ads be requested at once.
-- **IDs per build type.** `manifestPlaceholders["admobAppId"]` and a `BuildConfig` field for the interstitial ID: debug uses Google's test IDs; release reads `LEAKOUT_ADMOB_*` from Gradle properties or environment and falls back to the test IDs, like the signing variables.
+- **IDs per build type.** `manifestPlaceholders["admobAppId"]` and a `BuildConfig` field for the interstitial ID: debug uses Google's test IDs; release uses the Leak Out IDs, which are public and live in the build file like the score server client id; `LEAKOUT_ADMOB_*` override them as a pair.
 - **Version pins.** `play-services-ads` goes in the version catalog like every other dependency; its transitive `fragment` and lifecycle versions are checked against the existing pins (issue #88).
 - **Website file.** `app-ads.txt` goes in `website/src/static/` so Hugo serves it from the site root, one line with the AdMob publisher ID. It only matters for AdMob verification; the app never reads it.
 
@@ -33,6 +33,5 @@ All screen changes happen in `MainActivity` (a `Screen` state). Levels start fro
 
 - The issue says an ad "the first time the player starts a game". This change reads that as once per session (every start from the menu). Should it instead be once per app process?
 - Is the game child-directed (Families policy)? If yes, child-directed treatment and a lower max ad content rating are required.
-- What is the AdMob publisher ID for `app-ads.txt`, and is the website domain the one listed in the Play Console store listing?
 - Should a Daily Pipe opened from a tapped reminder also show an ad? This change shows it for button and reminder alike.
 - Should the very first launch after install skip the ad?

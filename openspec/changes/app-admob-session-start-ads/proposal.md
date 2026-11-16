@@ -10,7 +10,7 @@ Tracked in [#176](https://github.com/hexmasternl/leak-out/issues/176).
 - A session is the stretch from entering a level from the menu until the player returns to the menu. Moving from level to level inside a session shows **no** ad, so the ad appears once, at the start only.
 - An ad never blocks the player: if none is loaded or it fails to show, the level starts at once. The next ad is preloaded in the background.
 - Ads are requested only when the Google UMP consent flow allows it. The Settings screen gets a "Privacy options" entry where the rules require one.
-- Debug builds always use Google's test ad IDs. Release builds read the real AdMob app ID and ad unit ID from build variables (GitHub secrets in CI) and fall back to the test IDs when they are missing.
+- Debug builds always use Google's test ad IDs. Release builds use the Leak Out AdMob app ID and the `game-start-add` ad unit ID, which are public and sit in the build file; `LEAKOUT_ADMOB_*` variables can override them.
 - The decision "show an ad now?" is a pure Kotlin rule in `core`; the AdMob SDK sits behind an `AdProvider` interface in `app`, so the UI and tests use a fake.
 - The website serves `app-ads.txt` so AdMob can verify the app, and the deployment docs describe linking the app to its Play listing and the new variables.
 - No ads in the level designer's test play, on other screens, or between levels. No banner, rewarded or app-open ads.
@@ -33,6 +33,6 @@ Tracked in [#176](https://github.com/hexmasternl/leak-out/issues/176).
 - `app/MainActivity.kt`: asks the gate before a menu-started level or Daily Pipe opens; consent and SDK initialisation run at start.
 - `app/ui/settings/SettingsScreen.kt`: "Privacy options" row.
 - `app/src/gradle/libs.versions.toml`, `app/build.gradle.kts`, `AndroidManifest.xml`: `play-services-ads` (brings in UMP), AdMob app ID placeholder, `AD_ID` permission, per-build-type IDs.
-- `.github/workflows/deploy-play-internal.yml`, `docs/deployment.md`: new `LEAKOUT_ADMOB_*` variables, AdMob setup and app verification steps.
+- `docs/deployment.md`: AdMob ids, app verification and the release checklist; `.github/workflows/website-deploy.yml` smoke-tests `app-ads.txt`.
 - `website/src/static/app-ads.txt` (new): AdMob verification file.
 - Privacy policy and Play Console (Ads declaration, Data safety): updated by the maintainer before the release that ships this.

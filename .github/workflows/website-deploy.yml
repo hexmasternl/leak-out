@@ -124,7 +124,7 @@ jobs:
         env:
           HOSTNAME: ${{ steps.infrastructure.outputs.hostname }}
         run: |
-          for path in / /nl/ /fr/ /de/ /es/ /rules/ /faq/ /leaderboard/ /sitemap.xml /robots.txt; do
+          for path in / /nl/ /fr/ /de/ /es/ /rules/ /faq/ /leaderboard/ /sitemap.xml /robots.txt /app-ads.txt; do
             curl --fail --silent --show-error --max-time 20 --output /dev/null "https://$HOSTNAME$path"
             echo "https://$HOSTNAME$path is up"
           done

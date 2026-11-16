@@ -30,7 +30,7 @@
     { "x": 23, "y": 8 },
     { "x": 24, "y": 8 }
   ],
-  "flow": { "initialDelayMs": 20900, "cellsPerSecond": 0.391 },
+  "flow": { "initialDelayMs": 20900, "cellsPerSecond": 0.391, "reservoirSpeedFactor": 0.1 },
   "stack": { "weights": { "X": 6, "RES": 3 } },
   "stars": { "one": 2090, "two": 2620, "three": 3490 },
   "mandatory": [

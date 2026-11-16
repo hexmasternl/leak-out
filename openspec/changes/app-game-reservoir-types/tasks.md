@@ -20,15 +20,15 @@
 
 ## 4. Bundled levels
 
-- [ ] 4.1 Set `flow.reservoirSpeedFactor` per bundled level from its base speed: below 0.2 → 0.4, 0.2 to below 0.3 → 0.3 (left out), 0.3 to below 0.37 → 0.2, from 0.37 → 0.1
-- [ ] 4.2 Add a `BundledLevelsTest` check that every bundled level uses an allowed type and that no faster level uses a higher factor than a slower one
-- [ ] 4.3 Run `LevelSolvabilityTest` and `BundledLevelsTest`
+- [x] 4.1 Set `flow.reservoirSpeedFactor` per bundled level from its base speed: below 0.2 → 0.4, 0.2 to below 0.3 → 0.3 (left out), 0.3 to below 0.37 → 0.2, from 0.37 → 0.1
+- [x] 4.2 Add a `BundledLevelsTest` check that every bundled level uses an allowed type and that no faster level uses a higher factor than a slower one
+- [x] 4.3 Run `LevelSolvabilityTest` and `BundledLevelsTest`
 
 ## 5. Docs
 
-- [ ] 5.1 Document the four reservoir types in `docs/level-format.md`
+- [x] 5.1 Document the four reservoir types in `docs/level-format.md`
 
 ## 6. Verification
 
-- [ ] 6.1 Run `:core:test` and `:app:testDebugUnitTest`
+- [x] 6.1 Run `:core:test` and `:app:testDebugUnitTest`
 - [ ] 6.2 Play a level of each reservoir type on a device or emulator and check the colours and badges

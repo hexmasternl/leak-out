@@ -38,7 +38,7 @@
     { "x": 16, "y": 7 },
     { "x": 17, "y": 7 }
   ],
-  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.304 },
+  "flow": { "initialDelayMs": 25000, "cellsPerSecond": 0.304, "reservoirSpeedFactor": 0.2 },
   "stack": { "weights": { "X": 6, "RES": 1 } },
   "stars": { "one": 1070, "two": 1630, "three": 2170 },
   "leaky": [

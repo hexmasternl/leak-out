@@ -35,6 +35,36 @@ class BundledLevelsTest {
     }
 
     @Test
+    fun `every bundled level uses one of the four reservoir types`() {
+        val other = levelFiles().map(::parse).filter { ReservoirType.fromFactor(it.flow.reservoirSpeedFactor) == null }
+        assertEquals(emptyList(), other.map { "${it.id}: ${it.flow.reservoirSpeedFactor}" })
+    }
+
+    @Test
+    fun `the faster the liquid, the lower the reservoir factor`() {
+        val levels = levelFiles().map(::parse).sortedBy { it.flow.cellsPerSecond }
+        val violations = levels.zipWithNext().filter { (slower, faster) ->
+            faster.flow.cellsPerSecond > slower.flow.cellsPerSecond && faster.flow.reservoirSpeedFactor > slower.flow.reservoirSpeedFactor
+        }.map { (slower, faster) -> "level ${faster.id} is faster than ${slower.id} but slows less" }
+        assertEquals(emptyList(), violations)
+    }
+
+    @Test
+    fun `bundled levels follow the speed bands for their reservoir type`() {
+        val wrong = levelFiles().map(::parse).filter {
+            val speed = it.flow.cellsPerSecond
+            val expected = when {
+                speed < 0.2 -> ReservoirType.ORANGE_40
+                speed < 0.3 -> ReservoirType.PURPLE_30
+                speed < 0.37 -> ReservoirType.BLUE_20
+                else -> ReservoirType.RED_10
+            }
+            ReservoirType.fromFactor(it.flow.reservoirSpeedFactor) != expected
+        }
+        assertEquals(emptyList(), wrong.map { "${it.id}: speed ${it.flow.cellsPerSecond}, factor ${it.flow.reservoirSpeedFactor}" })
+    }
+
+    @Test
     fun `portals come in from level 49 and only on some levels`() {
         val levels = levelFiles().map(::parse).associateBy { it.id }
         assertEquals(emptyList(), (1..48).filter { levels.getValue(it).portals.isNotEmpty() }, "levels 1 to 48 with portals")

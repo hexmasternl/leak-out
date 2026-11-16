@@ -4,6 +4,7 @@ import android.app.Application
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import nl.hexmaster.leakout.reminders.ReminderNotifications
 
 /** Makes the [AppContainer] and starts what runs once per process. */
 class LeakOutApplication : Application() {
@@ -20,5 +21,7 @@ class LeakOutApplication : Application() {
         // Players who finished levels before achievements existed, or before an update added
         // some, get what their history has earned.
         container.tracker.launchReconcile()
+        // The channel the reminder notifications are posted on.
+        ReminderNotifications.createChannel(this)
     }
 }

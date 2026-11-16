@@ -8,6 +8,11 @@
     <!-- Noticing that the device is online again, so queued scores are sent. Normal permission. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- The daily pipe reminders: notifications need this permission from Android 13, asked for in the app. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Setting the reminders again after a restart. Normal permission, no prompt. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <!-- appCategory="game" exempts the app from Android 16's large-screen override that would
          otherwise ignore the landscape lock on tablets and foldables. -->
     <application
@@ -43,6 +48,22 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <!-- A reminder alarm went off: shows its notification. Only this app sends it. -->
+        <receiver
+            android:name=".reminders.ReminderAlarmReceiver"
+            android:exported="false" />
+
+        <!-- Restart, clock or time zone change: plans the reminders again. System broadcasts only. -->
+        <receiver
+            android:name=".reminders.ReminderRestoreReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

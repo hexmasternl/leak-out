@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.android.gms.games.PlayGamesSdk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import nl.hexmaster.leakout.ads.AdMobAdProvider
 import nl.hexmaster.leakout.achievements.AchievementRepository
 import nl.hexmaster.leakout.achievements.AchievementTracker
 import nl.hexmaster.leakout.achievements.data.RoomAchievementRepository
@@ -45,6 +46,9 @@ class AppContainer(context: Context, val scope: CoroutineScope, playGamesAppId: 
 
     /** The player's finished levels, kept on the device across restarts. */
     val history: LevelHistoryRepository by lazy { RoomLevelHistoryRepository(database) }
+
+    /** The interstitial ad shown at session start; it requests ads only after consent allows it (openspec/specs/session-start-ads). */
+    val ads: AdMobAdProvider by lazy { AdMobAdProvider(appContext, BuildConfig.ADMOB_INTERSTITIAL_ID) }
 
     /** The local achievement store, the source of truth for achievements. */
     val achievements: AchievementRepository by lazy { RoomAchievementRepository(database) }

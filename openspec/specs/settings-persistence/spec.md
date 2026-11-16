@@ -75,3 +75,13 @@ Resetting the seen tips SHALL make every tip not seen. It SHALL leave every othe
 #### Scenario: Clearing history leaves tips alone
 - **WHEN** the intro tour is stored as seen and all level history records are cleared
 - **THEN** the intro tour is still seen
+### Requirement: Reminders setting is stored
+The app SHALL store a boolean `remindersEnabled` setting that defaults to true and survives app restarts.
+
+#### Scenario: Default
+- **WHEN** the app starts with no stored value
+- **THEN** `remindersEnabled` is true
+
+#### Scenario: Persisted
+- **WHEN** the player switches reminders off and restarts the app
+- **THEN** `remindersEnabled` is still false

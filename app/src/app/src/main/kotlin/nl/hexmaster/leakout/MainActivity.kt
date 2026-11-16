@@ -38,6 +38,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
+import nl.hexmaster.leakout.ads.ConsentManager
+import nl.hexmaster.leakout.ads.SessionStartAds
 import nl.hexmaster.leakout.achievements.playgames.SignInState
 import nl.hexmaster.leakout.achievements.playgames.showPlayGamesAchievements
 import nl.hexmaster.leakout.audio.AudioManagerAudioFocus
@@ -229,6 +231,10 @@ class MainActivity : ComponentActivity() {
         AppInfo(versionName = info.versionName.orEmpty(), versionCode = PackageInfoCompat.getLongVersionCode(info))
     }
 
+    // The UMP consent flow and the ad that opens a session from the menu (openspec/specs/session-start-ads, ad-consent).
+    private val consent by lazy { ConsentManager(this) }
+    private val sessionStartAds by lazy { SessionStartAds(appContainer.ads) }
+
     // Set when a daily pipe reminder was tapped; the welcome screen opens the daily pipe once and clears it.
     private var openDailyPipeFromReminder by mutableStateOf(false)
 
@@ -286,9 +292,21 @@ class MainActivity : ComponentActivity() {
         playGames.attach(this)
         lifecycle.addObserver(
             object : DefaultLifecycleObserver {
-                override fun onDestroy(owner: LifecycleOwner) = playGames.detach(this@MainActivity)
+                override fun onDestroy(owner: LifecycleOwner) {
+                    playGames.detach(this@MainActivity)
+                    appContainer.ads.detach(this@MainActivity)
+                }
             },
         )
+        // Ads are requested only once the consent flow allows it; the SDK starts off the main thread.
+        val ads = appContainer.ads
+        ads.attach(this)
+        consent.gather(this) {
+            appContainer.scope.launch(Dispatchers.IO) {
+                ads.initializeSdk()
+                withContext(Dispatchers.Main) { ads.start() }
+            }
+        }
         setContent {
             LeakOutTheme {
                 SplashGate {
@@ -355,18 +373,23 @@ class MainActivity : ComponentActivity() {
                             )
                             Screen.Library -> LevelLibraryScreen(
                                 viewModel = library,
-                                onStartLevel = { id -> levels.load(id)?.let { screen = Screen.Game(it) } },
+                                onStartLevel = { id -> levels.load(id)?.let { level -> sessionStartAds.beforeMenuStart { screen = Screen.Game(level) } } },
                                 onBack = { screen = Screen.Welcome },
                             )
-                            Screen.Settings -> SettingsScreen(
-                                viewModel = settingsViewModel,
-                                appInfo = appInfo,
-                                onBack = { screen = Screen.Welcome },
-                                onSoundPreview = soundEffectsViewModel.soundEffects::preview,
-                                onMusicVolumePreview = music::previewVolume,
-                                onSignIn = { playGames.auth.signIn(this@MainActivity) },
-                                onOpenAchievements = { screen = Screen.Achievements },
-                            )
+                            Screen.Settings -> {
+                                val privacyOptionsRequired by consent.privacyOptionsRequired.collectAsState()
+                                SettingsScreen(
+                                    viewModel = settingsViewModel,
+                                    appInfo = appInfo,
+                                    onBack = { screen = Screen.Welcome },
+                                    onSoundPreview = soundEffectsViewModel.soundEffects::preview,
+                                    onMusicVolumePreview = music::previewVolume,
+                                    onSignIn = { playGames.auth.signIn(this@MainActivity) },
+                                    onOpenAchievements = { screen = Screen.Achievements },
+                                    privacyOptionsRequired = privacyOptionsRequired,
+                                    onPrivacyOptions = { consent.showPrivacyOptions(this@MainActivity) },
+                                )
+                            }
                             Screen.Achievements -> AchievementsScreen(
                                 viewModel = achievementsViewModel,
                                 onBack = { screen = Screen.Settings },
@@ -389,11 +412,11 @@ class MainActivity : ComponentActivity() {
                                 LaunchedEffect(openedDailyPipe) {
                                     val game = openedDailyPipe ?: return@LaunchedEffect
                                     dailyPipeViewModel.consumeOpened()
-                                    if (mayStartLevel()) screen = Screen.DailyPipe(game)
+                                    if (mayStartLevel()) sessionStartAds.beforeMenuStart { screen = Screen.DailyPipe(game) }
                                 }
                                 WelcomeScreen(
                                     resolveNextLevel = ::resolveNextLevel,
-                                    onStartLevel = { id -> levels.load(id)?.let { screen = Screen.Game(it) } },
+                                    onStartLevel = { id -> levels.load(id)?.let { level -> sessionStartAds.beforeMenuStart { screen = Screen.Game(level) } } },
                                     onOpenLevelLibrary = openLibrary,
                                     onSettings = { screen = Screen.Settings },
                                     onExit = { finishAffinity() },

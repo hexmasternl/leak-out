@@ -132,7 +132,7 @@ class SettingsScreenTest {
     fun panelsAndTitlesAreShown() {
         showScreen()
         compose.onNodeWithTag(SettingsTags.TITLE).assertIsDisplayed().assertTextEquals("SETTINGS")
-        for (tag in listOf(SettingsTags.AUDIO_PANEL, SettingsTags.FEEL_PANEL, PlayGamesPanelTags.PANEL, SettingsTags.PROGRESS_PANEL, SettingsTags.ABOUT_PANEL)) {
+        for (tag in listOf(SettingsTags.AUDIO_PANEL, SettingsTags.FEEL_PANEL, SettingsTags.REMINDERS_PANEL, PlayGamesPanelTags.PANEL, SettingsTags.PROGRESS_PANEL, SettingsTags.ABOUT_PANEL)) {
             compose.onNodeWithTag(tag).performScrollTo().assertIsDisplayed()
         }
         for (title in listOf("AUDIO", "FEEL", "PLAY GAMES", "PROGRESS", "ABOUT")) {
@@ -273,6 +273,28 @@ class SettingsScreenTest {
         vibration.performClick()
         vibration.assertIsOn()
         compose.runOnIdle { assertTrue(stored().vibrationEnabled) }
+    }
+
+    @Test
+    fun remindersSwitchReflectsAndChangesTheStoredValue() {
+        showScreen()
+        val reminders = compose.onNodeWithTag(SettingsTags.REMINDERS_SWITCH).performScrollTo()
+        reminders.assertIsEnabled().assertIsOn()
+        reminders.performClick()
+        reminders.assertIsOff()
+        compose.runOnIdle {
+            assertFalse(stored().remindersEnabled)
+            assertEquals(listOf("remindersEnabled"), settings.writes)
+        }
+        reminders.performClick()
+        reminders.assertIsOn()
+        compose.runOnIdle { assertTrue(stored().remindersEnabled) }
+    }
+
+    @Test
+    fun remindersStoredOffIsShownOff() {
+        showScreen(Settings(remindersEnabled = false))
+        compose.onNodeWithTag(SettingsTags.REMINDERS_SWITCH).performScrollTo().assertIsOff()
     }
 
     @Test

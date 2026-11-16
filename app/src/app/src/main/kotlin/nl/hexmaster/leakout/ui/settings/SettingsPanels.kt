@@ -141,6 +141,20 @@ fun FeelPanel(vibrationEnabled: Boolean, onVibrationChange: (Boolean) -> Unit, m
     }
 }
 
+/** The daily pipe reminders: one switch for [remindersEnabled] (openspec/specs/daily-pipe-reminders). */
+@Composable
+fun RemindersPanel(remindersEnabled: Boolean, onRemindersChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    SettingsPanel(title = stringResource(R.string.settings_reminders), modifier = modifier.testTag(SettingsTags.REMINDERS_PANEL)) {
+        SettingsSwitchRow(
+            label = stringResource(R.string.settings_daily_reminders),
+            icon = R.drawable.ic_bell,
+            checked = remindersEnabled,
+            onCheckedChange = onRemindersChange,
+            modifier = Modifier.testTag(SettingsTags.REMINDERS_SWITCH),
+        )
+    }
+}
+
 /**
  * The [progress] summary, the Show tips again button (disabled while no tip has been seen, then
  * "Tips will show again when you play" once reset) and the destructive Reset progress button,

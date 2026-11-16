@@ -180,7 +180,23 @@
     <string name="settings_music_volume">Music volume</string>
     <string name="settings_feel">Feel</string>
     <string name="settings_vibration">Vibration</string>
+    <!-- Settings, title of the panel with the daily pipe reminder notifications. -->
+    <string name="settings_reminders">Reminders</string>
+    <!-- Settings, switch: a notification at 9:00 inviting the player to play the daily pipe. -->
+    <string name="settings_daily_reminders">Daily reminders</string>
     <string name="settings_progress">Progress</string>
+    <!-- Name of the notification channel for the daily pipe reminders, shown in the system's app notification settings. -->
+    <string name="reminder_channel_name">Daily pipe reminders</string>
+    <!-- Description of the reminders notification channel, shown in the system's app notification settings. -->
+    <string name="reminder_channel_description">A reminder each morning to play the daily pipe, and a nudge after a week away.</string>
+    <!-- Notification title: invites the player to play today's daily pipe. -->
+    <string name="reminder_daily_title">Today\'s daily pipe is ready</string>
+    <!-- Notification text: invites the player to play today's daily pipe. -->
+    <string name="reminder_daily_body">Connect the pipes before they leak. Can you beat yesterday?</string>
+    <!-- Notification title: sent once when the player has not opened the game for a week. -->
+    <string name="reminder_miss_title">We miss you!</string>
+    <!-- Notification text: sent once when the player has not opened the game for a week. -->
+    <string name="reminder_miss_body">The pipes are waiting for you. Come back and stop the leaks.</string>
     <!-- Settings, progress panel. %1$d: the number of finished levels. %2$d: the total stars earned; ★ is a star symbol, keep it. -->
     <plurals name="settings_progress_summary">
         <item quantity="one">%1$d level finished · %2$d ★</item>

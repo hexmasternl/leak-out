@@ -53,6 +53,8 @@ object SettingsTags {
     const val MUSIC_VOLUME = "settings_music_volume"
     const val FEEL_PANEL = "settings_feel_panel"
     const val VIBRATION_SWITCH = "settings_vibration_switch"
+    const val REMINDERS_PANEL = "settings_reminders_panel"
+    const val REMINDERS_SWITCH = "settings_reminders_switch"
     const val PROGRESS_PANEL = "settings_progress_panel"
     const val PROGRESS_SUMMARY = "settings_progress_summary"
     const val RESET_PROGRESS = "settings_reset_progress"
@@ -93,6 +95,7 @@ fun SettingsScreen(
         appInfo = appInfo,
         onBack = onBack,
         onVibrationChange = viewModel::onVibrationChange,
+        onRemindersChange = viewModel::onRemindersChange,
         onResetConfirmed = viewModel::onResetConfirmed,
         onShowTipsAgain = viewModel::onShowTipsAgain,
         modifier = modifier,
@@ -121,6 +124,7 @@ fun SettingsContent(
     onVibrationChange: (Boolean) -> Unit,
     onResetConfirmed: () -> Unit,
     modifier: Modifier = Modifier,
+    onRemindersChange: (Boolean) -> Unit = {},
     onShowTipsAgain: () -> Unit = {},
     initialDialogOpen: Boolean = false,
     onSoundEnabledChange: (Boolean) -> Unit = {},
@@ -168,6 +172,7 @@ fun SettingsContent(
                     onMusicVolumePreview = onMusicVolumePreview,
                 )
                 FeelPanel(vibrationEnabled = state.settings.vibrationEnabled, onVibrationChange = onVibrationChange)
+                RemindersPanel(remindersEnabled = state.settings.remindersEnabled, onRemindersChange = onRemindersChange)
             }
             Column(
                 modifier = Modifier

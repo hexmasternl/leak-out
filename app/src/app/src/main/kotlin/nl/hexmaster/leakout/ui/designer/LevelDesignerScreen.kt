@@ -27,6 +27,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -55,6 +56,8 @@ import nl.hexmaster.leakout.core.level.EndpointKind
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.LevelDraft
 import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.core.level.ReservoirType
+import nl.hexmaster.leakout.ui.pipes.LocalReservoirType
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.ui.components.CartoonButton
 import nl.hexmaster.leakout.ui.components.CartoonButtonVariant
@@ -96,6 +99,8 @@ object DesignerTags {
 
     fun tool(tool: DesignerTool): String = "designer_tool_${tool.name.lowercase()}"
 
+    fun reservoirType(type: ReservoirType): String = "designer_reservoir_${type.name.lowercase()}"
+
     fun side(kind: EndpointKind, side: Side): String = "designer_side_${kind.name.lowercase()}_${side.name.lowercase()}"
 
     fun portalSide(side: Side): String = "designer_portal_side_${side.name.lowercase()}"
@@ -136,6 +141,7 @@ fun LevelDesignerScreen(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         val status = state.status
+        CompositionLocalProvider(LocalReservoirType provides state.draft.reservoirType) {
         DesignerGrid(
             level = state.level,
             highlighted = (status as? DesignStatus.Invalid)?.highlightedCells.orEmpty(),
@@ -148,6 +154,7 @@ fun LevelDesignerScreen(
             unpaired = state.draft.unpaired,
             selected = state.draft.selectedPortal.takeIf { state.tool == DesignerTool.PORTAL },
         )
+        }
         DesignerPanel(
             state = state,
             viewModel = viewModel,
@@ -318,7 +325,7 @@ private fun DesignerPanel(
         Section(stringResource(R.string.designer_section_flow)) {
             NumberInput(stringResource(R.string.designer_field_initial_delay), NumberField.InitialDelay, state, viewModel)
             NumberInput(stringResource(R.string.designer_field_cells_per_second), NumberField.CellsPerSecond, state, viewModel)
-            NumberInput(stringResource(R.string.designer_field_reservoir), NumberField.ReservoirSpeedFactor, state, viewModel)
+            ReservoirTypeChips(state.draft.reservoirType, viewModel::setReservoirType)
             NumberInput(stringResource(R.string.designer_field_speed_ramp), NumberField.SpeedRampPerCell, state, viewModel)
         }
 
@@ -509,6 +516,27 @@ private fun SideChips(label: String, current: Side, onSelect: (Side) -> Unit, ta
     }
 }
 
+
+/** A label and one chip per reservoir type, [current] selected: 10 %, 20 %, 30 % and 40 %. */
+@Composable
+private fun ReservoirTypeChips(current: ReservoirType, onSelect: (ReservoirType) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            stringResource(R.string.designer_field_reservoir),
+            style = LeakOutTextStyles.BodySm,
+            color = LeakOutColors.TextPrimary,
+            modifier = Modifier.width(72.dp),
+        )
+        ReservoirType.entries.forEach { type ->
+            Chip(
+                label = "${type.percent} %",
+                selected = type == current,
+                onClick = { onSelect(type) },
+                modifier = Modifier.weight(1f).testTag(DesignerTags.reservoirType(type)),
+            )
+        }
+    }
+}
 @Composable
 private fun NumberInput(
     label: String,

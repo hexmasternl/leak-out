@@ -7,16 +7,16 @@
 
 ## 2. Rendering
 
-- [ ] 2.1 Add the red, blue and orange reservoir tokens (300/500/700) to `docs/design-system.md` and the app's colour definitions; document that violet is the 30 % type
-- [ ] 2.2 Tint the reservoir in `PipeArt` from the level's `ReservoirType`, on the playing field and in the stack
-- [ ] 2.3 Show the percentage on the "slow" badge (string resource, all supported languages)
+- [x] 2.1 Add the red, blue and orange reservoir tokens (300/500/700) to `docs/design-system.md` and the app's colour definitions; document that violet is the 30 % type
+- [x] 2.2 Tint the reservoir in `PipeArt` from the level's `ReservoirType`, on the playing field and in the stack
+- [x] 2.3 Show the percentage on the "slow" badge (drawn as vector digits in the badge, so it needs no string resource and is the same in every language)
 - [ ] 2.4 Unit tests for the colour mapping and the badge text; check the four types side by side in the pipe lab
 
 ## 3. Level designer
 
-- [ ] 3.1 Replace the reservoir speed factor field with a four-way type selector
-- [ ] 3.2 Snap a restored design to the nearest type
-- [ ] 3.3 Update `LevelDesignerViewModelTest`
+- [x] 3.1 Replace the reservoir speed factor field with a four-way type selector
+- [x] 3.2 Snap a restored design to the nearest type
+- [x] 3.3 Update `LevelDesignerViewModelTest`
 
 ## 4. Bundled levels
 

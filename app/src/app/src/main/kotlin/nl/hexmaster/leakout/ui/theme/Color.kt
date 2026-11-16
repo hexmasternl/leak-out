@@ -87,6 +87,18 @@ object LeakOutColors {
     val Reservoir500 = Color(0xFFA78BFA)
     val Reservoir700 = Color(0xFF7C5CE6)
 
+    // 2.5 reservoir types: red (10 %), blue (20 %) and orange (40 %); the violet set above is the purple (30 %) type.
+    // ReservoirAccent in ui/pipes holds the same values as 0xRRGGBB for the pipe art.
+    val ReservoirRed300 = Color(0xFFFF7A90)
+    val ReservoirRed500 = Color(0xFFF0506E)
+    val ReservoirRed700 = Color(0xFFB83250)
+    val ReservoirBlue300 = Color(0xFF7FA8FF)
+    val ReservoirBlue500 = Color(0xFF4D7CFE)
+    val ReservoirBlue700 = Color(0xFF2F56C9)
+    val ReservoirOrange300 = Color(0xFFFFC48A)
+    val ReservoirOrange500 = Color(0xFFFF9F43)
+    val ReservoirOrange700 = Color(0xFFD9771F)
+
     // 2.6 Steel (pipes). The pipe art itself lives in assets/pipes/*.svg, which use the same hex
     // values; these tokens are for anything drawn around the pipes in code.
     val Steel100 = Color(0xFFC9D6E2)

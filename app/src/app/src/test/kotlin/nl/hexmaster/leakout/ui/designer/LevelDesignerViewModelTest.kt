@@ -14,6 +14,7 @@ import nl.hexmaster.leakout.core.level.ParseResult
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.PortalPair
 import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.core.level.ReservoirType
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.core.level.StarBenchmarks
 import org.junit.Assert.assertEquals
@@ -352,6 +353,35 @@ class LevelDesignerViewModelTest {
         val first = viewModel(saved)
         first.setOpenSide(EndpointKind.START, Side.LEFT)
         assertEquals(first.state.level, viewModel(saved).state.level)
+    }
+
+    @Test
+    fun `choosing a reservoir type sets the flow factor and marks the design dirty`() {
+        for (type in ReservoirType.entries) {
+            val vm = viewModel()
+            vm.setReservoirType(type)
+            assertEquals(type.factor, vm.state.level.flow.reservoirSpeedFactor, 0.0)
+            assertEquals(type, vm.state.draft.reservoirType)
+            assertEquals(type != ReservoirType.PURPLE_30, vm.state.dirty)
+        }
+    }
+
+    @Test
+    fun `a restored reservoir speed factor snaps to the nearest type`() {
+        val level = LevelDraft.new(5).level
+        val saved = SavedStateHandle(
+            mapOf(LevelDesignerViewModel.KEY_DRAFT to LevelWriter.write(level.copy(flow = level.flow.copy(reservoirSpeedFactor = 0.5)))),
+        )
+        val restored = viewModel(saved).state
+        assertEquals(ReservoirType.ORANGE_40, restored.draft.reservoirType)
+        assertEquals(0.4, restored.level.flow.reservoirSpeedFactor, 0.0)
+    }
+
+    @Test
+    fun `a chosen reservoir type is restored`() {
+        val saved = SavedStateHandle()
+        viewModel(saved).setReservoirType(ReservoirType.RED_10)
+        assertEquals(ReservoirType.RED_10, viewModel(saved).state.draft.reservoirType)
     }
 
     @Test

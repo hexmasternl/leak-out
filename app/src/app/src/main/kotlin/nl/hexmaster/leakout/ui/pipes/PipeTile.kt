@@ -46,7 +46,7 @@ fun PipeTile(
     fills: Map<String, ChannelFill> = emptyMap(),
 ) {
     val library = rememberPipeArtLibrary()
-    val art = remember(library, section) { library.prepared(section) }
+    val art = remember(library, section) { library.prepared(section) } // library carries the level's reservoir type
     val scratch = remember { LiquidScratch() }
     require(fills.keys.all { id -> art.channels.any { it.channel.id == id } }) {
         "Unknown channel in $fills for $section; it has ${art.channels.map { it.channel.id }}"

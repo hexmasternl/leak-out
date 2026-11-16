@@ -17,6 +17,7 @@ import nl.hexmaster.leakout.core.level.LevelWriter
 import nl.hexmaster.leakout.core.level.ParseResult
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.core.level.ReservoirType
 import nl.hexmaster.leakout.core.level.Side
 import nl.hexmaster.leakout.ui.levels.LevelCatalog
 
@@ -33,7 +34,6 @@ sealed interface NumberField {
     data object Id : NumberField
     data object InitialDelay : NumberField
     data object CellsPerSecond : NumberField
-    data object ReservoirSpeedFactor : NumberField
     data object SpeedRampPerCell : NumberField
     data object VisibleStackSize : NumberField
     data object ReplacePenalty : NumberField
@@ -176,6 +176,9 @@ class LevelDesignerViewModel(
 
     fun setName(name: String) = edit { it.withName(name) }
 
+    /** The developer chose [type]: `flow.reservoirSpeedFactor` becomes its factor. */
+    fun setReservoirType(type: ReservoirType) = edit { it.withReservoirType(type) }
+
     fun setAllowReplace(allow: Boolean) = edit { it.withRules(it.level.rules.copy(allowReplace = allow)) }
 
     /**
@@ -257,7 +260,8 @@ class LevelDesignerViewModel(
             if (x != null && y != null) Position(x, y) else null
         }
         // A design kept from before the grid limits shrank may be too large: shrink it to fit.
-        val draft = LevelDraft(level, unpaired, selected).let { it.resize(it.level.grid.columns, it.level.grid.rows) }
+        // A design saved with another reservoir speed factor snaps to the nearest reservoir type.
+        val draft = LevelDraft(level, unpaired, selected).let { it.resize(it.level.grid.columns, it.level.grid.rows) }.snapReservoirType()
         return LevelDesignerUiState(
             draft,
             tool ?: DesignerTool.START,
@@ -287,7 +291,6 @@ private fun apply(field: NumberField, text: String, draft: LevelDraft): LevelDra
         NumberField.Id -> int(draft::withId)
         NumberField.InitialDelay -> long { draft.withFlow(level.flow.copy(initialDelayMs = it)) }
         NumberField.CellsPerSecond -> double { draft.withFlow(level.flow.copy(cellsPerSecond = it)) }
-        NumberField.ReservoirSpeedFactor -> double { draft.withFlow(level.flow.copy(reservoirSpeedFactor = it)) }
         NumberField.SpeedRampPerCell -> double { draft.withFlow(level.flow.copy(speedRampPerCell = it)) }
         NumberField.VisibleStackSize -> int(draft::withVisibleStackSize)
         NumberField.ReplacePenalty -> long { draft.withRules(level.rules.copy(replacePenaltyMs = it)) }
@@ -300,7 +303,6 @@ private fun valueText(field: NumberField, level: Level): String = when (field) {
     NumberField.Id -> level.id.toString()
     NumberField.InitialDelay -> level.flow.initialDelayMs.toString()
     NumberField.CellsPerSecond -> level.flow.cellsPerSecond.toString()
-    NumberField.ReservoirSpeedFactor -> level.flow.reservoirSpeedFactor.toString()
     NumberField.SpeedRampPerCell -> level.flow.speedRampPerCell.toString()
     NumberField.VisibleStackSize -> level.stack.visibleSize.toString()
     NumberField.ReplacePenalty -> level.rules.replacePenaltyMs.toString()

@@ -64,6 +64,7 @@ import nl.hexmaster.leakout.core.engine.Outcome
 import nl.hexmaster.leakout.core.level.Level
 import nl.hexmaster.leakout.core.level.PipeSection
 import nl.hexmaster.leakout.core.level.Position
+import nl.hexmaster.leakout.core.level.ReservoirType
 import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.history.RecordResult
 import nl.hexmaster.leakout.scores.online.ScoreSubmissions
@@ -82,6 +83,7 @@ import nl.hexmaster.leakout.ui.game.onboarding.TipTargets
 import nl.hexmaster.leakout.ui.game.onboarding.TipText
 import nl.hexmaster.leakout.ui.game.onboarding.tipContent
 import nl.hexmaster.leakout.ui.splash.rememberReducedMotion
+import nl.hexmaster.leakout.ui.pipes.LocalReservoirType
 import nl.hexmaster.leakout.ui.pipes.rememberPipeArtLibrary
 import nl.hexmaster.leakout.ui.theme.LeakOutColors
 
@@ -134,6 +136,7 @@ fun GameScreen(
     val dragState = remember(session) { SectionDragState() }
     // Parse every pipe asset once up front, so no frame mid-game pays for a section's first draw.
     val pipes = rememberPipeArtLibrary().let { library -> remember(library) { library.apply { preloadAll() } } }
+    val reservoirType = remember(level) { ReservoirType.nearest(level.flow.reservoirSpeedFactor) }
 
     // Each value is derived, so a clock tick recomposes only what changed, not the whole screen.
     val attempt = session.select { state.attempt }
@@ -194,7 +197,7 @@ fun GameScreen(
         }
     }
 
-    CompositionLocalProvider(LocalTipTargets provides targets) {
+    CompositionLocalProvider(LocalTipTargets provides targets, LocalReservoirType provides reservoirType) {
     Box(
         modifier = Modifier
             .fillMaxSize()

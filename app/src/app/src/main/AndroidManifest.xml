@@ -13,6 +13,9 @@
     <!-- Setting the reminders again after a restart. Normal permission, no prompt. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- AdMob reads the advertising id (Android 13+ needs this declared). Normal permission, no prompt. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+
     <!-- appCategory="game" exempts the app from Android 16's large-screen override that would
          otherwise ignore the landscape lock on tablets and foldables. -->
     <application
@@ -31,6 +34,12 @@
         <meta-data
             android:name="com.google.android.gms.games.APP_ID"
             android:value="@string/app_id" />
+
+        <!-- AdMob app id: debug builds get Google's test id, release builds the real one (see build.gradle.kts).
+             Without it the Google Mobile Ads SDK crashes the app at start. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${admobAppId}" />
 
         <!-- sensorLandscape is applied before the first frame (no portrait flash) and still lets
              the sensor flip between both landscape sides. -->

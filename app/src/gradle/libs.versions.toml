@@ -29,6 +29,8 @@ fragment = "1.8.9"
 playServicesGamesV2 = "22.1.0"
 # Play In-App Updates: required and optional app updates (openspec/specs/app-updates).
 playAppUpdate = "2.1.0"
+# Google AdMob: the interstitial ad at session start (openspec/specs/session-start-ads). Brings in the UMP consent SDK.
+playServicesAds = "25.5.0"
 
 # Kotlin libraries
 kotlinxSerialization = "1.11.0"
@@ -72,6 +74,7 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 play-services-games-v2 = { group = "com.google.android.gms", name = "play-services-games-v2", version.ref = "playServicesGamesV2" }
 play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "playAppUpdate" }
 play-app-update-ktx = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "playAppUpdate" }
+play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
 
 # Kotlin
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }

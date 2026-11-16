@@ -141,6 +141,24 @@ fun FeelPanel(vibrationEnabled: Boolean, onVibrationChange: (Boolean) -> Unit, m
     }
 }
 
+/**
+ * The ad consent entry (openspec/specs/ad-consent): a button that reopens the consent form. The caller
+ * shows it only while the consent rules require a privacy options entry point.
+ */
+@Composable
+fun PrivacyPanel(onPrivacyOptions: () -> Unit, modifier: Modifier = Modifier) {
+    SettingsPanel(title = stringResource(R.string.settings_privacy), modifier = modifier.testTag(SettingsTags.PRIVACY_PANEL)) {
+        Spacer(Modifier.height(12.dp))
+        CartoonButton(
+            text = stringResource(R.string.settings_privacy_options),
+            onClick = onPrivacyOptions,
+            variant = CartoonButtonVariant.Primary,
+            faceHeight = 48.dp,
+            modifier = Modifier.fillMaxWidth().testTag(SettingsTags.PRIVACY_OPTIONS),
+        )
+    }
+}
+
 /** The daily pipe reminders: one switch for [remindersEnabled] (openspec/specs/daily-pipe-reminders). */
 @Composable
 fun RemindersPanel(remindersEnabled: Boolean, onRemindersChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {

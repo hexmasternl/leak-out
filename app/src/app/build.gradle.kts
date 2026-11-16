@@ -39,6 +39,23 @@ val scoreServerClientId = scoreServerSetting(
     "201820010117-uteqrtu77v48c9ovd8d9k9qan0sktcj4.apps.googleusercontent.com",
 )
 
+// AdMob (openspec/specs/session-start-ads). Debug builds always use Google's test ids, so developing never
+// clicks live ads. Release builds use the Leak Out app id and "game-start-add" interstitial unit below. Both are
+// public (they ship inside every APK, like the score server client id above); LEAKOUT_ADMOB_APP_ID and
+// LEAKOUT_ADMOB_INTERSTITIAL_ID override them, and only as a pair because the two ids belong together.
+val admobTestAppId = "ca-app-pub-3940256099942544~3347511713"
+val admobTestInterstitialId = "ca-app-pub-3940256099942544/1033173712"
+val admobLeakOutAppId = "ca-app-pub-1310013076234295~4675407791"
+val admobLeakOutInterstitialId = "ca-app-pub-1310013076234295/8713231863"
+fun admobEnv(name: String): String? = providers.environmentVariable(name).orNull?.trim()?.takeIf { it.isNotEmpty() }
+val admobOverrideAppId = admobEnv("LEAKOUT_ADMOB_APP_ID")
+val admobOverrideInterstitialId = admobEnv("LEAKOUT_ADMOB_INTERSTITIAL_ID")
+val admobReleaseIds = if (admobOverrideAppId != null && admobOverrideInterstitialId != null) {
+    admobOverrideAppId to admobOverrideInterstitialId
+} else {
+    admobLeakOutAppId to admobLeakOutInterstitialId
+}
+
 android {
     namespace = "nl.hexmaster.leakout"
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -70,11 +87,15 @@ android {
     buildTypes {
         // Feature flags, fixed per build type and read through FeatureFlags (see openspec/specs/feature-flags).
         debug {
+            manifestPlaceholders["admobAppId"] = admobTestAppId
+            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"$admobTestInterstitialId\"")
             buildConfigField("boolean", "LEVEL_DESIGNER", "true")
             // en-XA (long, accented) and ar-XB (right to left) for checking translated layouts; PseudoLocaleLayoutTest uses en-XA.
             isPseudoLocalesEnabled = true
         }
         release {
+            manifestPlaceholders["admobAppId"] = admobReleaseIds.first
+            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"${admobReleaseIds.second}\"")
             buildConfigField("boolean", "LEVEL_DESIGNER", "false")
             signingConfigs.findByName("upload")?.let { signingConfig = it }
             isMinifyEnabled = false
@@ -161,6 +182,9 @@ dependencies {
     // Play In-App Updates: asks Play for a newer version and its priority (openspec/specs/app-updates).
     implementation(libs.play.app.update)
     implementation(libs.play.app.update.ktx)
+
+    // AdMob: one interstitial at session start (openspec/specs/session-start-ads) and the UMP consent form it needs.
+    implementation(libs.play.services.ads)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

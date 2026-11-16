@@ -270,6 +270,27 @@ A successful run:
 
 In the Play Console, the release appears under **Test and release → Testing → Internal testing → Releases**, named after its version (for example `1001 (0.1.1)`). With the default `PLAY_RELEASE_STATUS` it is a draft: review its translations and roll it out (see [Translations](#translations)). Testers who opted in then get the update through the Play Store, usually within minutes.
 
+## Ads (AdMob)
+
+The app shows one interstitial ad when a play session starts from the menu, never between levels ([session-start-ads](../openspec/specs/session-start-ads/spec.md), consent: [ad-consent](../openspec/specs/ad-consent/spec.md)).
+
+**Ids.** Both ids are public (they ship inside every APK), so the defaults live in `app/src/app/build.gradle.kts`:
+
+| | App id | Interstitial ad unit |
+| --- | --- | --- |
+| Debug builds | Google's test app id | Google's test interstitial |
+| Release builds | `ca-app-pub-1310013076234295~4675407791` (Leak Out) | `ca-app-pub-1310013076234295/8713231863` (`game-start-add`) |
+
+Debug builds always show test ads, so developing never clicks live ads (that can get the AdMob account suspended). To use other ids in a release build, set **both** `LEAKOUT_ADMOB_APP_ID` and `LEAKOUT_ADMOB_INTERSTITIAL_ID` in the environment; with only one set the defaults are used.
+
+**Verifying the app in AdMob.** AdMob serves full demand only once the app is verified:
+
+1. In AdMob, open **Apps → Leak Out → App settings → Link to app store** and link the Play listing (`nl.hexmaster.leakout`; it must be published).
+2. In the Play Console, set the store listing's website (**Store settings → Store listing contact details → Website**) to `https://leakout.hexmaster.nl`.
+3. `website/src/static/app-ads.txt` is served at `https://leakout.hexmaster.nl/app-ads.txt` and holds `google.com, pub-1310013076234295, DIRECT, f08c47fec0942fa0`. The website deploy smoke-tests that it is up. Google crawls it; the status in AdMob can take a day or longer to show *Verified*.
+
+**Before a release with ads.** Declare "My app contains ads" in the Play Console (**App content → Ads**), update the **Data safety** form (advertising ID, device or other IDs) and the privacy policy, and set up the GDPR message in AdMob under **Privacy & messaging**; without that message no consent form is shown and ads are not requested in the EEA and UK.
+
 ## Versioning
 
 The workflow sets both versions of every release; nothing is bumped by hand.

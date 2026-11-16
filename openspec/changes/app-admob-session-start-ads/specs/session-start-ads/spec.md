@@ -54,15 +54,15 @@ The app SHALL NOT show ads on any other screen or event: not on the welcome scre
 - **THEN** no ad is shown
 
 ### Requirement: Test ads in debug builds
-Debug builds SHALL use Google's test AdMob app ID and test interstitial ad unit ID. Release builds SHALL use the app ID and ad unit ID supplied through the build variables `LEAKOUT_ADMOB_APP_ID` and `LEAKOUT_ADMOB_INTERSTITIAL_ID`, and SHALL fall back to the test IDs when either is missing. A real ad unit ID SHALL NOT be committed to the repository.
+Debug builds SHALL use Google's test AdMob app ID and test interstitial ad unit ID. Release builds SHALL use the Leak Out app ID `ca-app-pub-1310013076234295~4675407791` and the `game-start-add` interstitial ad unit ID `ca-app-pub-1310013076234295/8713231863`, which are public and live in the build file. The build variables `LEAKOUT_ADMOB_APP_ID` and `LEAKOUT_ADMOB_INTERSTITIAL_ID` SHALL override them, and only as a pair.
 
 #### Scenario: Debug build
 - **WHEN** a debug build requests an ad
 - **THEN** it uses the Google test ad unit ID
 
-#### Scenario: Release build without variables
-- **WHEN** a release build is made without `LEAKOUT_ADMOB_*` variables
-- **THEN** it uses the test IDs
+#### Scenario: Release build
+- **WHEN** a release build is made without the override variables
+- **THEN** it uses the Leak Out app ID and the `game-start-add` ad unit
 
 ### Requirement: Session rule is pure
 The decision whether to show an ad at a level start SHALL be made by a pure Kotlin rule in `core` that takes whether the start comes from the menu and whether an ad is ready, and has no Android or AdMob dependency.

@@ -182,6 +182,8 @@
     <string name="settings_vibration">Vibration</string>
     <!-- Settings, title of the panel with the daily pipe reminder notifications. -->
     <string name="settings_reminders">Reminders</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_privacy_options">Privacy options</string>
     <!-- Settings, switch: a notification at 9:00 inviting the player to play the daily pipe. -->
     <string name="settings_daily_reminders">Daily reminders</string>
     <string name="settings_progress">Progress</string>
@@ -214,7 +216,7 @@
     <!-- Settings, about panel. %1$s: the version name, for example 1.2.3. %2$d: the build number. -->
     <string name="settings_about_version">Version %1$s (%2$d)</string>
     <string name="settings_about_maker">Made by HexMaster</string>
-    <string name="settings_about_privacy">No account needed. If you sign in to Google Play Games, your achievements are shared with Google Play and the scores of the levels you win are sent to the Leak Out score server.</string>
+    <string name="settings_about_privacy">No account needed. A short ad is shown when you start playing, served by Google AdMob; where the law asks for it you choose what is shared under Privacy in Settings. If you sign in to Google Play Games, your achievements are shared with Google Play and the scores of the levels you win are sent to the Leak Out score server.</string>
     <string name="settings_about_music">Music</string>
     <!-- Tips (design-system.md 5.9) -->
     <!-- Format only: current step / number of steps. -->

@@ -40,6 +40,8 @@ import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 /** Stable handles for UI tests, independent of copy and layout. */
 object SettingsTags {
     const val SCREEN = "settings_screen"
+    const val PRIVACY_PANEL = "settings_privacy_panel"
+    const val PRIVACY_OPTIONS = "settings_privacy_options"
     const val TITLE = "settings_title"
     const val BACK = "settings_back"
     const val LEFT_COLUMN = "settings_left_column"
@@ -88,6 +90,8 @@ fun SettingsScreen(
     onMusicVolumePreview: (Float) -> Unit = {},
     onSignIn: () -> Unit = {},
     onOpenAchievements: () -> Unit = {},
+    privacyOptionsRequired: Boolean = false,
+    onPrivacyOptions: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     SettingsContent(
@@ -107,6 +111,8 @@ fun SettingsScreen(
         onMusicVolumePreview = onMusicVolumePreview,
         onSignIn = onSignIn,
         onOpenAchievements = onOpenAchievements,
+        privacyOptionsRequired = privacyOptionsRequired,
+        onPrivacyOptions = onPrivacyOptions,
     )
 }
 
@@ -135,6 +141,8 @@ fun SettingsContent(
     onMusicVolumePreview: (Float) -> Unit = {},
     onSignIn: () -> Unit = {},
     onOpenAchievements: () -> Unit = {},
+    privacyOptionsRequired: Boolean = false,
+    onPrivacyOptions: () -> Unit = {},
 ) {
     var dialogOpen by rememberSaveable { mutableStateOf(initialDialogOpen) }
     // The dialog is its own window and takes Back first, so this only leaves when it is closed.
@@ -173,6 +181,7 @@ fun SettingsContent(
                 )
                 FeelPanel(vibrationEnabled = state.settings.vibrationEnabled, onVibrationChange = onVibrationChange)
                 RemindersPanel(remindersEnabled = state.settings.remindersEnabled, onRemindersChange = onRemindersChange)
+                if (privacyOptionsRequired) PrivacyPanel(onPrivacyOptions)
             }
             Column(
                 modifier = Modifier

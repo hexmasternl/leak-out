@@ -42,6 +42,7 @@ private class SlowSettings : SettingsRepository {
     override suspend fun setMusicEnabled(enabled: Boolean) = Unit
     override suspend fun setMusicVolume(volume: Float) = Unit
     override suspend fun setVibrationEnabled(enabled: Boolean) = Unit
+    override suspend fun setRemindersEnabled(enabled: Boolean) = Unit
     override val seenTips = MutableStateFlow<Set<TipId>>(emptySet())
     override suspend fun markTipSeen(tip: TipId) = Unit
     override suspend fun resetTips() = Unit
@@ -97,6 +98,21 @@ class SettingsViewModelTest {
         val vm = SettingsViewModel(InMemorySettingsRepository(), history)
         history.recordCompletion(1, 100, 2)
         assertEquals(ProgressSummary(1, 2), vm.uiState.value!!.progress)
+    }
+
+    @Test
+    fun `a reminders change is written and reported to the scheduler`() = runTest {
+        val settings = InMemorySettingsRepository()
+        val reported = mutableListOf<Boolean>()
+        val vm = SettingsViewModel(settings, InMemoryLevelHistoryRepository(), onRemindersChanged = { reported += it })
+        assertTrue(vm.uiState.value!!.settings.remindersEnabled)
+        vm.onRemindersChange(false)
+        assertFalse(settings.settings.first().remindersEnabled)
+        assertFalse(vm.uiState.value!!.settings.remindersEnabled)
+        vm.onRemindersChange(true)
+        assertTrue(vm.uiState.value!!.settings.remindersEnabled)
+        assertEquals(listOf(false, true), reported)
+        assertEquals(listOf("remindersEnabled", "remindersEnabled"), settings.writes)
     }
 
     @Test

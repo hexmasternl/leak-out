@@ -83,6 +83,7 @@ class SettingsViewModel(
     achievements: AchievementRepository = InMemoryAchievementRepository(),
     signIn: StateFlow<SignInState> = MutableStateFlow(SignInState.Unavailable),
     private val onTipsReset: suspend () -> Unit = {},
+    private val onRemindersChanged: suspend (enabled: Boolean) -> Unit = {},
 ) : ViewModel() {
     private val credits = musicCredits?.tracks.orEmpty()
     private val tipsJustReset = MutableStateFlow(false)
@@ -112,6 +113,17 @@ class SettingsViewModel(
     /** Stores the vibration preference. Nothing vibrates yet; the haptic tick will read it. */
     fun onVibrationChange(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setVibrationEnabled(enabled) }
+    }
+
+    /**
+     * Stores the reminders preference, then calls [onRemindersChanged] so the pending reminders are
+     * cancelled (off) or scheduled again (on) straight away.
+     */
+    fun onRemindersChange(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setRemindersEnabled(enabled)
+            onRemindersChanged(enabled)
+        }
     }
 
     /** Turns the sound effects on or off; the next effect follows it. */

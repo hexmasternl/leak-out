@@ -12,6 +12,12 @@ import nl.hexmaster.leakout.core.update.UpdateGate
 import nl.hexmaster.leakout.history.LevelHistoryRepository
 import nl.hexmaster.leakout.history.data.LeakOutDatabase
 import nl.hexmaster.leakout.history.data.RoomLevelHistoryRepository
+import nl.hexmaster.leakout.settings.DataStoreSettingsRepository
+import kotlinx.coroutines.flow.first
+import nl.hexmaster.leakout.reminders.AlarmReminderScheduler
+import nl.hexmaster.leakout.reminders.DataStoreReminderStateStore
+import nl.hexmaster.leakout.reminders.ReminderCoordinator
+import nl.hexmaster.leakout.reminders.ReminderNotifications
 import nl.hexmaster.leakout.scores.online.CallbackNetworkMonitor
 import nl.hexmaster.leakout.scores.online.DailyPipeApi
 import nl.hexmaster.leakout.scores.online.DataStorePendingScoreQueue
@@ -88,6 +94,22 @@ class AppContainer(context: Context, val scope: CoroutineScope, playGamesAppId: 
 
     /** Google Play In-App Updates: whether a newer version is available and how urgent it is. */
     val appUpdates: AppUpdates by lazy { PlayAppUpdates.create(appContext) }
+
+    /** The player's stored preferences. */
+    val settings: DataStoreSettingsRepository by lazy { DataStoreSettingsRepository.create(appContext) }
+
+    /** What the reminders remember between runs: the last app open and whether the permission was asked. */
+    val reminderState: DataStoreReminderStateStore by lazy { DataStoreReminderStateStore.create(appContext) }
+
+    /** The daily pipe and "We miss you" reminders (openspec/specs/daily-pipe-reminders). */
+    val reminders: ReminderCoordinator by lazy {
+        ReminderCoordinator(
+            remindersEnabled = { settings.settings.first().remindersEnabled },
+            state = reminderState,
+            scheduler = AlarmReminderScheduler(appContext),
+            canNotify = { ReminderNotifications.canNotify(appContext) },
+        )
+    }
 
     /** What the update screens show, kept per process so the optional prompt is offered only once. */
     val updateGate = MutableStateFlow(UpdateGate())

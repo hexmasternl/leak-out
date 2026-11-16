@@ -261,6 +261,15 @@ class LevelDraft(source: Level, val unpaired: Endpoint? = null, selectedPortal: 
 
     fun withFlow(flow: FlowSettings): LevelDraft = edited(level.copy(flow = flow))
 
+    /** The draft's reservoir type: the type its `flow.reservoirSpeedFactor` snaps to. */
+    val reservoirType: ReservoirType get() = ReservoirType.nearest(level.flow.reservoirSpeedFactor)
+
+    /** Sets `flow.reservoirSpeedFactor` to [type]'s factor. */
+    fun withReservoirType(type: ReservoirType): LevelDraft = withFlow(level.flow.copy(reservoirSpeedFactor = type.factor))
+
+    /** Snaps `flow.reservoirSpeedFactor` to the nearest type, a tie going to the higher factor. */
+    fun snapReservoirType(): LevelDraft = withReservoirType(reservoirType)
+
     fun withVisibleStackSize(size: Int): LevelDraft = edited(level.copy(stack = level.stack.copy(visibleSize = size)))
 
     fun withWeight(section: PipeSection, weight: Int): LevelDraft =

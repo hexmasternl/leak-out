@@ -41,6 +41,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
         val MusicEnabled = booleanPreferencesKey("music_enabled")
         val MusicVolume = floatPreferencesKey("music_volume")
         val VibrationEnabled = booleanPreferencesKey("vibration_enabled")
+        val RemindersEnabled = booleanPreferencesKey("reminders_enabled")
 
         /** The [TipId.key]s of the seen tips. */
         val SeenTips = stringSetPreferencesKey("seen_tips")
@@ -65,6 +66,8 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
     override suspend fun setMusicVolume(volume: Float) = write { it[Keys.MusicVolume] = Settings.clampVolume(volume) }
 
     override suspend fun setVibrationEnabled(enabled: Boolean) = write { it[Keys.VibrationEnabled] = enabled }
+
+    override suspend fun setRemindersEnabled(enabled: Boolean) = write { it[Keys.RemindersEnabled] = enabled }
 
     override val seenTips: Flow<Set<TipId>> = dataStore.data
         .catch { error -> if (error is IOException) emit(emptyPreferences()) else throw error }
@@ -95,6 +98,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
             musicEnabled = preferences[Keys.MusicEnabled] ?: Settings.DEFAULT_MUSIC_ENABLED,
             musicVolume = Settings.clampVolume(preferences[Keys.MusicVolume] ?: Settings.DEFAULT_MUSIC_VOLUME),
             vibrationEnabled = preferences[Keys.VibrationEnabled] ?: Settings.DEFAULT_VIBRATION_ENABLED,
+            remindersEnabled = preferences[Keys.RemindersEnabled] ?: Settings.DEFAULT_REMINDERS_ENABLED,
         )
 
         /** The seen tips stored in [preferences]; none when the key is missing, unknown keys ignored. */

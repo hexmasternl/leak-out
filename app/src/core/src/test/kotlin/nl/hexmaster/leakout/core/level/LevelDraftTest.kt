@@ -212,6 +212,37 @@ class LevelDraftTest {
         assertEquals(blank.level.grid, level.grid)
     }
 
+    // Reservoir type
+
+    @Test
+    fun `choosing a reservoir type sets its factor`() {
+        for (type in ReservoirType.entries) {
+            val draft = blank.withReservoirType(type)
+            assertEquals(type.factor, draft.level.flow.reservoirSpeedFactor)
+            assertEquals(type, draft.reservoirType)
+        }
+    }
+
+    @Test
+    fun `a factor that is not a type snaps to the nearest type`() {
+        val draft = blank.withFlow(blank.level.flow.copy(reservoirSpeedFactor = 0.5))
+        assertEquals(ReservoirType.ORANGE_40, draft.reservoirType)
+        assertEquals(0.4, draft.snapReservoirType().level.flow.reservoirSpeedFactor)
+    }
+
+    @Test
+    fun `snapping a tie goes to the higher factor`() {
+        val draft = blank.withFlow(blank.level.flow.copy(reservoirSpeedFactor = 0.25)).snapReservoirType()
+        assertEquals(0.3, draft.level.flow.reservoirSpeedFactor)
+    }
+
+    @Test
+    fun `snapping keeps the other flow settings`() {
+        val flow = FlowSettings(1_000, 0.8, 0.5, 0.1)
+        val snapped = blank.withFlow(flow).snapReservoirType().level.flow
+        assertEquals(flow.copy(reservoirSpeedFactor = 0.4), snapped)
+    }
+
     // Mandatory sections
 
     private val cross = PipeSection.X

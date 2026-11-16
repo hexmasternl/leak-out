@@ -1,7 +1,15 @@
 package nl.hexmaster.leakout
 
+import android.Manifest
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import androidx.compose.runtime.snapshotFlow
+import nl.hexmaster.leakout.reminders.ReminderNotifications
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -134,6 +142,10 @@ class MainActivity : ComponentActivity() {
                     achievements = appContainer.achievements,
                     signIn = appContainer.playGames.auth.state,
                     onTipsReset = { appContainer.tracker.tipsReset() },
+                    onRemindersChanged = { enabled ->
+                        appContainer.reminders.refresh()
+                        if (enabled) requestNotificationPermission()
+                    },
                 )
             }
         }
@@ -217,6 +229,29 @@ class MainActivity : ComponentActivity() {
         AppInfo(versionName = info.versionName.orEmpty(), versionCode = PackageInfoCompat.getLongVersionCode(info))
     }
 
+    // Set when a daily pipe reminder was tapped; the welcome screen opens the daily pipe once and clears it.
+    private var openDailyPipeFromReminder by mutableStateOf(false)
+
+    // The Android 13+ notification permission; the answer re-plans the reminders.
+    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        appContainer.scope.launch { appContainer.reminders.refresh() }
+    }
+
+    /** Asks for the notification permission when Android 13+ needs it and it is not granted yet. */
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !ReminderNotifications.canNotify(this)) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    /** The welcome screen is up: asks for the permission once per install, never at the first frame. */
+    private suspend fun requestNotificationPermissionOnce() {
+        val store = appContainer.reminderState
+        if (store.permissionAsked()) return
+        store.setPermissionAsked()
+        requestNotificationPermission()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Before super.onCreate: swaps the splash theme for Theme.LeakOut. The system splash is
         // dismissed on the first frame, which is the Compose splash on the same colour.
@@ -230,9 +265,14 @@ class MainActivity : ComponentActivity() {
         hideSystemBars()
         // Music plays while the activity is visible: it pauses on stop and resumes in place on start.
         val music = musicViewModel.music
+        openDailyPipeFromReminder = savedInstanceState == null && intent.getBooleanExtra(ReminderNotifications.EXTRA_OPEN_DAILY_PIPE, false)
         lifecycle.addObserver(
             object : DefaultLifecycleObserver {
-                override fun onStart(owner: LifecycleOwner) = music.onForeground()
+                override fun onStart(owner: LifecycleOwner) {
+                    music.onForeground()
+                    // Every open, cold start or return, cancels the pending reminders and plans a new window.
+                    appContainer.scope.launch { appContainer.reminders.onAppOpened() }
+                }
 
                 override fun onStop(owner: LifecycleOwner) = music.onBackground()
             },
@@ -336,6 +376,16 @@ class MainActivity : ComponentActivity() {
                                 val dailyPipe by dailyPipeViewModel.state.collectAsState()
                                 val openedDailyPipe by dailyPipeViewModel.opened.collectAsState()
                                 // A downloaded pipe opens the game once; the gate is asked like any other level start.
+                                LaunchedEffect(Unit) { requestNotificationPermissionOnce() }
+                                // A tapped daily pipe reminder opens the pipe as soon as the button is usable.
+                                LaunchedEffect(openDailyPipeFromReminder) {
+                                    if (!openDailyPipeFromReminder) return@LaunchedEffect
+                                    val usable = withTimeoutOrNull(REMINDER_OPEN_WAIT_MS) {
+                                        snapshotFlow { dailyPipe.enabled }.first { it }
+                                    }
+                                    openDailyPipeFromReminder = false
+                                    if (usable != null) dailyPipeViewModel.open()
+                                }
                                 LaunchedEffect(openedDailyPipe) {
                                     val game = openedDailyPipe ?: return@LaunchedEffect
                                     dailyPipeViewModel.consumeOpened()
@@ -372,6 +422,9 @@ class MainActivity : ComponentActivity() {
         // Process lifetime: the version label shows once when the app starts, not on every return.
         @Volatile
         var versionLabelShown = false
+
+        // How long a tapped reminder waits for the Daily Pipe button to become usable (sign-in, network).
+        const val REMINDER_OPEN_WAIT_MS = 5_000L
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {

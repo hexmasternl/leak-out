@@ -92,11 +92,14 @@ Liquid is always rendered as a vertical gradient `liquid.300 → liquid.500 → 
 | `reservoir.300` | `#C7B5FF` | Reservoir liquid highlight |
 | `reservoir.500` | `#A78BFA` | Reservoir tank tint, "slow" badge |
 | `reservoir.700` | `#7C5CE6` | Reservoir tank shadow |
+| `reservoir.red.300` / `.500` / `.700` | `#FF7A90` / `#F0506E` / `#B83250` | The 10 % reservoir type: highlight, tank tint and badge, shadow. Pinker than `leak.500`, so a reservoir never reads as a leak |
+| `reservoir.blue.300` / `.500` / `.700` | `#7FA8FF` / `#4D7CFE` / `#2F56C9` | The 20 % reservoir type. Deeper than the liquid aqua |
+| `reservoir.orange.300` / `.500` / `.700` | `#FFC48A` / `#FF9F43` / `#D9771F` | The 40 % reservoir type. Yellower than `portal.3` |
 | `portal.1` | `#FF6FD8` | Ring of portal pair 1, symbol: circle |
 | `portal.2` | `#B8F25C` | Ring of portal pair 2, symbol: triangle |
 | `portal.3` | `#FF8A3D` | Ring of portal pair 3, symbol: square |
 
-The reservoir never recolours the liquid. Liquid stays aqua; the *tank* is violet so the player learns "violet = slow" without the flow ever changing colour.
+The reservoir never recolours the liquid. Liquid stays aqua; the *tank* carries the level's reservoir type so the player learns "tinted tank = slow" without the flow ever changing colour. A level has one reservoir type (`flow.reservoirSpeedFactor`): 10 % red, 20 % blue, 30 % purple (the violet `reservoir.*` tokens above, the default) or 40 % orange. The "slow" badge also shows the percentage, so colour is never the only cue.
 
 The portal colours tell the pairs of a level apart: both portals of a pair share their pair's colour, and pair *n* (the *n*-th entry of the level's `portals`) always takes `portal.n`. Each pair also has its own symbol, so colour is never the only cue. The three hues stay clear of the liquid aqua, the success green, the leak red and the reservoir violet. Like the rest of the board they are only drawn in the Deep palette.
 
@@ -236,7 +239,7 @@ Buttons keep a hint of the old "juicy" press physics without outlines. A **lip**
 
 - **Chip**: 32 dp tall, `radius.pill`, `surface.raised`, `display.xs` label, optional 16 dp leading icon. Tinted variants use the status tints with matching 500 text.
 - **Count badge**: 20 dp circle, `brass.500`, `display.xs` in `text.onBrass`.
-- **"Slow" badge** on reservoir tiles: `reservoir.500` pill with an hourglass icon.
+- **"Slow" badge** on reservoir tiles: a pill in the level's reservoir type (`reservoir.700` fill, `reservoir.300` rim, hourglass and percentage, for example "10 %"), top-right of the cell.
 
 ### 5.3 HUD bar
 
@@ -743,7 +746,7 @@ Kept from the original brief with tone adjusted to the new mood: lower, wetter, 
 - All tap targets ≥ 48 dp; grid cells ≥ 44 dp with 4 dp gaps.
 - Contrast pairs verified in 2.8. Never place `text.primary` on brass or liquid.
 - Liquid (aqua) and leak (coral) are distinguishable by shape and motion as well as colour: leaks always burst outward; flow is always contained in a bore.
-- The reservoir is marked by both colour (violet tank) and the hourglass badge.
+- The reservoir is marked by both colour (the tank in its type's accent) and the hourglass badge with its percentage.
 - The countdown ring is paired with a number; colour changes are never the only signal.
 - Stack pieces have content descriptions ("Next: corner, left to top").
 - Supports font scaling up to 130 % for body text; display sizes are fixed to protect layout, which is acceptable because they never carry essential information without a body-text or icon counterpart.
@@ -762,6 +765,9 @@ object LeakOutColors {                      // one instance per theme
     val brass100: Color; val brass300: Color; val brass500: Color; val brass700: Color; val brass900: Color
     val leak500: Color; val leak700: Color; val success500: Color; val success700: Color
     val reservoir300: Color; val reservoir500: Color; val reservoir700: Color
+    val reservoirRed300: Color; val reservoirRed500: Color; val reservoirRed700: Color
+    val reservoirBlue300: Color; val reservoirBlue500: Color; val reservoirBlue700: Color
+    val reservoirOrange300: Color; val reservoirOrange500: Color; val reservoirOrange700: Color
     val steel100: Color; val steel300: Color; val steel500: Color; val steel700: Color; val steel900: Color
     val textPrimary: Color; val textSecondary: Color; val textMuted: Color
     val textOnBrass: Color; val textOnLiquid: Color; val textOnStatus: Color
@@ -794,7 +800,7 @@ fun LeakOutTheme(daylight: Boolean = false, content: @Composable () -> Unit)
 | Display font | Fredoka | **Wendy One** |
 | UI font | Nunito | **Varela Round** |
 | Primary colour | Hydro blue for both liquid and buttons | Liquid aqua is reserved for liquid; **brass** is the action colour |
-| Reservoir | Purple liquid | Violet **tank**, liquid stays aqua |
+| Reservoir | Purple liquid | Tinted **tank** (violet by default, red, blue or orange by type), liquid stays aqua |
 | Themes | Light only | Deep (default) and Daylight |
 | Pipe art | Flat rectangles | Five-layer procedural stroke recipe with bore, specular and flanges |
 | Points popup | White fill under a 3 dp `InkDark` outline | `text.primary` fill and a soft `liquid.glow` glow, no border |

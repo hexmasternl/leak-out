@@ -24,6 +24,9 @@ interface SettingsRepository {
 
     suspend fun setVibrationEnabled(enabled: Boolean)
 
+    /** Turns the daily pipe reminders (openspec/specs/daily-pipe-reminders) on or off. */
+    suspend fun setRemindersEnabled(enabled: Boolean)
+
     /**
      * The tips the player has seen, now and after every change; none on first launch. Kept apart
      * from [settings] so a tip being closed does not recompose everything that reads the settings.
@@ -72,6 +75,9 @@ class InMemorySettingsRepository(
 
     override suspend fun setVibrationEnabled(enabled: Boolean) =
         write("vibrationEnabled") { it.copy(vibrationEnabled = enabled) }
+
+    override suspend fun setRemindersEnabled(enabled: Boolean) =
+        write("remindersEnabled") { it.copy(remindersEnabled = enabled) }
 
     private val tips = MutableStateFlow(initialSeenTips)
 

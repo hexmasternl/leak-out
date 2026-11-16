@@ -92,7 +92,7 @@ All timing lives in the level definition:
 |-------|---------|---------------|
 | `initialDelayMs` | Time before liquid leaves the start section | 8 000 – 20 000 |
 | `cellsPerSecond` | Base speed: how many cell lengths the liquid front advances per second | 0.4 – 2.0 |
-| `reservoirSpeedFactor` | Multiplier applied while inside a reservoir | 0.2 – 0.5 |
+| `reservoirSpeedFactor` | Multiplier applied while inside a reservoir; one of the four reservoir types | 0.1, 0.2, 0.3 or 0.4 |
 | `speedRampPerCell` | Optional: speed increase per filled cell, makes long levels harder | 0 – 0.05 |
 
 A **countdown** for the initial delay is shown on screen. Optionally the player can tap a "start flow" button to skip the wait for a time bonus.

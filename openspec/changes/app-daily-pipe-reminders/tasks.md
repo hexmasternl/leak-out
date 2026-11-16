@@ -2,8 +2,8 @@
 
 ## 1. Scheduling rules in core
 
-- [ ] 1.1 Add `ReminderPlanner` and `Reminder` types in `core` and verify `:core:test` passes
-- [ ] 1.2 Unit-test the planner: before and after 9:00, day boundaries, month/year rollover, DST changes, other time zones, the 7-day "We miss you" moment; verify the tests pass
+- [x] 1.1 Add `ReminderPlanner` and `Reminder` types in `core` and verify `:core:test` passes
+- [x] 1.2 Unit-test the planner: before and after 9:00, day boundaries, month/year rollover, DST changes, other time zones, the 7-day "We miss you" moment; verify the tests pass
 
 ## 2. Setting
 

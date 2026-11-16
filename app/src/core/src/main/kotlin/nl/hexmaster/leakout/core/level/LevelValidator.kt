@@ -204,8 +204,8 @@ object LevelValidator {
         if (!(flow.cellsPerSecond > 0.0 && flow.cellsPerSecond <= MAX_CELLS_PER_SECOND)) {
             error("flow.cellsPerSecond", "flow.cellsPerSecond must be greater than 0 and at most $MAX_CELLS_PER_SECOND, but had ${flow.cellsPerSecond}")
         }
-        if (!(flow.reservoirSpeedFactor > 0.0 && flow.reservoirSpeedFactor <= 1.0)) {
-            error("flow.reservoirSpeedFactor", "flow.reservoirSpeedFactor must be greater than 0 and at most 1, but had ${flow.reservoirSpeedFactor}")
+        if (ReservoirType.fromFactor(flow.reservoirSpeedFactor) == null) {
+            error("flow.reservoirSpeedFactor", "flow.reservoirSpeedFactor must be one of ${ReservoirType.FACTORS.joinToString(", ")}, but had ${flow.reservoirSpeedFactor}")
         }
         if (!(flow.speedRampPerCell >= 0.0)) {
             error("flow.speedRampPerCell", "flow.speedRampPerCell must be 0 or greater, but had ${flow.speedRampPerCell}")

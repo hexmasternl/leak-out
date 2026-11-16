@@ -180,14 +180,22 @@ class LevelValidatorTest {
     fun `speed on the upper bound is accepted`() = assertValid(valid(flow = flow(cellsPerSecond = 10.0)))
 
     @Test
-    fun `reservoir speed factor out of range is rejected`() {
-        for (factor in listOf(0.0, -0.1, 1.1)) {
+    fun `other reservoir speed factors are rejected`() {
+        for (factor in listOf(0.0, -0.1, 0.25, 0.5, 1.0, 1.2)) {
             assertOnlyError("flow.reservoirSpeedFactor", valid(flow = flow(reservoirSpeedFactor = factor)))
         }
     }
 
     @Test
-    fun `reservoir speed factor of one is accepted`() = assertValid(valid(flow = flow(reservoirSpeedFactor = 1.0)))
+    fun `each reservoir type is accepted`() {
+        for (type in ReservoirType.entries) assertValid(valid(flow = flow(reservoirSpeedFactor = type.factor)))
+    }
+
+    @Test
+    fun `reservoir speed factor error lists the allowed values`() {
+        val error = assertOnlyError("flow.reservoirSpeedFactor", valid(flow = flow(reservoirSpeedFactor = 0.5)))
+        assertTrue("0.1, 0.2, 0.3, 0.4" in error.message, error.message)
+    }
 
     @Test
     fun `negative speed ramp is rejected`() {

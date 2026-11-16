@@ -1,9 +1,9 @@
 ## 1. Reservoir types in core
 
-- [ ] 1.1 Add `ReservoirType` (`RED_10`, `BLUE_20`, `PURPLE_30`, `ORANGE_40`) with its factor and a lookup from a factor in `core/level`
-- [ ] 1.2 Restrict `flow.reservoirSpeedFactor` in `LevelValidator` to 0.1, 0.2, 0.3 and 0.4 (tolerance 1e-9); the error names the field and the allowed values
-- [ ] 1.3 Add snapping to the nearest type (ties to the higher factor) in `LevelDraft`
-- [ ] 1.4 Tests: `LevelValidatorTest` (each type accepted; 0, 0.25, 0.5 and 1.2 rejected), `LevelDraftTest` (snapping), `ReservoirType` lookup
+- [x] 1.1 Add `ReservoirType` (`RED_10`, `BLUE_20`, `PURPLE_30`, `ORANGE_40`) with its factor and a lookup from a factor in `core/level`
+- [x] 1.2 Restrict `flow.reservoirSpeedFactor` in `LevelValidator` to 0.1, 0.2, 0.3 and 0.4 (tolerance 1e-9); the error names the field and the allowed values
+- [x] 1.3 Add snapping to the nearest type (ties to the higher factor) in `LevelDraft`
+- [x] 1.4 Tests: `LevelValidatorTest` (each type accepted; 0, 0.25, 0.5 and 1.2 rejected), `LevelDraftTest` (snapping), `ReservoirType` lookup
 
 ## 2. Rendering
 

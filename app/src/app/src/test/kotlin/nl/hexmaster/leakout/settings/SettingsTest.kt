@@ -20,7 +20,24 @@ class SettingsTest {
         assertTrue(defaults.musicEnabled)
         assertEquals(0.6f, defaults.musicVolume, 0f)
         assertTrue(defaults.vibrationEnabled)
+        assertTrue(defaults.remindersEnabled)
         assertEquals(defaults, Settings.Default)
+    }
+
+    @Test
+    fun `the reminders setter writes only its own field`() = runTest {
+        val repository = InMemorySettingsRepository()
+        repository.setRemindersEnabled(false)
+        assertEquals(Settings.Default.copy(remindersEnabled = false), repository.settings.first())
+        assertEquals(listOf("remindersEnabled"), repository.writes)
+    }
+
+    @Test
+    fun `reminders read as on when nothing is stored and off when stored off`() {
+        val keys = DataStoreSettingsRepository.Keys
+        assertTrue(DataStoreSettingsRepository.read(mutablePreferencesOf()).remindersEnabled)
+        assertFalse(DataStoreSettingsRepository.read(mutablePreferencesOf(keys.RemindersEnabled to false)).remindersEnabled)
+        assertEquals("reminders_enabled", keys.RemindersEnabled.name)
     }
 
     @Test

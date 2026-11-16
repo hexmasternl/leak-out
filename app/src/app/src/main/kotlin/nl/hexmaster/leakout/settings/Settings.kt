@@ -11,6 +11,7 @@ data class Settings(
     val musicEnabled: Boolean = DEFAULT_MUSIC_ENABLED,
     val musicVolume: Float = DEFAULT_MUSIC_VOLUME,
     val vibrationEnabled: Boolean = DEFAULT_VIBRATION_ENABLED,
+    val remindersEnabled: Boolean = DEFAULT_REMINDERS_ENABLED,
 ) {
     companion object {
         const val DEFAULT_SOUND_ENABLED = true
@@ -18,6 +19,7 @@ data class Settings(
         const val DEFAULT_MUSIC_ENABLED = true
         const val DEFAULT_MUSIC_VOLUME = 0.6f
         const val DEFAULT_VIBRATION_ENABLED = true
+        const val DEFAULT_REMINDERS_ENABLED = true
 
         const val MIN_VOLUME = 0f
         const val MAX_VOLUME = 1f

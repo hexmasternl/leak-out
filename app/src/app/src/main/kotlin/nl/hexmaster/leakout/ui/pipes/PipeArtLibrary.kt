@@ -21,30 +21,64 @@ import androidx.compose.ui.platform.LocalContext
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
 import nl.hexmaster.leakout.core.level.PipeSection
+import nl.hexmaster.leakout.core.level.ReservoirType
 
 /**
  * Loads the pipe assets once and keeps them ready to draw: parsed [PipeArt] and the section's
  * glass overlay, plus Compose [Path]s and [Brush]es in the 0–100 view box. The tile scales the canvas, so one prepared set serves
  * every cell size.
  */
-class PipeArtLibrary(private val open: (fileName: String) -> InputStream) {
-    private val art = ConcurrentHashMap<PipeSection, PipeArt>()
-    private val glass = ConcurrentHashMap<PipeSection, List<SvgShape>>()
-    private val prepared = ConcurrentHashMap<PipeSection, PreparedPipeArt>()
+class PipeArtLibrary private constructor(
+    private val open: (fileName: String) -> InputStream,
+    private val caches: Caches,
+    /** The reservoir type [prepared] draws the reservoir in when none is given; see [forReservoir]. */
+    val reservoirType: ReservoirType,
+) {
+    constructor(open: (fileName: String) -> InputStream) : this(open, Caches(), ReservoirType.DEFAULT)
+
+    private class Caches {
+        val art = ConcurrentHashMap<PipeSection, PipeArt>()
+        val glass = ConcurrentHashMap<PipeSection, List<SvgShape>>()
+        val prepared = ConcurrentHashMap<Pair<PipeSection, ReservoirType>, PreparedPipeArt>()
+    }
+
+    /** A view of this library, sharing its caches, that draws the reservoir as [type]. */
+    fun forReservoir(type: ReservoirType): PipeArtLibrary =
+        if (type == reservoirType) this else PipeArtLibrary(open, caches, type)
 
     fun art(section: PipeSection): PipeArt =
-        art.getOrPut(section) { open(fileName(section)).use { PipeArtParser.parse(it) } }
+        caches.art.getOrPut(section) { open(fileName(section)).use { PipeArtParser.parse(it) } }
 
     /** The shapes of the section's glass overlay, drawn above everything else. */
     fun glass(section: PipeSection): List<SvgShape> =
-        glass.getOrPut(section) { open(glassFileName(section)).use { PipeArtParser.parseGlass(it) } }
+        caches.glass.getOrPut(section) { open(glassFileName(section)).use { PipeArtParser.parseGlass(it) } }
 
-    fun prepared(section: PipeSection): PreparedPipeArt =
-        prepared.getOrPut(section) { PreparedPipeArt.from(art(section), glass(section)) }
+    /**
+     * The section ready to draw. [reservoirType] only matters for the reservoir: its tank is tinted
+     * with the type's accent and its badge shows the type's percentage. Every other section is the
+     * same for every type.
+     */
+    fun prepared(section: PipeSection, reservoirType: ReservoirType = this.reservoirType): PreparedPipeArt {
+        val type = if (section == PipeSection.RES) reservoirType else ReservoirType.DEFAULT
+        return caches.prepared.getOrPut(section to type) {
+            val base = art(section)
+            if (section != PipeSection.RES) {
+                PreparedPipeArt.from(base, glass(section))
+            } else {
+                val accent = ReservoirAccent.of(type)
+                val tinted = base.copy(
+                    under = base.under.tinted(accent),
+                    over = base.over.tinted(accent) + ReservoirBadgeText.shapes(type.percent, accent.c300),
+                )
+                PreparedPipeArt.from(tinted, glass(section))
+            }
+        }
+    }
 
     /** Parses and prepares every section now, so the first frame that draws them does not have to. */
     fun preloadAll() {
         PipeSection.entries.forEach { prepared(it) }
+        ReservoirType.entries.forEach { prepared(PipeSection.RES, it) }
     }
 
     companion object {
@@ -69,11 +103,15 @@ class PipeArtLibrary(private val open: (fileName: String) -> InputStream) {
 /** Provides the library to [PipeTile]; defaults to the app's shared library. */
 val LocalPipeArtLibrary = staticCompositionLocalOf<PipeArtLibrary?> { null }
 
+/** The reservoir type of the level being shown; reservoirs are drawn in its accent. Purple (30 %) when none is provided. */
+val LocalReservoirType = staticCompositionLocalOf { ReservoirType.DEFAULT }
+
 @Composable
 fun rememberPipeArtLibrary(): PipeArtLibrary {
-    LocalPipeArtLibrary.current?.let { return it }
+    val type = LocalReservoirType.current
+    LocalPipeArtLibrary.current?.let { return it.forReservoir(type) }
     val context = LocalContext.current
-    return remember(context) { PipeArtLibrary.get(context) }
+    return remember(context, type) { PipeArtLibrary.get(context).forReservoir(type) }
 }
 
 class PreparedShape(

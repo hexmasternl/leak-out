@@ -15,7 +15,7 @@ Every level is one JSON file in `src/app/src/main/assets/levels/`, named `level_
   "flow": {
     "initialDelayMs": 12000,        // required, 0 or more: time before the liquid starts
     "cellsPerSecond": 0.6,          // required, above 0 and at most 10: base speed
-    "reservoirSpeedFactor": 0.3,    // optional, above 0 and at most 1: speed multiplier inside a reservoir
+    "reservoirSpeedFactor": 0.3,    // optional, one of 0.1, 0.2, 0.3, 0.4: the reservoir type (see Reservoir types)
     "speedRampPerCell": 0.0         // optional, 0 or more: speed increase per filled cell
   },
   "stack": {                        // optional
@@ -75,6 +75,19 @@ Defaults live in `LevelDefaults`. Each optional field can be overridden on its o
 | `mandatory` | none (see [Mandatory sections](#mandatory-sections)) |
 | `portals` | none (see [Portal pairs](#portal-pairs)) |
 | `leaky` | none (see [Leaky tiles](#leaky-tiles)) |
+
+## Reservoir types
+
+`flow.reservoirSpeedFactor` is the speed multiplier inside a reservoir and selects the level's reservoir type. It must be one of the four values below (anything else fails validation, and the error lists them). A level has one reservoir type; the app draws every reservoir of the level in its accent colour and shows the percentage on the reservoir's "slow" badge.
+
+| Factor | Type | Accent | Badge |
+|--------|------|--------|-------|
+| 0.1 | `RED_10` | red | 10 % |
+| 0.2 | `BLUE_20` | blue | 20 % |
+| 0.3 (default) | `PURPLE_30` | purple (violet) | 30 % |
+| 0.4 | `ORANGE_40` | orange | 40 % |
+
+The bundled levels pick the type from their base `cellsPerSecond`: the faster the liquid, the stronger the slow-down. Below 0.2 cells per second: 0.4. From 0.2 to below 0.3: 0.3 (the field is left out). From 0.3 to below 0.37: 0.2. From 0.37: 0.1.
 
 ## Coordinates and open sides
 

@@ -311,7 +311,7 @@
     <string name="designer_section_flow" translatable="false">Flow</string>
     <string name="designer_field_initial_delay" translatable="false">Initial delay (ms)</string>
     <string name="designer_field_cells_per_second" translatable="false">Cells per second</string>
-    <string name="designer_field_reservoir" translatable="false">Reservoir speed factor</string>
+    <string name="designer_field_reservoir" translatable="false">Reservoir</string>
     <string name="designer_field_speed_ramp" translatable="false">Speed ramp per cell</string>
     <string name="designer_section_stack" translatable="false">Stack</string>
     <string name="designer_field_visible_size" translatable="false">Visible size</string>

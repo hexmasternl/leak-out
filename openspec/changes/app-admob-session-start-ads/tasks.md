@@ -5,8 +5,8 @@
 
 ## 2. AdMob setup (maintainer, manual)
 
-- [ ] 2.1 Create the AdMob app (`nl.hexmaster.leakout`) and an interstitial ad unit; copy the app ID and ad unit ID
-- [ ] 2.2 Link the app to its Play listing in AdMob and set up the GDPR message under Privacy & messaging
+- [x] 2.1 Create the AdMob app (`nl.hexmaster.leakout`) and an interstitial ad unit; copy the app ID and ad unit ID
+- [x] 2.2 Link the app to its Play listing in AdMob and set up the GDPR message under Privacy & messaging
 - [ ] 2.3 (optional) Override the release IDs with `LEAKOUT_ADMOB_APP_ID` and `LEAKOUT_ADMOB_INTERSTITIAL_ID`; not needed, the build file holds the Leak Out IDs
 
 ## 3. Build and manifest
@@ -32,7 +32,7 @@
 
 - [x] 6.1 Add `website/src/static/app-ads.txt` with the AdMob publisher line and smoke-test it in the website deploy
 - [x] 6.2 Document the AdMob setup, app verification, the `LEAKOUT_ADMOB_*` variables and ad testing rules in `docs/deployment.md`
-- [ ] 6.3 Update the privacy policy, the Play Console Ads declaration and the Data safety form (maintainer)
+- [x] 6.3 Update the privacy policy, the Play Console Ads declaration and the Data safety form (maintainer)
 - [ ] 6.4 After the website deploys, check `https://leakout.hexmaster.nl/app-ads.txt` and that the Play listing website is that domain (maintainer)
 
 ## 7. Verification

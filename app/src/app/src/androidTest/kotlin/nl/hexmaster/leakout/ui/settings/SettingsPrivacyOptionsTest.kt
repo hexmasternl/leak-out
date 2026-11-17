@@ -44,7 +44,7 @@ class SettingsPrivacyOptionsTest {
     }
 
     @Test
-    fun `the row is shown and opens the consent form when privacy options are required`() {
+    fun rowIsShownAndOpensTheConsentFormWhenPrivacyOptionsAreRequired() {
         showScreen(privacyOptionsRequired = true)
 
         compose.onNodeWithTag(SettingsTags.PRIVACY_OPTIONS).performScrollTo().assertIsDisplayed().performClick()
@@ -53,7 +53,7 @@ class SettingsPrivacyOptionsTest {
     }
 
     @Test
-    fun `the row is not there when privacy options are not required`() {
+    fun rowIsAbsentWhenPrivacyOptionsAreNotRequired() {
         showScreen(privacyOptionsRequired = false)
 
         compose.onNodeWithTag(SettingsTags.PRIVACY_OPTIONS).assertDoesNotExist()

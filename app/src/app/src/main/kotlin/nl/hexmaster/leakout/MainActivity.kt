@@ -16,6 +16,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -87,7 +88,7 @@ import nl.hexmaster.leakout.ui.update.UpdateGateHost
 import nl.hexmaster.leakout.update.UpdateViewModel
 
 /** The screens, until a navigation library is worth adding. */
-private sealed interface Screen {
+internal sealed interface Screen {
     data object Welcome : Screen
     data object Library : Screen
     data object Settings : Screen
@@ -311,6 +312,10 @@ class MainActivity : ComponentActivity() {
             LeakOutTheme {
                 SplashGate {
                     var screen by rememberSaveable(stateSaver = ScreenSaver) { mutableStateOf<Screen>(Screen.Welcome) }
+                    // The menu follows the device, everything else is landscape. Until the splash is done the
+                    // manifest's default applies, which follows the device as well.
+                    val orientation = orientationFor(screen).activityInfo
+                    SideEffect { if (requestedOrientation != orientation) requestedOrientation = orientation }
                     // Every visit opens on the page asked for, not the one left last time.
                     val openLibrary = { page: Int ->
                         library.reopen(page)

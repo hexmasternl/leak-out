@@ -1,6 +1,7 @@
 package nl.hexmaster.leakout.ui.title
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -107,5 +108,69 @@ class WelcomeLayoutFourButtonsTest {
     fun `three buttons stay the default`() {
         assertEquals(WelcomeLayout.compute(800f, 360f), WelcomeLayout.compute(800f, 360f, WelcomeLayout.BUTTON_COUNT))
         assertEquals(3, WelcomeLayout.compute(800f, 360f).buttonCount)
+    }
+}
+
+/** Portrait sizes after insets get one centred column of buttons under the title (spec welcome-screen). */
+@RunWith(Parameterized::class)
+class WelcomeLayoutPortraitTest(private val widthDp: Float, private val heightDp: Float) {
+
+    companion object {
+        // Small phones, the spec's 360x640, common phones, foldable inner screens and tablets.
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}x{1}")
+        fun sizes(): List<Array<Float>> = listOf(
+            arrayOf(260f, 480f),
+            arrayOf(300f, 568f),
+            arrayOf(328f, 560f),
+            arrayOf(360f, 640f),
+            arrayOf(412f, 732f),
+            arrayOf(412f, 915f),
+            arrayOf(600f, 1024f),
+            arrayOf(800f, 1280f),
+        )
+    }
+
+    @Test
+    fun `a taller than wide area gets the portrait layout`() {
+        assertTrue(WelcomeLayout.compute(widthDp, heightDp).portrait)
+    }
+
+    @Test
+    fun `title and every button fit the height, with three or four buttons`() {
+        for (count in listOf(3, 4)) {
+            val layout = WelcomeLayout.compute(widthDp, heightDp, count)
+            assertTrue("content ${layout.contentHeightDp} > $heightDp ($count buttons)", layout.contentHeightDp <= heightDp)
+        }
+    }
+
+    @Test
+    fun `title and buttons fit the width`() {
+        val layout = WelcomeLayout.compute(widthDp, heightDp, buttonCount = 4)
+        assertTrue(layout.titleSizeDp * WelcomeLayout.TITLE_WIDTH_EM <= widthDp)
+        assertTrue("button ${layout.buttonWidthDp} > $widthDp", layout.buttonWidthDp <= widthDp)
+        assertEquals(layout.buttonWidthDp, layout.buttonRowWidthDp, 0.001f)
+    }
+
+    @Test
+    fun `buttons keep a 48dp touch target`() {
+        val layout = WelcomeLayout.compute(widthDp, heightDp, buttonCount = 4)
+        assertTrue(layout.buttonFaceHeightDp + WelcomeLayout.BUTTON_SHADOW_DP >= WelcomeLayout.MIN_TOUCH_TARGET_DP)
+        assertTrue(layout.buttonWidthDp >= WelcomeLayout.MIN_TOUCH_TARGET_DP)
+    }
+
+    @Test
+    fun `the stack holds every button and the spacing between them`() {
+        val layout = WelcomeLayout.compute(widthDp, heightDp, buttonCount = 4)
+        val expected = 4 * (layout.buttonFaceHeightDp + WelcomeLayout.BUTTON_SHADOW_DP) + 3 * layout.buttonSpacingDp
+        assertEquals(expected, layout.buttonsHeightDp, 0.001f)
+    }
+}
+
+class WelcomeLayoutOrientationTest {
+    @Test
+    fun `landscape and square areas keep the row layout`() {
+        assertFalse(WelcomeLayout.compute(800f, 360f).portrait)
+        assertFalse(WelcomeLayout.compute(600f, 600f).portrait)
     }
 }

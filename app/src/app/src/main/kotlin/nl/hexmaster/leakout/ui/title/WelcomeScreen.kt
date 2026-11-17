@@ -66,6 +66,7 @@ object WelcomeScreenTags {
     const val VERSION = "welcome_version"
     const val DAILY_PIPE = "welcome_daily_pipe"
     const val DAILY_PIPE_STATUS = "welcome_daily_pipe_status"
+    const val BUTTONS = "welcome_buttons"
 }
 
 /**
@@ -192,7 +193,9 @@ fun WelcomeScreen(
         )
     }
 
-    Box(modifier = modifier.fillMaxSize().testTag(WelcomeScreenTags.SCREEN)) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize().testTag(WelcomeScreenTags.SCREEN)) {
+        // The same rule as WelcomeLayout.compute, for the corner items outside the content area.
+        val screenPortrait = maxHeight > maxWidth
         WelcomeBackground()
         // Art runs under the bars and cutout; interactive content stays inside the safe area.
         // The larger inset is applied to both sides so a one-sided camera cutout does not push
@@ -219,52 +222,71 @@ fun WelcomeScreen(
             val buttonTextSize = with(LocalDensity.current) { BUTTON_TEXT_DP.dp.toSp() }
             val buttonTextStyle = LeakOutTextStyles.ButtonText.copy(fontSize = buttonTextSize)
 
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            val title = @Composable { modifier: Modifier ->
                 LeakOutTitle(
                     text = stringResource(R.string.welcome_title),
                     sizeDp = layout.titleSizeDp,
-                    modifier = Modifier.testTag(WelcomeScreenTags.TITLE),
+                    modifier = modifier.testTag(WelcomeScreenTags.TITLE),
                 )
-                Spacer(Modifier.height(layout.gapDp.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(layout.buttonSpacingDp.dp)) {
-                    val buttonModifier = Modifier.width(layout.buttonWidthDp.dp)
+            }
+            // The same buttons, in the same order, as a row in landscape or a column in portrait.
+            val buttons = @Composable {
+                val buttonModifier = Modifier.width(layout.buttonWidthDp.dp)
+                CartoonButton(
+                    text = stringResource(R.string.welcome_play),
+                    onClick = { showPlayMenu = true },
+                    variant = CartoonButtonVariant.Secondary,
+                    faceHeight = layout.buttonFaceHeightDp.dp,
+                    textStyle = buttonTextStyle,
+                    modifier = buttonModifier.testTag(WelcomeScreenTags.PLAY),
+                )
+                if (dailyPipe.visible) {
                     CartoonButton(
-                        text = stringResource(R.string.welcome_play),
-                        onClick = { showPlayMenu = true },
-                        variant = CartoonButtonVariant.Secondary,
+                        text = stringResource(R.string.welcome_daily_pipe),
+                        onClick = onDailyPipe,
+                        variant = CartoonButtonVariant.Success,
                         faceHeight = layout.buttonFaceHeightDp.dp,
                         textStyle = buttonTextStyle,
-                        modifier = buttonModifier.testTag(WelcomeScreenTags.PLAY),
-                    )
-                    if (dailyPipe.visible) {
-                        CartoonButton(
-                            text = stringResource(R.string.welcome_daily_pipe),
-                            onClick = onDailyPipe,
-                            variant = CartoonButtonVariant.Success,
-                            faceHeight = layout.buttonFaceHeightDp.dp,
-                            textStyle = buttonTextStyle,
-                            enabled = dailyPipe.enabled,
-                            modifier = buttonModifier.testTag(WelcomeScreenTags.DAILY_PIPE),
-                        )
-                    }
-                    CartoonButton(
-                        text = stringResource(R.string.welcome_settings),
-                        onClick = onSettings,
-                        variant = CartoonButtonVariant.Primary,
-                        faceHeight = layout.buttonFaceHeightDp.dp,
-                        textStyle = buttonTextStyle,
-                        modifier = buttonModifier.testTag(WelcomeScreenTags.SETTINGS),
-                    )
-                    CartoonButton(
-                        text = stringResource(R.string.welcome_exit),
-                        onClick = { requestExit() },
-                        variant = CartoonButtonVariant.Danger,
-                        faceHeight = layout.buttonFaceHeightDp.dp,
-                        textStyle = buttonTextStyle,
-                        modifier = buttonModifier.testTag(WelcomeScreenTags.EXIT),
+                        enabled = dailyPipe.enabled,
+                        modifier = buttonModifier.testTag(WelcomeScreenTags.DAILY_PIPE),
                     )
                 }
-                if (dailyPipe.visible) DailyPipeStatus(dailyPipe)
+                CartoonButton(
+                    text = stringResource(R.string.welcome_settings),
+                    onClick = onSettings,
+                    variant = CartoonButtonVariant.Primary,
+                    faceHeight = layout.buttonFaceHeightDp.dp,
+                    textStyle = buttonTextStyle,
+                    modifier = buttonModifier.testTag(WelcomeScreenTags.SETTINGS),
+                )
+                CartoonButton(
+                    text = stringResource(R.string.welcome_exit),
+                    onClick = { requestExit() },
+                    variant = CartoonButtonVariant.Danger,
+                    faceHeight = layout.buttonFaceHeightDp.dp,
+                    textStyle = buttonTextStyle,
+                    modifier = buttonModifier.testTag(WelcomeScreenTags.EXIT),
+                )
+            }
+            val buttonSpacing = Arrangement.spacedBy(layout.buttonSpacingDp.dp)
+
+            if (layout.portrait) {
+                // Portrait: the title at the top, the buttons stacked and centred at the bottom.
+                title(Modifier.align(Alignment.TopCenter).padding(top = layout.gapDp.dp))
+                Column(
+                    modifier = Modifier.align(Alignment.BottomCenter).testTag(WelcomeScreenTags.BUTTONS),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Column(verticalArrangement = buttonSpacing, horizontalAlignment = Alignment.CenterHorizontally) { buttons() }
+                    if (dailyPipe.visible) DailyPipeStatus(dailyPipe)
+                }
+            } else {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    title(Modifier)
+                    Spacer(Modifier.height(layout.gapDp.dp))
+                    Row(horizontalArrangement = buttonSpacing, modifier = Modifier.testTag(WelcomeScreenTags.BUTTONS)) { buttons() }
+                    if (dailyPipe.visible) DailyPipeStatus(dailyPipe)
+                }
             }
         }
         // A developer tool, out of the way of the Play / Settings / Exit layout.
@@ -282,7 +304,8 @@ fun WelcomeScreen(
                 text = startupVersion,
                 onShown = onVersionLabelShown,
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
+                    // In portrait the button stack fills the bottom, so the version moves to the free top-left corner.
+                    .align(if (screenPortrait) Alignment.TopStart else Alignment.BottomEnd)
                     .padding(horizontal = horizontalInset, vertical = verticalInset)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
             )
@@ -346,6 +369,20 @@ private const val BUTTON_TEXT_DP = 18f
 @Preview(name = "Welcome 800x360", widthDp = 800, heightDp = 360)
 @Composable
 private fun WelcomeScreenStandardPreview() {
+    LeakOutTheme {
+        WelcomeScreen(
+            resolveNextLevel = { NextLevelResolver.resolve(totalLevels = 48, stars = emptyMap()) },
+            onStartLevel = {},
+            onOpenLevelLibrary = {},
+            onSettings = {},
+            onExit = {},
+        )
+    }
+}
+
+@Preview(name = "Welcome 360x640 (portrait)", widthDp = 360, heightDp = 640)
+@Composable
+private fun WelcomeScreenPortraitPreview() {
     LeakOutTheme {
         WelcomeScreen(
             resolveNextLevel = { NextLevelResolver.resolve(totalLevels = 48, stars = emptyMap()) },

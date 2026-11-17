@@ -70,3 +70,44 @@ class HudInsetsTest {
         assertEquals(HudInsets.None, insets(CutoutRect(0, 0, 0, 100)))
     }
 }
+
+class HudCornerInsetsTest {
+    private val width = 2400
+
+    // Rounded top corners with a 100 px radius, their arcs centred 100 px in from each edge.
+    private val corners = listOf(
+        ScreenCorner(radius = 100, centerX = 100, centerY = 100, onLeft = true),
+        ScreenCorner(radius = 100, centerX = 2300, centerY = 100, onLeft = false),
+    )
+
+    @Test
+    fun squareCornersNeedNoInset() {
+        assertEquals(HudInsets.None, hudCornerInsets(emptyList(), 0, width))
+    }
+
+    @Test
+    fun atTheTopEdgeTheWholeRadiusIsCut() {
+        assertEquals(HudInsets(100, 100), hudCornerInsets(corners, 0, width))
+    }
+
+    @Test
+    fun belowTheArcCentreNothingIsCut() {
+        assertEquals(HudInsets.None, hudCornerInsets(corners, 100, width))
+    }
+
+    @Test
+    fun halfwayDownTheArcFollowsTheCurve() {
+        // At y = 40 the arc is sqrt(100^2 - 60^2) = 80 px from its centre, so 20 px from the edge.
+        assertEquals(HudInsets(20, 20), hudCornerInsets(corners, 40, width))
+    }
+
+    @Test
+    fun oneRoundedCornerOnlyInsetsItsOwnSide() {
+        assertEquals(HudInsets(20, 0), hudCornerInsets(corners.take(1), 40, width))
+    }
+
+    @Test
+    fun zeroRadiusIsIgnored() {
+        assertEquals(HudInsets.None, hudCornerInsets(listOf(ScreenCorner(0, 0, 0, true)), 0, width))
+    }
+}

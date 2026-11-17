@@ -7,7 +7,8 @@
 
 - [x] 2.1 In `GameScreen`, apply only the vertical `safeDrawing` insets to the outer column and give the stack and field row the horizontal `safeDrawing` insets.
 - [x] 2.2 Read the display cutout bounding rects from the root window insets, derive the HUD band from the top inset and `HudLayout.HEIGHT`, and pad the HUD with the helper's result; recompute on inset and rotation changes.
-- [ ] 2.3 Check the HUD panel shape and the cog wheel button at the screen edges on both landscape sides. (needs a phone or emulator with a cutout; not checked yet)
+- [x] 2.3 Check the HUD panel shape and the cog wheel button at the screen edges on both landscape sides. (checked on the emulator by the maintainer)
+- [x] 2.4 Keep the HUD content inside the display's rounded top corners (`RoundedCorner`, Android 12+): the panel stays full width, the content moves in past the curve plus a margin.
 
 ## 3. Tests
 

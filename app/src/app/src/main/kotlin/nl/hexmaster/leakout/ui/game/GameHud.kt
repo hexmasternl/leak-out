@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.absolutePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -81,6 +82,7 @@ fun GameHud(
     clockMs: () -> Long = { 0L },
     onWarningShown: () -> Unit = {},
     levelLabel: String? = null,
+    edges: HudEdges = HudEdges(),
 ) {
     val locale = LocalConfiguration.current.locales[0]
     val levelText = levelLabel ?: stringResource(R.string.hud_level, HudFormat.level(levelId))
@@ -93,7 +95,8 @@ fun GameHud(
             .fillMaxWidth()
             .height(HudLayout.HEIGHT)
             .hudPanel()
-            .padding(start = 16.dp, end = 4.dp),
+            // Inside the display's rounded corners the content moves further in, see rememberHudEdges.
+            .absolutePadding(left = edges.contentLeft, right = edges.contentRight),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {

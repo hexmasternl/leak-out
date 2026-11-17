@@ -215,6 +215,7 @@ fun GameScreen(
                 // Under a tip only the tip is read out; the game is dimmed and frozen.
                 .semantics { if (activeTip != null) hideFromAccessibility() },
         ) {
+            val hudEdges = rememberHudEdges()
             GameHud(
                 levelId = currentLevel.id,
                 levelLabel = levelLabel,
@@ -226,7 +227,8 @@ fun GameScreen(
                 attempt = attempt,
                 onPause = { session.pauseByUser() },
                 pauseEnabled = outcome is Outcome.Playing,
-                modifier = Modifier.hudCutoutPadding().fillMaxWidth(),
+                modifier = Modifier.hudPanelPadding(hudEdges).fillMaxWidth(),
+                edges = hudEdges,
                 gapDistance = { GapDistance.of(session.state) },
                 clockMs = { session.state.clockMs },
                 onWarningShown = { haptics?.play(HapticEffect.GapWarning) },

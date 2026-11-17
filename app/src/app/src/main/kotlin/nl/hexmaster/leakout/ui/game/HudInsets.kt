@@ -32,3 +32,26 @@ fun hudHorizontalInsets(cutouts: List<CutoutRect>, hudTop: Int, hudBottom: Int, 
     }
     return HudInsets(left, right)
 }
+
+/** One of the display's rounded top corners, in window pixels, with the centre of its arc. */
+data class ScreenCorner(val radius: Int, val centerX: Int, val centerY: Int, val onLeft: Boolean)
+
+/**
+ * How far, in pixels from the left and right screen edges, the rounded top [corners] of the display
+ * reach in at height [y]: the HUD keeps its content inside that curve so nothing falls off the screen.
+ */
+fun hudCornerInsets(corners: List<ScreenCorner>, y: Int, screenWidth: Int): HudInsets {
+    var left = 0
+    var right = 0
+    for (corner in corners) {
+        if (corner.radius <= 0 || y >= corner.centerY) continue
+        val dy = (corner.centerY - y).toDouble().coerceAtMost(corner.radius.toDouble())
+        val reach = kotlin.math.sqrt(corner.radius.toDouble() * corner.radius - dy * dy)
+        if (corner.onLeft) {
+            left = maxOf(left, kotlin.math.ceil(corner.centerX - reach).toInt().coerceIn(0, screenWidth))
+        } else {
+            right = maxOf(right, kotlin.math.ceil(screenWidth - (corner.centerX + reach)).toInt().coerceIn(0, screenWidth))
+        }
+    }
+    return HudInsets(left, right)
+}

@@ -26,6 +26,7 @@ import nl.hexmaster.leakout.core.level.StackSettings
 import nl.hexmaster.leakout.core.level.StarBenchmarks
 import nl.hexmaster.leakout.ui.theme.LeakOutTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -67,17 +68,50 @@ class HudCutoutTest {
         assertEquals(800f, hud.right.value, 0.5f)
     }
 
+    @Test
+    fun squareCornersKeepTheDefaultContentPadding() {
+        show(emptyList(), corners = emptyList())
+
+        val hud = compose.onNodeWithTag(HudTags.HUD).getUnclippedBoundsInRoot()
+        val level = compose.onNodeWithTag(HudTags.LEVEL).getUnclippedBoundsInRoot()
+        val cog = compose.onNodeWithTag(HudTags.PAUSE).getUnclippedBoundsInRoot()
+        assertEquals(hud.left.value + HudContentStart.value, level.left.value, 0.5f)
+        assertEquals(hud.right.value - HudContentEnd.value, cog.right.value, 0.5f)
+    }
+
+    @Test
+    fun roundedCornersMoveTheContentInsideTheCurve() {
+        val width = screenWidth()
+        val radius = with(compose.density) { 200.dp.roundToPx() }
+        // Large rounded corners, so the curve still reaches in below a visible status bar.
+        show(
+            emptyList(),
+            corners = listOf(
+                ScreenCorner(radius, radius, radius, onLeft = true),
+                ScreenCorner(radius, width - radius, radius, onLeft = false),
+            ),
+        )
+
+        val hud = compose.onNodeWithTag(HudTags.HUD).getUnclippedBoundsInRoot()
+        val level = compose.onNodeWithTag(HudTags.LEVEL).getUnclippedBoundsInRoot()
+        val cog = compose.onNodeWithTag(HudTags.PAUSE).getUnclippedBoundsInRoot()
+        // The panel still spans the full width; only its content moves in.
+        assertEquals(0f, hud.left.value, 0.5f)
+        assertTrue(level.left.value > hud.left.value + HudContentStart.value)
+        assertTrue(cog.right.value < hud.right.value - HudContentEnd.value)
+    }
+
     private fun screenWidth(): Int {
         var width = 0
         compose.runOnUiThread { width = compose.activity.window.decorView.rootView.width }
         return width
     }
 
-    private fun show(cutouts: List<CutoutRect>) {
+    private fun show(cutouts: List<CutoutRect>, corners: List<ScreenCorner> = emptyList()) {
         val level = level()
         compose.setContent {
             LeakOutTheme {
-                CompositionLocalProvider(LocalCutoutRects provides cutouts) {
+                CompositionLocalProvider(LocalCutoutRects provides cutouts, LocalScreenCorners provides corners) {
                     // The test activity shows the system bars; the game hides them, so measure a bare screen.
                     Box(Modifier.size(800.dp, 360.dp).consumeWindowInsets(WindowInsets.safeDrawing)) {
                         GameScreen(level = level, onExit = {}, session = GameSession(level, Random(7)))

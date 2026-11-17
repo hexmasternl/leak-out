@@ -19,6 +19,10 @@ The game screen SHALL show a HUD bar along the top edge, across the full width o
 - **WHEN** the device is turned to the other landscape side, so the same cutout sits in the middle of the left short edge
 - **THEN** the HUD spans from the left edge to the right edge of the screen, and the stack column stays clear of the cutout
 
+#### Scenario: Rounded screen corners
+- **WHEN** the game screen is shown full width on a device with rounded screen corners
+- **THEN** the HUD panel reaches both screen edges, and the level, the cog wheel and the other HUD items stay inside the curve of the corners, fully visible
+
 #### Scenario: Cutout in the HUD band
 - **WHEN** the game screen is shown on a device whose cutout overlaps the HUD's vertical band on the left
 - **THEN** the HUD content starts to the right of the cutout, and the right side of the HUD still reaches the right edge of the screen

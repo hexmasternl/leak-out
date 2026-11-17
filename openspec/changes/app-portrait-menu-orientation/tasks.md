@@ -1,8 +1,8 @@
 ## 1. Manifest
 
-- [ ] 1.1 Remove `android:screenOrientation` from `MainActivity` in `app/src/main/AndroidManifest.xml` and add `android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"`, with a comment explaining why.
-- [ ] 1.2 Declare `android.hardware.screen.landscape` and `android.hardware.screen.portrait` with `android:required="false"`.
-- [ ] 1.3 Add a check (unit test on the merged release manifest, or a Gradle verification task run by `testReleaseUnitTest`/CI) that fails when a release activity sets `screenOrientation` or a screen feature is required.
+- [x] 1.1 Remove `android:screenOrientation` from `MainActivity` in `app/src/main/AndroidManifest.xml` and add `android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"`, with a comment explaining why.
+- [x] 1.2 Declare `android.hardware.screen.landscape` and `android.hardware.screen.portrait` with `android:required="false"`.
+- [x] 1.3 Add a check (unit test on the merged release manifest, or a Gradle verification task run by `testReleaseUnitTest`/CI) that fails when a release activity sets `screenOrientation` or a screen feature is required.
 
 ## 2. Orientation policy
 

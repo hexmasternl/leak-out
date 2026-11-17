@@ -208,4 +208,62 @@ androidComponents {
     beforeVariants(selector().withBuildType("release")) { variant ->
         variant.hostTests[com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE]?.enable = true
     }
+    // Every release build checks its merged manifest for a screen orientation Play would turn into a
+    // required hardware feature (openspec/specs/play-store-compliance), so the Play Console never blocks review on it.
+    onVariants(selector().withBuildType("release")) { variant ->
+        val verify = tasks.register<VerifyScreenFeaturesTask>("verify${variant.name.replaceFirstChar(Char::uppercase)}ScreenFeatures") {
+            mergedManifest.set(variant.artifacts.get(com.android.build.api.artifact.SingleArtifact.MERGED_MANIFEST))
+            marker.set(layout.buildDirectory.file("intermediates/screen_features/${variant.name}/verified.txt"))
+        }
+        val suffix = variant.name.replaceFirstChar(Char::uppercase)
+        tasks.matching { it.name == "bundle$suffix" || it.name == "assemble$suffix" }.configureEach { dependsOn(verify) }
+    }
+}
+
+/**
+ * Fails when the merged manifest locks an activity's orientation or declares a screen orientation
+ * feature as required: Play implies `android.hardware.screen.landscape` (or portrait) from either and
+ * then limits the devices the app can be installed on.
+ */
+abstract class VerifyScreenFeaturesTask : DefaultTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val mergedManifest: RegularFileProperty
+
+    @get:OutputFile
+    abstract val marker: RegularFileProperty
+
+    @TaskAction
+    fun verify() {
+        val androidNs = "http://schemas.android.com/apk/res/android"
+        val factory = javax.xml.parsers.DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+        val document = factory.newDocumentBuilder().parse(mergedManifest.get().asFile)
+        val problems = mutableListOf<String>()
+
+        val activities = document.getElementsByTagName("activity")
+        for (i in 0 until activities.length) {
+            val activity = activities.item(i) as org.w3c.dom.Element
+            val orientation = activity.getAttributeNS(androidNs, "screenOrientation")
+            if (orientation.isNotEmpty()) {
+                problems += "${activity.getAttributeNS(androidNs, "name")} locks screenOrientation=\"$orientation\""
+            }
+        }
+
+        val features = document.getElementsByTagName("uses-feature")
+        val declared = mutableMapOf<String, String>()
+        for (i in 0 until features.length) {
+            val feature = features.item(i) as org.w3c.dom.Element
+            declared[feature.getAttributeNS(androidNs, "name")] = feature.getAttributeNS(androidNs, "required")
+        }
+        for (name in listOf("android.hardware.screen.landscape", "android.hardware.screen.portrait")) {
+            if (declared[name] != "false") problems += "$name must be declared with android:required=\"false\""
+        }
+
+        if (problems.isNotEmpty()) {
+            throw GradleException(
+                "The merged manifest would make Play require a screen orientation:\n" + problems.joinToString("\n") { "  - $it" },
+            )
+        }
+        marker.get().asFile.apply { parentFile.mkdirs() }.writeText("ok\n")
+    }
 }

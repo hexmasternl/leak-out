@@ -1,7 +1,7 @@
 ## 1. HUD insets
 
-- [ ] 1.1 Add a pure `hudHorizontalInsets(cutoutRects, hudTop, hudBottom, screenWidth)` helper in `app/ui/game` that returns the left and right inset the HUD needs (0 when no cutout overlaps the HUD band).
-- [ ] 1.2 JVM unit tests: no cutout; cutout in the middle of the left or right edge below the band; corner cutout overlapping the band on each side; top-centre notch; cutouts on both sides.
+- [x] 1.1 Add a pure `hudHorizontalInsets(cutoutRects, hudTop, hudBottom, screenWidth)` helper in `app/ui/game` that returns the left and right inset the HUD needs (0 when no cutout overlaps the HUD band).
+- [x] 1.2 JVM unit tests: no cutout; cutout in the middle of the left or right edge below the band; corner cutout overlapping the band on each side; top-centre notch; cutouts on both sides.
 
 ## 2. Game screen layout
 

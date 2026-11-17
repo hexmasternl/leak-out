@@ -16,6 +16,16 @@
     <!-- AdMob reads the advertising id (Android 13+ needs this declared). Normal permission, no prompt. -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
+    <!-- The menu follows the device and a level locks to landscape at runtime, so neither screen orientation is
+         required: without these Play would imply a required landscape screen and hide the app from devices
+         (openspec/specs/play-store-compliance). Release builds fail if one becomes required again. -->
+    <uses-feature
+        android:name="android.hardware.screen.landscape"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.screen.portrait"
+        android:required="false" />
+
     <!-- appCategory="game" exempts the app from Android 16's large-screen override that would
          otherwise ignore the landscape lock on tablets and foldables. -->
     <application
@@ -41,12 +51,13 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${admobAppId}" />
 
-        <!-- sensorLandscape is applied before the first frame (no portrait flash) and still lets
-             the sensor flip between both landscape sides. -->
+        <!-- No orientation lock here: MainActivity sets it per screen (ScreenOrientation), so the splash and
+             the welcome screen follow the device and a level is played in landscape. The activity handles
+             rotation itself, so switching orientation never recreates it and never resets the current screen. -->
         <activity
             android:name=".MainActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
             android:exported="true"
-            android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.LeakOut.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -21,4 +21,4 @@ features:
 
 ## Speel zoals jij wilt, privé
 
-Geen advertenties, geen account bij ons, geen tracking en geen analytics. Leak Out werkt volledig offline en je voortgang blijft op je toestel. Log desgewenst in bij Google Play Games om prestaties te ontgrendelen en je beste scores op de [ranglijst](/nl/leaderboard/) te zetten.
+Alleen één advertentie als je begint te spelen, geen account bij ons en geen analytics. Leak Out werkt volledig offline en je voortgang blijft op je toestel. Log desgewenst in bij Google Play Games om prestaties te ontgrendelen en je beste scores op de [ranglijst](/nl/leaderboard/) te zetten.

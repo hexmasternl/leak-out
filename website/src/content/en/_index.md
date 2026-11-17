@@ -21,4 +21,4 @@ features:
 
 ## Play your way, privately
 
-No ads, no accounts with us, no tracking and no analytics. Leak Out plays fully offline and your progress stays on your device. Sign in to Google Play Games if you like, to unlock achievements and put your best scores on the [leaderboard](/leaderboard/).
+Just one ad when you start playing, no accounts with us and no analytics. Leak Out plays fully offline and your progress stays on your device. Sign in to Google Play Games if you like, to unlock achievements and put your best scores on the [leaderboard](/leaderboard/).

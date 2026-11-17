@@ -21,4 +21,4 @@ features:
 
 ## Juega a tu manera, con privacidad
 
-Sin anuncios, sin cuentas con nosotros, sin rastreo y sin analíticas. Leak Out funciona totalmente sin conexión y tu progreso se queda en tu dispositivo. Si quieres, inicia sesión en Google Play Juegos para desbloquear logros y llevar tus mejores puntuaciones a la [clasificación](/es/leaderboard/).
+Solo un anuncio al empezar a jugar, sin cuentas con nosotros y sin analíticas. Leak Out funciona totalmente sin conexión y tu progreso se queda en tu dispositivo. Si quieres, inicia sesión en Google Play Juegos para desbloquear logros y llevar tus mejores puntuaciones a la [clasificación](/es/leaderboard/).

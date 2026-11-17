@@ -21,4 +21,4 @@ features:
 
 ## Spiel, wie du willst, und privat
 
-Keine Werbung, kein Konto bei uns, kein Tracking und keine Analyse. Leak Out läuft komplett offline, und dein Fortschritt bleibt auf deinem Gerät. Melde dich bei Google Play Games an, wenn du möchtest, um Erfolge freizuschalten und deine besten Punktzahlen in die [Bestenliste](/de/leaderboard/) zu bringen.
+Nur eine Anzeige, wenn du losspielst, kein Konto bei uns und keine Analyse. Leak Out läuft komplett offline, und dein Fortschritt bleibt auf deinem Gerät. Melde dich bei Google Play Games an, wenn du möchtest, um Erfolge freizuschalten und deine besten Punktzahlen in die [Bestenliste](/de/leaderboard/) zu bringen.

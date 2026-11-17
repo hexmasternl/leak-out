@@ -21,4 +21,4 @@ features:
 
 ## Jouez à votre façon, en toute confidentialité
 
-Pas de publicité, pas de compte chez nous, pas de pistage ni de statistiques. Leak Out fonctionne entièrement hors ligne et votre progression reste sur votre appareil. Connectez-vous à Google Play Games si vous le souhaitez, pour débloquer des succès et placer vos meilleurs scores dans le [classement](/fr/leaderboard/).
+Une seule publicité quand vous commencez à jouer, pas de compte chez nous ni de statistiques. Leak Out fonctionne entièrement hors ligne et votre progression reste sur votre appareil. Connectez-vous à Google Play Games si vous le souhaitez, pour débloquer des succès et placer vos meilleurs scores dans le [classement](/fr/leaderboard/).

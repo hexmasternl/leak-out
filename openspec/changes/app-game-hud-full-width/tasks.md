@@ -5,11 +5,11 @@
 
 ## 2. Game screen layout
 
-- [ ] 2.1 In `GameScreen`, apply only the vertical `safeDrawing` insets to the outer column and give the stack and field row the horizontal `safeDrawing` insets.
-- [ ] 2.2 Read the display cutout bounding rects from the root window insets, derive the HUD band from the top inset and `HudLayout.HEIGHT`, and pad the HUD with the helper's result; recompute on inset and rotation changes.
-- [ ] 2.3 Check the HUD panel shape and the cog wheel button at the screen edges on both landscape sides.
+- [x] 2.1 In `GameScreen`, apply only the vertical `safeDrawing` insets to the outer column and give the stack and field row the horizontal `safeDrawing` insets.
+- [x] 2.2 Read the display cutout bounding rects from the root window insets, derive the HUD band from the top inset and `HudLayout.HEIGHT`, and pad the HUD with the helper's result; recompute on inset and rotation changes.
+- [ ] 2.3 Check the HUD panel shape and the cog wheel button at the screen edges on both landscape sides. (needs a phone or emulator with a cutout; not checked yet)
 
 ## 3. Tests
 
-- [ ] 3.1 Instrumented test: with a side cutout, the HUD spans the full screen width and the stack and field stay clear of the cutout, on both landscape sides.
-- [ ] 3.2 Run `:app:testDebugUnitTest` and the affected instrumented tests.
+- [x] 3.1 Instrumented test: with a side cutout, the HUD spans the full screen width and the stack and field stay clear of the cutout, on both landscape sides. (`HudCutoutTest`, which fakes the cutout through `LocalCutoutRects`; compiled, not run on a device yet)
+- [ ] 3.2 Run `:app:testDebugUnitTest` and the affected instrumented tests. (`:app:testDebugUnitTest` passes; the instrumented test was compiled but not run: no device attached)

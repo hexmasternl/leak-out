@@ -13,16 +13,16 @@
 
 ## 3. Portrait welcome screen
 
-- [ ] 3.1 Give `WelcomeLayout` a portrait arrangement: title at the top, buttons in one column centred horizontally at the bottom, above the navigation bar inset.
-- [ ] 3.2 Check the background, version badge, play menu dialog, exit confirmation and update dialogs in portrait.
-- [ ] 3.3 Check the splash wordmark in portrait and that rotating during the splash neither replays nor restarts it.
+- [x] 3.1 Give `WelcomeLayout` a portrait arrangement: title at the top, buttons in one column centred horizontally at the bottom, above the navigation bar inset.
+- [x] 3.2 Check the background, version badge, play menu dialog, exit confirmation and update dialogs in portrait.
+- [x] 3.3 Check the splash wordmark in portrait and that rotating during the splash neither replays nor restarts it.
 
 ## 4. Tests
 
-- [ ] 4.1 Instrumented test: welcome screen in portrait shows the buttons stacked, centred and at the bottom, also at 130 % font scale on 360×640 dp.
-- [ ] 4.2 Instrumented test: rotating on the welcome screen keeps the screen and any open dialog; the splash is not replayed.
-- [ ] 4.3 Instrumented test: starting a level from the welcome screen in portrait (fake ad provider) ends in landscape with the level intact; returning to the welcome screen unlocks orientation again.
-- [ ] 4.4 Run `:core:test`, `:app:testDebugUnitTest` and the affected instrumented tests.
+- [x] 4.1 Instrumented test: welcome screen in portrait shows the buttons stacked, centred and at the bottom, also at 130 % font scale on 360×640 dp.
+- [x] 4.2 Instrumented test: rotating on the welcome screen keeps the screen and any open dialog; the splash is not replayed.
+- [x] 4.3 Instrumented test: starting a level from the welcome screen in portrait (fake ad provider) ends in landscape with the level intact; returning to the welcome screen unlocks orientation again.
+- [ ] 4.4 Run `:core:test`, `:app:testDebugUnitTest` and the affected instrumented tests. (the orientation and welcome layout JVM tests pass; the full suites and the instrumented run were skipped at the maintainer's request, see the pull request)
 
 ## 5. Release
 

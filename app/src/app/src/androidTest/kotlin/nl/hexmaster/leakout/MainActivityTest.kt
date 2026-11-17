@@ -86,20 +86,25 @@ class MainActivityTest {
     }
 
     @Test
-    fun manifestLocksActivityToSensorLandscape() {
+    fun manifestLeavesTheOrientationToTheActivityAndHandlesRotation() {
         val activity = compose.activity
         // The int-flag overload works on every API level the app supports (min 26).
         @Suppress("DEPRECATION")
         val info = activity.packageManager.getActivityInfo(activity.componentName, 0)
-        assertEquals(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE, info.screenOrientation)
-        assertEquals(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE, activity.requestedOrientation)
+        assertEquals(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED, info.screenOrientation)
+        val rotation = ActivityInfo.CONFIG_ORIENTATION or ActivityInfo.CONFIG_SCREEN_SIZE or
+            ActivityInfo.CONFIG_SCREEN_LAYOUT or ActivityInfo.CONFIG_SMALLEST_SCREEN_SIZE
+        assertEquals(rotation, info.configChanges and rotation)
     }
 
     @Test
-    fun activityIsLaidOutInLandscape() {
-        val config = compose.activity.resources.configuration
-        assertEquals(Configuration.ORIENTATION_LANDSCAPE, config.orientation)
-        assertTrue(config.screenWidthDp > config.screenHeightDp)
+    fun welcomeScreenFollowsTheDeviceAndALevelIsLandscape() {
+        skipSplash()
+        assertEquals(ActivityInfo.SCREEN_ORIENTATION_FULL_USER, compose.activity.requestedOrientation)
+        playThen(PlayMenuTags.CONTINUE, GameScreenTags.SCREEN)
+        compose.waitForIdle()
+        assertEquals(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE, compose.activity.requestedOrientation)
+        compose.waitUntil(5_000) { compose.activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE }
     }
 
     /** Play, then a choice on the play menu; the history is read off the main thread, so wait for [tag]. */

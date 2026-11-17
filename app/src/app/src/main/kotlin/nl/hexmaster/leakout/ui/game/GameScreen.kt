@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -207,7 +209,9 @@ fun GameScreen(
         Column(
             Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
+                // Only the vertical insets here: the HUD keeps clear of the cutout only where it reaches
+                // the HUD's band, the stack and the field always keep clear of it.
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical))
                 // Under a tip only the tip is read out; the game is dimmed and frozen.
                 .semantics { if (activeTip != null) hideFromAccessibility() },
         ) {
@@ -222,14 +226,20 @@ fun GameScreen(
                 attempt = attempt,
                 onPause = { session.pauseByUser() },
                 pauseEnabled = outcome is Outcome.Playing,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.hudCutoutPadding().fillMaxWidth(),
                 gapDistance = { GapDistance.of(session.state) },
                 clockMs = { session.state.clockMs },
                 onWarningShown = { haptics?.play(HapticEffect.GapWarning) },
             )
             // Keyed on the attempt: a new attempt starts the stack and the field fresh, a pause keeps them.
             key(attempt) {
-                Row(Modifier.weight(1f).fillMaxWidth().padding(12.dp)) {
+                Row(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+                        .padding(12.dp),
+                ) {
                     StackPanel(
                         stack = session.select { state.stack },
                         visibleSize = currentLevel.stack.visibleSize,

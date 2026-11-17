@@ -6,10 +6,10 @@
 
 ## 2. Orientation policy
 
-- [ ] 2.1 Add a pure `orientationFor(screen)` mapping in `app` (Welcome to follow device with `SCREEN_ORIENTATION_FULL_USER`; every other screen to `SCREEN_ORIENTATION_SENSOR_LANDSCAPE`).
-- [ ] 2.2 Unit test the mapping for every `Screen`.
-- [ ] 2.3 Apply it in `MainActivity` whenever the screen changes, so the splash and welcome screen follow the device and every other screen is landscape-locked.
-- [ ] 2.4 Make sure the screen only switches to `Game`/`DailyPipe` after the session-start ad has closed or been skipped, so the ad shows in the current orientation.
+- [x] 2.1 Add a pure `orientationFor(screen)` mapping in `app` (Welcome to follow device with `SCREEN_ORIENTATION_FULL_USER`; every other screen to `SCREEN_ORIENTATION_SENSOR_LANDSCAPE`).
+- [x] 2.2 Unit test the mapping for every `Screen`.
+- [x] 2.3 Apply it in `MainActivity` whenever the screen changes, so the splash and welcome screen follow the device and every other screen is landscape-locked.
+- [x] 2.4 Make sure the screen only switches to `Game`/`DailyPipe` after the session-start ad has closed or been skipped, so the ad shows in the current orientation.
 
 ## 3. Portrait welcome screen
 

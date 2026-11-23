@@ -50,8 +50,11 @@ data class DailyScoreResult(
 /** One ranked best result of a daily pipe. */
 data class DailyLeaderboardEntry(val position: Int, val displayName: String, val score: Int, val stars: Int, val isCurrentPlayer: Boolean)
 
-/** The top of a daily pipe's ranking and the asking player's own position, if any. */
-data class DailyTopScores(val date: LocalDate, val entries: List<DailyLeaderboardEntry>, val playerPosition: Int?)
+/** The asking player's own place on a daily pipe: their [position] and best [score] and [stars]. */
+data class DailyPlayerRank(val position: Int, val score: Int, val stars: Int)
+
+/** The top of a daily pipe's ranking and the asking player's own place, or null when they have no result that day. */
+data class DailyTopScores(val date: LocalDate, val entries: List<DailyLeaderboardEntry>, val player: DailyPlayerRank?)
 
 /** The daily pipe endpoints of the score server (server README, "Daily pipe"). */
 interface DailyPipeServerApi {
@@ -98,7 +101,7 @@ internal object DailyPipeJson {
         )
     }
 
-    /** Reads `{ date, entries: [{ position, displayName, score, stars, isCurrentPlayer }], player }`, sorted by position. */
+    /** Reads `{ date, entries: [{ position, displayName, score, stars, isCurrentPlayer }], player: { position, score, stars } }`, sorted by position. */
     fun topScores(body: String): DailyTopScores = readOrUnavailable("daily top scores") {
         val fields = json.parseToJsonElement(body).jsonObject
         DailyTopScores(
@@ -113,7 +116,13 @@ internal object DailyPipeJson {
                     isCurrentPlayer = entry["isCurrentPlayer"]?.jsonPrimitive?.boolean ?: false,
                 )
             }.sortedBy { it.position },
-            playerPosition = (fields["player"] as? JsonObject)?.getValue("position")?.jsonPrimitive?.int,
+            player = (fields["player"] as? JsonObject)?.let { player ->
+                DailyPlayerRank(
+                    position = player.getValue("position").jsonPrimitive.int,
+                    score = player.getValue("score").jsonPrimitive.int,
+                    stars = player.getValue("stars").jsonPrimitive.int,
+                )
+            },
         )
     }
 
@@ -161,11 +170,22 @@ sealed interface DailySubmission {
     data object Failed : DailySubmission
 }
 
-/** The daily pipe for the game: today's pipe and submitting a result. */
+/** What loading a daily pipe's top scores gave. */
+sealed interface DailyTopResult {
+    data class Loaded(val top: DailyTopScores) : DailyTopResult
+
+    /** Not signed in, offline, a timeout or a server error. */
+    data object Failed : DailyTopResult
+}
+
+/** The daily pipe for the game: today's pipe, submitting a result and the day's top scores. */
 interface DailyPipes {
     suspend fun today(): DailyPipeDownload
 
     suspend fun submit(date: LocalDate, score: Int, stars: Int): DailySubmission
+
+    /** The top scores of the pipe of [date] and the player's own place, for the daily leaderboard. */
+    suspend fun top(date: LocalDate): DailyTopResult
 }
 
 /**
@@ -192,7 +212,7 @@ class DailyPipeApi(
 
     override suspend fun submit(date: LocalDate, score: Int, stars: Int): DailySubmission = try {
         val result = authorized { token -> api.submitDailyScore(token, date, score, stars) }
-        DailySubmission.Accepted(result, top(date))
+        DailySubmission.Accepted(result, topOrNull(date))
     } catch (cancelled: CancellationException) {
         throw cancelled
     } catch (ended: ScoreServerException.Rejected) {
@@ -201,8 +221,10 @@ class DailyPipeApi(
         failed("daily score", error, DailySubmission.Failed)
     }
 
-    /** The day's top scores, or null: the submission went through, so a failure here costs only the list. */
-    private suspend fun top(date: LocalDate): DailyTopScores? = try {
+    override suspend fun top(date: LocalDate): DailyTopResult = topOrNull(date)?.let(DailyTopResult::Loaded) ?: DailyTopResult.Failed
+
+    /** The day's top scores, or null when they could not be loaded; the failure is logged. */
+    private suspend fun topOrNull(date: LocalDate): DailyTopScores? = try {
         authorized { token -> api.dailyTopScores(token, date) }
     } catch (cancelled: CancellationException) {
         throw cancelled

@@ -14,6 +14,7 @@ import nl.hexmaster.leakout.scores.online.DailyPipeDownload
 import nl.hexmaster.leakout.scores.online.DailyPipes
 import nl.hexmaster.leakout.scores.online.DailyStreak
 import nl.hexmaster.leakout.scores.online.DailySubmission
+import nl.hexmaster.leakout.scores.online.DailyTopResult
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -170,5 +171,7 @@ class DailyPipeViewModelTest {
         }
 
         override suspend fun submit(date: LocalDate, score: Int, stars: Int): DailySubmission = DailySubmission.Failed
+
+        override suspend fun top(date: LocalDate): DailyTopResult = DailyTopResult.Failed
     }
 }

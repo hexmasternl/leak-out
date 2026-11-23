@@ -21,7 +21,7 @@ class DailyPipeApiTest {
     private val streak = DailyStreak(current = 4, best = 7, wonToday = true)
     private val pipe = DailyPipe(date, """{"id":20261102}""", 1234L, streak, DailyBestScore(380, 2))
     private val result = DailyScoreResult(date, DailyBestScore(380, 2), isNewBest = true, rank = 5, streak = streak)
-    private val top = DailyTopScores(date, listOf(DailyLeaderboardEntry(1, "Ada", 400, 3, false)), playerPosition = 5)
+    private val top = DailyTopScores(date, listOf(DailyLeaderboardEntry(1, "Ada", 400, 3, false)), player = DailyPlayerRank(5, 120, 1))
 
     // HTTP client against a local server.
 
@@ -89,15 +89,27 @@ class DailyPipeApiTest {
         val read = HttpScoreServerApi(base).dailyTopScores("tok", date)
 
         assertEquals(listOf("Ada", "Me"), read.entries.map { it.displayName })
-        assertEquals(2, read.playerPosition)
+        assertEquals(DailyPlayerRank(position = 2, score = 380, stars = 2), read.player)
         assertTrue(read.entries[1].isCurrentPlayer)
     }
 
     @Test
-    fun `a top scores answer without the player has no position`() = runBlocking {
+    fun `a top scores answer without the player has no own place`() = runBlocking {
         answer("/api/daily-pipes/2026-11-02/scores/top", 200, """{"date":"2026-11-02","entries":[],"player":null}""")
 
-        assertNull(HttpScoreServerApi(base).dailyTopScores("tok", date).playerPosition)
+        assertNull(HttpScoreServerApi(base).dailyTopScores("tok", date).player)
+    }
+
+    @Test
+    fun `a player outside the entries keeps their own position and best score`() = runBlocking {
+        answer(
+            "/api/daily-pipes/2026-11-02/scores/top",
+            200,
+            """{"date":"2026-11-02","entries":[{"position":1,"displayName":"Ada","score":512,"stars":3,"isCurrentPlayer":false}],""" +
+                """"player":{"position":76,"score":125,"stars":1}}""",
+        )
+
+        assertEquals(DailyPlayerRank(position = 76, score = 125, stars = 1), HttpScoreServerApi(base).dailyTopScores("tok", date).player)
     }
 
     @Test
@@ -219,6 +231,33 @@ class DailyPipeApiTest {
         assertEquals(listOf("daily top scores"), log.failures)
     }
 
+    @Test
+    fun `the day's top scores load on their own`() = runBlocking {
+        fake.top = { top }
+
+        assertEquals(DailyTopResult.Loaded(top), client.top(date))
+        assertEquals(listOf(date), fake.topDates)
+    }
+
+    @Test
+    fun `top scores that fail to load or a signed-out player give a failed leaderboard`() = runBlocking {
+        fake.top = { throw unavailable() }
+        assertEquals(DailyTopResult.Failed, client.top(date))
+
+        signIn.value = SignInState.SignedOut
+        fake.top = { top }
+        assertEquals(DailyTopResult.Failed, client.top(date))
+    }
+
+    @Test
+    fun `top scores with an expired token sign in again once`() = runBlocking {
+        var calls = 0
+        fake.top = { if (calls++ == 0) throw unauthorized() else top }
+
+        assertEquals(DailyTopResult.Loaded(top), client.top(date))
+        assertEquals(listOf("token-1", "token-2"), fake.tokens)
+    }
+
     /** A scripted [DailyPipeServerApi]. */
     private class FakeDailyPipeServer : DailyPipeServerApi {
         val tokens = mutableListOf<String>()
@@ -237,6 +276,12 @@ class DailyPipeApiTest {
             return submit()
         }
 
-        override suspend fun dailyTopScores(accessToken: String, date: LocalDate): DailyTopScores = top()
+        val topDates = mutableListOf<LocalDate>()
+
+        override suspend fun dailyTopScores(accessToken: String, date: LocalDate): DailyTopScores {
+            tokens += accessToken
+            topDates += date
+            return top()
+        }
     }
 }

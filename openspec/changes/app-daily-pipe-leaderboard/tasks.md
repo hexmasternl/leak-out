@@ -2,9 +2,9 @@
 
 ## 1. Data
 
-- [ ] 1.1 Replace `DailyTopScores.playerPosition` with `player: DailyPlayerRank?` (position, score, stars), parse it in `DailyPipeJson.topScores` and update the callers; verify with new cases in `DailyPipeApiTest` (player present, player null)
-- [ ] 1.2 Add `DailyPipes.top(date)` returning loaded or failed, built on the existing top-scores call with its 401 retry; verify with unit tests for success, failure and signing in again
-- [ ] 1.3 Add the pure row selection `dailyLeaderboardRows` (top 5, own row below when outside the top 5, marked row inside it, none without a result); verify with unit tests for those cases plus fewer than 5 entries and no entries
+- [x] 1.1 Replace `DailyTopScores.playerPosition` with `player: DailyPlayerRank?` (position, score, stars), parse it in `DailyPipeJson.topScores` and update the callers; verify with new cases in `DailyPipeApiTest` (player present, player null)
+- [x] 1.2 Add `DailyPipes.top(date)` returning loaded or failed, built on the existing top-scores call with its 401 retry; verify with unit tests for success, failure and signing in again
+- [x] 1.3 Add the pure row selection `dailyLeaderboardRows` (top 5, own row below when outside the top 5, marked row inside it, none without a result); verify with unit tests for those cases plus fewer than 5 entries and no entries
 
 ## 2. Leaderboard UI
 

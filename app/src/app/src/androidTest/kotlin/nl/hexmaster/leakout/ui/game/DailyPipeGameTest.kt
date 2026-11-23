@@ -37,6 +37,7 @@ import nl.hexmaster.leakout.scores.online.DailyBestScore
 import nl.hexmaster.leakout.scores.online.DailyLeaderboardEntry
 import nl.hexmaster.leakout.scores.online.DailyPipe
 import nl.hexmaster.leakout.scores.online.DailyPipeDownload
+import nl.hexmaster.leakout.scores.online.DailyPlayerRank
 import nl.hexmaster.leakout.scores.online.DailyPipes
 import nl.hexmaster.leakout.scores.online.DailyScoreResult
 import nl.hexmaster.leakout.scores.online.DailyStreak
@@ -80,7 +81,7 @@ class DailyPipeGameTest {
             DailyTopScores(
                 date,
                 listOf(DailyLeaderboardEntry(1, "Ada", 90, 3, false), DailyLeaderboardEntry(2, "Me", 60, 2, true)),
-                playerPosition = 2,
+                player = DailyPlayerRank(2, 60, 2),
             ),
         )
         showWelcomeThenGame()

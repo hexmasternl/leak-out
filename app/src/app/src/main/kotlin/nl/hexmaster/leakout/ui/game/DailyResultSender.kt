@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import nl.hexmaster.leakout.core.engine.Outcome
+import nl.hexmaster.leakout.ui.daily.DailyLeaderboardState
 import nl.hexmaster.leakout.ui.daily.DailyResultState
 import nl.hexmaster.leakout.ui.daily.DailyResults
 
@@ -41,6 +42,52 @@ internal fun rememberDailyResult(session: GameSession, daily: DailyResults): Dai
         if (holder.state is DailyResultState.Sent || holder.state == DailyResultState.Ended) return@LaunchedEffect
         holder.state = DailyResultState.Sending
         holder.state = DailyResultState.of(daily.submit(score.total, won.finalStars))
+    }
+    return holder
+}
+
+/**
+ * The daily leaderboard of one attempt (spec `daily-pipe`): shown before the attempt starts, while
+ * [waitingForStart], and again after a win once [afterWin] is set by the level complete dialog's Next.
+ */
+class DailyLeaderboardHolder {
+    var waitingForStart: Boolean by mutableStateOf(true)
+        internal set
+
+    var afterWin: Boolean by mutableStateOf(false)
+        internal set
+
+    var state: DailyLeaderboardState by mutableStateOf(DailyLeaderboardState.Loading)
+        internal set
+
+    /** Closes the starting leaderboard; the attempt starts. */
+    fun start() {
+        waitingForStart = false
+    }
+
+    /** Shows the leaderboard after a win, loaded again so that it holds the new result. */
+    fun showAfterWin() {
+        afterWin = true
+    }
+}
+
+/**
+ * Loads the day's top scores through [daily] for the leaderboard of each attempt: when the attempt
+ * opens, and after a win once Next was tapped and the [result] is no longer being sent, so the new
+ * result is in the list. A new attempt (Restart) opens on the starting leaderboard again.
+ */
+@Composable
+internal fun rememberDailyLeaderboard(session: GameSession, daily: DailyResults, result: DailyResultHolder?): DailyLeaderboardHolder {
+    val attempt = session.select { state.attempt }
+    val holder = remember(session, daily, attempt) { DailyLeaderboardHolder() }
+    LaunchedEffect(holder) {
+        holder.state = DailyLeaderboardState.of(daily.top())
+    }
+    val sending = result?.state == DailyResultState.Sending
+    LaunchedEffect(holder, holder.afterWin, sending) {
+        if (!holder.afterWin || sending) return@LaunchedEffect
+        holder.state = DailyLeaderboardState.Loading
+        holder.state = DailyLeaderboardState.of(daily.top())
     }
     return holder
 }

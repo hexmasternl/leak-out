@@ -315,7 +315,7 @@ The two dialogs shown when an attempt ends. Both sit over the see-through `surfa
 | Message | `body.md` `text.secondary` | "You kept the water flowing." When the win beat the stored best, "New best!" in `display.sm` `brass.300` takes its place once the tally is done, so the panel does not grow |
 | Stars | 40 dp, 12 dp apart | Earned in `brass.300` with a pop-in stagger of 80 ms and a small brass burst, missed in `line.strong` |
 | Score row | three equal columns | See below |
-| Buttons | stacked | Success "Next Level", glass "Restart", then one row of two equal tertiary buttons "Top 10" and "Exit" (Exit alone, centred, when the top 10 is not available) |
+| Buttons | stacked | Success "Next Level", glass "Restart", then one row of two equal tertiary buttons "Top 10" and "Exit" (Exit alone, centred, when the top 10 is not available). On the Daily Pipe only a success "Next", which opens the daily leaderboard |
 
 The **score row** follows the game's scoring (the points earned during play, minus 3 per unused section, never below 0). Three equal columns, each a `label.md` caption in `text.secondary` above its value:
 
@@ -488,6 +488,44 @@ The own row is marked `▐ ▌` in the sketches.
 | A state, in either layout | 40 indicator + 12 + 48 message + 16 + 52 button | ≈ 168 dp, inside the 200 dp (Compact) or 400 dp (Regular) list space |
 
 On a 640 × 360 dp screen (328 dp available) the top 10 uses Compact and all ten rows are visible without scrolling; on a 1280 × 800 dp tablet it uses Regular.
+
+#### Daily leaderboard
+
+Today's top 5 on the Daily Pipe with the player's own place (spec `daily-pipe`). It shows twice per attempt: when the Daily Pipe opens, over the paused board, and after a win, once the player taps **Next**, the only button of the Daily Pipe's win dialog. It is a result dialog: the see-through `surface.scrim`, the same panel, and the same Regular / Compact choice by measuring.
+
+| Element | Style | Notes |
+|---------|-------|-------|
+| Eyebrow | `display.xs` `success.500` | "DAILY PIPE" |
+| Title | `display.lg` `text.primary`, centred | "Today's top 5" |
+| Table | 12 dp below the title, 202 dp high in every state | A header row and up to 6 rows, see below |
+| Buttons | at the start: brass Primary "Start" | Closes the dialog; the countdown and the tips start only then. Back leaves to the main menu |
+| | after a win: glass Secondary "Restart", tertiary "Exit" | Restart deals the same stack again and opens on this dialog with Start. Back works as Exit |
+
+**Table.** A 22 dp header row with the captions "POSITION", "PLAYER" and "POINTS" in `label.md` `text.secondary` (screen readers skip it), then 30 dp rows with 8 dp horizontal padding: the position (76 dp wide, `numeric.md`, 1–3 in `brass.300`, others in `text.secondary`), the name (`body.md` `text.primary`, one line, ellipsized) and the points (72 dp wide, `numeric.md` `text.primary`, right aligned, the device's digit grouping).
+
+- Rows 1 to 5 are the day's best results. Fewer results show fewer rows.
+- When the player has a result for today outside the top 5, a sixth row below them shows their position, name and best score.
+- The player's own row, wherever it is, shows "(you)" after the name in `liquid.300`, a `liquid.tint` fill and a 1 dp `liquid.500` border with `radius.sm`.
+- Each row is one screen-reader item: "Position 1, Player v, 512 points"; the own row reads "Position 76, Player a, you, 125 points".
+
+Loading (a 28 dp `liquid.500` ring and "Loading today's top scores…"), "No scores yet today" and "Today's top scores could not be loaded" take the table's place in `body.md` `text.secondary`, so the panel does not change size. Start always works, also when the scores could not be loaded.
+
+```
+                    Compact, at the start
+┌──────────────────────────────────────┬─────────────────────┐
+│              DAILY PIPE              │                     │
+│            Today's top 5             │                     │
+│ POSITION  PLAYER              POINTS │  ┌───────────────┐  │
+│  1        Player v               512 │  │     Start     │  │
+│  2        Player w               511 │  └───────────────┘  │
+│  3        Player x               501 │                     │
+│  4        Player y               498 │                     │
+│  5        Player z               495 │                     │
+│▐ 76       Player a (you)         125▌│                     │
+└──────────────────────────────────────┴─────────────────────┘
+```
+
+Heights at 100 % font: Compact information 48 padding + 17 eyebrow + 4 + 31 title + 12 + 202 table ≈ 314 dp, inside the 328 dp of a 640 × 360 dp screen (the column scrolls at larger font scales); Regular adds 20 + the buttons below the table and is used on tablets.
 
 ### 5.7 Toast
 

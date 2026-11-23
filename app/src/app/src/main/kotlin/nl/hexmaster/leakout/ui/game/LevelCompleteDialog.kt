@@ -65,7 +65,8 @@ private typealias Tagger = Modifier.(String) -> Modifier
  * sent to the score server ([scorePost]), the status dot shows in the top-left corner. With
  * [onTopScores], a Top 10 button shares Exit's row and is enabled together with the other buttons.
  * A daily pipe win passes its [eyebrow] and the [daily] result panel, with [onRetryDaily] behind its
- * Try again button.
+ * Try again button, and [onDailyNext]: the dialog then has that one Next button in place of Next
+ * Level, Restart, Top 10 and Exit (spec `daily-pipe`).
  */
 @Composable
 fun LevelCompleteDialog(
@@ -83,9 +84,10 @@ fun LevelCompleteDialog(
     eyebrow: String? = null,
     daily: DailyResultState? = null,
     onRetryDaily: () -> Unit = {},
+    onDailyNext: (() -> Unit)? = null,
 ) {
     val paneName = stringResource(R.string.win_pane_title)
-    val details = WinDetails(eyebrow, daily, onRetryDaily)
+    val details = WinDetails(eyebrow, daily, onRetryDaily, onDailyNext)
     ResultDialogWindow(
         onDismissRequest = onExit,
         dismissOnBackPress = frame.buttonsEnabled,
@@ -102,9 +104,15 @@ fun LevelCompleteDialog(
 
 /**
  * What a daily pipe win adds to the dialog: its own [eyebrow] in place of "Level 12", and the
- * [daily] result panel under the score row (spec `daily-pipe`). Both are absent for a bundled level.
+ * [daily] result panel under the score row, and [onDailyNext] behind the only button (spec
+ * `daily-pipe`). All are absent for a bundled level.
  */
-private data class WinDetails(val eyebrow: String? = null, val daily: DailyResultState? = null, val onRetryDaily: () -> Unit = {})
+private data class WinDetails(
+    val eyebrow: String? = null,
+    val daily: DailyResultState? = null,
+    val onRetryDaily: () -> Unit = {},
+    val onDailyNext: (() -> Unit)? = null,
+)
 
 /** The Regular content with the final values, so the chosen layout does not change during the tally. */
 @Composable
@@ -157,7 +165,7 @@ private fun LevelCompleteContent(
                 AchievementUnlockedRow(unlocked, Modifier.tag(LevelCompleteTags.ACHIEVEMENTS), animate = !measuring)
             }
             Spacer(Modifier.height(24.dp))
-            WinButtons(FlowButtonSize.Large, frame, hasNextLevel, onNextLevel, onRestart, onExit, onTopScores, tag)
+            WinButtons(FlowButtonSize.Large, frame, hasNextLevel, onNextLevel, onRestart, onExit, onTopScores, tag, details.onDailyNext)
         }
         ResultDialogLayout.Compact -> CompactColumns(
             info = {
@@ -177,7 +185,7 @@ private fun LevelCompleteContent(
                     AchievementUnlockedRow(unlocked, Modifier.tag(LevelCompleteTags.ACHIEVEMENTS), animate = !measuring)
                 }
             },
-            buttons = { WinButtons(FlowButtonSize.Medium, frame, hasNextLevel, onNextLevel, onRestart, onExit, onTopScores, tag) },
+            buttons = { WinButtons(FlowButtonSize.Medium, frame, hasNextLevel, onNextLevel, onRestart, onExit, onTopScores, tag, details.onDailyNext) },
         )
     }
 }
@@ -244,7 +252,10 @@ private fun WinScoreRow(score: FinalScore, frame: WinFrame, tag: Tagger) {
     }
 }
 
-/** Success Next Level, glass Restart and tertiary Exit (with Top 10 beside it), stacked 12 dp apart. */
+/**
+ * Success Next Level, glass Restart and tertiary Exit (with Top 10 beside it), stacked 12 dp apart;
+ * for a daily pipe win ([onDailyNext]) only a success Next, which opens the daily leaderboard.
+ */
 @Composable
 private fun ColumnScope.WinButtons(
     size: FlowButtonSize,
@@ -255,7 +266,19 @@ private fun ColumnScope.WinButtons(
     onExit: () -> Unit,
     onTopScores: (() -> Unit)?,
     tag: Tagger,
+    onDailyNext: (() -> Unit)? = null,
 ) {
+    if (onDailyNext != null) {
+        FlowButton(
+            text = stringResource(R.string.daily_result_next),
+            onClick = onDailyNext,
+            variant = FlowButtonVariant.Success,
+            size = size,
+            enabled = frame.buttonsEnabled,
+            modifier = Modifier.fillMaxWidth().tag(LevelCompleteTags.NEXT),
+        )
+        return
+    }
     // CompactColumns already spaces its buttons; the Regular column does not.
     val gap = @Composable { if (size == FlowButtonSize.Large) Spacer(Modifier.height(ResultDialogMetrics.ButtonSpacing)) }
     FlowButton(

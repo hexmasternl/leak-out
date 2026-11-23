@@ -160,8 +160,8 @@ sealed interface DailyPipeDownload {
 
 /** What submitting a daily pipe result gave. */
 sealed interface DailySubmission {
-    /** The server took the result; [top] is the day's top scores, or null when they could not be loaded. */
-    data class Accepted(val result: DailyScoreResult, val top: DailyTopScores?) : DailySubmission
+    /** The server took the result: the player's best, rank and streak. */
+    data class Accepted(val result: DailyScoreResult) : DailySubmission
 
     /** The pipe's day has ended (UTC midnight passed); nothing was stored. */
     data object Ended : DailySubmission
@@ -211,8 +211,7 @@ class DailyPipeApi(
     }
 
     override suspend fun submit(date: LocalDate, score: Int, stars: Int): DailySubmission = try {
-        val result = authorized { token -> api.submitDailyScore(token, date, score, stars) }
-        DailySubmission.Accepted(result, topOrNull(date))
+        DailySubmission.Accepted(authorized { token -> api.submitDailyScore(token, date, score, stars) })
     } catch (cancelled: CancellationException) {
         throw cancelled
     } catch (ended: ScoreServerException.Rejected) {
@@ -221,15 +220,12 @@ class DailyPipeApi(
         failed("daily score", error, DailySubmission.Failed)
     }
 
-    override suspend fun top(date: LocalDate): DailyTopResult = topOrNull(date)?.let(DailyTopResult::Loaded) ?: DailyTopResult.Failed
-
-    /** The day's top scores, or null when they could not be loaded; the failure is logged. */
-    private suspend fun topOrNull(date: LocalDate): DailyTopScores? = try {
-        authorized { token -> api.dailyTopScores(token, date) }
+    override suspend fun top(date: LocalDate): DailyTopResult = try {
+        DailyTopResult.Loaded(authorized { token -> api.dailyTopScores(token, date) })
     } catch (cancelled: CancellationException) {
         throw cancelled
     } catch (error: Exception) {
-        failed("daily top scores", error, null)
+        failed("daily top scores", error, DailyTopResult.Failed)
     }
 
     private suspend fun <T> authorized(call: suspend (token: String) -> T): T {

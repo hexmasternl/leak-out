@@ -198,12 +198,12 @@ class DailyPipeApiTest {
     }
 
     @Test
-    fun `a win is submitted and the day's top scores loaded`() = runBlocking {
+    fun `a win is submitted without loading the top scores`() = runBlocking {
         fake.submit = { result }
-        fake.top = { top }
 
-        assertEquals(DailySubmission.Accepted(result, top), client.submit(date, 380, 2))
+        assertEquals(DailySubmission.Accepted(result), client.submit(date, 380, 2))
         assertEquals(listOf(Triple(date, 380, 2)), fake.submissions)
+        assertEquals(emptyList<LocalDate>(), fake.topDates)
     }
 
     @Test
@@ -223,15 +223,6 @@ class DailyPipeApiTest {
     }
 
     @Test
-    fun `top scores that fail to load leave the submission accepted`() = runBlocking {
-        fake.submit = { result }
-        fake.top = { throw unavailable() }
-
-        assertEquals(DailySubmission.Accepted(result, null), client.submit(date, 380, 2))
-        assertEquals(listOf("daily top scores"), log.failures)
-    }
-
-    @Test
     fun `the day's top scores load on their own`() = runBlocking {
         fake.top = { top }
 
@@ -243,6 +234,7 @@ class DailyPipeApiTest {
     fun `top scores that fail to load or a signed-out player give a failed leaderboard`() = runBlocking {
         fake.top = { throw unavailable() }
         assertEquals(DailyTopResult.Failed, client.top(date))
+        assertEquals(listOf("daily top scores"), log.failures)
 
         signIn.value = SignInState.SignedOut
         fake.top = { top }

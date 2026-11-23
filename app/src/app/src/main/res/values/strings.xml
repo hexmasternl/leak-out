@@ -498,10 +498,27 @@
     <string name="daily_result_best_streak">Best %1$d</string>
     <!-- %1$d: the player's position in today's ranking -->
     <string name="daily_result_rank">You are #%1$d today</string>
-    <string name="daily_result_top_title">Today\'s top scores</string>
-    <!-- %1$d: rank. %2$s: the player's name. %3$s: the score, already formatted -->
-    <string name="daily_result_top_row">%1$d. %2$s · %3$s</string>
     <string name="daily_result_ended">The Daily Pipe has ended. A new one is waiting.</string>
     <string name="daily_result_failed">Your result could not be sent.</string>
     <string name="daily_result_retry">Try again</string>
+    <!-- The only button of the Daily Pipe's level complete dialog; it opens today's leaderboard -->
+    <string name="daily_result_next">Next</string>
+    <!-- The daily leaderboard, shown when the Daily Pipe starts and after a win -->
+    <string name="daily_leaderboard_title">Today\'s top 5</string>
+    <string name="daily_leaderboard_position">Position</string>
+    <string name="daily_leaderboard_player">Player</string>
+    <string name="daily_leaderboard_points">Points</string>
+    <!-- %1$s: the player's own name on their row of the daily leaderboard -->
+    <string name="daily_leaderboard_you">%1$s (you)</string>
+    <!-- The player's own row when their name is not known -->
+    <string name="daily_leaderboard_you_unnamed">You</string>
+    <!-- Read out per row. %1$d: position. %2$s: the player's name. %3$s: the points, already formatted -->
+    <string name="daily_leaderboard_row_description">Position %1$d, %2$s, %3$s points</string>
+    <!-- Read out on the player's own row. %1$d: position. %2$s: the player's name. %3$s: the points, already formatted -->
+    <string name="daily_leaderboard_row_own_description">Position %1$d, %2$s, you, %3$s points</string>
+    <string name="daily_leaderboard_loading">Loading today\'s top scores…</string>
+    <string name="daily_leaderboard_empty">No scores yet today</string>
+    <string name="daily_leaderboard_failed">Today\'s top scores could not be loaded</string>
+    <!-- Closes the daily leaderboard and starts the Daily Pipe -->
+    <string name="daily_leaderboard_start">Start</string>
 </resources>

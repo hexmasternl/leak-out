@@ -244,10 +244,17 @@ class DailyPipeGameTest {
         compose.onNodeWithTag(LevelCompleteTags.DIALOG).assertIsDisplayed()
     }
 
-    /** The game screen as `MainActivity` shows a daily pipe; with [start] the starting leaderboard is closed with Start. */
+    /**
+     * The game screen as `MainActivity` shows a daily pipe; with [start] the starting leaderboard is
+     * closed with Start. Like in the app, the game opens once the activity's window is shown, so the
+     * leaderboard's dialog window takes the focus (and Back) from it.
+     */
     private fun showGame(start: Boolean = true) {
         session = GameSession(level, GameEngine.seeded(4242L))
-        compose.setContent { LeakOutTheme { DailyGame(DailyPipeGame(date, level, 4242L, streak)) } }
+        var opened by mutableStateOf(false)
+        compose.setContent { LeakOutTheme { if (opened) DailyGame(DailyPipeGame(date, level, 4242L, streak)) } }
+        compose.waitForIdle()
+        opened = true
         compose.waitForIdle()
         if (start) {
             compose.onNodeWithTag(DailyLeaderboardTags.START).performClick()

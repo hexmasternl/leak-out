@@ -73,6 +73,8 @@ import nl.hexmaster.leakout.scores.online.ScoreSubmissions
 import nl.hexmaster.leakout.settings.SettingsRepository
 import nl.hexmaster.leakout.settings.TipId
 import nl.hexmaster.leakout.ui.components.KeepScreenOn
+import nl.hexmaster.leakout.ui.daily.DailyLeaderboardActions
+import nl.hexmaster.leakout.ui.daily.DailyLeaderboardDialog
 import nl.hexmaster.leakout.ui.daily.DailyResults
 import nl.hexmaster.leakout.ui.game.onboarding.DragHint
 import nl.hexmaster.leakout.ui.game.onboarding.TapHint
@@ -135,6 +137,8 @@ fun GameScreen(
     KeepScreenOn()
     // A daily pipe win goes to the server once the level complete dialog shows; Try again sends it again.
     val dailyResult = daily?.let { rememberDailyResult(session, it) }
+    // A daily pipe opens paused behind the day's leaderboard and shows it again after a win.
+    val dailyBoard = daily?.let { rememberDailyLeaderboard(session, it, dailyResult) }
     val dragState = remember(session) { SectionDragState() }
     // Parse every pipe asset once up front, so no frame mid-game pays for a section's first draw.
     val pipes = rememberPipeArtLibrary().let { library -> remember(library) { library.apply { preloadAll() } } }
@@ -160,8 +164,10 @@ fun GameScreen(
     val activeTip = session.select { activeTip }
     // Until the level-start tips have been looked at, the countdown must not move.
     val waitingForTips = tips != null && outcome is Outcome.Playing && session.select { tipsCheckedAttempt } != attempt
+    // Until Start on the daily leaderboard nothing moves, and the tips wait too.
+    val waitingForStart = dailyBoard?.waitingForStart == true && outcome is Outcome.Playing
 
-    GameClock(session, paused || waitingForTips)
+    GameClock(session, paused || waitingForTips || waitingForStart)
     ReplacementLandingSound(session, soundEffects)
     GapHeartbeat(session, soundEffects)
     PointsAwardedSound(session, soundEffects)
@@ -195,7 +201,8 @@ fun GameScreen(
         when (session.state.outcome) {
             is Outcome.Won -> session.skipWinAnimation()
             is Outcome.Lost -> session.skipLeakEffect()
-            Outcome.Playing -> session.pauseByUser()
+            // Behind the starting daily leaderboard nothing runs yet, so there is nothing to pause.
+            Outcome.Playing -> if (!waitingForStart) session.pauseByUser()
         }
     }
 
@@ -304,7 +311,7 @@ fun GameScreen(
             )
         }
         DragOverlay(dragState)
-        if (tips != null) GameTips(session, tips, targets, fieldState, showPauseDialog)
+        if (tips != null && !waitingForStart) GameTips(session, tips, targets, fieldState, showPauseDialog)
     }
     }
 
@@ -340,7 +347,27 @@ fun GameScreen(
             eyebrow = levelLabel,
         )
     }
-    if (showWinDialog) {
+    if (dailyBoard != null && waitingForStart) {
+        DailyLeaderboardDialog(
+            state = dailyBoard.state,
+            actions = DailyLeaderboardActions.Start(dailyBoard::start),
+            onBack = {
+                session.abandonAttempt(achievements)
+                onExit()
+            },
+            eyebrow = levelLabel.orEmpty(),
+            playerName = daily?.playerName,
+        )
+    }
+    if (showWinDialog && dailyBoard?.afterWin == true) {
+        DailyLeaderboardDialog(
+            state = dailyBoard.state,
+            actions = DailyLeaderboardActions.AfterWin(onRestart = restartOrLeave, onExit = onExit),
+            onBack = onExit,
+            eyebrow = levelLabel.orEmpty(),
+            playerName = daily?.playerName,
+        )
+    } else if (showWinDialog) {
         val score = session.select { state.finalScore }
         val frame = session.select { winFrame }
         if (score != null && frame != null) {
@@ -359,6 +386,7 @@ fun GameScreen(
                 eyebrow = levelLabel,
                 daily = dailyResult?.state,
                 onRetryDaily = { dailyResult?.retry() },
+                onDailyNext = dailyBoard?.let { board -> board::showAfterWin },
             )
         }
     }

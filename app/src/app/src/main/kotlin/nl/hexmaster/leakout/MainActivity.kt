@@ -352,7 +352,9 @@ class MainActivity : ComponentActivity() {
                                 // Every attempt, restarts included, deals the same sections from the server's seed.
                                 val session = remember(game) { GameSession(game.level, GameEngine.seeded(game.stackSeed)) }
                                 val dailyPipes = appContainer.dailyPipes
-                                val results = remember(game) { DailyResults { score, stars -> dailyPipes.submit(game.date, score, stars) } }
+                                val results = remember(game) {
+                                    DailyResults.of(dailyPipes, game.date) { (playGames.auth.state.value as? SignInState.SignedIn)?.displayName }
+                                }
                                 GameScreen(
                                     level = game.level,
                                     onExit = { screen = Screen.Welcome },
